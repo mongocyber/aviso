@@ -42,7 +42,7 @@ Original takeover facts:
 - `README.md` no longer reads like a generic Plasmo scaffold and explains the actual product and local workflow.
 - `docs/EXECUTION_PLAN.md` and `docs/ACCEPTANCE_CRITERIA.md` no longer contradict each other on M1-M5 completion.
 - `RELEASE_CHECKLIST.md` exists before any release or store work begins.
-- Manual Chrome QA results are recorded after running `tests/manual-test.html` A-F.
+- Manual Chrome QA results are recorded after running `tests/manual-test.html` A-G.
 - Release workflow package-manager and Node-version assumptions are reconciled.
 
 ## Verification

@@ -8,6 +8,26 @@ Aviso 是一个 Chrome MV3 浏览器扩展，技术栈为 Plasmo、React 18、Ty
 
 当前状态：v0.1.0 收口为 `v0.1 internal dogfood / 内部试用版`。A-G 手动验收用户已验证基本通过，豆包/火山方舟 API 用户确认可用；OpenAI / Anthropic 真实调用尚未验证。本版本用于内部试用，不进入公开发布，不提交商店。
 
+## Phase 1 内部文档体系
+
+状态：已创建，待用户验收。本文档体系不创建官网、不安装依赖、不配置自动化，作为后续上架、迭代、自动 changelog、release-please 和 Docusaurus 用户文档整理的内部事实源。
+
+本轮新增内部文档：
+
+- `docs/01_PROJECT_CHARTER.md`
+- `docs/02_PRD.md`
+- `docs/03_TECH_SPEC.md`
+- `docs/04_ROADMAP.md`
+- `docs/05_RELEASE_PLAN.md`
+- `docs/06_RISK_REGISTER.md`
+- `docs/07_PRIVACY_AND_SECURITY.md`
+
+同步更新：
+
+- `README.md` 新增项目文档入口，并把当前状态统一为 v0.1 internal dogfood、A-G 基本通过、豆包可用、OpenAI / Anthropic 未验证。
+- `docs/EXECUTION_PLAN.md` 和 `docs/ACCEPTANCE_CRITERIA.md` 清理旧验收口径，改为 A-G 内部试用基线。
+- 本轮未改源码、未安装依赖、未配置自动化、未运行真实 API、未提交 Git。
+
 ## 本轮读取的来源
 
 - `README.md`
@@ -22,16 +42,19 @@ Aviso 是一个 Chrome MV3 浏览器扩展，技术栈为 Plasmo、React 18、Ty
 - `tests/unit.test.ts`
 - `.github/workflows/submit.yml`
 - 关键源码：`src/background/`、`src/contents/`、`src/popup/`、`src/utils/`、`src/types/`
+- Phase 1 文档：`docs/01_PROJECT_CHARTER.md` 到 `docs/07_PRIVACY_AND_SECURITY.md`
 
-本轮开始时未发现：
+历史接管时未发现：
 
 - `AGENTS.md`（本轮按会话中提供的 AGENTS 规则执行）
 - `CLAUDE.md`
 - `RELEASE_CHECKLIST.md`（本轮已新增）
 
-仓库风险：
+版本控制状态：
 
-- 当前目录不是 git 仓库，无法在此目录直接生成正常 git diff、commit、tag 或回滚记录。本轮没有自行初始化 git。
+- 当前目录已是本地 Git 仓库。
+- v0.1 internal dogfood 基线提交：`3dc7ea3 chore: establish v0.1 internal dogfood baseline`。
+- 当前没有创建 GitHub 远端、没有 push、没有 tag；公开发布前仍需单独确认远端、tag 和回滚点。
 
 ## 本轮完成的 Issue 001 改动
 
@@ -164,7 +187,7 @@ v0.1 结论：前端触发链路已能立即响应，默认模型保持较快的
 1. OpenAI / Anthropic 真实最小调用尚未验证。必须由用户另行明确批准，并用安全测试 Key 验证。
 2. `npm run package` 尚未执行，尚未生成可提交商店的 zip。
 3. 商店截图、描述、发布说明、外部隐私政策页面、发布账号和发布密钥仍未确认。
-4. 当前目录不是 git 仓库。公开发布前建议先迁入/初始化版本控制，再做 tag、发布记录和回滚方案。
+4. 当前只有本地 Git 基线提交。公开发布前仍需确认 GitHub 远端、release tag、发布记录和回滚方案。
 5. 远端链接正文总结仍未实现。当前只透传 URL；如果要抓远端正文，通常需要扩大 `host_permissions`，需产品决策。
 
 ## 建议下一步

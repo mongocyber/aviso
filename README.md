@@ -8,15 +8,33 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它把右键菜单、划词工具�
 
 ## 当前状态
 
-本项目已进入 v0.1.0 代码完成候选状态，但还不是可发布状态。
+本项目已收口为 `v0.1 internal dogfood / 内部试用版`，但还不是公开发布状态。
 
 - M1-M4 的功能代码项已实现。
 - M5 的自动化测试、手动验收页和生产构建基线已具备。
-- 用户已反馈完成早期真实 Chrome A-F 人工点击验收，但尚未把逐项结果写入发布清单；当前新增 iframe G 组验收后需按 A-G 重新记录。
-- 尚未完成真实 OpenAI / Anthropic / 豆包调用验证。
-- 尚未准备 Chrome 商店素材、隐私政策页面和发布回滚记录。
+- 用户已反馈 A-G 手动验收基本通过，作为内部试用通过记录。
+- 豆包 / 火山方舟 API 用户确认可用；OpenAI / Anthropic 真实调用尚未验证。
+- 尚未准备 Chrome 商店素材、公开隐私政策页面、最终打包、tag 和发布回滚记录。
 
-更细的状态以 [STATUS.md](./STATUS.md)、[docs/EXECUTION_PLAN.md](./docs/EXECUTION_PLAN.md) 和 [docs/ACCEPTANCE_CRITERIA.md](./docs/ACCEPTANCE_CRITERIA.md) 为准。
+更细的状态以 [STATUS.md](./STATUS.md)、[RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md) 和 `docs/` 内部文档为准。
+
+## 项目文档入口
+
+内部项目文档是后续上架、迭代和 Docusaurus 官网文档整理的事实源。官网文档后续应从这些内容改写成用户版，而不是反向覆盖内部事实源。
+
+- [01_PROJECT_CHARTER.md](./docs/01_PROJECT_CHARTER.md)：项目定位、边界、当前事实矩阵。
+- [02_PRD.md](./docs/02_PRD.md)：产品需求、v0.1 范围、验证状态和 v0.2 候选。
+- [03_TECH_SPEC.md](./docs/03_TECH_SPEC.md)：技术架构、模块结构、消息流、权限和存储。
+- [04_ROADMAP.md](./docs/04_ROADMAP.md)：内部试用、公开发布准备和 v0.2 路线。
+- [05_RELEASE_PLAN.md](./docs/05_RELEASE_PLAN.md)：发布门禁、验证步骤、商店与回滚要求。
+- [06_RISK_REGISTER.md](./docs/06_RISK_REGISTER.md)：当前风险、缓解措施和下一步动作。
+- [07_PRIVACY_AND_SECURITY.md](./docs/07_PRIVACY_AND_SECURITY.md)：隐私、安全、数据流和公开发布前缺口。
+
+辅助文档：
+
+- [docs/EXECUTION_PLAN.md](./docs/EXECUTION_PLAN.md)：接管后的执行基线。
+- [docs/ACCEPTANCE_CRITERIA.md](./docs/ACCEPTANCE_CRITERIA.md)：验收口径。
+- [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)：发布前逐项检查清单。
 
 ## 功能范围
 
@@ -85,7 +103,7 @@ npm run build
 4. 按页面内 A-G 清单逐项验证。
 5. 把结果记录到 [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md) 的 QA 记录模板中。
 
-当前文档只记录“用户已反馈完成手动验收”，发布前仍需把 Chrome 版本、操作系统、验收时间、A-G 逐项结果和异常备注补录到发布清单。
+当前文档记录的是“用户反馈 A-G 基本通过”。公开发布前仍需把 Chrome 版本、操作系统、验收时间、A-G 逐项结果和异常备注补录到发布清单。
 
 ## API Key 与隐私
 
