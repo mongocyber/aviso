@@ -28,6 +28,49 @@ Aviso 是一个 Chrome MV3 浏览器扩展，技术栈为 Plasmo、React 18、Ty
 - `docs/EXECUTION_PLAN.md` 和 `docs/ACCEPTANCE_CRITERIA.md` 清理旧验收口径，改为 A-G 内部试用基线。
 - 本轮未改源码、未安装依赖、未配置自动化、未运行真实 API、未提交 Git。
 
+## 官网文档站 Vercel 生产部署状态
+
+时间：2026-06-01 CST。
+
+状态：Aviso 官网文档站已通过 Vercel CLI 完成生产部署，使用 Vercel 默认域名托管。该状态只代表 `website/` Docusaurus 文档站已可访问，不代表 Aviso 扩展已公开发布、已提交 Chrome Web Store 或已关闭 v0.1 发布门禁。
+
+生产 URL：
+
+```text
+https://aviso-nine.vercel.app
+```
+
+本次部署 URL：
+
+```text
+https://aviso-ca1m2ip9g-jonyliu-projects.vercel.app
+```
+
+Vercel 项目配置：
+
+- Root Directory：`website`
+- Framework：`Docusaurus (v2+)`
+- Install Command：`npm ci`
+- Build Command：`npm run build`
+- Output Directory：`build`
+- Node.js：`20.x`
+
+线上页面验证结果：
+
+| 页面 | 状态 |
+|------|------|
+| `/` | 200 |
+| `/docs/privacy-policy/` | 200 |
+| `/docs/install/` | 200 |
+| `/docs/known-limitations/` | 200 |
+
+当前限制与风险：
+
+- 当前是 Vercel CLI 生产部署成功，不是 GitHub `main` 自动部署触发的结果。
+- Vercel GitHub 集成尚未连上，可能原因是 Vercel GitHub App 尚未被授权访问 `mongocyber/aviso`。
+- 隐私政策页面仍为发布前草案，正式公开发布前仍需与 Chrome Web Store 隐私声明、Popup 内隐私说明和最终构建产物再次核对。
+- Aviso 仍保持 `v0.1 internal dogfood / 内部试用版` 口径；OpenAI / Anthropic 真实调用、Chrome Web Store 提交、最终 package zip、release tag 和回滚点仍未关闭。
+
 ## 本轮读取的来源
 
 - `README.md`
