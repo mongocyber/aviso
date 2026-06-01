@@ -1,0 +1,223 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Aviso 手动验收页</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 20px;
+      }
+      h2 {
+        margin-top: 40px;
+        color: #333;
+      }
+      .checklist {
+        background: #f5f5f5;
+        padding: 16px;
+        border-radius: 8px;
+        margin-bottom: 24px;
+      }
+      .checklist li {
+        margin: 8px 0;
+      }
+      img {
+        display: block;
+        max-width: 400px;
+        margin: 16px 0;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+      p.text-block {
+        line-height: 1.8;
+        font-size: 15px;
+        background: #fffde7;
+        padding: 12px;
+        border-radius: 4px;
+      }
+      a {
+        color: #1a73e8;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Aviso 手动验收页</h1>
+
+    <div class="checklist">
+      <strong>验收清单 A · 右键菜单</strong>
+      <ol>
+        <li>右键下方图片 → 菜单应出现「解释这张图片」</li>
+        <li>
+          点击「解释这张图片」→ 浮窗出现；未配置 Key 时显示「API Key 未配置」
+        </li>
+        <li>选中下方文字段落后右键 → 标题应显示选中文本预览（前 20 字）</li>
+        <li>右键下方链接 → 「总结」项应显示「总结这个链接」</li>
+        <li>
+          右键页面空白处 → 「总结当前页面」→
+          浮窗摘要应基于<strong>本页正文</strong>而非仅 URL
+        </li>
+        <li>切换模型 radio → 重新打开右键菜单，勾选项应保持上次选择</li>
+      </ol>
+    </div>
+
+    <div class="checklist">
+      <strong>验收清单 B · 划词工具栏</strong>
+      <ol>
+        <li>
+          选中下方文字（≥2 字）→ 上方浮出工具栏：解释 / 翻译 / 润色 / 总结 /
+          发给 AI
+        </li>
+        <li>点击各按钮 → 浮窗出现并流式输出；「发给 AI」进入自由对话</li>
+        <li>Popup 常规页关闭「划词浮动工具栏」→ 再次选中文字不再浮出工具栏</li>
+      </ol>
+    </div>
+
+    <div class="checklist">
+      <strong
+        >验收清单 C · 命令面板（Mac: Command+Shift+Space / Win/Linux:
+        Ctrl+Shift+Space）</strong
+      >
+      <ol>
+        <li>
+          Mac 按 Command+Shift+Space，Win/Linux 按 Ctrl+Shift+Space →
+          面板居中弹出，输入框自动聚焦；Esc / 点遮罩关闭
+        </li>
+        <li>输入关键词 → 搜索已保存历史与书签；↑↓ 导航、Enter 选择</li>
+        <li>
+          当前 Chrome Profile 已保存 YouTube 书签时，输入 youtube →
+          结果中显示带「书签」标记的 YouTube 书签；点击后打开 URL
+        </li>
+        <li>
+          无结果时显示「没有找到已保存历史或书签，按 Enter 发给
+          AI」；回车仍按意图调用 AI（如「翻译 hello」应走翻译）
+        </li>
+        <li>
+          书签查询失败时显示「书签搜索失败，请检查扩展权限或重新加载扩展」，不应一直停在「搜索中…」
+        </li>
+        <li>
+          选中已保存历史项 → 以其<strong>原始操作</strong>重新执行（非固定解释）
+        </li>
+        <li>Popup 关闭「命令面板」→ 快捷键不再唤起</li>
+      </ol>
+    </div>
+
+    <div class="checklist">
+      <strong>验收清单 D · 剪贴板感知</strong>
+      <ol>
+        <li>复制下方普通文字（≥5 字）→ 右下角 Toast 提示类型，3 秒后消失</li>
+        <li>
+          复制「13800138000」「password: x」等敏感内容 → <strong>不应</strong>弹
+          Toast
+        </li>
+        <li>Popup 关闭「剪贴板感知」→ 复制不再弹 Toast</li>
+      </ol>
+    </div>
+
+    <div class="checklist">
+      <strong>验收清单 E · 自定义模板</strong>
+      <ol>
+        <li>
+          Popup → 模板页 → 添加模板：名称任意，内容含
+          <code>{{selection}}</code>，勾选「选中文字」→ 完成 → 保存设置
+        </li>
+        <li>选中下方文字右键 → 「自定义模板 ▸」子菜单应出现刚建的模板</li>
+        <li>点击该模板 → 浮窗输出应基于选中文字（占位符已展开）</li>
+        <li>编辑 / 删除模板后保存 → 右键菜单即时同步（无需重装扩展）</li>
+      </ol>
+    </div>
+
+    <div class="checklist">
+      <strong>验收清单 F · 浮窗与历史</strong>
+      <ol>
+        <li>
+          浮窗「复制」可复制结果；「保存」后按钮变「✓
+          已保存」，重复点击不重复入库
+        </li>
+        <li>浮窗「继续追问」携带上文发起新请求并流式输出</li>
+        <li>Popup → 历史页：可查看 / 置顶 / 删除 / 清空</li>
+      </ol>
+    </div>
+
+    <div class="checklist">
+      <strong>验收清单 G · iframe / Hugging Face Spaces / Gradio 嵌入页</strong>
+      <ol>
+        <li>在本页底部 iframe 内选中文字 → iframe 内应浮出划词工具栏</li>
+        <li>
+          点击 iframe 内工具栏的「解释 / 翻译」→ 顶层页面只出现一个 AI
+          浮窗；未配置 Key 时显示「API Key 未配置」
+        </li>
+        <li>
+          在 iframe 内选中文字后右键 → Aviso
+          菜单项可点击，点击后顶层页面只出现一个 AI 浮窗
+        </li>
+        <li>
+          聚焦 iframe 内输入框或正文后，Mac 按 Command+Shift+Space、Win/Linux 按
+          Ctrl+Shift+Space → 顶层页面只出现一个命令面板
+        </li>
+        <li>
+          在 iframe 内选中文字后按 Ctrl+C / Command+C → 顶层页面右下角出现剪贴板
+          Toast
+        </li>
+        <li>
+          反复按快捷键或重复点击 iframe
+          内工具栏，不应出现多个重复命令面板或多个浮窗实例
+        </li>
+      </ol>
+    </div>
+
+    <h2>1. 图片（右键测试 image 操作）</h2>
+    <img
+      src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAC0CAYAAAAuPxHvAAADnklEQVR42u3coXFCQRSFYYqKRlMCLgwN0EFKQVJKVIpAItDYRSFeTIYJvHfP7if+AvZw5xvUW32fW5OkhFZGkAQsSQKWJGBJErAkCViSgCVJwJIkYEkCliQBS5KAJQlYkgQsSQKWJGBJErAkCViSgCVJwJL0z9rPFliS6sH0bMCSVB6qXuACljQQVOlwAUsaEKpUuIAlDY5VElrAkmAVgxawJFjFoAUsCVYxaAFLAhawJGViVRktYEnAApakXKyqogUsCVjAkpSNVUW0gCUBC1iSgAUsCVjAkgQsYEkCFrAkWI2GFrAkaPmHJQlYwJKABSxJwAKWJGABSwIWsCRBy9caJAELWBK0fHFUErCAJak4WlW3AZYELGBJykSr8i7AkqAVgRWwJGjFYAUsCVoxWAFLGhyutA2ApUlfm7UdBoAr9e3A0gSrR/boE670NwNLE6h+Z59MyHp9G7Bg9Wd2ErBUHipwCViKgwpcApYisYKWgKUYqMAlYCkSK2gJWIqBClwCluKgApeApUisoCVgKQYqcAlYisQKWgKWYqACl4AFqvj8jgIWrKAlYAlU4BKwNDRU4BKwYAUtAUugApeAJVhBS8ACFbgELIEKXAIWrAQtAQtU4BKwBCtoCVigErgELFCBS8ASrKAlYIFK4BKwQAUuAQtWgpaABSqBS8CCFbQELFAJXAIWqAQuYBkBVtASsEAlcAlYsBK0gCVgye0Da7gup4MWzA0CS8ACloAFLAFLwAIWsAQsAQtYAhawBCwBC1jAErAELGAJWMASsASskmBdb+1tVcBjiXe5QWAJWMASsIAFLGAJWMACloAlYAFLwAIWsIAlYAELWOoGrN1x3/TagLUsWG6w34AFLGAJWMACFrAELGABC1jAErCAJWABqxRYn+uPtwQsAQtYwAKWgAUsYAlYAhawBCxgAQtYAhawgCVgAQtYwBKwgAUsYAFLwAKWgAUsYAFLwAIWsIAFLM0M1tzNDdYSuUFgCVjAErCABSxgCVjAApaAJWABS8ACFrCAJWABC1gCloAFLAELWMACloAFLGAJWAIWsAQsYAELWAIWsIAlYAlYwBKwgAUsYAlYwAKWgAUsYAFLwAIWsIAFLAELWAIWsIAFLAFLErAkCViSBCxJwJIkYEkSsCQBS5KAJUnAkgQsSQKWJAFLErAkCViSBCxJwJIkYEkSsCQBS5KAJUnAkgQsSQKWJAFLErAkCViSgCVJwJKk13UHG13Qx9JFtBUAAAAASUVORK5CYII="
+      alt="PNG 测试图片"
+      width="300"
+      height="180" />
+    <p>↑ 右键此图片，应出现「解释这张图片」菜单项</p>
+
+    <h2>2. 文字选择（右键测试 selection 动态标题）</h2>
+    <p class="text-block">
+      人工智能正在深刻改变人们的工作方式和生活方式，从自动化重复性任务到辅助复杂决策，AI
+      正在各个领域展现出强大的潜力与价值。
+    </p>
+    <p>↑ 选中上方文字后右键，「解释」项标题应显示选中文字预览</p>
+
+    <h2>3. 链接（右键测试 link 动态标题）</h2>
+    <p>
+      <a href="https://www.anthropic.com">Anthropic 官网</a>
+      ← 右键此链接，「总结」项应显示「总结这个链接」
+    </p>
+
+    <h2>4. 页面空白（右键测试 page 动态标题）</h2>
+    <p>↓ 在下方空白区域右键，「总结」项应显示「总结当前页面」</p>
+    <div
+      style="
+        height: 120px;
+        background: #fafafa;
+        border: 1px dashed #ccc;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+      ">
+      在这里右键
+    </div>
+
+    <h2>5. iframe 嵌入页（Hugging Face Spaces / Gradio 类场景）</h2>
+    <p>
+      ↓ 在 iframe 内选择文字、右键或按命令面板快捷键。AI
+      浮窗和命令面板应统一显示在顶层页面，且只出现一个实例。
+    </p>
+    <iframe
+      src="./iframe-fixture.html"
+      title="Aviso iframe 手动验收 fixture"
+      style="
+        width: 100%;
+        height: 360px;
+        border: 1px solid #ccd6cc;
+        border-radius: 8px;
+        background: #fff;
+      "></iframe>
+  </body>
+</html>

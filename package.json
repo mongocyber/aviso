@@ -1,0 +1,56 @@
+{
+  "name": "aviso",
+  "displayName": "Aviso",
+  "version": "0.1.0",
+  "description": "智能浏览器助手，感知操作对象，就地调用 AI，浮窗展示结果。零额外费用、零数据收集、开源。",
+  "author": "Aviso",
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package",
+    "test": "node --test \"tests/**/*.test.ts\""
+  },
+  "dependencies": {
+    "plasmo": "0.90.5",
+    "react": "18.2.0",
+    "react-dom": "18.2.0",
+    "openai": "^4.67.0",
+    "@anthropic-ai/sdk": "^0.32.0",
+    "@mozilla/readability": "^0.5.0",
+    "crypto-js": "^4.2.0"
+  },
+  "devDependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "4.1.1",
+    "@types/chrome": "0.0.258",
+    "@types/crypto-js": "^4.2.2",
+    "@types/mozilla__readability": "^0.4.2",
+    "@types/node": "20.11.5",
+    "@types/react": "18.2.48",
+    "@types/react-dom": "18.2.18",
+    "prettier": "3.2.4",
+    "typescript": "5.3.3"
+  },
+  "manifest": {
+    "name": "Aviso",
+    "description": "智能浏览器助手，感知操作对象，就地调用 AI，浮窗展示结果。",
+    "host_permissions": [
+      "https://ark.cn-beijing.volces.com/*"
+    ],
+    "permissions": [
+      "contextMenus",
+      "activeTab",
+      "storage",
+      "bookmarks",
+      "clipboardWrite"
+    ],
+    "commands": {
+      "open-command-palette": {
+        "suggested_key": {
+          "default": "Ctrl+Shift+Space",
+          "mac": "Command+Shift+Space"
+        },
+        "description": "打开命令面板"
+      }
+    }
+  }
+}

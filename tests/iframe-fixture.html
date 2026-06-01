@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="zh">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Aviso iframe fixture</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 20px;
+        font-family: sans-serif;
+        color: #24302b;
+        background: #fbfdfb;
+      }
+      .panel {
+        border: 1px solid #d9e2da;
+        border-radius: 8px;
+        padding: 16px;
+        background: #ffffff;
+      }
+      .text-block {
+        line-height: 1.8;
+        font-size: 15px;
+        background: #eef8ee;
+        padding: 12px;
+        border-radius: 6px;
+      }
+      input {
+        width: 100%;
+        box-sizing: border-box;
+        margin-top: 12px;
+        padding: 10px 12px;
+        border: 1px solid #cbd8ce;
+        border-radius: 6px;
+        font-size: 14px;
+      }
+      .blank {
+        height: 72px;
+        margin-top: 12px;
+        border: 1px dashed #cbd8ce;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #728077;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="panel">
+      <h3>iframe 内测试区</h3>
+      <p class="text-block">
+        Hugging Face Spaces 和 Gradio 页面经常把实际交互区嵌入 iframe。Aviso
+        需要在 iframe 内选择这段文字时显示划词工具栏，并把 AI
+        浮窗统一打开在顶层页面。
+      </p>
+      <input
+        value="聚焦这里后测试命令面板快捷键"
+        aria-label="iframe shortcut input" />
+      <p>
+        <a href="https://huggingface.co/spaces">Hugging Face Spaces 示例链接</a>
+      </p>
+      <div class="blank">在 iframe 内这里右键测试页面上下文</div>
+    </div>
+  </body>
+</html>
