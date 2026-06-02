@@ -100,5 +100,5 @@ Acceptance for V2-004:
 | Manual single-provider connectivity UI | Done in V2-004. |
 | OpenAI live connectivity validation | Not done; must be triggered by the user from the installed extension and recorded as a summary-only result. |
 | Anthropic live connectivity validation | Not done; must be triggered by the user from the installed extension and recorded as a summary-only result. |
-| 豆包 / 火山方舟 structured validation record | Not refreshed; must be triggered by the user from the installed extension and recorded as a summary-only result. |
+| 豆包 / 火山方舟 structured validation record | Done through V2-004 manual single-provider test. Summary: `doubao`, `doubao-seed-2-0-lite-260428`, success, about 2505 ms, no raw prompt/response/private data logged. |
 | Public provider claims | Limited to validated providers only. |

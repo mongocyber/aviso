@@ -101,9 +101,13 @@ V2-004 边界：
 - UI 只展示摘要字段，不展示 raw prompt、raw response、API Key、私人网页内容或截图内容。
 - 当前实现不代表 OpenAI / Anthropic 已通过真实验证；公开发布仍只能宣称已完成验证的 provider。
 
+已补录的 V2-004 脱敏验证结果：
+
+- 豆包 / 火山方舟：通过。`provider=doubao`，`model_or_endpoint=doubao-seed-2-0-lite-260428`，`host_permission_present=true`，`result=success`，`latency_note=约 2505 ms`，`error_category=none`，`secret_leak_check=pass`，`raw_prompt_logged=no`，`raw_response_logged=no`，`private_page_data_logged=no`。记录来源为用户在已加载扩展的 Popup 手动点击单 provider 测试。
+
 仍未关闭：
 
-- OpenAI / Anthropic / 豆包真实最小调用记录需要用户在安装后的扩展中手动触发并补录脱敏结果。
+- OpenAI / Anthropic 真实最小调用记录仍未完成；用户当前没有原生 OpenAI / Anthropic API Key，OpenRouter Key 不作为这两条原生 provider 的验证依据。
 - 商店素材、最终隐私政策一致性、release tag 和回滚点仍未完成。
 
 ## 本轮读取的来源

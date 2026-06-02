@@ -16,7 +16,7 @@ Aviso's current risk profile is less about missing core code and more about rele
 |----|------|--------|--------|------------|-------------|
 | R-001 | OpenAI path, host permission, and manual validation UI are implemented, but live validation is incomplete. | Open | Public users may hit untested provider behavior. | Use V2-004 user-triggered minimal validation with safe test key. | Keep public claims blocked until validation record exists. |
 | R-002 | Anthropic path, host permission, and manual validation UI are implemented, but live validation is incomplete. | Open | Public users may hit untested provider behavior. | Use V2-004 user-triggered minimal validation with safe test key. | Keep public claims blocked until validation record exists. |
-| R-003 | 豆包 / 火山方舟 is user-confirmed but lacks a fresh structured validation record. | Open | Release evidence may be too informal. | Record endpoint, action, result, and latency note without exposing secrets. | Add provider validation note before public release. |
+| R-003 | 豆包 / 火山方舟 needed a fresh structured validation record. | Closed | Release evidence is stronger for the provider-limited path. | V2-004 summary-only validation is recorded without secrets or raw provider content. | Keep future provider evidence in the same summary-only format. |
 | R-004 | Public privacy policy does not exist. | Open | Chrome Web Store release blocked. | Derive policy from `docs/07_PRIVACY_AND_SECURITY.md` and Popup copy. | Prepare public policy page in a separate task. |
 | R-005 | Store screenshots or docs may accidentally expose API Keys or private pages. | Open | Security and trust risk. | Use sanitized fixtures and run a final leakage check. | Define screenshot capture rules. |
 | R-006 | Broader remote-link fetching would require wider host permissions. | Controlled | Could weaken privacy and store trust. | Keep out of v0.1; require product decision for v0.2. | Decide v0.2 host-permission stance. |
@@ -54,7 +54,7 @@ Aviso's current risk profile is less about missing core code and more about rele
 ## Not Accepted For Public Release
 
 - Shipping without a public privacy policy.
-- Shipping without provider validation records.
+- Shipping without provider validation records for any provider claimed in public copy.
 - Shipping screenshots or docs containing real API Keys or private account data.
 - Shipping without package artifact, tag, and rollback point.
 - Expanding permissions without product-owner approval.

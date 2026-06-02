@@ -34,7 +34,7 @@ Aviso should move from internal dogfood to public release through evidence, not 
 
 - OpenAI real minimal call validation.
 - Anthropic real minimal call validation.
-- Fresh provider validation notes for 豆包 / 火山方舟.
+- Fresh provider validation notes for 豆包 / 火山方舟 are complete through V2-004 manual single-provider validation.
 - Chrome version, OS, date, screenshots or concise evidence for manual QA.
 - `npm run package` and final zip verification.
 - Public privacy policy page.
@@ -87,7 +87,7 @@ V2-004 adds the manual provider connectivity surface:
 - The test payload uses only the fixed public prompt and no page, clipboard, screenshot, link, or selection context.
 - Summary fields explicitly state that raw prompt, raw response, private page data, screenshots, and API Keys are not logged by this flow.
 
-Live provider evidence remains separate: the user still needs to run provider checks from the installed extension with safe keys and record summary-only results before public provider claims.
+Live provider evidence remains separate. 豆包 / 火山方舟 has passed the V2-004 manual single-provider check; OpenAI / Anthropic still require native provider API Keys before they can be claimed as validated.
 
 ### Backlog Requiring Separate Approval
 
@@ -116,7 +116,7 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 1. Finish V2-001 docs-only scope cleanup.
 2. Use V2-002A decision docs as the boundary for provider host permissions.
 3. Decide whether v0.2-alpha should proceed before v0.1 public-release gates are closed.
-4. Run manual provider connectivity checks from the installed extension and record summary-only evidence for each provider that will be publicly claimed.
+4. Keep public provider claims limited to 豆包 / 火山方舟 until OpenAI / Anthropic native-key checks are completed.
 5. Implement P1 user-facing improvements in the order: screenshot to AI, copy context, translation MVP.
 6. Keep public release preparation separate: package, provider evidence, privacy policy, store assets, tag, and rollback.
 

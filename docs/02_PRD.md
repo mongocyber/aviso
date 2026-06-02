@@ -65,7 +65,7 @@ This version assumes users can provide their own API Keys and understand that mo
 | Type check | Verified previously | `npx tsc --noEmit` passed during baseline verification. |
 | Build | Verified previously | `npm run build` produced `build/chrome-mv3-prod` outside the default sandbox; sandbox build may fail with `Operation not permitted`. |
 | Manual A-G QA | Verified by user feedback | User reported A-G basic pass for internal dogfood. Detailed Chrome version, OS, screenshots, and step notes remain incomplete. |
-| 豆包 / 火山方舟 | Verified by user feedback | User confirmed API usability. This Phase 1 docs work did not run a real API call. |
+| 豆包 / 火山方舟 | Verified by V2-004 manual connectivity test | User triggered the single-provider test from the installed extension. Summary result: `doubao`, `doubao-seed-2-0-lite-260428`, success, about 2505 ms, no raw prompt/response/private data logged. |
 | OpenAI | Host permission implemented; live call unverified | Code and model registry route exist. V2-003 added `https://api.openai.com/*`, but no approved live-call record exists. |
 | Anthropic | Host permission implemented; live call unverified | Code and model registry route exist. V2-003 added `https://api.anthropic.com/*`, but no approved live-call record exists. |
 
@@ -76,7 +76,7 @@ Before public release, Aviso still needs:
 - OpenAI minimal real-call validation through the approved V2-004 manual single-provider flow with a safe test key.
 - Anthropic minimal real-call validation through the approved V2-004 manual single-provider flow with a safe test key.
 - V2-004 live validation records before claiming OpenAI or Anthropic support.
-- A fresh provider and error-behavior record for 豆包 / 火山方舟.
+- A fresh provider and error-behavior record for 豆包 / 火山方舟 is complete; OpenAI / Anthropic records remain open.
 - `npm run package` and the final extension zip.
 - Chrome Web Store screenshots, description, support copy, and privacy declarations.
 - Public privacy policy page consistent with Popup copy and actual implementation.

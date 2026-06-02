@@ -16,7 +16,7 @@ Current provider options in code:
 - Anthropic
 - 豆包 / 火山方舟
 
-OpenAI and Anthropic code paths and host permissions are implemented but not live-validated. 豆包 / 火山方舟 API usability has been confirmed by user feedback, but this document does not record a fresh real API call.
+OpenAI and Anthropic code paths and host permissions are implemented but not live-validated. 豆包 / 火山方舟 has passed the V2-004 manual single-provider connectivity test with summary-only evidence.
 
 ## Data Stored Locally
 
@@ -90,6 +90,7 @@ Aviso does not currently request broad host permissions for arbitrary remote pag
 - OpenAI live validation is not complete.
 - Anthropic live validation is not complete.
 - OpenAI and Anthropic host permission manifest changes and manual validation UI are implemented, but validation records are still missing.
+- 豆包 / 火山方舟 validation is recorded only as a summary. Do not add screenshots, API Keys, raw prompts, raw responses, or private page content to public docs or store assets.
 - Provider validation evidence should be recorded without exposing keys, private pages, or raw sensitive content.
 - Store screenshots must be sanitized.
 - Final secret/API Key leakage scan should run on docs, screenshots, build output, and package artifact.
