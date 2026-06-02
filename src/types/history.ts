@@ -3,6 +3,7 @@ export type HistoryTrigger =
   | "toolbar"
   | "command-palette"
   | "clipboard"
+  | "screenshot"
   | "manual"
 
 export type HistoryEntry = {

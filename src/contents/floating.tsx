@@ -56,8 +56,15 @@ function operationLabel(operation: string): string {
   return OPERATION_LABELS[operation] ?? operation
 }
 
-// 用户气泡显示文案：图片不展示 URL，其余展示原始输入
-function userBubbleText(operation: string, inputText: string): string {
+// 用户气泡显示文案：图片不展示 URL / base64，其余展示原始输入
+function userBubbleText(
+  operation: string,
+  inputText: string,
+  imageSource?: AIRequestPayload["imageSource"]
+): string {
+  if (operation === "image_explain" && imageSource === "screenshot-region") {
+    return "🖼 [截图区域]"
+  }
   if (operation === "image_explain") return "🖼 [图片]"
   return inputText
 }
@@ -159,6 +166,7 @@ function FloatingWindow() {
           trigger,
           operation,
           context,
+          imageSource,
           selectionText,
           userMessage,
           linkUrl,
@@ -200,7 +208,7 @@ function FloatingWindow() {
         const inputText =
           selectionText || userMessage || linkUrl || srcUrl || pageUrl || ""
 
-        const bubble = userBubbleText(operation, inputText)
+        const bubble = userBubbleText(operation, inputText, imageSource)
         const messages: ChatMsg[] = bubble
           ? [
               { role: "user", content: bubble },
@@ -235,6 +243,7 @@ function FloatingWindow() {
               operation,
               trigger,
               context,
+              imageSource,
               selectionText,
               userMessage,
               linkUrl,

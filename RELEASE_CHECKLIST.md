@@ -146,5 +146,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [x] V2-004 manual connectivity test UI 已实现：用户手动触发、一次只测单 provider，摘要不记录 Key、raw prompt、raw response、私人网页内容或私密截图。
 - [x] 豆包 / 火山方舟真实 provider 最小验证记录已补录。
 - [x] V2-004B latency baseline 已实现为本地 console 脱敏摘要；未运行真实 provider、未新增 provider、未改变 manifest 权限。
+- [x] V2-005 screenshot to AI internal dogfood MVP 已实现：右键页面菜单手动触发，确认选区后才截图；截图/base64 不写入 history、storage、docs、console 或 release artifacts；未新增权限、provider、依赖或真实 API 验证。
+- [ ] V2-005 已重新加载本地扩展并完成人工 UI QA：取消流程、确认流程、非 vision / 豆包未验证 endpoint 拦截、敏感页面提醒、截图结果浮窗和 `[Aviso perf]` 摘要均已核对。
 - [ ] OpenAI / Anthropic 真实 provider 最小验证记录仍待原生 API Key 手动触发并补录；OpenAI / Anthropic 仍不可对外宣称已验证。
-- [ ] 截图、翻译、缓存或复制上下文能力上线前，已确认不会把敏感截图、缓存内容或私有网页信息写入日志、文档、截图或 release artifacts。
+- [ ] 翻译、缓存或复制上下文能力上线前，已确认不会把缓存内容或私有网页信息写入日志、文档、截图或 release artifacts。

@@ -34,6 +34,12 @@ import {
   hasPrivateContextPayload,
   isProviderHostPermissionPresent
 } from "../src/utils/provider-connectivity.ts"
+import {
+  bucketScreenshotDataUrl,
+  getScreenshotVisionBlockReason,
+  isSupportedScreenshotDataUrl,
+  normalizeScreenshotRegion
+} from "../src/utils/screenshot.ts"
 import { expandTemplate } from "../src/utils/template.ts"
 import {
   bucketInputSize,
@@ -489,4 +495,73 @@ test("perf 错误分类覆盖 key、限流、网络、超时和 provider 错误"
   assert.equal(categorizePerfError(new Error("fetch failed")), "network_error")
   assert.equal(categorizePerfError(new Error("timeout")), "timeout")
   assert.equal(categorizePerfError({ status: 503 }), "provider_error")
+})
+
+test("screenshot region 归一化并过滤过小区域", () => {
+  assert.deepEqual(normalizeScreenshotRegion(120, 90, 20, 10, 300, 200), {
+    x: 20,
+    y: 10,
+    width: 100,
+    height: 80
+  })
+  assert.deepEqual(normalizeScreenshotRegion(-10, -10, 400, 240, 300, 200), {
+    x: 0,
+    y: 0,
+    width: 300,
+    height: 200
+  })
+  assert.equal(normalizeScreenshotRegion(10, 10, 18, 18, 300, 200), null)
+})
+
+test("screenshot data URL 只识别常见位图并输出大小分桶", () => {
+  assert.equal(
+    isSupportedScreenshotDataUrl("data:image/png;base64,QUJDRA=="),
+    true
+  )
+  assert.equal(
+    isSupportedScreenshotDataUrl("data:image/svg+xml;base64,PHN2Zy8+"),
+    false
+  )
+  assert.equal(
+    bucketScreenshotDataUrl("data:image/png;base64," + "A".repeat(100)),
+    "0-250kb"
+  )
+  assert.equal(
+    bucketScreenshotDataUrl("data:image/png;base64," + "A".repeat(400_000)),
+    "250kb-1mb"
+  )
+})
+
+test("screenshot vision gate 拦截 model-dependent 豆包截图路线", () => {
+  const openaiRoute = resolveModelRoute("gpt-4o-mini", {})
+  const doubaoRoute = resolveModelRoute("doubao", {
+    doubaoModel: "doubao-seed-2-0-lite-260428"
+  })
+
+  assert.equal(getScreenshotVisionBlockReason(openaiRoute), null)
+  assert.match(
+    getScreenshotVisionBlockReason(doubaoRoute) ?? "",
+    /尚未验证截图理解/
+  )
+})
+
+test("perf summary 允许 screenshot trigger 且支持图片输入错误分类", () => {
+  const summary = buildPerfSummary({
+    trigger: "screenshot",
+    provider: "doubao",
+    modelOrEndpoint: "doubao-seed-2-0-lite-260428",
+    inputChars: 9000,
+    contextType: "image_explain",
+    timing: {
+      triggerAt: 10,
+      screenshotCaptureStartedAt: 20,
+      screenshotCaptureReadyAt: 40,
+      screenshotCropReadyAt: 55
+    },
+    errorCategory: "unsupported_image_input"
+  })
+
+  assert.equal(summary.trigger, "screenshot")
+  assert.equal(summary.input_size_bucket, "5001+")
+  assert.equal(summary.error_category, "unsupported_image_input")
 })

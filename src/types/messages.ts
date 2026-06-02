@@ -14,6 +14,7 @@ export type AIRequestPayload = {
   trigger?: string
   context?: ContextMenuContext
   operation?: string
+  imageSource?: "remote-image" | "screenshot-region"
   selectionText?: string
   pageContent?: string
   userMessage?: string
@@ -28,6 +29,13 @@ export type AIRequestPayload = {
 
 export type ProviderConnectivityPayload = {
   provider: ProviderId
+}
+
+export type ScreenshotRegion = {
+  x: number
+  y: number
+  width: number
+  height: number
 }
 
 export type MessageRequest =
@@ -49,12 +57,28 @@ export type MessageRequest =
       payload: ProviderConnectivityPayload
     }
   | {
+      action: "START_SCREENSHOT_SELECTION"
+      payload: {
+        requestId: string
+        pageUrl: string
+        timing?: RequestTiming
+      }
+    }
+  | {
+      action: "CAPTURE_VISIBLE_TAB"
+      payload: {
+        requestId: string
+        timing?: RequestTiming
+      }
+    }
+  | {
       action: "SHOW_FLOATING_WINDOW"
       payload: {
         requestId?: string
         trigger: string
         operation: string
         context?: ContextMenuContext
+        imageSource?: AIRequestPayload["imageSource"]
         selectionText?: string
         linkUrl?: string
         srcUrl?: string

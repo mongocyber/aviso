@@ -92,6 +92,7 @@ Vercel 项目配置：
 - V2-003：minimal model registry and routing 已实现并提交，默认 `gpt-4o-mini`、`claude*` 路由和豆包 / 火山方舟北京网关行为保持兼容。
 - V2-004：Popup API Key 页已新增用户手动触发的单 provider 连接测试入口，background 通过独立 `VALIDATE_PROVIDER_CONNECTIVITY` 消息返回脱敏 validation 摘要。
 - V2-004B：真实浮窗 AI 请求已新增请求级 `[Aviso perf]` 脱敏性能摘要，覆盖 trigger、provider、model/endpoint、输入长度分桶、context type、UI/background/provider start/first chunk/done 阶段耗时和错误分类。该日志只输出到本地 console，不写入 storage，不发送远端 telemetry。
+- V2-005：Screenshot to AI internal dogfood MVP 已实现为右键页面菜单“截图提问”：用户手动框选可见区域并确认后才截图，裁剪后的图片复用现有 `image_explain` 浮窗流。未新增 manifest 权限、host permission、provider 或依赖；未运行真实 provider API。
 - 当前生产 zip 包已生成：`build/chrome-mv3-prod.zip`，约 1.1 MB；包内 manifest 已核对为 `Aviso` / `0.1.0`，普通权限未新增，host permissions 仍为 OpenAI / Anthropic / Ark。
 
 V2-004 边界：
@@ -109,6 +110,15 @@ V2-004B 边界：
 - `context_type` 区分 `selection`、`page_summary`、`image_explain`、`command`、`follow_up`、`unknown`。
 - 该性能基线不改变默认 provider、模型、token 上限、API Key 存储位置、`contextai_*` storage key 或 manifest 权限。
 - V2-004 手动连接测试摘要保持原结构；本轮未运行真实 provider API。
+
+V2-005 边界：
+
+- 入口仅为用户手动触发的右键页面菜单“截图提问”；未确认选区不会调用 `captureVisibleTab`，取消不会调用 provider。
+- 截图只在内存中用于裁剪和本次 `image_explain` 请求；不写入 `chrome.storage`、history input、文件、文档、console 或 release artifact。
+- 发送给 provider 的 screenshot payload 不附带完整页面 URL；浮窗用户气泡只显示“截图区域”，不展示 base64。
+- `screenshot` perf/timing 只记录阶段和图片大小/区域分桶，不记录 raw image、base64、页面正文、选中文本、raw prompt、raw response 或 API Key。
+- 豆包 / 火山方舟截图理解按 model-dependent 处理：当前接入点未验证 vision 时会在发送 provider 前拦截并提示切换已确认支持视觉输入的模型。
+- 当前仍需重新加载本地扩展并完成手动 UI QA；不代表 Chrome Web Store 公开发布能力已关闭验收。
 
 已补录的 V2-004 脱敏验证结果：
 

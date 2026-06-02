@@ -1,5 +1,6 @@
 import type { MessageRequest, MessageResponse } from "~types/messages"
 import { parseIntentLocally } from "~utils/intent"
+import { bucketScreenshotDataUrl } from "~utils/screenshot"
 import { logTiming, markTiming } from "~utils/timing"
 
 import { handleAIRequest, handleProviderConnectivityTest } from "./ai-client"
@@ -193,6 +194,35 @@ async function handleMessage(
       case "VALIDATE_PROVIDER_CONNECTIVITY": {
         const summary = await handleProviderConnectivityTest(request.payload)
         sendResponse({ success: true, data: summary })
+        break
+      }
+
+      case "CAPTURE_VISIBLE_TAB": {
+        if (!sender.tab?.windowId) {
+          sendResponse({
+            success: false,
+            error: "无法截图：没有可用的当前窗口。"
+          })
+          break
+        }
+
+        const dataUrl = await chrome.tabs.captureVisibleTab(
+          sender.tab.windowId,
+          { format: "png" }
+        )
+        const timing = markTiming(
+          request.payload.timing,
+          "screenshotCaptureReadyAt"
+        )
+        logTiming(
+          "screenshot_capture_ready",
+          request.payload.requestId,
+          timing,
+          {
+            imageSizeBucket: bucketScreenshotDataUrl(dataUrl)
+          }
+        )
+        sendResponse({ success: true, data: { dataUrl, timing } })
         break
       }
 

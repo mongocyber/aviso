@@ -5,6 +5,9 @@ export type RequestTiming = {
   backgroundReceivedAt?: number
   pageContentRequestStartedAt?: number
   pageContentReadyAt?: number
+  screenshotCaptureStartedAt?: number
+  screenshotCaptureReadyAt?: number
+  screenshotCropReadyAt?: number
   providerRequestStartedAt?: number
   firstChunkAt?: number
   doneAt?: number
@@ -30,6 +33,7 @@ export type PerfErrorCategory =
   | "timeout"
   | "network_error"
   | "provider_error"
+  | "unsupported_image_input"
   | "unknown_error"
 
 export type PerfSummary = {
@@ -179,7 +183,8 @@ function sanitizeTrigger(trigger: string | undefined): string {
     "command-palette-history",
     "clipboard",
     "follow-up",
-    "history"
+    "history",
+    "screenshot"
   ])
   return trigger && allowed.has(trigger) ? trigger : "unknown"
 }

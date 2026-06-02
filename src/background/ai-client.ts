@@ -19,6 +19,7 @@ import {
   isProviderHostPermissionPresent,
   type ConnectivityValidationSummary
 } from "~utils/provider-connectivity"
+import { getScreenshotVisionBlockReason } from "~utils/screenshot"
 import { getApiKeys, getSettings, getTemplates } from "~utils/storage"
 import { expandTemplate } from "~utils/template"
 import {
@@ -155,8 +156,19 @@ export async function handleAIRequest(
   }
 
   const route = resolveModelRoute(payload.model, settings)
+  const imageInputBlockReason = getImageInputBlockReason(payload, route)
 
   try {
+    if (imageInputBlockReason) {
+      logPreProviderPerf(
+        payload,
+        route.provider.id,
+        route.requestModel,
+        "unsupported_image_input"
+      )
+      throw new Error(imageInputBlockReason)
+    }
+
     if (route.provider.id === "anthropic") {
       await callAnthropic(
         route.requestModel,
@@ -453,7 +465,8 @@ function inferPerfContextType(payload: AIRequestPayload): PerfContextType {
 function logPreProviderPerf(
   payload: AIRequestPayload,
   provider: ProviderId,
-  modelOrEndpoint: string
+  modelOrEndpoint: string,
+  errorCategory: PerfErrorCategory = "unknown_error"
 ): void {
   logPerfSummary({
     trigger: payload.trigger,
@@ -462,8 +475,22 @@ function logPreProviderPerf(
     inputChars: estimatePayloadChars(payload),
     contextType: inferPerfContextType(payload),
     timing: payload.timing,
-    errorCategory: "unknown_error"
+    errorCategory
   })
+}
+
+function getImageInputBlockReason(
+  payload: AIRequestPayload,
+  route: ReturnType<typeof resolveModelRoute>
+): string | null {
+  if (
+    payload.operation !== "image_explain" ||
+    payload.imageSource !== "screenshot-region"
+  ) {
+    return null
+  }
+
+  return getScreenshotVisionBlockReason(route)
 }
 
 function buildImageMessages(

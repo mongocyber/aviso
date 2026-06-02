@@ -161,6 +161,17 @@ Current host permissions:
 
 Aviso does not currently request broad host permissions for arbitrary page fetching.
 
+## Screenshot To AI
+
+V2-005 implements an internal dogfood screenshot-to-AI MVP without changing manifest permissions:
+
+- Entry point: the right-click page menu item `截图提问` under the Aviso root menu.
+- Selection flow: `src/contents/screenshot.tsx` displays a visible-page region overlay. Cancel or Escape exits without calling `captureVisibleTab` or any provider.
+- Capture flow: after user confirmation, the overlay is hidden, background handles `CAPTURE_VISIBLE_TAB` with `chrome.tabs.captureVisibleTab`, and the content script crops the selected region in memory with canvas.
+- AI flow: the cropped image is sent through the existing floating-window `image_explain` path with `imageSource=screenshot-region`. The user bubble displays only `截图区域`, not the data URL.
+- Privacy boundary: screenshot/base64 is not stored in `chrome.storage`, history input, files, docs, console logs, release artifacts, or validation records. The screenshot request does not attach the full page URL to the provider payload.
+- Provider boundary: screenshot images are allowed only for routes that are vision-capable. 豆包 / 火山方舟 remains `model-dependent`; the current endpoint is blocked for screenshot understanding until a vision-capable endpoint is explicitly validated.
+
 ## Error Handling And Timing
 
 - `src/utils/errors.ts` normalizes provider and network errors into readable Chinese messages.
@@ -170,6 +181,7 @@ Aviso does not currently request broad host permissions for arbitrary page fetch
 - `input_size_bucket` is bucketed as `0-500`, `501-2000`, `2001-5000`, or `5001+`; raw prompt text, selected text, page content, full URLs, image/base64 payloads, provider responses, and API Keys are not included in the perf summary.
 - `context_type` is limited to `selection`, `page_summary`, `image_explain`, `command`, `follow_up`, or `unknown`. Missing timing marks are represented as `null` so failed, first-chunk-missing, and done-missing paths remain diagnosable without inventing raw data.
 - `[Aviso perf]` is not persisted to `chrome.storage` and is not sent to a remote logging or telemetry service.
+- V2-005 adds screenshot capture/crop timing marks and image-size/region buckets only. Raw image data, base64, page URLs, selected text, prompts, responses, and API Keys are not logged.
 
 ## Testing
 
@@ -253,8 +265,8 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 - V2-004 tests one provider at a time and must not auto-test all configured providers.
 - Provider validation records must not include API Keys, raw prompts, raw responses, private webpages, or screenshots with private data.
 - V2-004B latency baseline is limited to local console summaries for ordinary floating-window AI requests. It must not change provider routing, model defaults, token limits, API Key storage, storage key names, or manifest permissions.
+- V2-005 screenshot-to-AI is limited to the existing `activeTab` boundary and right-click user trigger. It must not add `tabs`, `scripting`, `<all_urls>` host permissions, new providers, new dependencies, screenshot persistence, or full-page scrolling capture.
 - Result caching may be added only with a clear key design that includes operation, input, target language, provider, model, endpoint/base URL, and template version where relevant. A clear-cache control is required if caching ships.
-- Screenshot-to-AI should use the existing `activeTab` user-triggered boundary where possible. If the implementation needs broader capture, scripting, or tab permissions, stop and record the decision before code changes.
 - Translation MVP should reuse existing floating-window and selection flows first. Full-page DOM translation, YouTube subtitle translation, and third-party translation engines are separate discovery items.
 - No new dependency should be added unless the executing agent proves the existing browser storage APIs are insufficient for the approved slice.
 
@@ -278,6 +290,7 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 - 2026-06-02: Implemented V2-003 provider/model registry, route fallback, approved host permissions, and root extension type-check boundary.
 - 2026-06-02: Implemented V2-004 manual single-provider connectivity flow, summary-only validation contract, Popup UI, and tests.
 - 2026-06-02: Implemented V2-004B local-console latency baseline with fixed redacted `[Aviso perf]` summaries for ordinary AI requests.
+- 2026-06-02: Implemented V2-005 screenshot-to-AI internal dogfood MVP with right-click selection, in-memory crop, existing image flow reuse, and no new manifest permissions.
 - 2026-06-02: In V2-002A, recorded approved OpenAI / Anthropic provider host permissions for V2-003 as a docs-only decision.
 - 2026-06-02: Added v0.2-alpha technical delta constraints and corrected the desktop draft assumptions about file names, message contracts, manifest permissions, host permissions, storage, and MVP boundaries.
 - 2026-06-01: Created Phase 1 internal technical specification from current code structure and package manifest.

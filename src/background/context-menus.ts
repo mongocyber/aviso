@@ -24,6 +24,7 @@ const MENU_ID_SUMMARIZE_VIDEO = "contextai-summarize-video"
 const MENU_ID_SUMMARIZE_LINK = "contextai-summarize-link"
 const MENU_ID_SUMMARIZE_PAGE = "contextai-summarize-page"
 const MENU_ID_IMAGE_EXPLAIN = "contextai-image-explain"
+const MENU_ID_SCREENSHOT_ASK = "contextai-screenshot-ask"
 const MENU_ID_TEMPLATES = "contextai-templates"
 const MENU_ID_MODEL_SEPARATOR = "contextai-model-sep"
 const MENU_ID_MODEL_PREFIX = "contextai-model-"
@@ -152,6 +153,14 @@ export async function registerContextMenus() {
       contexts: ["page"]
     })
 
+    // 用户手动框选当前可见区域后再发送给支持视觉的模型
+    chrome.contextMenus.create({
+      id: MENU_ID_SCREENSHOT_ASK,
+      parentId: MENU_ID_ROOT,
+      title: "截图提问",
+      contexts: ["page"]
+    })
+
     // 自定义模板子菜单（仅在有模板时创建，子项随设置动态生成）
     if (templates.length > 0) {
       chrome.contextMenus.create({
@@ -255,6 +264,36 @@ export async function handleContextMenuClick(
   if (menuItemId.startsWith(MENU_ID_MODEL_PREFIX)) {
     const modelId = menuItemId.replace(MENU_ID_MODEL_PREFIX, "")
     handleModelSwitch(modelId)
+    return
+  }
+
+  if (menuItemId === MENU_ID_SCREENSHOT_ASK) {
+    const requestId = `req-${Date.now()}`
+    const timing = startTiming()
+    logTiming("trigger", requestId, timing, {
+      trigger: "screenshot",
+      operation: "image_explain",
+      context: "page",
+      frameId: sourceFrameId,
+      frameUrl: sourceFrameUrl
+    })
+
+    await sendMessageToDisplayFrame(
+      tabId,
+      {
+        action: "START_SCREENSHOT_SELECTION",
+        payload: {
+          requestId,
+          pageUrl: sourcePageUrl,
+          timing
+        }
+      },
+      {
+        fallbackFrameId: sourceFrameId,
+        fallbackFrameUrl: sourceFrameUrl,
+        label: "context-menu-start-screenshot-selection"
+      }
+    )
     return
   }
 

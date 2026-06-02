@@ -51,7 +51,7 @@ Aviso should move from internal dogfood to public release through evidence, not 
 | V2-003 minimal model registry and routing | P0 | Route tasks to existing provider/model choices while preserving current defaults and local API Key storage. | V2-002A decision docs | Implemented; live provider calls not run |
 | V2-004 manual connectivity test UI | P0 | Let users test configured providers on demand, with latency and readable failure reasons. | V2-003 | Implemented; live evidence still user-triggered |
 | V2-004B latency baseline | P0 | Add a redacted request-level local console summary for ordinary AI requests so slow replies can be attributed to UI, background, provider first chunk, done, or failure. | V2-004 | Implemented; no provider/model/token/permission changes |
-| V2-005 screenshot to AI | P1 | Capture a user-selected visible-page region and send it to a vision-capable configured model. | V2-002, V2-003 | Plan mode because capture and image data flow affect privacy |
+| V2-005 screenshot to AI | P1 | Capture a user-selected visible-page region and send it to a vision-capable configured model. | V2-004B | Implemented for internal dogfood; manual loaded-extension QA still required |
 | V2-006 copy current context | P1 | Copy title, URL, optional selection, and truncated page text as clean structured text. | V2-001 | Single implementation thread |
 | V2-007 translation MVP | P1 | Improve selection translation and floating-window translation output without third-party default fallback. | V2-003 | Single implementation thread |
 | V2-008 theme and Aviso panel polish | P2 | Add theme setting and user-facing panel naming changes without breaking shortcuts or iframe behavior. | V2-001 | Single implementation thread |
@@ -100,6 +100,18 @@ V2-004B adds the latency baseline for ordinary floating-window AI requests:
 - It does not run real providers during implementation, does not add OpenRouter, does not add dependencies or permissions, and does not change provider routing, model defaults, token limits, API Key storage, or `contextai_*` storage keys.
 - V2-004 manual connectivity-test summaries remain separate and unchanged.
 
+### V2-005 Implementation
+
+V2-005 adds the screenshot-to-AI internal dogfood MVP:
+
+- The first entry point is the right-click page menu item `截图提问`.
+- The user must drag a visible-page region and confirm before `captureVisibleTab` runs.
+- The extension hides the selection overlay before capture, crops the image in memory, and reuses the existing floating-window `image_explain` stream.
+- The implementation adds no manifest permission, host permission, provider, dependency, storage key, cache, or telemetry.
+- Screenshot/base64 data is not written to history input, `chrome.storage`, logs, docs, files, or release artifacts; the provider payload does not include the full page URL.
+- 豆包 / 火山方舟 screenshot understanding remains blocked until a vision-capable endpoint is explicitly validated.
+- Manual loaded-extension QA is still required before treating this as a release-ready feature.
+
 ### Backlog Requiring Separate Approval
 
 These items remain valid product ideas but should not be pulled into v0.2-alpha MVP by default:
@@ -144,5 +156,6 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 - 2026-06-02: Marked V2-003 registry/routing implementation complete while keeping live provider validation in V2-004.
 - 2026-06-02: Marked V2-004 manual connectivity test UI implemented while keeping real provider evidence as a release gate.
 - 2026-06-02: Marked V2-004B latency baseline implemented as local-console redacted perf summaries for ordinary AI requests.
+- 2026-06-02: Marked V2-005 screenshot-to-AI internal dogfood MVP implemented while keeping loaded-extension QA and release claims open.
 - 2026-06-02: Replaced the broad v0.2 candidate backlog with a v0.2-alpha issue map, recommended sequence, and high-permission discovery backlog.
 - 2026-06-01: Created Phase 1 roadmap from current internal dogfood baseline and release checklist.
