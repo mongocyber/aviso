@@ -14,7 +14,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它把右键菜单、划词工具�
 - M5 的自动化测试、手动验收页和生产构建基线已具备。
 - 用户已反馈 A-G 手动验收基本通过，作为内部试用通过记录。
 - 豆包 / 火山方舟 API 用户确认可用；OpenAI / Anthropic 真实调用尚未验证。
-- 尚未准备 Chrome 商店素材、公开隐私政策页面、最终打包、tag 和发布回滚记录。
+- 已生成当前生产 zip 包；尚未准备 Chrome 商店素材、公开隐私政策最终版、tag 和发布回滚记录。
 
 更细的状态以 [STATUS.md](./STATUS.md)、[RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md) 和 `docs/` 内部文档为准。
 

@@ -91,6 +91,7 @@ Vercel 项目配置：
 - V2-002 / V2-002A：provider host permission 审计和决策文档已完成。
 - V2-003：minimal model registry and routing 已实现并提交，默认 `gpt-4o-mini`、`claude*` 路由和豆包 / 火山方舟北京网关行为保持兼容。
 - V2-004：Popup API Key 页已新增用户手动触发的单 provider 连接测试入口，background 通过独立 `VALIDATE_PROVIDER_CONNECTIVITY` 消息返回脱敏 validation 摘要。
+- 当前生产 zip 包已生成：`build/chrome-mv3-prod.zip`，约 1.1 MB；包内 manifest 已核对为 `Aviso` / `0.1.0`，普通权限未新增，host permissions 仍为 OpenAI / Anthropic / Ark。
 
 V2-004 边界：
 
@@ -103,7 +104,7 @@ V2-004 边界：
 仍未关闭：
 
 - OpenAI / Anthropic / 豆包真实最小调用记录需要用户在安装后的扩展中手动触发并补录脱敏结果。
-- `npm run package`、商店素材、最终隐私政策一致性、release tag 和回滚点仍未完成。
+- 商店素材、最终隐私政策一致性、release tag 和回滚点仍未完成。
 
 ## 本轮读取的来源
 
