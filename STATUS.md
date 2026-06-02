@@ -118,7 +118,8 @@ V2-005 边界：
 - 发送给 provider 的 screenshot payload 不附带完整页面 URL；浮窗用户气泡只显示“截图区域”，不展示 base64。
 - `screenshot` perf/timing 只记录阶段和图片大小/区域分桶，不记录 raw image、base64、页面正文、选中文本、raw prompt、raw response 或 API Key。
 - 豆包 / 火山方舟截图理解按 model-dependent 处理：当前接入点未验证 vision 时会在发送 provider 前拦截并提示切换已确认支持视觉输入的模型。
-- 当前仍需重新加载本地扩展并完成手动 UI QA；不代表 Chrome Web Store 公开发布能力已关闭验收。
+- 已完成一轮重新加载后的手动 UI QA：取消流程正常，确认流程正常，豆包 / 火山方舟未验证 vision endpoint 被拦截并显示可读错误，Service Worker Console 可见 `[Aviso perf]` 摘要入口。记录来源：2026-06-02 用户本地截图测试反馈。
+- 该 QA 不包含真实 OpenAI / Anthropic vision provider 验证；不代表 Chrome Web Store 公开发布能力已关闭验收。
 
 已补录的 V2-004 脱敏验证结果：
 
