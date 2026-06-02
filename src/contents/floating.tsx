@@ -9,13 +9,18 @@ import type {
 } from "~types/messages"
 import { buildFollowUpPriorContext } from "~utils/follow-up-context"
 import {
+  shouldShowSlowResponseHint,
   SLOW_FIRST_CHUNK_MS,
   SLOW_MODEL_RESPONSE_TEXT,
   USER_CANCELLED_ASSISTANT_TEXT,
-  WAITING_MODEL_RESPONSE_TEXT,
-  shouldShowSlowResponseHint
+  WAITING_MODEL_RESPONSE_TEXT
 } from "~utils/response-guard"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
+import {
+  formatTranslationError,
+  formatTranslationUserBubble,
+  TRANSLATION_WAITING_TEXT
+} from "~utils/translation"
 
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"],
@@ -51,7 +56,7 @@ const INITIAL_STATE: FloatingState = {
 
 const OPERATION_LABELS: Record<string, string> = {
   explain: "解释",
-  translate: "翻译",
+  translate: "翻译文本",
   polish: "润色",
   summarize: "总结",
   custom: "自由提问",
@@ -74,7 +79,18 @@ function userBubbleText(
     return "🖼 [截图区域]"
   }
   if (operation === "image_explain") return "🖼 [图片]"
+  if (operation === "translate") return formatTranslationUserBubble(inputText)
   return inputText
+}
+
+function defaultStatusText(operation: string): string {
+  return operation === "translate"
+    ? TRANSLATION_WAITING_TEXT
+    : WAITING_MODEL_RESPONSE_TEXT
+}
+
+function visibleErrorText(operation: string, error: string): string {
+  return operation === "translate" ? formatTranslationError(error) : error
 }
 
 function lastByRole(messages: ChatMsg[], role: "user" | "assistant"): string {
@@ -122,7 +138,7 @@ function FloatingWindow() {
   const sendAIRequest = (
     requestId: string,
     payload: AIRequestPayload,
-    statusText = WAITING_MODEL_RESPONSE_TEXT
+    statusText = defaultStatusText(payload.operation ?? "")
   ) => {
     if (activeRequestRef.current !== requestId) {
       logTiming("ai_request_skipped", requestId, payload.timing, {
@@ -164,7 +180,10 @@ function FloatingWindow() {
               ? {
                   ...prev,
                   loading: false,
-                  error: response.error as string,
+                  error: visibleErrorText(
+                    prev.operation,
+                    response.error as string
+                  ),
                   statusText: ""
                 }
               : prev
@@ -261,7 +280,7 @@ function FloatingWindow() {
           requestId,
           trigger,
           operation,
-          statusText: statusText ?? WAITING_MODEL_RESPONSE_TEXT,
+          statusText: statusText ?? defaultStatusText(operation),
           messages
         })
         setSavedId("")
@@ -283,7 +302,7 @@ function FloatingWindow() {
               templateId,
               timing
             },
-            statusText ?? WAITING_MODEL_RESPONSE_TEXT
+            statusText ?? defaultStatusText(operation)
           )
         }
       }
@@ -297,7 +316,7 @@ function FloatingWindow() {
             ...aiPayload,
             timing: timing ?? aiPayload.timing
           },
-          statusText ?? WAITING_MODEL_RESPONSE_TEXT
+          statusText ?? defaultStatusText(aiPayload.operation ?? "")
         )
       }
 
@@ -330,7 +349,12 @@ function FloatingWindow() {
         const { error, requestId } = message.payload
         setState((prev) =>
           prev.requestId === requestId && activeRequestRef.current === requestId
-            ? { ...prev, loading: false, error, statusText: "" }
+            ? {
+                ...prev,
+                loading: false,
+                error: visibleErrorText(prev.operation, error),
+                statusText: ""
+              }
             : prev
         )
       }

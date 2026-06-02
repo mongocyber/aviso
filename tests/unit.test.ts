@@ -9,8 +9,8 @@ import {
 } from "../src/utils/clipboard-detect.ts"
 import { normalizeError } from "../src/utils/errors.ts"
 import {
-  DEFAULT_FOLLOW_UP_CONTEXT_BUDGET,
-  buildFollowUpPriorContext
+  buildFollowUpPriorContext,
+  DEFAULT_FOLLOW_UP_CONTEXT_BUDGET
 } from "../src/utils/follow-up-context.ts"
 import {
   parseSupportedImageSrc,
@@ -40,21 +40,31 @@ import {
   isProviderHostPermissionPresent
 } from "../src/utils/provider-connectivity.ts"
 import {
+  shouldShowSlowResponseHint,
+  SLOW_FIRST_CHUNK_MS
+} from "../src/utils/response-guard.ts"
+import {
   bucketScreenshotDataUrl,
   getScreenshotVisionBlockReason,
   isSupportedScreenshotDataUrl,
   normalizeScreenshotRegion
 } from "../src/utils/screenshot.ts"
-import {
-  SLOW_FIRST_CHUNK_MS,
-  shouldShowSlowResponseHint
-} from "../src/utils/response-guard.ts"
 import { expandTemplate } from "../src/utils/template.ts"
 import {
   bucketInputSize,
   buildPerfSummary,
   categorizePerfError
 } from "../src/utils/timing.ts"
+import {
+  buildTranslationUserContent,
+  formatTranslationError,
+  formatTranslationUserBubble,
+  getTranslationSourceText,
+  sanitizeTranslationPayload,
+  TRANSLATION_EMPTY_INPUT_ERROR,
+  TRANSLATION_SYSTEM_PROMPT,
+  TRANSLATION_WAITING_TEXT
+} from "../src/utils/translation.ts"
 
 test("detectType 识别 URL", () => {
   assert.equal(detectType("https://example.com/path?q=1"), "url")
@@ -189,6 +199,14 @@ test("parseIntentLocally 识别常见中文命令", () => {
   assert.equal(parseIntentLocally("解释 Transformer").action, "explain")
 })
 
+test("parseIntentLocally 翻译命令保留待翻译文本", () => {
+  assert.deepEqual(parseIntentLocally("翻译 hello world"), {
+    action: "translate",
+    target: "hello world",
+    params: {}
+  })
+})
+
 test("parseIntentLocally 识别搜索和导航命令", () => {
   assert.deepEqual(parseIntentLocally("打开 github.com"), {
     action: "navigate",
@@ -216,6 +234,58 @@ test("parseUserIntent 使用本地解析，不依赖 background 模型请求", a
     target: "hello",
     params: {}
   })
+})
+
+test("translation prompt 只要求输出译文且保留中英互译", () => {
+  assert.match(TRANSLATION_SYSTEM_PROMPT, /只输出译文/)
+  assert.match(TRANSLATION_SYSTEM_PROMPT, /主要是中文/)
+  assert.match(TRANSLATION_SYSTEM_PROMPT, /否则翻译成.*中文/)
+  assert.doesNotMatch(TRANSLATION_SYSTEM_PROMPT, /Google|百度|有道|fallback/i)
+})
+
+test("translation payload 只使用选区或用户输入，不混入 URL 和页面正文", () => {
+  const payload = {
+    operation: "translate",
+    selectionText: "Hello world",
+    userMessage: "翻译 ignored",
+    pageUrl: "https://private.example.com/path",
+    linkUrl: "https://private.example.com/link",
+    pageContent: "private page body"
+  }
+
+  assert.equal(getTranslationSourceText(payload), "Hello world")
+  assert.equal(
+    buildTranslationUserContent(payload),
+    "待翻译文本：\nHello world"
+  )
+  assert.doesNotMatch(
+    buildTranslationUserContent(payload),
+    /private\.example|private page body/
+  )
+
+  const sanitized = sanitizeTranslationPayload(payload)
+  assert.equal(sanitized.pageUrl, undefined)
+  assert.equal(sanitized.linkUrl, undefined)
+  assert.equal(sanitized.pageContent, undefined)
+  assert.equal(sanitized.selectionText, "Hello world")
+})
+
+test("translation display 文案明确翻译状态和失败反馈", () => {
+  assert.equal(TRANSLATION_WAITING_TEXT, "正在翻译…")
+  assert.equal(
+    TRANSLATION_EMPTY_INPUT_ERROR,
+    "没有可翻译的文本：请先选中文字，或在命令面板输入“翻译 + 文本”。"
+  )
+  assert.equal(formatTranslationUserBubble(" hello "), "待翻译文本：\nhello")
+  assert.equal(formatTranslationUserBubble("  "), "")
+  assert.equal(
+    formatTranslationError("API Key 未配置"),
+    "翻译失败：API Key 未配置"
+  )
+  assert.equal(
+    formatTranslationError("翻译失败：网络错误"),
+    "翻译失败：网络错误"
+  )
 })
 
 test("truncatePageContent 保守截断长正文", () => {

@@ -17,7 +17,6 @@ import {
 const MENU_ID_ROOT = "contextai-root"
 const MENU_ID_EXPLAIN = "contextai-explain"
 const MENU_ID_TRANSLATE = "contextai-translate"
-const MENU_ID_TRANSLATE_PAGE = "contextai-translate-page"
 const MENU_ID_POLISH = "contextai-polish"
 const MENU_ID_POLISH_EDITABLE = "contextai-polish-editable"
 const MENU_ID_SUMMARIZE = "contextai-summarize"
@@ -97,14 +96,6 @@ export async function registerContextMenus() {
       parentId: MENU_ID_ROOT,
       title: "翻译“%s”",
       contexts: ["selection"]
-    })
-
-    // 翻译页面——保留非 selection 场景的静态标题，避免显示字面量 %s
-    chrome.contextMenus.create({
-      id: MENU_ID_TRANSLATE_PAGE,
-      parentId: MENU_ID_ROOT,
-      title: "翻译",
-      contexts: ["page"]
     })
 
     // 润色（选中文字时使用 Chrome 原生 %s 预览）
@@ -357,7 +348,6 @@ export async function handleContextMenuClick(
   const actionMap: Record<string, string> = {
     [MENU_ID_EXPLAIN]: "explain",
     [MENU_ID_TRANSLATE]: "translate",
-    [MENU_ID_TRANSLATE_PAGE]: "translate",
     [MENU_ID_POLISH]: "polish",
     [MENU_ID_POLISH_EDITABLE]: "polish",
     [MENU_ID_SUMMARIZE]: "summarize",

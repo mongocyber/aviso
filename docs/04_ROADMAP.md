@@ -44,19 +44,19 @@ Aviso should move from internal dogfood to public release through evidence, not 
 
 ## v0.2-alpha Issue Map
 
-| Issue | Priority | Goal | Depends on | Execution mode |
-|-------|----------|------|------------|----------------|
-| V2-001 scope and technical spec cleanup | P0 | Keep PRD, tech spec, roadmap, privacy, risk, and release checklist aligned with the approved v0.2-alpha MVP. | Product-owner approval | Docs-only, single thread |
-| V2-002 provider validation plan and permission audit | P0 | Decide exact host permissions and validation protocol for OpenAI, Anthropic, and 豆包 / 火山方舟 without exposing secrets. | V2-001 | Decision docs complete; no manifest change in V2-002A |
-| V2-003 minimal model registry and routing | P0 | Route tasks to existing provider/model choices while preserving current defaults and local API Key storage. | V2-002A decision docs | Implemented; live provider calls not run |
-| V2-004 manual connectivity test UI | P0 | Let users test configured providers on demand, with latency and readable failure reasons. | V2-003 | Implemented; live evidence still user-triggered |
-| V2-004B latency baseline | P0 | Add a redacted request-level local console summary for ordinary AI requests so slow replies can be attributed to UI, background, provider first chunk, done, or failure. | V2-004 | Implemented; no provider/model/token/permission changes |
-| V2-004C follow-up speed guard | P0 | Reduce perceived wait for follow-ups and long first-token delays through bounded prior context, clearer waiting copy, slow hint, and stop waiting. | V2-004B | Implemented; installed-extension QA completed; no provider/model/permission changes |
-| V2-005 screenshot to AI | P1 | Capture a user-selected visible-page region and send it to a vision-capable configured model. | V2-004C | Implemented for internal dogfood; loaded-extension UI QA completed; real vision provider validation still open |
-| V2-006 copy current context | P1 | Copy title, URL, optional selection, and truncated page text as clean structured text. | V2-001 | Implemented for internal dogfood; installed-extension QA completed |
-| V2-007 translation MVP | P1 | Improve selection translation and floating-window translation output without third-party default fallback. | V2-003 | Single implementation thread |
-| V2-008 theme and Aviso panel polish | P2 | Add theme setting and user-facing panel naming changes without breaking shortcuts or iframe behavior. | V2-001 | Single implementation thread |
-| V2-009 high-permission discovery backlog | P3 | Separately evaluate multi-tab aggregation, tab grouping, voice input, full-page translation, YouTube subtitles, and remote-link body extraction. | V2-001 | Read-only discovery / decision docs |
+| Issue                                                | Priority | Goal                                                                                                                                                                     | Depends on             | Execution mode                                                                                                 |
+| ---------------------------------------------------- | -------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------- | -------------------------------------------------------------------------------------------------------------- |
+| V2-001 scope and technical spec cleanup              | P0       | Keep PRD, tech spec, roadmap, privacy, risk, and release checklist aligned with the approved v0.2-alpha MVP.                                                             | Product-owner approval | Docs-only, single thread                                                                                       |
+| V2-002 provider validation plan and permission audit | P0       | Decide exact host permissions and validation protocol for OpenAI, Anthropic, and 豆包 / 火山方舟 without exposing secrets.                                               | V2-001                 | Decision docs complete; no manifest change in V2-002A                                                          |
+| V2-003 minimal model registry and routing            | P0       | Route tasks to existing provider/model choices while preserving current defaults and local API Key storage.                                                              | V2-002A decision docs  | Implemented; live provider calls not run                                                                       |
+| V2-004 manual connectivity test UI                   | P0       | Let users test configured providers on demand, with latency and readable failure reasons.                                                                                | V2-003                 | Implemented; live evidence still user-triggered                                                                |
+| V2-004B latency baseline                             | P0       | Add a redacted request-level local console summary for ordinary AI requests so slow replies can be attributed to UI, background, provider first chunk, done, or failure. | V2-004                 | Implemented; no provider/model/token/permission changes                                                        |
+| V2-004C follow-up speed guard                        | P0       | Reduce perceived wait for follow-ups and long first-token delays through bounded prior context, clearer waiting copy, slow hint, and stop waiting.                       | V2-004B                | Implemented; installed-extension QA completed; no provider/model/permission changes                            |
+| V2-005 screenshot to AI                              | P1       | Capture a user-selected visible-page region and send it to a vision-capable configured model.                                                                            | V2-004C                | Implemented for internal dogfood; loaded-extension UI QA completed; real vision provider validation still open |
+| V2-006 copy current context                          | P1       | Copy title, URL, optional selection, and truncated page text as clean structured text.                                                                                   | V2-001                 | Implemented for internal dogfood; installed-extension QA completed                                             |
+| V2-007 translation MVP                               | P1       | Improve selection translation and floating-window translation output without third-party default fallback.                                                               | V2-003                 | Implemented for internal dogfood; installed-extension UI QA pending                                            |
+| V2-008 theme and Aviso panel polish                  | P2       | Add theme setting and user-facing panel naming changes without breaking shortcuts or iframe behavior.                                                                    | V2-001                 | Single implementation thread                                                                                   |
+| V2-009 high-permission discovery backlog             | P3       | Separately evaluate multi-tab aggregation, tab grouping, voice input, full-page translation, YouTube subtitles, and remote-link body extraction.                         | V2-001                 | Read-only discovery / decision docs                                                                            |
 
 ### V2-002A Decision Docs
 
@@ -135,6 +135,18 @@ V2-006 adds the copy-current-context internal dogfood MVP:
 - Clipboard writing uses the existing content script and `clipboardWrite` permission path; no manifest permission, host permission, provider, dependency, storage key, cache, telemetry, package, tag, or release action is added.
 - The copy flow does not call `AI_REQUEST`, does not call any provider, does not emit `[Aviso perf]`, and does not write copied content to history, `chrome.storage`, files, docs, console, or release artifacts.
 - Visible success/failure toast feedback is shown through the existing page UI layer. Installed-extension QA has covered the right-click copy-current-context internal dogfood main path.
+
+### V2-007 Implementation
+
+V2-007 improves translation as an existing AI operation, not as a separate translation service:
+
+- Entry points remain selected text and user input: right-click selected text, selection toolbar, and command palette input such as `翻译 hello`.
+- Command palette translation continues to use local intent parsing and sends the stripped target text to the floating-window translate flow.
+- The translation prompt now asks for automatic Chinese-to-English / non-Chinese-to-Chinese translation and only the translated text, preserving meaning, tone, formatting, names, numbers, links, code snippets, and line breaks.
+- Floating-window translation copy is more explicit: title `翻译文本`, user bubble `待翻译文本`, waiting state `正在翻译…`, and errors prefixed with `翻译失败`.
+- The previous page-context right-click translation item is removed to avoid empty-selection requests that translate only a page URL.
+- The implementation adds no manifest permission, host permission, provider, dependency, third-party translation fallback, cache, telemetry, package, tag, release action, default model change, token-limit change, API Key storage change, or `contextai_*` storage-key migration.
+- Installed-extension UI QA still needs a dogfood record for right-click selection translation, toolbar translation, and command palette `翻译 hello`.
 
 ### Backlog Requiring Separate Approval
 

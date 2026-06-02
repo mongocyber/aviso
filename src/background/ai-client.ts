@@ -31,6 +31,13 @@ import {
   type PerfErrorCategory,
   type RequestTiming
 } from "~utils/timing"
+import {
+  buildTranslationUserContent,
+  getTranslationSourceText,
+  sanitizeTranslationPayload,
+  TRANSLATION_EMPTY_INPUT_ERROR,
+  TRANSLATION_SYSTEM_PROMPT
+} from "~utils/translation"
 
 export type StreamChunk = {
   text: string
@@ -154,6 +161,7 @@ export async function handleAIRequest(
       }
     }
   }
+  payload = sanitizeTranslationPayload(payload)
 
   const route = resolveModelRoute(payload.model, settings)
   const imageInputBlockReason = getImageInputBlockReason(payload, route)
@@ -167,6 +175,13 @@ export async function handleAIRequest(
         "unsupported_image_input"
       )
       throw new Error(imageInputBlockReason)
+    }
+    if (
+      payload.operation === "translate" &&
+      !getTranslationSourceText(payload)
+    ) {
+      logPreProviderPerf(payload, route.provider.id, route.requestModel)
+      throw new Error(TRANSLATION_EMPTY_INPUT_ERROR)
     }
 
     if (route.provider.id === "anthropic") {
@@ -564,8 +579,7 @@ function getDefaultSystemPrompt(operation?: string): string {
   const prompts: Record<string, string> = {
     explain:
       "你是一个专业的内容解释助手。请用清晰、简洁的中文解释用户提供的内容，必要时给出示例。",
-    translate:
-      "你是一个专业翻译助手。请将用户提供的内容翻译成中文（如果是中文则翻译成英文），保持原文风格和语气。",
+    translate: TRANSLATION_SYSTEM_PROMPT,
     polish:
       "你是一个专业文字润色助手。请改善用户提供文字的表达，使其更流畅、专业，保持原意不变。",
     summarize:
@@ -585,6 +599,10 @@ function getDefaultSystemPrompt(operation?: string): string {
 }
 
 function buildUserContent(payload: AIRequestPayload): string {
+  if (payload.operation === "translate") {
+    return buildTranslationUserContent(payload)
+  }
+
   const parts: string[] = []
 
   // 用户选中的文字（工具栏、右键 selection、剪贴板）

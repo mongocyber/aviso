@@ -55,6 +55,8 @@ For V2-004, `src/background/ai-client.ts` also exposes a manual provider connect
 
 For V2-006, `src/background/context-menus.ts` adds the manual `复制当前上下文` page/selection menu item. It requests existing page extraction from the clicked frame, formats title, URL, optional selection, and truncated page text with `src/utils/page-content.ts`, then asks the content script to write the text to the clipboard. This path does not call `AI_REQUEST`, provider connectivity, model routing, history, storage writes, or perf summaries.
 
+For V2-007, `src/background/context-menus.ts` keeps translation scoped to selected text only. The right-click selection item `翻译“%s”` still opens the floating window with `operation=translate`, while the previous page-context translate item is removed so an empty page click cannot send the page URL as translation input.
+
 ### Content Scripts
 
 | Script            | Frame scope                | Purpose                                                                       |
@@ -111,6 +113,14 @@ Copy current context is separate from the floating-window and provider flows:
 3. `formatCurrentContext` returns Markdown-like structured text and applies the same page-body truncation boundary as page summary.
 4. Background sends `WRITE_CURRENT_CONTEXT_TO_CLIPBOARD` to the content script.
 5. Content script writes to the user clipboard with existing clipboard write capability and shows a success/failure toast through `SHOW_COPY_CONTEXT_TOAST`.
+
+Translation uses the existing floating-window and provider flow:
+
+1. User triggers translation from selected text through the context menu or selection toolbar, or types a local command such as `翻译 hello` in the command palette.
+2. The command palette still uses local intent parsing only; for `translate`, it passes the stripped target text as `userMessage`.
+3. Floating UI opens with a translation-specific title, user bubble, waiting copy, and error prefix.
+4. Background validates that `selectionText` or `userMessage` contains text before provider start.
+5. `src/utils/translation.ts` provides the translation prompt and formats the provider user content as `待翻译文本` only. Page URL, link URL, and page body are not included as translation input.
 
 ## Provider Registry And Selection
 
@@ -202,6 +212,17 @@ V2-006 implements an internal dogfood copy-context MVP without changing manifest
 - Feedback: the same content script shows visible success/failure toast messages.
 - Privacy boundary: copied content is not sent to AI providers, not persisted in history or `chrome.storage`, not logged to console, not written to files or docs, and not included in perf summaries or telemetry.
 
+## Translation MVP
+
+V2-007 improves the existing translation action without changing providers or permissions:
+
+- Entry points: selected-text context menu, selection toolbar, and command palette local intent such as `翻译 hello`.
+- Provider path: reuses the current configured provider/model, `operation=translate`, streaming chunks, history, model routing, and existing max-token boundary for translate.
+- Prompt behavior: automatically translates mainly Chinese input to English and other input to Chinese, asks for the translated text only, and preserves meaning, tone, format, names, numbers, links, code snippets, and line breaks.
+- Input boundary: selected text or command-palette user input only. It does not translate the full DOM, page URL, link URL, remote link body, YouTube subtitles, screenshots, or page body.
+- UI behavior: floating title shows translation, the user bubble labels the text as `待翻译文本`, waiting copy says `正在翻译…`, and errors are prefixed with `翻译失败`.
+- Privacy and permission boundary: no manifest permission, host permission, provider, dependency, third-party translation service, cache, telemetry, storage key, default model, token limit, or API Key storage change.
+
 ## Error Handling And Timing
 
 - `src/utils/errors.ts` normalizes provider and network errors into readable Chinese messages.
@@ -213,6 +234,7 @@ V2-006 implements an internal dogfood copy-context MVP without changing manifest
 - V2-004C adds `user_cancelled` as a perf error category for stopped/aborted requests. It is a fixed category only; the raw prompt, raw response, page content, selected text, full URL, image/base64, screenshot, and API Key remain excluded.
 - `[Aviso perf]` is not persisted to `chrome.storage` and is not sent to a remote logging or telemetry service.
 - V2-005 adds screenshot capture/crop timing marks and image-size/region buckets only. Raw image data, base64, page URLs, selected text, prompts, responses, and API Keys are not logged.
+- V2-007 keeps translation perf summaries on the existing redacted `[Aviso perf]` path. Translation source text is counted only by size bucket; raw text, page URL, link URL, page body, prompts, responses, screenshots, and API Keys are not logged or persisted.
 
 ## Testing
 
@@ -220,6 +242,7 @@ Current test and manual assets:
 
 - `tests/unit.test.ts`: unit coverage for clipboard type detection, sensitive filtering, template expansion, error normalization, image source validation, local intent parsing, page truncation, provider/model route resolution, approved host boundaries, and provider connectivity summary rules.
 - V2-006 unit coverage includes copy-context formatting, body truncation, missing-field fallbacks, and manifest permission boundary checks.
+- V2-007 unit coverage includes local translation intent target extraction, translation prompt shape, translation payload input boundary, user-visible translation copy, and the unchanged manifest permission boundary.
 - `tests/manual-test.html`: A-G manual QA fixture.
 - `tests/iframe-fixture.html`: iframe validation fixture for Hugging Face Spaces / Gradio-like embedding behavior.
 

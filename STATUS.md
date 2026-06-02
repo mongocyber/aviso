@@ -95,6 +95,7 @@ Vercel 项目配置：
 - V2-004C：Follow-up speed guard 已实现。追问只携带最近对话节选并按字符预算裁剪；普通请求和追问等待文案改为“等待模型响应…”；超过 9 秒未收到首段内容时浮窗提示“模型响应较慢，可继续等待或停止”；用户可停止当前等待，浮窗会忽略该 requestId 后续 chunk，并向 background 发送取消信号。
 - V2-005：Screenshot to AI internal dogfood MVP 已实现为右键页面菜单“截图提问”：用户手动框选可见区域并确认后才截图，裁剪后的图片复用现有 `image_explain` 浮窗流。未新增 manifest 权限、host permission、provider 或依赖；未运行真实 provider API。
 - V2-006：Copy current context internal dogfood MVP 已实现为右键页面菜单“复制当前上下文”：用户手动触发后把页面标题、URL、可选选中文本和可选截断正文整理为 Markdown 文本写入剪贴板。该流程不调用 AI、不调用 provider、不写入 history / `chrome.storage` / 文件 / 文档 / console，未新增权限、host permission、provider 或依赖。
+- V2-007：Translation MVP 已实现为现有翻译流体验改进。选区右键、划词工具栏和命令面板本地 intent 继续复用 `operation=translate`、当前 configured provider/model、浮窗 streaming、history、provider routing 和脱敏 `[Aviso perf]` 摘要；翻译 prompt 改为只输出译文，浮窗标题、用户气泡、等待状态和失败提示更明确；右键 page 上下文不再提供空选区“翻译”入口，避免把页面 URL 当作翻译内容。
 - 当前生产 zip 包已生成：`build/chrome-mv3-prod.zip`，约 1.1 MB；包内 manifest 已核对为 `Aviso` / `0.1.0`，普通权限未新增，host permissions 仍为 OpenAI / Anthropic / Ark。
 
 V2-004 边界：
@@ -140,6 +141,15 @@ V2-006 边界：
 - 剪贴板写入由 content script 在当前页面执行，使用既有 `clipboardWrite` 能力；失败时显示可读 toast。
 - 复制内容只写入用户剪贴板；不会进入 AI 请求、provider、history、`chrome.storage`、文件、文档、console、性能摘要或远端 telemetry。
 - 已完成重新加载后的人工 UI QA：右键复制当前上下文 internal dogfood 主路径用户反馈通过。记录来源：2026-06-02 用户反馈。
+
+V2-007 边界：
+
+- 入口限定为选区翻译和用户输入翻译：右键选区“翻译”、划词工具栏“翻译”、命令面板“翻译 xxx”。
+- 翻译仍调用当前 configured provider/model，不新增 provider、host permission、manifest permission、依赖、远端服务或第三方免费翻译 fallback。
+- 翻译 prompt 要求自动中英互译、只输出译文、保持原意/语气/格式，不添加解释、标题、候选译法或额外说明。
+- translate payload 只使用 `selectionText` 或命令面板解析后的 `userMessage`；不会把页面 URL、链接 URL 或页面正文作为待翻译文本混入。
+- 空翻译输入会在 provider 前拦截并显示可读错误，不运行真实 provider API。
+- `[Aviso perf]` 仍只输出脱敏字段和输入长度分桶；不记录 raw prompt、raw response、页面正文、选中文本、完整 URL、图片/base64、截图或 API Key。
 
 已补录的 V2-004 脱敏验证结果：
 

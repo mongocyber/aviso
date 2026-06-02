@@ -264,6 +264,8 @@ function CommandPalette() {
     const timing = startTiming()
     setVisible(false)
     const intent = await parseUserIntent(query)
+    const userMessage =
+      intent.action === "translate" ? intent.target.trim() : query
     logTiming("trigger", requestId, timing, {
       trigger: "command-palette",
       operation: intent.action,
@@ -276,7 +278,7 @@ function CommandPalette() {
         requestId,
         trigger: "command-palette",
         operation: intent.action,
-        userMessage: query,
+        userMessage,
         timing
       }
     })
