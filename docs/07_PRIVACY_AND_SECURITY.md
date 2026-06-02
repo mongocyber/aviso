@@ -81,6 +81,8 @@ Aviso does not currently request broad host permissions for arbitrary remote pag
 - Page content is truncated to 5000 characters by default before submission.
 - Error messages are normalized to avoid leaking provider internals or sensitive remote image URLs.
 - Provider connectivity tests are manual, single-provider, and summary-only. They use a fixed public prompt and do not include page content, selected text, links, images, screenshots, clipboard content, raw provider responses, or API Keys in the displayed validation summary.
+- V2-004B performance summaries are local-console only. `[Aviso perf]` logs include fixed fields, input-size buckets, coarse context types, timing marks, and error categories; they do not include raw prompts, raw responses, selected text, page content, full URLs, image/base64 payloads, screenshots, or API Keys.
+- Performance summaries are not persisted to `chrome.storage` and are not sent to telemetry, analytics, a project-owned server, or any remote logging service.
 - Build artifacts, `node_modules`, environment files, caches, and key-like files are ignored by Git.
 
 ## Known Gaps Before Public Release
@@ -105,6 +107,7 @@ v0.2-alpha planning keeps the v0.1 privacy model: no project-owned backend, no t
 |------------|---------------|----------------|
 | Provider connectivity test | Fixed public test prompt, selected provider endpoint, user API Key | Implemented as a user-triggered single-provider action. Do not run all tests automatically when settings opens. Do not log raw prompts, raw responses, keys, private webpages, or private screenshots. |
 | Model routing | Feature route IDs, provider/model IDs, non-secret settings | Store route configuration in `chrome.storage.sync`; keep API Keys encrypted in `chrome.storage.local`. |
+| Latency baseline | Redacted trigger/provider/model labels, input-size bucket, coarse context type, timing marks, error category | Implemented in V2-004B as local-console summaries only. Do not persist or transmit these logs, and do not add raw text, full URLs, images/base64, screenshots, responses, or keys. |
 | Screenshot to AI | User-selected visible-page image region and optional prompt | Must be explicitly triggered by the user. Show clear feedback and do not write screenshot data to logs, docs, or screenshots. |
 | Copy current context | Page title, URL, optional selection, truncated page text | Copies to the user's clipboard only. No provider call unless the user separately sends it to AI. |
 | Translation MVP | Selected text, target language, provider/model choice | Use existing provider flow first. Third-party translation fallback is not in MVP until host permissions and public copy are approved. |
@@ -139,6 +142,7 @@ v0.2-alpha planning keeps the v0.1 privacy model: no project-owned backend, no t
 
 - 2026-06-02: Updated V2-003 provider host implementation status and kept OpenAI / Anthropic live validation as a V2-004 gate.
 - 2026-06-02: Updated V2-004 privacy status after adding manual single-provider connectivity UI and summary-only validation fields.
+- 2026-06-02: Added V2-004B privacy controls for local-only redacted performance summaries.
 - 2026-06-02: Recorded approved OpenAI / Anthropic provider hosts as later implementation scope, with manual single-provider validation and no secret/raw-content logging.
 - 2026-06-02: Added v0.2-alpha privacy notes covering provider checks, model routing, screenshot-to-AI, copy context, translation MVP, local cache, and high-permission non-scope.
 - 2026-06-01: Created Phase 1 internal privacy and security baseline from current implementation and release checklist.

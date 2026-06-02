@@ -166,6 +166,10 @@ Aviso does not currently request broad host permissions for arbitrary page fetch
 - `src/utils/errors.ts` normalizes provider and network errors into readable Chinese messages.
 - `src/utils/image-src.ts` blocks unsupported image inputs before provider calls when possible.
 - `src/utils/timing.ts` logs lightweight `[Aviso timing]` milestones such as trigger, floating shown, background received, provider start, first chunk, and done.
+- V2-004B adds one local-console `[Aviso perf]` summary per ordinary floating-window AI request. The summary contains only fixed redacted fields: `trigger`, `provider`, `model_or_endpoint`, `input_size_bucket`, `context_type`, `t_ui_visible_ms`, `t_background_received_ms`, `t_provider_start_ms`, `t_first_chunk_ms`, `t_done_ms`, and `error_category`.
+- `input_size_bucket` is bucketed as `0-500`, `501-2000`, `2001-5000`, or `5001+`; raw prompt text, selected text, page content, full URLs, image/base64 payloads, provider responses, and API Keys are not included in the perf summary.
+- `context_type` is limited to `selection`, `page_summary`, `image_explain`, `command`, `follow_up`, or `unknown`. Missing timing marks are represented as `null` so failed, first-chunk-missing, and done-missing paths remain diagnosable without inventing raw data.
+- `[Aviso perf]` is not persisted to `chrome.storage` and is not sent to a remote logging or telemetry service.
 
 ## Testing
 
@@ -192,6 +196,7 @@ npm run package
 - Remote link body fetching.
 - Universal image capture/conversion.
 - Provider benchmarking matrix.
+- Remote performance telemetry or persisted performance logs.
 - Docusaurus or public docs build.
 - Release automation such as release-please, commitlint, or husky.
 
@@ -247,6 +252,7 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 - Provider connectivity checks are explicit user-triggered checks. Settings-page open must not automatically spend tokens across all configured providers.
 - V2-004 tests one provider at a time and must not auto-test all configured providers.
 - Provider validation records must not include API Keys, raw prompts, raw responses, private webpages, or screenshots with private data.
+- V2-004B latency baseline is limited to local console summaries for ordinary floating-window AI requests. It must not change provider routing, model defaults, token limits, API Key storage, storage key names, or manifest permissions.
 - Result caching may be added only with a clear key design that includes operation, input, target language, provider, model, endpoint/base URL, and template version where relevant. A clear-cache control is required if caching ships.
 - Screenshot-to-AI should use the existing `activeTab` user-triggered boundary where possible. If the implementation needs broader capture, scripting, or tab permissions, stop and record the decision before code changes.
 - Translation MVP should reuse existing floating-window and selection flows first. Full-page DOM translation, YouTube subtitle translation, and third-party translation engines are separate discovery items.
@@ -271,6 +277,7 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 
 - 2026-06-02: Implemented V2-003 provider/model registry, route fallback, approved host permissions, and root extension type-check boundary.
 - 2026-06-02: Implemented V2-004 manual single-provider connectivity flow, summary-only validation contract, Popup UI, and tests.
+- 2026-06-02: Implemented V2-004B local-console latency baseline with fixed redacted `[Aviso perf]` summaries for ordinary AI requests.
 - 2026-06-02: In V2-002A, recorded approved OpenAI / Anthropic provider host permissions for V2-003 as a docs-only decision.
 - 2026-06-02: Added v0.2-alpha technical delta constraints and corrected the desktop draft assumptions about file names, message contracts, manifest permissions, host permissions, storage, and MVP boundaries.
 - 2026-06-01: Created Phase 1 internal technical specification from current code structure and package manifest.

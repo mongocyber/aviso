@@ -11,6 +11,8 @@ export type ContextMenuContext =
   | "page"
 
 export type AIRequestPayload = {
+  trigger?: string
+  context?: ContextMenuContext
   operation?: string
   selectionText?: string
   pageContent?: string

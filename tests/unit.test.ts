@@ -35,6 +35,11 @@ import {
   isProviderHostPermissionPresent
 } from "../src/utils/provider-connectivity.ts"
 import { expandTemplate } from "../src/utils/template.ts"
+import {
+  bucketInputSize,
+  buildPerfSummary,
+  categorizePerfError
+} from "../src/utils/timing.ts"
 
 test("detectType 识别 URL", () => {
   assert.equal(detectType("https://example.com/path?q=1"), "url")
@@ -359,4 +364,129 @@ test("connectivity 错误分类覆盖 key、限流、网络、超时和 provider
   )
   assert.equal(categorizeConnectivityError(new Error("timeout")), "timeout")
   assert.equal(categorizeConnectivityError({ status: 500 }), "provider_error")
+})
+
+test("perf input size 只输出分桶", () => {
+  assert.equal(bucketInputSize(0), "0-500")
+  assert.equal(bucketInputSize(500), "0-500")
+  assert.equal(bucketInputSize(501), "501-2000")
+  assert.equal(bucketInputSize(2000), "501-2000")
+  assert.equal(bucketInputSize(2001), "2001-5000")
+  assert.equal(bucketInputSize(5000), "2001-5000")
+  assert.equal(bucketInputSize(5001), "5001+")
+})
+
+test("perf summary 字段固定且按 trigger 计算阶段耗时", () => {
+  const summary = buildPerfSummary({
+    trigger: "toolbar",
+    provider: "openai",
+    modelOrEndpoint: "gpt-4o-mini",
+    inputChars: 1200,
+    contextType: "selection",
+    timing: {
+      triggerAt: 1000,
+      floatingShownAt: 1040,
+      backgroundReceivedAt: 1125,
+      providerRequestStartedAt: 1300,
+      firstChunkAt: 1900,
+      doneAt: 2600
+    },
+    errorCategory: "none"
+  })
+
+  assert.deepEqual(Object.keys(summary), [
+    "trigger",
+    "provider",
+    "model_or_endpoint",
+    "input_size_bucket",
+    "context_type",
+    "t_ui_visible_ms",
+    "t_background_received_ms",
+    "t_provider_start_ms",
+    "t_first_chunk_ms",
+    "t_done_ms",
+    "error_category"
+  ])
+  assert.deepEqual(summary, {
+    trigger: "toolbar",
+    provider: "openai",
+    model_or_endpoint: "gpt-4o-mini",
+    input_size_bucket: "501-2000",
+    context_type: "selection",
+    t_ui_visible_ms: 40,
+    t_background_received_ms: 125,
+    t_provider_start_ms: 300,
+    t_first_chunk_ms: 900,
+    t_done_ms: 1600,
+    error_category: "none"
+  })
+})
+
+test("perf summary 对未完成 timing 兼容并标记缺失阶段", () => {
+  const firstChunkMissing = buildPerfSummary({
+    trigger: "command-palette",
+    provider: "doubao",
+    modelOrEndpoint: "doubao-seed-2-0-lite-260428",
+    inputChars: 80,
+    contextType: "command",
+    timing: {
+      triggerAt: 10,
+      backgroundReceivedAt: 20,
+      providerRequestStartedAt: 30,
+      doneAt: 100
+    },
+    errorCategory: "missing_first_chunk"
+  })
+
+  const doneMissing = buildPerfSummary({
+    trigger: "context-menu",
+    provider: "anthropic",
+    modelOrEndpoint: "claude-haiku-4-5-20251001",
+    inputChars: 7000,
+    contextType: "page_summary",
+    timing: {
+      triggerAt: 10,
+      floatingShownAt: 10,
+      backgroundReceivedAt: 20,
+      providerRequestStartedAt: 30,
+      firstChunkAt: 60
+    },
+    errorCategory: "missing_done"
+  })
+
+  assert.equal(firstChunkMissing.t_first_chunk_ms, null)
+  assert.equal(firstChunkMissing.error_category, "missing_first_chunk")
+  assert.equal(doneMissing.t_done_ms, null)
+  assert.equal(doneMissing.input_size_bucket, "5001+")
+  assert.equal(doneMissing.error_category, "missing_done")
+})
+
+test("perf summary 脱敏兜底不输出 URL、base64 或未知 provider", () => {
+  const summary = buildPerfSummary({
+    trigger: "https://private.example.com/path?token=secret",
+    provider: "https://api.example.com",
+    modelOrEndpoint: "https://api.example.com/model?key=secret",
+    inputChars: 42,
+    contextType: "image_explain",
+    timing: {},
+    errorCategory: "unknown_error"
+  })
+
+  assert.equal(summary.trigger, "unknown")
+  assert.equal(summary.provider, "unknown")
+  assert.equal(summary.model_or_endpoint, "redacted_endpoint")
+  assert.equal(JSON.stringify(summary).includes("private.example.com"), false)
+  assert.equal(JSON.stringify(summary).includes("secret"), false)
+})
+
+test("perf 错误分类覆盖 key、限流、网络、超时和 provider 错误", () => {
+  assert.equal(
+    categorizePerfError(new Error("OpenAI API Key 未配置")),
+    "api_key_missing"
+  )
+  assert.equal(categorizePerfError({ status: 401 }), "unauthorized")
+  assert.equal(categorizePerfError({ status: 429 }), "rate_limited")
+  assert.equal(categorizePerfError(new Error("fetch failed")), "network_error")
+  assert.equal(categorizePerfError(new Error("timeout")), "timeout")
+  assert.equal(categorizePerfError({ status: 503 }), "provider_error")
 })

@@ -71,6 +71,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [ ] 商店隐私文案与 Popup 隐私说明一致。
 - [ ] API Key 不出现在日志、构建产物、截图、提交记录或 issue 文档中。
 - [x] Provider 连接测试入口为用户手动触发、一次只测单 provider，并返回脱敏摘要；不会在设置页打开时自动测试全部 provider。
+- [x] V2-004B `[Aviso perf]` 性能摘要只输出到本地 console，不写入 `chrome.storage`，不发送远端 telemetry，不包含 raw prompt、raw response、页面正文、选中文本、完整 URL、图片/base64 或 API Key。
 - [ ] 真实 OpenAI 调用已通过用户手动触发的单 provider 最小样例验证。公开发布门禁未关闭。
 - [ ] 真实 Anthropic 调用已通过用户手动触发的单 provider 最小样例验证。公开发布门禁未关闭。
 - [x] 真实豆包/火山方舟调用已通过 V2-004 手动单 provider 连接测试。脱敏记录：`provider=doubao`，`model_or_endpoint=doubao-seed-2-0-lite-260428`，`host_permission_present=true`，`result=success`，`latency_note=约 2505 ms`，`error_category=none`，`secret_leak_check=pass`，`raw_prompt_logged=no`，`raw_response_logged=no`，`private_page_data_logged=no`。记录来源：2026-06-02 用户在已加载扩展的 Popup 手动触发。
@@ -110,6 +111,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 
 - [x] 前端触发链路已优化：用户点击/发送后应立即看到浮窗和明确等待状态。
 - [x] 已保留响应速度优化：立即显示浮窗、正在连接模型、timing 日志、页面正文 5000 字符截断、默认 `max_tokens` 1024。
+- [x] 已新增 V2-004B 脱敏性能基线：普通浮窗 AI 请求输出一条 `[Aviso perf]` 摘要，可区分 UI 可见、background 接收、provider start、first chunk、done、缺失阶段和错误失败。
 - [x] 默认模型为较快的 `gpt-4o-mini`。
 - [x] provider 首 token 仍可能受模型、网络、API Key 状态、provider 负载和输入长度影响。
 - [x] Aviso v0.1 不承诺模型秒回；本版本不做后端中转、不扩大权限、不新增依赖、不继续重构 AI 客户端。
@@ -143,5 +145,6 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [x] V2-003 minimal model registry and routing 已实现，默认 `gpt-4o-mini` 和现有 OpenAI / Anthropic / 豆包路由行为保持兼容。
 - [x] V2-004 manual connectivity test UI 已实现：用户手动触发、一次只测单 provider，摘要不记录 Key、raw prompt、raw response、私人网页内容或私密截图。
 - [x] 豆包 / 火山方舟真实 provider 最小验证记录已补录。
+- [x] V2-004B latency baseline 已实现为本地 console 脱敏摘要；未运行真实 provider、未新增 provider、未改变 manifest 权限。
 - [ ] OpenAI / Anthropic 真实 provider 最小验证记录仍待原生 API Key 手动触发并补录；OpenAI / Anthropic 仍不可对外宣称已验证。
 - [ ] 截图、翻译、缓存或复制上下文能力上线前，已确认不会把敏感截图、缓存内容或私有网页信息写入日志、文档、截图或 release artifacts。

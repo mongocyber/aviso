@@ -373,7 +373,9 @@ export async function handleContextMenuClick(
               timing: contentTiming,
               statusText: "正在连接模型…",
               aiPayload: {
+                trigger: "context-menu",
                 operation: builtinAction,
+                context: ctx,
                 selectionText: info.selectionText ?? "",
                 linkUrl: info.linkUrl ?? "",
                 srcUrl: info.srcUrl ?? "",

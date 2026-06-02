@@ -50,6 +50,7 @@ Aviso should move from internal dogfood to public release through evidence, not 
 | V2-002 provider validation plan and permission audit | P0 | Decide exact host permissions and validation protocol for OpenAI, Anthropic, and 豆包 / 火山方舟 without exposing secrets. | V2-001 | Decision docs complete; no manifest change in V2-002A |
 | V2-003 minimal model registry and routing | P0 | Route tasks to existing provider/model choices while preserving current defaults and local API Key storage. | V2-002A decision docs | Implemented; live provider calls not run |
 | V2-004 manual connectivity test UI | P0 | Let users test configured providers on demand, with latency and readable failure reasons. | V2-003 | Implemented; live evidence still user-triggered |
+| V2-004B latency baseline | P0 | Add a redacted request-level local console summary for ordinary AI requests so slow replies can be attributed to UI, background, provider first chunk, done, or failure. | V2-004 | Implemented; no provider/model/token/permission changes |
 | V2-005 screenshot to AI | P1 | Capture a user-selected visible-page region and send it to a vision-capable configured model. | V2-002, V2-003 | Plan mode because capture and image data flow affect privacy |
 | V2-006 copy current context | P1 | Copy title, URL, optional selection, and truncated page text as clean structured text. | V2-001 | Single implementation thread |
 | V2-007 translation MVP | P1 | Improve selection translation and floating-window translation output without third-party default fallback. | V2-003 | Single implementation thread |
@@ -88,6 +89,16 @@ V2-004 adds the manual provider connectivity surface:
 - Summary fields explicitly state that raw prompt, raw response, private page data, screenshots, and API Keys are not logged by this flow.
 
 Live provider evidence remains separate. 豆包 / 火山方舟 has passed the V2-004 manual single-provider check; OpenAI / Anthropic still require native provider API Keys before they can be claimed as validated.
+
+### V2-004B Implementation
+
+V2-004B adds the latency baseline for ordinary floating-window AI requests:
+
+- Each request emits at most one local console `[Aviso perf]` summary.
+- The summary uses fixed redacted fields and input-size buckets only.
+- The timing stages cover UI visible, background received, provider request start, first chunk, done, and error/missing-stage categories.
+- It does not run real providers during implementation, does not add OpenRouter, does not add dependencies or permissions, and does not change provider routing, model defaults, token limits, API Key storage, or `contextai_*` storage keys.
+- V2-004 manual connectivity-test summaries remain separate and unchanged.
 
 ### Backlog Requiring Separate Approval
 
@@ -132,5 +143,6 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 - 2026-06-02: Added V2-002A provider host permission decision docs and V2-003 / V2-004 handoff boundaries.
 - 2026-06-02: Marked V2-003 registry/routing implementation complete while keeping live provider validation in V2-004.
 - 2026-06-02: Marked V2-004 manual connectivity test UI implemented while keeping real provider evidence as a release gate.
+- 2026-06-02: Marked V2-004B latency baseline implemented as local-console redacted perf summaries for ordinary AI requests.
 - 2026-06-02: Replaced the broad v0.2 candidate backlog with a v0.2-alpha issue map, recommended sequence, and high-permission discovery backlog.
 - 2026-06-01: Created Phase 1 roadmap from current internal dogfood baseline and release checklist.

@@ -91,6 +91,7 @@ Vercel 项目配置：
 - V2-002 / V2-002A：provider host permission 审计和决策文档已完成。
 - V2-003：minimal model registry and routing 已实现并提交，默认 `gpt-4o-mini`、`claude*` 路由和豆包 / 火山方舟北京网关行为保持兼容。
 - V2-004：Popup API Key 页已新增用户手动触发的单 provider 连接测试入口，background 通过独立 `VALIDATE_PROVIDER_CONNECTIVITY` 消息返回脱敏 validation 摘要。
+- V2-004B：真实浮窗 AI 请求已新增请求级 `[Aviso perf]` 脱敏性能摘要，覆盖 trigger、provider、model/endpoint、输入长度分桶、context type、UI/background/provider start/first chunk/done 阶段耗时和错误分类。该日志只输出到本地 console，不写入 storage，不发送远端 telemetry。
 - 当前生产 zip 包已生成：`build/chrome-mv3-prod.zip`，约 1.1 MB；包内 manifest 已核对为 `Aviso` / `0.1.0`，普通权限未新增，host permissions 仍为 OpenAI / Anthropic / Ark。
 
 V2-004 边界：
@@ -100,6 +101,14 @@ V2-004 边界：
 - 测试 payload 只使用固定公开短句，不带网页正文、选中文本、链接、图片、截图或剪贴板内容。
 - UI 只展示摘要字段，不展示 raw prompt、raw response、API Key、私人网页内容或截图内容。
 - 当前实现不代表 OpenAI / Anthropic 已通过真实验证；公开发布仍只能宣称已完成验证的 provider。
+
+V2-004B 边界：
+
+- `[Aviso perf]` 每次普通浮窗 AI 请求最多输出一条请求级摘要。
+- `input_size_bucket` 只记录 `0-500`、`501-2000`、`2001-5000`、`5001+` 分桶，不记录原文、页面正文、选中文本、完整 URL、图片 base64 或 response。
+- `context_type` 区分 `selection`、`page_summary`、`image_explain`、`command`、`follow_up`、`unknown`。
+- 该性能基线不改变默认 provider、模型、token 上限、API Key 存储位置、`contextai_*` storage key 或 manifest 权限。
+- V2-004 手动连接测试摘要保持原结构；本轮未运行真实 provider API。
 
 已补录的 V2-004 脱敏验证结果：
 

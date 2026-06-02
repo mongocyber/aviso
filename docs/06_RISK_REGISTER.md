@@ -20,7 +20,7 @@ Aviso's current risk profile is less about missing core code and more about rele
 | R-004 | Public privacy policy does not exist. | Open | Chrome Web Store release blocked. | Derive policy from `docs/07_PRIVACY_AND_SECURITY.md` and Popup copy. | Prepare public policy page in a separate task. |
 | R-005 | Store screenshots or docs may accidentally expose API Keys or private pages. | Open | Security and trust risk. | Use sanitized fixtures and run a final leakage check. | Define screenshot capture rules. |
 | R-006 | Broader remote-link fetching would require wider host permissions. | Controlled | Could weaken privacy and store trust. | Keep out of v0.1; require product decision for v0.2. | Decide v0.2 host-permission stance. |
-| R-007 | Model first token can be slow. | Accepted for v0.1 | Users may interpret delay as failure. | Immediate floating UI, waiting states, timing logs, shorter default output. | Document limitation in user-facing release copy. |
+| R-007 | Model first token can be slow. | Accepted for v0.1 | Users may interpret delay as failure. | Immediate floating UI, waiting states, timing logs, shorter default output, and V2-004B redacted `[Aviso perf]` summaries. | Use local perf summaries to classify UI/background/provider first chunk/done/error delays before changing models or token limits. |
 | R-008 | Long pages are truncated to 5000 characters. | Accepted for v0.1 | Summaries may miss later content. | Record as limitation; evaluate chunking in v0.2. | Add v0.2 discovery issue. |
 | R-009 | Remote image URLs may fail even after format validation. | Accepted for v0.1 | Image explain may be unreliable on protected images. | Show readable error; consider local capture in v0.2. | Add v0.2 image reliability issue. |
 | R-010 | `npm run build` can fail in sandbox with `Operation not permitted`. | Known environment risk | False debugging path if treated as code failure. | Re-run outside sandbox when needed and document environment. | Keep note in release plan. |
@@ -42,10 +42,12 @@ Aviso's current risk profile is less about missing core code and more about rele
 | R-107 | Third-party translation fallback could contradict no-extra-network expectations. | Controlled | Data may be sent to Google/Baidu/Youdao without the user understanding it. | Keep out of MVP until provider copy and host permissions are approved. | Move to discovery backlog. |
 | R-108 | Multi-tab, tab grouping, and voice features require high-sensitivity permissions. | Controlled | Store review, microphone trust, and broad browsing-data access risk. | Keep out of MVP; evaluate with decision docs before coding. | Create discovery issue only if user approves. |
 | R-109 | Future implementation may confuse host permission implementation with completed validation. | Controlled | Docs or public copy could overstate provider support. | Keep live validation in V2-004; public copy claims only validated providers. | Use registry metadata but keep provider claims blocked until validation records exist. |
+| R-110 | Performance logs could accidentally expose private context if raw inputs are logged. | Controlled | Console output may reveal selected text, page content, URLs, image/base64 payloads, or API Keys. | V2-004B uses fixed fields, size buckets, context types, sanitized provider/model labels, and no persistence or telemetry. | Keep tests covering field shape, buckets, missing timing, error categories, and redaction. |
 
 ## Accepted v0.1 Limitations
 
 - Provider latency can vary.
+- Latency diagnosis is local-console only and should not be treated as telemetry or benchmark evidence.
 - Long content is truncated.
 - Remote link body extraction is not implemented.
 - Some image sources are unsupported or may fail provider-side.
@@ -58,6 +60,7 @@ Aviso's current risk profile is less about missing core code and more about rele
 - Shipping screenshots or docs containing real API Keys or private account data.
 - Shipping without package artifact, tag, and rollback point.
 - Expanding permissions without product-owner approval.
+- Persisting performance logs or sending them to any remote service without a separate privacy decision.
 - Shipping v0.2-alpha provider, screenshot, translation, tab, or voice features without updated privacy/security docs.
 
 ## Open Questions
@@ -72,6 +75,7 @@ Aviso's current risk profile is less about missing core code and more about rele
 
 - 2026-06-02: Updated provider host permission risks after V2-003 landed OpenAI / Anthropic manifest hosts and minimal registry/routing, while live validation remains open for V2-004.
 - 2026-06-02: Updated provider validation risks after V2-004 added manual single-provider connectivity UI while keeping live evidence open.
+- 2026-06-02: Added V2-004B latency-baseline risk controls for local-only redacted `[Aviso perf]` summaries.
 - 2026-06-02: Updated provider host permission risks after OpenAI / Anthropic host decisions were approved for V2-003, while live validation remains open for V2-004.
 - 2026-06-02: Added v0.2-alpha planning risks for scope expansion, host permissions, provider checks, model-route storage, screenshots, caching, third-party translation, and high-permission tab/voice features.
 - 2026-06-01: Created Phase 1 risk register from current release checklist, status file, and technical baseline.

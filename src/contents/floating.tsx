@@ -158,6 +158,7 @@ function FloatingWindow() {
           requestId: providedRequestId,
           trigger,
           operation,
+          context,
           selectionText,
           userMessage,
           linkUrl,
@@ -232,6 +233,8 @@ function FloatingWindow() {
             requestId,
             {
               operation,
+              trigger,
+              context,
               selectionText,
               userMessage,
               linkUrl,
@@ -339,7 +342,7 @@ function FloatingWindow() {
     const q = followUp.trim()
     if (!q) return
     const requestId = `req-${Date.now()}`
-    const timing = startTiming()
+    const timing = markTiming(startTiming(), "floatingShownAt")
     activeRequestRef.current = requestId
     logTiming("trigger", requestId, timing, {
       trigger: "follow-up",
@@ -367,6 +370,7 @@ function FloatingWindow() {
     sendAIRequest(
       requestId,
       {
+        trigger: "follow-up",
         operation: "custom",
         userMessage: q,
         selectionText: priorContext,

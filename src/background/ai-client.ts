@@ -9,7 +9,7 @@ import type {
 import { normalizeError } from "~utils/errors"
 import { assertSupportedImageSrc } from "~utils/image-src"
 import { parseIntentLocally } from "~utils/intent"
-import { resolveModelRoute } from "~utils/model-registry"
+import { resolveModelRoute, type ProviderId } from "~utils/model-registry"
 import {
   buildConnectivityTestPayload,
   buildConnectivityValidationSummary,
@@ -21,7 +21,15 @@ import {
 } from "~utils/provider-connectivity"
 import { getApiKeys, getSettings, getTemplates } from "~utils/storage"
 import { expandTemplate } from "~utils/template"
-import { logTiming, markTiming } from "~utils/timing"
+import {
+  categorizePerfError,
+  logPerfSummary,
+  logTiming,
+  markTiming,
+  type PerfContextType,
+  type PerfErrorCategory,
+  type RequestTiming
+} from "~utils/timing"
 
 export type StreamChunk = {
   text: string
@@ -156,22 +164,28 @@ export async function handleAIRequest(
         apiKeys.anthropic,
         onChunk,
         {
-          requestId: options.requestId
+          requestId: options.requestId,
+          logPerf: true
         }
       )
     } else if (route.provider.id === "doubao") {
       if (route.missingConfig === "doubaoModel") {
+        logPreProviderPerf(payload, route.provider.id, route.requestModel)
         throw new Error("豆包接入点 ID 未配置，请在设置的 API Key 页填写")
       }
       await callOpenAI(route.requestModel, payload, apiKeys.doubao, onChunk, {
         baseURL: route.provider.baseURL,
         keyLabel: "豆包",
-        requestId: options.requestId
+        requestId: options.requestId,
+        providerId: route.provider.id,
+        logPerf: true
       })
     } else {
       await callOpenAI(route.requestModel, payload, apiKeys.openai, onChunk, {
         keyLabel: route.provider.displayName,
-        requestId: options.requestId
+        requestId: options.requestId,
+        providerId: route.provider.id,
+        logPerf: true
       })
     }
   } catch (err) {
@@ -184,72 +198,103 @@ async function callOpenAI(
   payload: AIRequestPayload,
   apiKey: string,
   onChunk: (chunk: StreamChunk) => void,
-  opts?: { baseURL?: string; keyLabel?: string; requestId?: string }
+  opts?: {
+    baseURL?: string
+    keyLabel?: string
+    requestId?: string
+    providerId?: ProviderId
+    logPerf?: boolean
+  }
 ): Promise<void> {
-  if (!apiKey) throw new Error(`${opts?.keyLabel ?? "OpenAI"} API Key 未配置`)
-
-  const client = new OpenAI({
-    apiKey,
-    baseURL: opts?.baseURL,
-    dangerouslyAllowBrowser: true
-  })
-
-  const messages =
-    payload.operation === "image_explain" && payload.srcUrl
-      ? buildImageMessages(payload, "openai")
-      : buildMessages(payload)
-  const maxTokens = getMaxOutputTokens(payload.operation)
   const requestId = opts?.requestId ?? "unknown"
-  let timing = markTiming(payload.timing, "providerRequestStartedAt")
-
-  logTiming("provider_request_start", requestId, timing, {
-    provider: opts?.keyLabel ?? "OpenAI",
-    model,
-    maxTokens,
-    inputChars: estimatePayloadChars(payload)
-  })
-
-  const stream = await client.chat.completions.create({
-    model,
-    messages: messages as Parameters<
-      typeof client.chat.completions.create
-    >[0]["messages"],
-    stream: true,
-    max_tokens: maxTokens
-  })
-
+  let timing: RequestTiming | undefined = payload.timing
   let sawFirstChunk = false
   let sawDone = false
-  for await (const chunk of stream) {
-    const text = chunk.choices[0]?.delta?.content ?? ""
-    const done = chunk.choices[0]?.finish_reason != null
-    if (text && !sawFirstChunk) {
-      sawFirstChunk = true
-      timing = markTiming(timing, "firstChunkAt")
-      logTiming("provider_first_chunk", requestId, timing, {
-        provider: opts?.keyLabel ?? "OpenAI",
-        model
-      })
+  let errorCategory: PerfErrorCategory = "none"
+
+  try {
+    if (!apiKey) throw new Error(`${opts?.keyLabel ?? "OpenAI"} API Key 未配置`)
+
+    const client = new OpenAI({
+      apiKey,
+      baseURL: opts?.baseURL,
+      dangerouslyAllowBrowser: true
+    })
+
+    const messages =
+      payload.operation === "image_explain" && payload.srcUrl
+        ? buildImageMessages(payload, "openai")
+        : buildMessages(payload)
+    const maxTokens = getMaxOutputTokens(payload.operation)
+    timing = markTiming(timing, "providerRequestStartedAt")
+
+    logTiming("provider_request_start", requestId, timing, {
+      provider: opts?.keyLabel ?? "OpenAI",
+      model,
+      maxTokens,
+      inputChars: estimatePayloadChars(payload)
+    })
+
+    const stream = await client.chat.completions.create({
+      model,
+      messages: messages as Parameters<
+        typeof client.chat.completions.create
+      >[0]["messages"],
+      stream: true,
+      max_tokens: maxTokens
+    })
+
+    for await (const chunk of stream) {
+      const text = chunk.choices[0]?.delta?.content ?? ""
+      const done = chunk.choices[0]?.finish_reason != null
+      if (text && !sawFirstChunk) {
+        sawFirstChunk = true
+        timing = markTiming(timing, "firstChunkAt")
+        logTiming("provider_first_chunk", requestId, timing, {
+          provider: opts?.keyLabel ?? "OpenAI",
+          model
+        })
+      }
+      if (text || done) onChunk({ text, done })
+      if (done) {
+        sawDone = true
+        timing = markTiming(timing, "doneAt")
+        logTiming("provider_done", requestId, timing, {
+          provider: opts?.keyLabel ?? "OpenAI",
+          model
+        })
+      }
     }
-    if (text || done) onChunk({ text, done })
-    if (done) {
-      sawDone = true
+
+    if (!sawDone) {
+      errorCategory = "missing_done"
       timing = markTiming(timing, "doneAt")
       logTiming("provider_done", requestId, timing, {
         provider: opts?.keyLabel ?? "OpenAI",
-        model
+        model,
+        reason: "stream-ended"
+      })
+      onChunk({ text: "", done: true })
+    }
+
+    if (!sawFirstChunk && errorCategory === "none") {
+      errorCategory = "missing_first_chunk"
+    }
+  } catch (err) {
+    errorCategory = categorizePerfError(err)
+    throw err
+  } finally {
+    if (opts?.logPerf) {
+      logPerfSummary({
+        trigger: payload.trigger,
+        provider: opts.providerId ?? "openai",
+        modelOrEndpoint: model,
+        inputChars: estimatePayloadChars(payload),
+        contextType: inferPerfContextType(payload),
+        timing,
+        errorCategory
       })
     }
-  }
-
-  if (!sawDone) {
-    timing = markTiming(timing, "doneAt")
-    logTiming("provider_done", requestId, timing, {
-      provider: opts?.keyLabel ?? "OpenAI",
-      model,
-      reason: "stream-ended"
-    })
-    onChunk({ text: "", done: true })
   }
 }
 
@@ -258,70 +303,95 @@ async function callAnthropic(
   payload: AIRequestPayload,
   apiKey: string,
   onChunk: (chunk: StreamChunk) => void,
-  opts: { requestId?: string } = {}
+  opts: { requestId?: string; logPerf?: boolean } = {}
 ): Promise<void> {
-  if (!apiKey) throw new Error("Anthropic API Key 未配置")
-
-  const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true })
-
-  const messages =
-    payload.operation === "image_explain" && payload.srcUrl
-      ? buildImageMessages(payload, "anthropic")
-      : buildMessages(payload)
-  const maxTokens = getMaxOutputTokens(payload.operation)
   const requestId = opts.requestId ?? "unknown"
-  let timing = markTiming(payload.timing, "providerRequestStartedAt")
-
-  logTiming("provider_request_start", requestId, timing, {
-    provider: "Anthropic",
-    model,
-    maxTokens,
-    inputChars: estimatePayloadChars(payload)
-  })
-
-  const stream = client.messages.stream({
-    model,
-    messages: messages as Parameters<
-      typeof client.messages.stream
-    >[0]["messages"],
-    max_tokens: maxTokens
-  })
-
+  let timing: RequestTiming | undefined = payload.timing
   let sawFirstChunk = false
   let sawDone = false
-  for await (const event of stream) {
-    if (
-      event.type === "content_block_delta" &&
-      event.delta.type === "text_delta"
-    ) {
-      if (!sawFirstChunk) {
-        sawFirstChunk = true
-        timing = markTiming(timing, "firstChunkAt")
-        logTiming("provider_first_chunk", requestId, timing, {
+  let errorCategory: PerfErrorCategory = "none"
+
+  try {
+    if (!apiKey) throw new Error("Anthropic API Key 未配置")
+
+    const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true })
+
+    const messages =
+      payload.operation === "image_explain" && payload.srcUrl
+        ? buildImageMessages(payload, "anthropic")
+        : buildMessages(payload)
+    const maxTokens = getMaxOutputTokens(payload.operation)
+    timing = markTiming(timing, "providerRequestStartedAt")
+
+    logTiming("provider_request_start", requestId, timing, {
+      provider: "Anthropic",
+      model,
+      maxTokens,
+      inputChars: estimatePayloadChars(payload)
+    })
+
+    const stream = client.messages.stream({
+      model,
+      messages: messages as Parameters<
+        typeof client.messages.stream
+      >[0]["messages"],
+      max_tokens: maxTokens
+    })
+
+    for await (const event of stream) {
+      if (
+        event.type === "content_block_delta" &&
+        event.delta.type === "text_delta"
+      ) {
+        if (!sawFirstChunk) {
+          sawFirstChunk = true
+          timing = markTiming(timing, "firstChunkAt")
+          logTiming("provider_first_chunk", requestId, timing, {
+            provider: "Anthropic",
+            model
+          })
+        }
+        onChunk({ text: event.delta.text, done: false })
+      } else if (event.type === "message_stop") {
+        sawDone = true
+        timing = markTiming(timing, "doneAt")
+        logTiming("provider_done", requestId, timing, {
           provider: "Anthropic",
           model
         })
+        onChunk({ text: "", done: true })
       }
-      onChunk({ text: event.delta.text, done: false })
-    } else if (event.type === "message_stop") {
-      sawDone = true
+    }
+
+    if (!sawDone) {
+      errorCategory = "missing_done"
       timing = markTiming(timing, "doneAt")
       logTiming("provider_done", requestId, timing, {
         provider: "Anthropic",
-        model
+        model,
+        reason: "stream-ended"
       })
       onChunk({ text: "", done: true })
     }
-  }
 
-  if (!sawDone) {
-    timing = markTiming(timing, "doneAt")
-    logTiming("provider_done", requestId, timing, {
-      provider: "Anthropic",
-      model,
-      reason: "stream-ended"
-    })
-    onChunk({ text: "", done: true })
+    if (!sawFirstChunk && errorCategory === "none") {
+      errorCategory = "missing_first_chunk"
+    }
+  } catch (err) {
+    errorCategory = categorizePerfError(err)
+    throw err
+  } finally {
+    if (opts.logPerf) {
+      logPerfSummary({
+        trigger: payload.trigger,
+        provider: "anthropic",
+        modelOrEndpoint: model,
+        inputChars: estimatePayloadChars(payload),
+        contextType: inferPerfContextType(payload),
+        timing,
+        errorCategory
+      })
+    }
   }
 }
 
@@ -364,6 +434,36 @@ function estimatePayloadChars(payload: AIRequestPayload): number {
     payload.pageUrl,
     payload.systemPrompt
   ].reduce((sum, value) => sum + (value?.length ?? 0), 0)
+}
+
+function inferPerfContextType(payload: AIRequestPayload): PerfContextType {
+  if (payload.trigger === "follow-up") return "follow_up"
+  if (payload.operation === "image_explain") return "image_explain"
+  if (payload.operation === "summarize" && payload.pageContent) {
+    return "page_summary"
+  }
+  if (payload.trigger === "command-palette" || payload.userMessage) {
+    return "command"
+  }
+  if (payload.context === "selection" || payload.selectionText)
+    return "selection"
+  return "unknown"
+}
+
+function logPreProviderPerf(
+  payload: AIRequestPayload,
+  provider: ProviderId,
+  modelOrEndpoint: string
+): void {
+  logPerfSummary({
+    trigger: payload.trigger,
+    provider,
+    modelOrEndpoint,
+    inputChars: estimatePayloadChars(payload),
+    contextType: inferPerfContextType(payload),
+    timing: payload.timing,
+    errorCategory: "unknown_error"
+  })
 }
 
 function buildImageMessages(
@@ -477,9 +577,7 @@ function buildUserContent(payload: AIRequestPayload): string {
 }
 
 /** 轻量意图解析：保持本地解析，避免额外模型调用。 */
-export async function parseIntent(
-  input: string
-): Promise<{
+export async function parseIntent(input: string): Promise<{
   action: string
   target: string
   params: Record<string, unknown>
