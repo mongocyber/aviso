@@ -1,6 +1,6 @@
 # Aviso STATUS
 
-Updated: 2026-06-01
+Updated: 2026-06-02
 
 ## 本轮接管结论
 
@@ -30,21 +30,32 @@ Aviso 是一个 Chrome MV3 浏览器扩展，技术栈为 Plasmo、React 18、Ty
 
 ## 官网文档站 Vercel 生产部署状态
 
-时间：2026-06-01 CST。
+时间：2026-06-02 CST。
 
-状态：Aviso 官网文档站已通过 Vercel CLI 完成生产部署，使用 Vercel 默认域名托管。该状态只代表 `website/` Docusaurus 文档站已可访问，不代表 Aviso 扩展已公开发布、已提交 Chrome Web Store 或已关闭 v0.1 发布门禁。
+状态：Aviso 官网文档站已通过 GitHub `main` 自动部署到 Vercel，使用 Vercel 默认域名托管。该状态只代表 `website/` Docusaurus 文档站已可访问，且 GitHub main -> Vercel 自动部署链路已启用并成功触发；不代表 Aviso 扩展已公开发布、已提交 Chrome Web Store 或已关闭 v0.1 发布门禁。
 
 生产 URL：
 
 ```text
-https://aviso-nine.vercel.app
+https://aviso-nine.vercel.app/
 ```
 
-本次部署 URL：
+本次 GitHub 自动部署 URL：
 
 ```text
-https://aviso-ca1m2ip9g-jonyliu-projects.vercel.app
+https://vercel.com/jonyliu-projects/aviso/7FtsfHC9FMQAGvpzRUo5dWbrg2VH
 ```
+
+最新线上 commit：
+
+```text
+cb801bc9e6a41bdfd6591bf33a162c44d4583fa2
+```
+
+相关提交：
+
+- `6258c94 docs: archive landing page design references`：官网首页设计源文件归档。
+- `cb801bc docs: refresh website landing page`：官网首页刷新并通过 GitHub `main` 自动部署到 Vercel。
 
 Vercel 项目配置：
 
@@ -60,14 +71,14 @@ Vercel 项目配置：
 | 页面 | 状态 |
 |------|------|
 | `/` | 200 |
+| `/docs/intro/` | 200 |
 | `/docs/privacy-policy/` | 200 |
 | `/docs/install/` | 200 |
-| `/docs/known-limitations/` | 200 |
 
 当前限制与风险：
 
-- 当前是 Vercel CLI 生产部署成功，不是 GitHub `main` 自动部署触发的结果。
-- Vercel GitHub 集成尚未连上，可能原因是 Vercel GitHub App 尚未被授权访问 `mongocyber/aviso`。
+- Vercel GitHub 集成已连上，GitHub `main` 自动部署已启用并已成功触发。
+- 新版官网首页已部署到生产 URL，但 `aviso-social-card.png` 仍待补齐。
 - 隐私政策页面仍为发布前草案，正式公开发布前仍需与 Chrome Web Store 隐私声明、Popup 内隐私说明和最终构建产物再次核对。
 - Aviso 仍保持 `v0.1 internal dogfood / 内部试用版` 口径；OpenAI / Anthropic 真实调用、Chrome Web Store 提交、最终 package zip、release tag 和回滚点仍未关闭。
 
@@ -97,7 +108,8 @@ Vercel 项目配置：
 
 - 当前目录已是本地 Git 仓库。
 - v0.1 internal dogfood 基线提交：`3dc7ea3 chore: establish v0.1 internal dogfood baseline`。
-- 当前没有创建 GitHub 远端、没有 push、没有 tag；公开发布前仍需单独确认远端、tag 和回滚点。
+- GitHub `origin/main` 已包含新版官网首页部署提交：`cb801bc9e6a41bdfd6591bf33a162c44d4583fa2`。
+- 当前没有创建 release tag 或公开发布回滚点；公开发布前仍需单独确认 tag 和回滚方案。
 
 ## 本轮完成的 Issue 001 改动
 

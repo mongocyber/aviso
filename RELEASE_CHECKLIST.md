@@ -6,7 +6,7 @@
 
 负责人：
 
-日期：2026-06-01
+日期：2026-06-02
 
 当前收口状态：`v0.1 internal dogfood / 内部试用版`
 
@@ -87,7 +87,9 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [ ] 128x128 图标可用。
 - [ ] 商店截图齐备，且不包含 API Key、私人网页、真实账号或敏感信息。
 - [ ] 商店描述准确说明功能、权限和隐私边界。
-- [x] 托管文档站已通过 Vercel 默认域名生产部署：`https://aviso-nine.vercel.app`。该状态不代表扩展已公开发布或已提交 Chrome Web Store。
+- [x] 托管文档站已通过 GitHub `main` 自动部署到 Vercel 生产环境：`https://aviso-nine.vercel.app/`。该状态不代表扩展已公开发布或已提交 Chrome Web Store。
+- [x] 新版官网首页已部署。设计源文件归档 commit：`6258c94`；官网首页刷新 commit：`cb801bc`。
+- [ ] `aviso-social-card.png` 仍待补齐。
 - [x] 隐私政策草案页面已有可访问 URL：`https://aviso-nine.vercel.app/docs/privacy-policy/`。
 - [ ] 隐私政策最终版本仍需与 Chrome Web Store 隐私声明、Popup 内隐私说明和最终构建产物再次核对。
 - [ ] 发布说明列出主要功能、已知限制和支持方式。
@@ -96,7 +98,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 
 - [ ] 发布账号、提交权限和密钥由用户确认。
 - [ ] GitHub Actions 发布 workflow 只在确认后手动触发。
-- [ ] Vercel GitHub 集成自动部署 `main` 已启用。当前仅为 Vercel CLI 生产部署成功，GitHub 集成尚未连上，可能原因是 Vercel GitHub App 未授权访问 `mongocyber/aviso`。
+- [x] Vercel GitHub 集成自动部署 `main` 已启用并已成功触发。最新线上 commit：`cb801bc9e6a41bdfd6591bf33a162c44d4583fa2`；Deployment URL：`https://vercel.com/jonyliu-projects/aviso/7FtsfHC9FMQAGvpzRUo5dWbrg2VH`。
 - [ ] 发布前有可追踪 git 提交或 tag。
 - [ ] 记录上一版可回滚构建产物或 tag。
 - [ ] 发布后验证商店版本号、权限提示和首次启动体验。
@@ -115,13 +117,12 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [x] v0.1 当前用途限定为 internal dogfood / 内部试用。
 - [x] A-G 手动验收用户已验证基本通过。
 - [x] 豆包/火山方舟 API 用户确认可用；本次未运行真实 API。
-- [x] Aviso 官网文档站已通过 Vercel CLI 生产部署，Root Directory 为 `website`，生产 URL 为 `https://aviso-nine.vercel.app`。
-- [x] 已验证官网首页、隐私政策草案、安装文档、已知限制页面均返回 200。
+- [x] Aviso 官网文档站已通过 GitHub `main` 自动部署到 Vercel，Root Directory 为 `website`，生产 URL 为 `https://aviso-nine.vercel.app/`。
+- [x] 已验证官网首页、介绍文档、隐私政策草案、安装文档均返回 200。
 - [x] 当前版本不进入公开发布，不提交 Chrome 商店。
 - [ ] OpenAI 真实最小调用验证完成。
 - [ ] Anthropic 真实最小调用验证完成。
 - [ ] `npm run package` 通过并生成可提交 zip。
 - [ ] Chrome 商店截图、描述、发布说明等素材准备完成。
 - [ ] 外部隐私政策最终版本准备完成并与 Popup 隐私说明、Chrome Web Store 隐私声明一致。
-- [ ] Vercel GitHub 集成自动部署 `main` 已启用。
 - [ ] 发布前存在可追踪 git 提交或 tag，并记录回滚点。
