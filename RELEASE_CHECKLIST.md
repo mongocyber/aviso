@@ -6,7 +6,7 @@
 
 负责人：
 
-日期：2026-06-02
+日期：2026-06-03
 
 当前收口状态：`v0.1 internal dogfood / 内部试用版`
 
@@ -49,12 +49,13 @@ tests/manual-test.html
 | G · iframe / Hugging Face Spaces / Gradio 嵌入页 | 基本通过 | 用户反馈已验证基本通过；覆盖 iframe 内划词、右键、命令面板、剪贴板提示和单实例 UI。 |
 | V2-004C · 追问速度保护                           | 通过     | 用户反馈已验收；覆盖追问上下文预算、慢响应提示和停止等待。                          |
 | V2-006 · 复制当前上下文                          | 通过     | 用户反馈已验收；覆盖右键复制当前上下文 internal dogfood 主路径。                    |
+| V2-007 · 翻译 MVP                                 | 通过     | 用户反馈已验收；覆盖右键选区“翻译”、划词工具栏“翻译”和命令面板“翻译 hello”。       |
 
 Chrome 版本：用户未补录
 
 操作系统：用户未补录
 
-验收时间：2026-06-01 / 2026-06-02 用户反馈
+验收时间：2026-06-01 / 2026-06-02 / 2026-06-03 用户反馈
 
 A-G 是否全部通过：基本通过，进入 v0.1 内部试用
 
@@ -87,7 +88,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 
 - [x] `npm test` 通过。2026-06-02，V2-007 后 54 项测试通过；存在 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
 - [x] `npx tsc --noEmit` 通过。2026-06-02，V2-007 后无错误输出。
-- [x] `npm run build` 已有既有通过记录。2026-06-02 V2-007 本轮默认沙箱内仍被系统拦截为 `Operation not permitted`；按本轮边界未沙箱外重跑。
+- [x] `npm run build` 已有既有通过记录。2026-06-03 V2-007 合回主线后默认沙箱内仍被系统拦截为 `Operation not permitted`；沙箱外重跑通过，构建产物 manifest 权限边界已核对。
 - [x] `npm run package` 通过，并生成当前 zip：`build/chrome-mv3-prod.zip`，约 1.1 MB。2026-06-02，沙箱外重跑通过；包内 manifest 权限边界已核对。
 - [x] Chrome 加载 `build/chrome-mv3-prod` 无安装报错。2026-06-02 用户本地验收通过。
 - [x] 版本号、扩展名称、描述、图标符合本次发布目标。Manifest 显示 `0.1.0` / `Aviso`，权限未扩大。
@@ -161,7 +162,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] V2-006 copy current context internal dogfood MVP 已实现：右键页面菜单手动触发，复制 Markdown 结构化上下文到剪贴板，正文按默认 5000 字符边界截断；未新增权限、provider、依赖、storage、history 或真实 API 调用。
 - [x] V2-006 已重新加载本地扩展并完成人工 UI QA：右键复制当前上下文 internal dogfood 主路径用户反馈通过。记录来源：2026-06-02 用户反馈。
 - [x] V2-007 translation MVP 已实现：选区/用户输入翻译继续复用现有 provider routing、streaming、history 和脱敏 perf；不做全页 DOM 翻译、不接第三方翻译服务、不扩大权限。
-- [ ] V2-007 安装后人工 UI QA 仍需补录：右键选区“翻译”、划词工具栏“翻译”和命令面板“翻译 hello”主路径。
+- [x] V2-007 已重新加载本地扩展并完成人工 UI QA：右键选区“翻译”、划词工具栏“翻译”和命令面板“翻译 hello”三条主路径用户反馈通过。记录来源：2026-06-03 用户反馈。
 - [ ] V2-005 真实 vision provider 验证仍未完成；OpenAI / Anthropic 原生 API Key 验证前，截图理解不能对外宣称 provider 已验证。
 - [ ] OpenAI / Anthropic 真实 provider 最小验证记录仍待原生 API Key 手动触发并补录；OpenAI / Anthropic 仍不可对外宣称已验证。
 - [x] 翻译和复制上下文能力已确认不会把缓存内容或私有网页信息写入日志、文档、截图或 release artifacts；本轮未实现翻译缓存。

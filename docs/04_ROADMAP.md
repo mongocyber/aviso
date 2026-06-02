@@ -54,7 +54,7 @@ Aviso should move from internal dogfood to public release through evidence, not 
 | V2-004C follow-up speed guard                        | P0       | Reduce perceived wait for follow-ups and long first-token delays through bounded prior context, clearer waiting copy, slow hint, and stop waiting.                       | V2-004B                | Implemented; installed-extension QA completed; no provider/model/permission changes                            |
 | V2-005 screenshot to AI                              | P1       | Capture a user-selected visible-page region and send it to a vision-capable configured model.                                                                            | V2-004C                | Implemented for internal dogfood; loaded-extension UI QA completed; real vision provider validation still open |
 | V2-006 copy current context                          | P1       | Copy title, URL, optional selection, and truncated page text as clean structured text.                                                                                   | V2-001                 | Implemented for internal dogfood; installed-extension QA completed                                             |
-| V2-007 translation MVP                               | P1       | Improve selection translation and floating-window translation output without third-party default fallback.                                                               | V2-003                 | Implemented for internal dogfood; installed-extension UI QA pending                                            |
+| V2-007 translation MVP                               | P1       | Improve selection translation and floating-window translation output without third-party default fallback.                                                               | V2-003                 | Implemented for internal dogfood; installed-extension UI QA completed                                          |
 | V2-008 theme and Aviso panel polish                  | P2       | Add theme setting and user-facing panel naming changes without breaking shortcuts or iframe behavior.                                                                    | V2-001                 | Single implementation thread                                                                                   |
 | V2-009 high-permission discovery backlog             | P3       | Separately evaluate multi-tab aggregation, tab grouping, voice input, full-page translation, YouTube subtitles, and remote-link body extraction.                         | V2-001                 | Read-only discovery / decision docs                                                                            |
 
@@ -146,7 +146,7 @@ V2-007 improves translation as an existing AI operation, not as a separate trans
 - Floating-window translation copy is more explicit: title `翻译文本`, user bubble `待翻译文本`, waiting state `正在翻译…`, and errors prefixed with `翻译失败`.
 - The previous page-context right-click translation item is removed to avoid empty-selection requests that translate only a page URL.
 - The implementation adds no manifest permission, host permission, provider, dependency, third-party translation fallback, cache, telemetry, package, tag, release action, default model change, token-limit change, API Key storage change, or `contextai_*` storage-key migration.
-- Installed-extension UI QA still needs a dogfood record for right-click selection translation, toolbar translation, and command palette `翻译 hello`.
+- Installed-extension UI QA has covered right-click selection translation, toolbar translation, and command palette `翻译 hello` for internal dogfood.
 
 ### Backlog Requiring Separate Approval
 
@@ -176,7 +176,7 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 2. Use V2-002A decision docs as the boundary for provider host permissions.
 3. Decide whether v0.2-alpha should proceed before v0.1 public-release gates are closed.
 4. Keep public provider claims limited to 豆包 / 火山方舟 until OpenAI / Anthropic native-key checks are completed.
-5. Implement P1 user-facing improvements in the order: screenshot to AI, copy context, translation MVP. Screenshot and copy context are now implemented for internal dogfood; translation MVP remains next.
+5. P1 user-facing improvements for screenshot to AI, copy context, and translation MVP are implemented for internal dogfood. Keep V2-008 theme / panel polish as the next implementation candidate after V2-009 discovery is reviewed.
 6. Keep public release preparation separate: package, provider evidence, privacy policy, store assets, tag, and rollback.
 
 ## Open Questions

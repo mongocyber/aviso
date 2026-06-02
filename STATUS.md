@@ -1,6 +1,6 @@
 # Aviso STATUS
 
-Updated: 2026-06-02
+Updated: 2026-06-03
 
 ## 本轮接管结论
 
@@ -150,6 +150,7 @@ V2-007 边界：
 - translate payload 只使用 `selectionText` 或命令面板解析后的 `userMessage`；不会把页面 URL、链接 URL 或页面正文作为待翻译文本混入。
 - 空翻译输入会在 provider 前拦截并显示可读错误，不运行真实 provider API。
 - `[Aviso perf]` 仍只输出脱敏字段和输入长度分桶；不记录 raw prompt、raw response、页面正文、选中文本、完整 URL、图片/base64、截图或 API Key。
+- 已完成重新加载后的人工 UI QA：右键选区“翻译”、划词工具栏“翻译”和命令面板“翻译 hello”三条主路径用户反馈通过。记录来源：2026-06-03 用户反馈。
 
 已补录的 V2-004 脱敏验证结果：
 
