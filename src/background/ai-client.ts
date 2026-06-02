@@ -1,18 +1,125 @@
-import OpenAI from "openai"
 import Anthropic from "@anthropic-ai/sdk"
-import { getSettings, getApiKeys, getTemplates } from "~utils/storage"
-import { expandTemplate } from "~utils/template"
+import OpenAI from "openai"
+
+import type { PromptTemplate } from "~types/history"
+import type {
+  AIRequestPayload,
+  ProviderConnectivityPayload
+} from "~types/messages"
 import { normalizeError } from "~utils/errors"
 import { assertSupportedImageSrc } from "~utils/image-src"
 import { parseIntentLocally } from "~utils/intent"
 import { resolveModelRoute } from "~utils/model-registry"
+import {
+  buildConnectivityTestPayload,
+  buildConnectivityValidationSummary,
+  categorizeConnectivityError,
+  getConnectivityModelId,
+  hasPrivateContextPayload,
+  isProviderHostPermissionPresent,
+  type ConnectivityValidationSummary
+} from "~utils/provider-connectivity"
+import { getApiKeys, getSettings, getTemplates } from "~utils/storage"
+import { expandTemplate } from "~utils/template"
 import { logTiming, markTiming } from "~utils/timing"
-import type { AIRequestPayload } from "~types/messages"
-import type { PromptTemplate } from "~types/history"
 
 export type StreamChunk = {
   text: string
   done: boolean
+}
+
+export async function handleProviderConnectivityTest(
+  payload: ProviderConnectivityPayload
+): Promise<ConnectivityValidationSummary> {
+  const [settings, apiKeys] = await Promise.all([getSettings(), getApiKeys()])
+  const route = resolveModelRoute(
+    getConnectivityModelId(payload.provider),
+    settings
+  )
+  const hostPermissionPresent = isProviderHostPermissionPresent(
+    route.provider,
+    chrome.runtime.getManifest().host_permissions
+  )
+  const modelOrEndpoint = route.requestModel
+  const base = {
+    provider: payload.provider,
+    modelOrEndpoint,
+    hostPermissionPresent
+  }
+
+  if (!hostPermissionPresent) {
+    return buildConnectivityValidationSummary({
+      ...base,
+      result: "failure",
+      latencyNote: "未发起：缺少 provider host permission。",
+      errorCategory: "host_permission_missing",
+      notes: "Manifest 中没有当前 provider 的已批准 host permission。"
+    })
+  }
+
+  const apiKey = apiKeys[route.provider.apiKeyStorageKey]
+  if (!apiKey) {
+    return buildConnectivityValidationSummary({
+      ...base,
+      result: "failure",
+      latencyNote: "未发起：API Key 未配置。",
+      errorCategory: "api_key_missing",
+      notes: "请先保存当前 provider 的 API Key，再手动测试连接。"
+    })
+  }
+
+  if (route.missingConfig === "doubaoModel") {
+    return buildConnectivityValidationSummary({
+      ...base,
+      result: "failure",
+      latencyNote: "未发起：豆包接入点 ID / 模型名未配置。",
+      errorCategory: "endpoint_or_model_missing",
+      notes: "豆包测试需要火山方舟接入点 ID / 模型名。"
+    })
+  }
+
+  const testPayload = buildConnectivityTestPayload()
+  if (hasPrivateContextPayload(testPayload)) {
+    return buildConnectivityValidationSummary({
+      ...base,
+      result: "failure",
+      latencyNote: "未发起：测试 payload 含私有上下文字段。",
+      errorCategory: "unknown_error",
+      notes: "连接测试必须只使用固定公开短句。"
+    })
+  }
+
+  const startedAt = Date.now()
+  try {
+    if (route.provider.id === "anthropic") {
+      await callAnthropic(route.requestModel, testPayload, apiKey, () => {}, {
+        requestId: `connectivity-${route.provider.id}`
+      })
+    } else {
+      await callOpenAI(route.requestModel, testPayload, apiKey, () => {}, {
+        baseURL: route.provider.baseURL,
+        keyLabel: route.provider.displayName,
+        requestId: `connectivity-${route.provider.id}`
+      })
+    }
+
+    return buildConnectivityValidationSummary({
+      ...base,
+      result: "success",
+      latencyNote: `已发起并收到 provider 响应，耗时约 ${Date.now() - startedAt} ms。`,
+      errorCategory: "none",
+      notes:
+        "仅发送固定公开短句；未记录 raw prompt、raw response、网页正文、截图或 API Key。"
+    })
+  } catch (err) {
+    return buildConnectivityValidationSummary({
+      ...base,
+      result: "failure",
+      latencyNote: `已发起但 provider 未通过，耗时约 ${Date.now() - startedAt} ms。`,
+      errorCategory: categorizeConnectivityError(err),
+      notes: "provider 返回失败；界面仅展示脱敏分类，不展示底层原始响应。"
+    })
+  }
 }
 
 export async function handleAIRequest(
@@ -104,7 +211,9 @@ async function callOpenAI(
 
   const stream = await client.chat.completions.create({
     model,
-    messages: messages as Parameters<typeof client.chat.completions.create>[0]["messages"],
+    messages: messages as Parameters<
+      typeof client.chat.completions.create
+    >[0]["messages"],
     stream: true,
     max_tokens: maxTokens
   })
@@ -172,7 +281,9 @@ async function callAnthropic(
 
   const stream = client.messages.stream({
     model,
-    messages: messages as Parameters<typeof client.messages.stream>[0]["messages"],
+    messages: messages as Parameters<
+      typeof client.messages.stream
+    >[0]["messages"],
     max_tokens: maxTokens
   })
 
@@ -260,7 +371,8 @@ function buildImageMessages(
   provider: "openai" | "anthropic"
 ): Array<{ role: "user" | "assistant"; content: unknown }> {
   const imageSource = assertSupportedImageSrc(payload.srcUrl)
-  const systemPrompt = payload.systemPrompt ?? getDefaultSystemPrompt("image_explain")
+  const systemPrompt =
+    payload.systemPrompt ?? getDefaultSystemPrompt("image_explain")
   const extra = payload.pageUrl ? `\n\n页面地址：${payload.pageUrl}` : ""
   const text = systemPrompt + extra
 
@@ -299,27 +411,35 @@ function buildImageMessages(
 function buildMessages(
   payload: AIRequestPayload
 ): Array<{ role: "user" | "assistant"; content: string }> {
-  const systemPrompt = payload.systemPrompt ?? getDefaultSystemPrompt(payload.operation)
+  const systemPrompt =
+    payload.systemPrompt ?? getDefaultSystemPrompt(payload.operation)
   const userContent = buildUserContent(payload)
 
-  return [
-    { role: "user", content: `${systemPrompt}\n\n${userContent}` }
-  ]
+  return [{ role: "user", content: `${systemPrompt}\n\n${userContent}` }]
 }
 
 function getDefaultSystemPrompt(operation?: string): string {
   const prompts: Record<string, string> = {
-    explain: "你是一个专业的内容解释助手。请用清晰、简洁的中文解释用户提供的内容，必要时给出示例。",
-    translate: "你是一个专业翻译助手。请将用户提供的内容翻译成中文（如果是中文则翻译成英文），保持原文风格和语气。",
-    polish: "你是一个专业文字润色助手。请改善用户提供文字的表达，使其更流畅、专业，保持原意不变。",
-    summarize: "你是一个内容摘要助手。请用简洁的要点总结用户提供的内容，突出核心信息。",
-    intent: "你是一个意图解析助手。将用户输入解析为结构化指令，输出 JSON 格式：{action, target, params}。",
-    image_explain: "你是一个图像分析助手。请用简洁、清晰的中文描述并解释图片内容，包括主要元素、场景、文字等关键信息。",
+    explain:
+      "你是一个专业的内容解释助手。请用清晰、简洁的中文解释用户提供的内容，必要时给出示例。",
+    translate:
+      "你是一个专业翻译助手。请将用户提供的内容翻译成中文（如果是中文则翻译成英文），保持原文风格和语气。",
+    polish:
+      "你是一个专业文字润色助手。请改善用户提供文字的表达，使其更流畅、专业，保持原意不变。",
+    summarize:
+      "你是一个内容摘要助手。请用简洁的要点总结用户提供的内容，突出核心信息。",
+    intent:
+      "你是一个意图解析助手。将用户输入解析为结构化指令，输出 JSON 格式：{action, target, params}。",
+    image_explain:
+      "你是一个图像分析助手。请用简洁、清晰的中文描述并解释图片内容，包括主要元素、场景、文字等关键信息。",
     search: "你是一个知识助手。请就用户的问题提供准确、相关的信息和解答。",
-    navigate: "你是一个查询助手。请帮用户找到并说明其想要查找的信息，必要时给出可访问的途径或关键词。",
+    navigate:
+      "你是一个查询助手。请帮用户找到并说明其想要查找的信息，必要时给出可访问的途径或关键词。",
     custom: "你是一个智能助手，请根据上下文帮助用户处理其问题。"
   }
-  return prompts[operation ?? ""] ?? "你是一个智能助手，请帮助用户处理以下内容。"
+  return (
+    prompts[operation ?? ""] ?? "你是一个智能助手，请帮助用户处理以下内容。"
+  )
 }
 
 function buildUserContent(payload: AIRequestPayload): string {
@@ -359,6 +479,10 @@ function buildUserContent(payload: AIRequestPayload): string {
 /** 轻量意图解析：保持本地解析，避免额外模型调用。 */
 export async function parseIntent(
   input: string
-): Promise<{ action: string; target: string; params: Record<string, unknown> }> {
+): Promise<{
+  action: string
+  target: string
+  params: Record<string, unknown>
+}> {
   return parseIntentLocally(input)
 }

@@ -70,6 +70,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [ ] Popup 隐私说明与实际实现一致。
 - [ ] 商店隐私文案与 Popup 隐私说明一致。
 - [ ] API Key 不出现在日志、构建产物、截图、提交记录或 issue 文档中。
+- [x] Provider 连接测试入口为用户手动触发、一次只测单 provider，并返回脱敏摘要；不会在设置页打开时自动测试全部 provider。
 - [ ] 真实 OpenAI 调用已通过用户手动触发的单 provider 最小样例验证。公开发布门禁未关闭。
 - [ ] 真实 Anthropic 调用已通过用户手动触发的单 provider 最小样例验证。公开发布门禁未关闭。
 - [x] 真实豆包/火山方舟调用已由用户确认 API 可用。本次未运行真实 API。
@@ -140,5 +141,6 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [x] V2-002 provider validation / permission audit 的 host permission 产品决策已批准并记录到 `docs/decisions/001-v2-provider-host-permissions.md`。
 - [x] OpenAI / Anthropic 新增 provider host permission 已由用户确认，并已在 V2-003 同步到 `package.json` manifest；真实 provider 连通性验证仍留给 V2-004。
 - [x] V2-003 minimal model registry and routing 已实现，默认 `gpt-4o-mini` 和现有 OpenAI / Anthropic / 豆包路由行为保持兼容。
-- [ ] 任何真实 provider 连通性测试均由用户手动触发、一次只测单 provider，使用安全测试 Key，不记录 Key、raw prompt、raw response、私人网页内容或私密截图。
+- [x] V2-004 manual connectivity test UI 已实现：用户手动触发、一次只测单 provider，摘要不记录 Key、raw prompt、raw response、私人网页内容或私密截图。
+- [ ] 真实 provider 最小验证记录仍待用户手动触发并补录；OpenAI / Anthropic 仍不可对外宣称已验证。
 - [ ] 截图、翻译、缓存或复制上下文能力上线前，已确认不会把敏感截图、缓存内容或私有网页信息写入日志、文档、截图或 release artifacts。

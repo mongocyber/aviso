@@ -1,23 +1,18 @@
-import { test } from "node:test"
 import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
+import { test } from "node:test"
 
 import {
   detectType,
   isSensitive,
   isSensitiveDomain
 } from "../src/utils/clipboard-detect.ts"
-import { parseIntentLocally, parseUserIntent } from "../src/utils/intent.ts"
-import {
-  MAX_PAGE_CONTENT_CHARS,
-  truncatePageContent
-} from "../src/utils/page-content.ts"
-import { expandTemplate } from "../src/utils/template.ts"
 import { normalizeError } from "../src/utils/errors.ts"
 import {
-  UNSUPPORTED_IMAGE_SRC_MESSAGE,
-  parseSupportedImageSrc
+  parseSupportedImageSrc,
+  UNSUPPORTED_IMAGE_SRC_MESSAGE
 } from "../src/utils/image-src.ts"
+import { parseIntentLocally, parseUserIntent } from "../src/utils/intent.ts"
 import {
   APPROVED_PROVIDER_HOST_PERMISSIONS,
   DEFAULT_MODEL_ID,
@@ -26,6 +21,20 @@ import {
   PROVIDER_REGISTRY,
   resolveModelRoute
 } from "../src/utils/model-registry.ts"
+import {
+  MAX_PAGE_CONTENT_CHARS,
+  truncatePageContent
+} from "../src/utils/page-content.ts"
+import {
+  buildConnectivityTestPayload,
+  buildConnectivityValidationSummary,
+  categorizeConnectivityError,
+  CONNECTIVITY_TEST_PROMPT,
+  getConnectivityModelId,
+  hasPrivateContextPayload,
+  isProviderHostPermissionPresent
+} from "../src/utils/provider-connectivity.ts"
+import { expandTemplate } from "../src/utils/template.ts"
 
 test("detectType 识别 URL", () => {
   assert.equal(detectType("https://example.com/path?q=1"), "url")
@@ -106,7 +115,10 @@ test("normalizeError 隐藏远程图片下载失败的底层 URL", () => {
   )
 
   assert.match(out, /模型无法读取这张网页图片/)
-  assert.doesNotMatch(out, /miro\.medium\.com|Request id|Timeout while downloading/i)
+  assert.doesNotMatch(
+    out,
+    /miro\.medium\.com|Request id|Timeout while downloading/i
+  )
 })
 
 test("parseSupportedImageSrc 放行 http/https 图片来源", () => {
@@ -121,12 +133,15 @@ test("parseSupportedImageSrc 放行 http/https 图片来源", () => {
 })
 
 test("parseSupportedImageSrc 放行 PNG/JPEG/WebP base64 data URL", () => {
-  assert.deepEqual(parseSupportedImageSrc("data:image/png;base64,iVBORw0KGgo="), {
-    kind: "base64",
-    url: "data:image/png;base64,iVBORw0KGgo=",
-    mediaType: "image/png",
-    data: "iVBORw0KGgo="
-  })
+  assert.deepEqual(
+    parseSupportedImageSrc("data:image/png;base64,iVBORw0KGgo="),
+    {
+      kind: "base64",
+      url: "data:image/png;base64,iVBORw0KGgo=",
+      mediaType: "image/png",
+      data: "iVBORw0KGgo="
+    }
+  )
   assert.equal(
     parseSupportedImageSrc("data:image/jpeg;base64,/9j/")?.mediaType,
     "image/jpeg"
@@ -263,4 +278,85 @@ test("package host_permissions 精确匹配批准 provider 边界", () => {
     [...pkg.manifest.host_permissions].sort(),
     [...APPROVED_PROVIDER_HOST_PERMISSIONS].sort()
   )
+})
+
+test("connectivity test payload 只包含固定公开短句，不带页面私有上下文", () => {
+  const payload = buildConnectivityTestPayload()
+
+  assert.equal(payload.userMessage, CONNECTIVITY_TEST_PROMPT)
+  assert.equal(hasPrivateContextPayload(payload), false)
+  assert.equal(payload.selectionText, undefined)
+  assert.equal(payload.pageContent, undefined)
+  assert.equal(payload.srcUrl, undefined)
+  assert.equal(payload.pageUrl, undefined)
+})
+
+test("connectivity route 每次只解析当前 provider", () => {
+  const openai = resolveModelRoute(getConnectivityModelId("openai"), {})
+  const anthropic = resolveModelRoute(getConnectivityModelId("anthropic"), {})
+  const doubao = resolveModelRoute(getConnectivityModelId("doubao"), {
+    doubaoModel: "ep-test"
+  })
+
+  assert.equal(openai.provider.id, "openai")
+  assert.equal(openai.requestModel, "gpt-4o-mini")
+  assert.equal(anthropic.provider.id, "anthropic")
+  assert.equal(anthropic.requestModel, "claude-haiku-4-5-20251001")
+  assert.equal(doubao.provider.id, "doubao")
+  assert.equal(doubao.requestModel, "ep-test")
+})
+
+test("connectivity host permission 检查只匹配 provider registry 元数据", () => {
+  assert.equal(
+    isProviderHostPermissionPresent(
+      PROVIDER_REGISTRY.openai,
+      APPROVED_PROVIDER_HOST_PERMISSIONS
+    ),
+    true
+  )
+  assert.equal(
+    isProviderHostPermissionPresent(PROVIDER_REGISTRY.anthropic, [
+      "https://ark.cn-beijing.volces.com/*"
+    ]),
+    false
+  )
+})
+
+test("connectivity 摘要固定为脱敏字段，不记录 raw prompt/response", () => {
+  const summary = buildConnectivityValidationSummary({
+    provider: "openai",
+    modelOrEndpoint: "gpt-4o-mini",
+    hostPermissionPresent: true,
+    result: "failure",
+    latencyNote: "未发起：API Key 未配置。",
+    errorCategory: "api_key_missing",
+    notes: "请先保存当前 provider 的 API Key，再手动测试连接。"
+  })
+
+  assert.deepEqual(summary, {
+    provider: "openai",
+    model_or_endpoint: "gpt-4o-mini",
+    action: "provider_connectivity_test",
+    trigger: "manual_settings_provider_button",
+    host_permission_present: true,
+    result: "failure",
+    latency_note: "未发起：API Key 未配置。",
+    error_category: "api_key_missing",
+    secret_leak_check: "pass",
+    raw_prompt_logged: "no",
+    raw_response_logged: "no",
+    private_page_data_logged: "no",
+    notes: "请先保存当前 provider 的 API Key，再手动测试连接。"
+  })
+})
+
+test("connectivity 错误分类覆盖 key、限流、网络、超时和 provider 错误", () => {
+  assert.equal(categorizeConnectivityError({ status: 401 }), "unauthorized")
+  assert.equal(categorizeConnectivityError({ status: 429 }), "rate_limited")
+  assert.equal(
+    categorizeConnectivityError(new Error("fetch failed")),
+    "network_error"
+  )
+  assert.equal(categorizeConnectivityError(new Error("timeout")), "timeout")
+  assert.equal(categorizeConnectivityError({ status: 500 }), "provider_error")
 })

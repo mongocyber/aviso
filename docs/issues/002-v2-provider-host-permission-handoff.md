@@ -1,6 +1,6 @@
 # Issue 002: V2-002A Provider Host Permission Decision Handoff
 
-Status: V2-003 consumed; ready for V2-004 planning
+Status: V2-004 implemented; live provider evidence still pending
 
 Date: 2026-06-02
 
@@ -16,7 +16,7 @@ V2-003 implementation has updated the manifest host permissions to:
 - `https://api.anthropic.com/*`
 - `https://ark.cn-beijing.volces.com/*`
 
-This issue began as a handoff document. After V2-003, it remains useful as the V2-004 boundary: source routing and manifest host permissions are implemented, but no live provider connectivity validation has been run.
+This issue began as a handoff document. After V2-004, source routing, manifest host permissions, and the manual single-provider validation UI are implemented, but no live provider connectivity evidence has been recorded in this repository.
 
 ## V2-003 Handoff
 
@@ -74,10 +74,10 @@ Forbidden behavior:
 
 Acceptance for V2-004:
 
-- Tests are manual and single-provider.
-- Validation records are summary-only and secret-free.
-- Public release copy and checklist claim only providers that have passed validation.
-- Failed provider checks produce readable error categories without leaking provider internals or secrets.
+- Done. Tests are manual and single-provider.
+- Done. Validation summaries are summary-only and secret-free.
+- Done. Failed provider checks produce readable error categories without leaking provider internals or secrets.
+- Still required. Public release copy and checklist claim only providers that have passed real validation.
 
 ## Still Out Of MVP
 
@@ -97,7 +97,8 @@ Acceptance for V2-004:
 |------|-------|
 | Provider host permission product decision | Approved and documented. |
 | Manifest host permission implementation | Done in V2-003. |
-| OpenAI live connectivity validation | Not done; belongs to V2-004. |
-| Anthropic live connectivity validation | Not done; belongs to V2-004. |
-| 豆包 / 火山方舟 structured validation record | Not refreshed; belongs to V2-004 or release prep. |
+| Manual single-provider connectivity UI | Done in V2-004. |
+| OpenAI live connectivity validation | Not done; must be triggered by the user from the installed extension and recorded as a summary-only result. |
+| Anthropic live connectivity validation | Not done; must be triggered by the user from the installed extension and recorded as a summary-only result. |
+| 豆包 / 火山方舟 structured validation record | Not refreshed; must be triggered by the user from the installed extension and recorded as a summary-only result. |
 | Public provider claims | Limited to validated providers only. |

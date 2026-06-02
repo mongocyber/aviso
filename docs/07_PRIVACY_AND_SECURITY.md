@@ -80,6 +80,7 @@ Aviso does not currently request broad host permissions for arbitrary remote pag
 - Unsupported image sources are rejected with readable errors before model calls when possible.
 - Page content is truncated to 5000 characters by default before submission.
 - Error messages are normalized to avoid leaking provider internals or sensitive remote image URLs.
+- Provider connectivity tests are manual, single-provider, and summary-only. They use a fixed public prompt and do not include page content, selected text, links, images, screenshots, clipboard content, raw provider responses, or API Keys in the displayed validation summary.
 - Build artifacts, `node_modules`, environment files, caches, and key-like files are ignored by Git.
 
 ## Known Gaps Before Public Release
@@ -88,7 +89,7 @@ Aviso does not currently request broad host permissions for arbitrary remote pag
 - Chrome Web Store privacy declarations are not prepared.
 - OpenAI live validation is not complete.
 - Anthropic live validation is not complete.
-- OpenAI and Anthropic host permission manifest changes are implemented, but validation records are still missing.
+- OpenAI and Anthropic host permission manifest changes and manual validation UI are implemented, but validation records are still missing.
 - Provider validation evidence should be recorded without exposing keys, private pages, or raw sensitive content.
 - Store screenshots must be sanitized.
 - Final secret/API Key leakage scan should run on docs, screenshots, build output, and package artifact.
@@ -101,7 +102,7 @@ v0.2-alpha planning keeps the v0.1 privacy model: no project-owned backend, no t
 
 | Capability | Data involved | Privacy stance |
 |------------|---------------|----------------|
-| Provider connectivity test | Minimal test prompt, selected provider endpoint, user API Key | Must be user-triggered for one provider at a time or directly tied to a just-edited key. Do not run all tests automatically when settings opens. Do not log raw prompts, raw responses, keys, private webpages, or private screenshots. |
+| Provider connectivity test | Fixed public test prompt, selected provider endpoint, user API Key | Implemented as a user-triggered single-provider action. Do not run all tests automatically when settings opens. Do not log raw prompts, raw responses, keys, private webpages, or private screenshots. |
 | Model routing | Feature route IDs, provider/model IDs, non-secret settings | Store route configuration in `chrome.storage.sync`; keep API Keys encrypted in `chrome.storage.local`. |
 | Screenshot to AI | User-selected visible-page image region and optional prompt | Must be explicitly triggered by the user. Show clear feedback and do not write screenshot data to logs, docs, or screenshots. |
 | Copy current context | Page title, URL, optional selection, truncated page text | Copies to the user's clipboard only. No provider call unless the user separately sends it to AI. |
@@ -136,6 +137,7 @@ v0.2-alpha planning keeps the v0.1 privacy model: no project-owned backend, no t
 ## Changelog
 
 - 2026-06-02: Updated V2-003 provider host implementation status and kept OpenAI / Anthropic live validation as a V2-004 gate.
+- 2026-06-02: Updated V2-004 privacy status after adding manual single-provider connectivity UI and summary-only validation fields.
 - 2026-06-02: Recorded approved OpenAI / Anthropic provider hosts as later implementation scope, with manual single-provider validation and no secret/raw-content logging.
 - 2026-06-02: Added v0.2-alpha privacy notes covering provider checks, model routing, screenshot-to-AI, copy context, translation MVP, local cache, and high-permission non-scope.
 - 2026-06-01: Created Phase 1 internal privacy and security baseline from current implementation and release checklist.

@@ -2,6 +2,9 @@ import { useEffect, useRef, useState } from "react"
 
 import { aviso, AvisoIcon, AvisoMark, visuallyStable } from "~styles/aviso"
 import type { HistoryEntry, PromptTemplate, Settings } from "~types/history"
+import type { ProviderId } from "~utils/model-registry"
+import { PROVIDER_REGISTRY } from "~utils/model-registry"
+import type { ConnectivityValidationSummary } from "~utils/provider-connectivity"
 import {
   getApiKeys,
   getSettings,
@@ -39,6 +42,8 @@ const POPUP_FRAME = {
   expandedHeight: 600
 } as const
 
+const CONNECTIVITY_TEST_TIMEOUT_MS = 45_000
+
 const settingsSignature = (value: Settings) =>
   JSON.stringify({
     defaultModel: value.defaultModel,
@@ -58,6 +63,12 @@ function Popup() {
   const [tab, setTab] = useState<"general" | "api" | "templates" | "history">(
     "general"
   )
+  const [testingProvider, setTestingProvider] = useState<ProviderId | null>(
+    null
+  )
+  const [connectivityResults, setConnectivityResults] = useState<
+    Partial<Record<ProviderId, ConnectivityValidationSummary>>
+  >({})
   const [draft, setDraft] = useState<PromptTemplate | null>(null)
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [openHint, setOpenHint] = useState("")
@@ -192,6 +203,61 @@ function Popup() {
     if (!value || value.startsWith("••")) return
     await saveApiKey(provider, value)
     flashSaved()
+  }
+
+  const testProviderConnectivity = async (
+    provider: ProviderId,
+    currentKeyValue: string
+  ) => {
+    if (testingProvider) return
+    if (currentKeyValue && !currentKeyValue.startsWith("••")) {
+      await saveApiKey(provider, currentKeyValue)
+      flashSaved()
+    }
+
+    setTestingProvider(provider)
+    let settled = false
+    const timeoutId = window.setTimeout(() => {
+      if (settled) return
+      settled = true
+      setTestingProvider(null)
+      setConnectivityResults((prev) => ({
+        ...prev,
+        [provider]: buildPopupFallbackSummary(
+          provider,
+          settings,
+          "连接测试超时，请稍后重试。"
+        )
+      }))
+    }, CONNECTIVITY_TEST_TIMEOUT_MS)
+
+    chrome.runtime.sendMessage(
+      {
+        action: "VALIDATE_PROVIDER_CONNECTIVITY",
+        payload: { provider }
+      },
+      (resp) => {
+        if (settled) return
+        settled = true
+        window.clearTimeout(timeoutId)
+        setTestingProvider(null)
+        if (resp?.success && resp.data) {
+          setConnectivityResults((prev) => ({
+            ...prev,
+            [provider]: resp.data as ConnectivityValidationSummary
+          }))
+        } else {
+          setConnectivityResults((prev) => ({
+            ...prev,
+            [provider]: buildPopupFallbackSummary(
+              provider,
+              settings,
+              resp?.error ?? chrome.runtime.lastError?.message
+            )
+          }))
+        }
+      }
+    )
   }
 
   const commitDraft = () => {
@@ -488,6 +554,27 @@ function Popup() {
                   placeholder={placeholder}
                   style={styles.input}
                 />
+                <div style={styles.connectivityRow}>
+                  <span style={styles.connectivityHint}>
+                    手动测试 {PROVIDER_REGISTRY[provider].displayName}
+                    ，一次只测当前 provider。
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => testProviderConnectivity(provider, value)}
+                    disabled={testingProvider !== null}
+                    style={{
+                      ...styles.editBtn,
+                      ...(testingProvider !== null ? styles.disabledBtn : {})
+                    }}>
+                    {testingProvider === provider ? "测试中..." : "测试连接"}
+                  </button>
+                </div>
+                {connectivityResults[provider] && (
+                  <ConnectivitySummaryView
+                    summary={connectivityResults[provider]}
+                  />
+                )}
               </div>
             ))}
 
@@ -690,6 +777,86 @@ function Popup() {
       </footer>
     </div>
   )
+}
+
+function ConnectivitySummaryView({
+  summary
+}: {
+  summary?: ConnectivityValidationSummary
+}) {
+  if (!summary) return null
+  const ok = summary.result === "success"
+  const rows = [
+    ["provider", summary.provider],
+    ["model_or_endpoint", summary.model_or_endpoint],
+    ["action", summary.action],
+    ["trigger", summary.trigger],
+    ["host_permission_present", String(summary.host_permission_present)],
+    ["result", summary.result],
+    ["latency_note", summary.latency_note],
+    ["error_category", summary.error_category],
+    ["secret_leak_check", summary.secret_leak_check],
+    ["raw_prompt_logged", summary.raw_prompt_logged],
+    ["raw_response_logged", summary.raw_response_logged],
+    ["private_page_data_logged", summary.private_page_data_logged],
+    ["notes", summary.notes]
+  ]
+
+  return (
+    <div
+      style={{
+        ...styles.connectivityResult,
+        borderColor: ok ? aviso.sage500 : aviso.danger
+      }}>
+      <div style={styles.connectivityResultTitle}>
+        <span
+          style={{
+            ...styles.connectivityStatusDot,
+            background: ok ? aviso.sage400 : aviso.danger
+          }}
+        />
+        {ok ? "连接测试通过" : "连接测试未通过"}
+      </div>
+      {rows.map(([key, value]) => (
+        <div key={key} style={styles.summaryRow}>
+          <span style={styles.summaryKey}>{key}</span>
+          <span style={styles.summaryValue}>{value}</span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function buildPopupFallbackSummary(
+  provider: ProviderId,
+  settings: Settings,
+  error?: string
+): ConnectivityValidationSummary {
+  const hasError = Boolean(error)
+  const modelOrEndpoint =
+    provider === "openai"
+      ? "gpt-4o-mini"
+      : provider === "anthropic"
+        ? "claude-haiku-4-5-20251001"
+        : settings.doubaoModel?.trim() || "未配置"
+
+  return {
+    provider,
+    model_or_endpoint: modelOrEndpoint,
+    action: "provider_connectivity_test",
+    trigger: "manual_settings_provider_button",
+    host_permission_present: true,
+    result: "failure",
+    latency_note: "未发起或未收到 background 摘要。",
+    error_category: "unknown_error",
+    secret_leak_check: "pass",
+    raw_prompt_logged: "no",
+    raw_response_logged: "no",
+    private_page_data_logged: "no",
+    notes: hasError
+      ? "Popup 未收到可用的脱敏摘要；底层错误原文未展示。"
+      : "Popup 未收到可用的脱敏摘要。"
+  }
 }
 
 const styles: Record<string, React.CSSProperties> = {
@@ -992,6 +1159,67 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 500,
     cursor: "pointer",
     whiteSpace: "nowrap"
+  },
+  disabledBtn: {
+    opacity: 0.55,
+    cursor: "not-allowed"
+  },
+  connectivityRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    marginTop: 8,
+    minWidth: 0
+  },
+  connectivityHint: {
+    minWidth: 0,
+    color: aviso.darkText3,
+    fontSize: 11.5,
+    lineHeight: 1.45,
+    overflowWrap: "anywhere"
+  },
+  connectivityResult: {
+    marginTop: 10,
+    padding: "10px 11px",
+    border: `1px solid ${aviso.darkLine}`,
+    borderRadius: 10,
+    background: aviso.darkBg
+  },
+  connectivityResultTitle: {
+    display: "flex",
+    alignItems: "center",
+    gap: 7,
+    marginBottom: 8,
+    color: aviso.darkText,
+    fontSize: 12.5,
+    fontWeight: 700
+  },
+  connectivityStatusDot: {
+    width: 7,
+    height: 7,
+    borderRadius: "50%",
+    flex: "0 0 auto"
+  },
+  summaryRow: {
+    display: "grid",
+    gridTemplateColumns: "112px minmax(0, 1fr)",
+    gap: 8,
+    padding: "3px 0",
+    fontSize: 11,
+    lineHeight: 1.45,
+    minWidth: 0
+  },
+  summaryKey: {
+    color: aviso.darkText3,
+    fontFamily: aviso.mono,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  summaryValue: {
+    color: aviso.darkText2,
+    overflowWrap: "anywhere"
   },
   templateForm: {
     marginTop: 12,

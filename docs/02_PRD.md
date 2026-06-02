@@ -117,7 +117,7 @@ Those drafts are useful inputs, but they are not the canonical project spec. Thi
 |----------|------------|-------|
 | P0 | Provider validation and permission audit | Host permission decision is approved for OpenAI, Anthropic, and 豆包 / 火山方舟. Record minimal live-call behavior only through user-triggered single-provider checks with safe test keys. |
 | P0 | Minimal model registry and routing | Implemented in V2-003 for existing providers only. Registry exposes provider/model metadata for V2-004 and preserves current defaults. |
-| P0 | Manual model connectivity test | Add user-triggered connectivity checks with readable errors and latency notes. Do not auto-test all keys on settings open. |
+| P0 | Manual model connectivity test | Implemented in V2-004 as user-triggered single-provider checks with readable summary states and latency notes. It does not auto-test all keys on settings open. |
 | P1 | Screenshot to AI | Add a user-triggered capture flow for visible-page regions and send base64 image input to a configured vision-capable model. |
 | P1 | Copy current context | Let users copy a structured context bundle with title, URL, optional selection, and truncated page text. |
 | P1 | Translation MVP | Improve selection translation and floating-window translation actions first. Page-wide DOM translation and YouTube subtitles are discovery/backlog until risk is reviewed. |
@@ -150,6 +150,7 @@ Those drafts are useful inputs, but they are not the canonical project spec. Thi
 ## Changelog
 
 - 2026-06-02: Implemented V2-003 minimal model registry/routing and landed approved OpenAI / Anthropic host permissions while keeping live validation as a V2-004 gate.
+- 2026-06-02: Implemented V2-004 manual single-provider connectivity test UI and summary-only validation surface; real provider evidence still requires user-triggered live runs.
 - 2026-06-02: In V2-002A, recorded the approved OpenAI / Anthropic provider host permission decision as docs-only, before V2-003 implementation.
 - 2026-06-02: Converted the desktop v0.2 drafts into a narrower v0.2-alpha internal dogfood scope, with high-permission Agent, tab, translation-fallback, and voice features moved out of the MVP.
 - 2026-06-01: Created Phase 1 internal PRD from current source, docs, release checklist, and test structure.

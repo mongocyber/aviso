@@ -36,6 +36,7 @@ Status: Internal technical baseline plus v0.2-alpha technical constraints
 
 - `AI_REQUEST`
 - `SHOW_FLOATING_WINDOW`
+- `VALIDATE_PROVIDER_CONNECTIVITY`
 - `PARSE_INTENT`
 - `SEARCH_BOOKMARKS`
 - `REQUEST_OPEN_COMMAND_PALETTE`
@@ -48,6 +49,8 @@ Status: Internal technical baseline plus v0.2-alpha technical constraints
 `src/background/frame-router.ts` centralizes frame-aware delivery. It sends display messages to the top frame first, with source-frame fallback when necessary.
 
 `src/background/ai-client.ts` resolves provider/model routes through `src/utils/model-registry.ts` and streams chunks back to the floating UI.
+
+For V2-004, `src/background/ai-client.ts` also exposes a manual provider connectivity path through `handleProviderConnectivityTest`. It uses the same provider route metadata, sends only a fixed public test prompt, and returns a summary object instead of raw provider content.
 
 ### Content Scripts
 
@@ -66,6 +69,7 @@ Status: Internal technical baseline plus v0.2-alpha technical constraints
 
 - model selection
 - OpenAI / Anthropic / 豆包 API Key fields
+- manual single-provider connectivity test buttons and summary display
 - 豆包 endpoint / model field
 - feature toggles
 - custom template editor
@@ -80,6 +84,14 @@ Status: Internal technical baseline plus v0.2-alpha technical constraints
 4. Floating UI opens immediately and either starts `AI_REQUEST` or waits for page-content extraction.
 5. Background handles `AI_REQUEST`, resolves settings/API Keys, calls the provider, and streams `AI_STREAM_CHUNK`.
 6. Floating UI renders chunks and can save final output to local history.
+
+Manual provider connectivity is separate from the floating-window flow:
+
+1. User clicks a provider-specific test button in the Popup API Key page.
+2. Popup sends `VALIDATE_PROVIDER_CONNECTIVITY` with the single provider id.
+3. Background checks host permission, local encrypted API Key availability, and provider endpoint/model config.
+4. Background sends the fixed public test prompt only to the selected provider.
+5. Popup displays the returned summary fields; raw prompt, raw response, API Key, page content, screenshots, and clipboard content are not displayed or stored by this flow.
 
 ## Provider Registry And Selection
 
@@ -98,6 +110,28 @@ Status: Internal technical baseline plus v0.2-alpha technical constraints
 | `doubao` | OpenAI SDK with 火山方舟 base URL and user endpoint | Implemented; user confirmed API usability. |
 
 Default model is `gpt-4o-mini`. Unknown non-Claude model IDs continue to fall back to the OpenAI route for compatibility with any existing saved OpenAI model value.
+
+## Provider Connectivity Tests
+
+`src/utils/provider-connectivity.ts` defines the V2-004 connectivity summary contract, fixed public test prompt, provider-to-test-model mapping, host permission check helper, and error category mapping.
+
+Connectivity summary fields:
+
+- `provider`
+- `model_or_endpoint`
+- `action`
+- `trigger`
+- `host_permission_present`
+- `result`
+- `latency_note`
+- `error_category`
+- `secret_leak_check`
+- `raw_prompt_logged`
+- `raw_response_logged`
+- `private_page_data_logged`
+- `notes`
+
+The Popup adds one test button per approved provider. It disables concurrent tests and has a local timeout fallback so the UI does not stay stuck if background does not return a response.
 
 ## Storage
 
@@ -137,7 +171,7 @@ Aviso does not currently request broad host permissions for arbitrary page fetch
 
 Current test and manual assets:
 
-- `tests/unit.test.ts`: unit coverage for clipboard type detection, sensitive filtering, template expansion, error normalization, image source validation, local intent parsing, page truncation, provider/model route resolution, and approved host boundaries.
+- `tests/unit.test.ts`: unit coverage for clipboard type detection, sensitive filtering, template expansion, error normalization, image source validation, local intent parsing, page truncation, provider/model route resolution, approved host boundaries, and provider connectivity summary rules.
 - `tests/manual-test.html`: A-G manual QA fixture.
 - `tests/iframe-fixture.html`: iframe validation fixture for Hugging Face Spaces / Gradio-like embedding behavior.
 
@@ -210,8 +244,8 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 ### v0.2-alpha Implementation Constraints
 
 - Model routing supports existing providers only: OpenAI, Anthropic, and 豆包 / 火山方舟.
-- Provider connectivity checks must be explicit user-triggered checks, or directly tied to a just-edited key. Settings-page open must not automatically spend tokens across all configured providers.
-- V2-004 must test one provider at a time and must not auto-test all configured providers.
+- Provider connectivity checks are explicit user-triggered checks. Settings-page open must not automatically spend tokens across all configured providers.
+- V2-004 tests one provider at a time and must not auto-test all configured providers.
 - Provider validation records must not include API Keys, raw prompts, raw responses, private webpages, or screenshots with private data.
 - Result caching may be added only with a clear key design that includes operation, input, target language, provider, model, endpoint/base URL, and template version where relevant. A clear-cache control is required if caching ships.
 - Screenshot-to-AI should use the existing `activeTab` user-triggered boundary where possible. If the implementation needs broader capture, scripting, or tab permissions, stop and record the decision before code changes.
@@ -236,6 +270,7 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 ## Changelog
 
 - 2026-06-02: Implemented V2-003 provider/model registry, route fallback, approved host permissions, and root extension type-check boundary.
+- 2026-06-02: Implemented V2-004 manual single-provider connectivity flow, summary-only validation contract, Popup UI, and tests.
 - 2026-06-02: In V2-002A, recorded approved OpenAI / Anthropic provider host permissions for V2-003 as a docs-only decision.
 - 2026-06-02: Added v0.2-alpha technical delta constraints and corrected the desktop draft assumptions about file names, message contracts, manifest permissions, host permissions, storage, and MVP boundaries.
 - 2026-06-01: Created Phase 1 internal technical specification from current code structure and package manifest.

@@ -82,6 +82,29 @@ Vercel 项目配置：
 - 隐私政策页面仍为发布前草案，正式公开发布前仍需与 Chrome Web Store 隐私声明、Popup 内隐私说明和最终构建产物再次核对。
 - Aviso 仍保持 `v0.1 internal dogfood / 内部试用版` 口径；OpenAI / Anthropic 真实调用、Chrome Web Store 提交、最终 package zip、release tag 和回滚点仍未关闭。
 
+## v0.2-alpha P0 Provider Work
+
+时间：2026-06-02 CST。
+
+当前状态：
+
+- V2-002 / V2-002A：provider host permission 审计和决策文档已完成。
+- V2-003：minimal model registry and routing 已实现并提交，默认 `gpt-4o-mini`、`claude*` 路由和豆包 / 火山方舟北京网关行为保持兼容。
+- V2-004：Popup API Key 页已新增用户手动触发的单 provider 连接测试入口，background 通过独立 `VALIDATE_PROVIDER_CONNECTIVITY` 消息返回脱敏 validation 摘要。
+
+V2-004 边界：
+
+- 设置页打开时不会自动测试所有 provider。
+- 每次点击只测试当前 provider。
+- 测试 payload 只使用固定公开短句，不带网页正文、选中文本、链接、图片、截图或剪贴板内容。
+- UI 只展示摘要字段，不展示 raw prompt、raw response、API Key、私人网页内容或截图内容。
+- 当前实现不代表 OpenAI / Anthropic 已通过真实验证；公开发布仍只能宣称已完成验证的 provider。
+
+仍未关闭：
+
+- OpenAI / Anthropic / 豆包真实最小调用记录需要用户在安装后的扩展中手动触发并补录脱敏结果。
+- `npm run package`、商店素材、最终隐私政策一致性、release tag 和回滚点仍未完成。
+
 ## 本轮读取的来源
 
 - `README.md`

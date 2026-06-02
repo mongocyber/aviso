@@ -43,7 +43,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它把右键菜单、划词工具�
 - 命令面板：Mac 通过 `Command+Shift+Space`，Windows/Linux 通过 `Ctrl+Shift+Space` 搜索历史和书签，或直接输入问题。
 - 剪贴板感知：复制普通文本后给出提示，敏感页面和敏感内容会被跳过。
 - 浮窗：流式展示结果，支持复制、保存、继续追问。
-- Popup 设置页：模型选择、API Key、本地功能开关、自定义模板、历史管理和隐私说明。
+- Popup 设置页：模型选择、API Key、手动单 provider 连接测试、本地功能开关、自定义模板、历史管理和隐私说明。
 
 ## 本地开发
 
@@ -114,6 +114,7 @@ Aviso 没有自建后端。AI 请求由浏览器扩展直接发往用户选择�
 - 代码里保留少量 `contextai_*` 内部 storage key / DOM id，用于兼容改名前的本地设置、历史和已保存 Key；这不影响对外品牌名。
 - 项目不添加遥测、分析 SDK 或自建中转服务。
 - 当前 `host_permissions` 仅包含已批准 provider 网关：`https://api.openai.com/*`、`https://api.anthropic.com/*`、`https://ark.cn-beijing.volces.com/*`。
+- Provider 连接测试只能由用户在 Popup 手动触发，一次只测一个 provider，并且只展示脱敏摘要；这不等于 OpenAI / Anthropic 已完成真实验证。
 - 远端链接正文总结未实现，因为它通常需要扩大 `host_permissions`，这与当前最小权限原则存在取舍。
 
 发布前必须再次确认 Popup 内隐私说明、商店隐私文案和实际权限一致。

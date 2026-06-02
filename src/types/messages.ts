@@ -1,5 +1,6 @@
-import type { RequestTiming } from "~utils/timing"
 import type { ClipboardType } from "~utils/clipboard-detect"
+import type { ProviderId } from "~utils/model-registry"
+import type { RequestTiming } from "~utils/timing"
 
 export type ContextMenuContext =
   | "selection"
@@ -23,6 +24,10 @@ export type AIRequestPayload = {
   timing?: RequestTiming
 }
 
+export type ProviderConnectivityPayload = {
+  provider: ProviderId
+}
+
 export type MessageRequest =
   | {
       action: "AI_REQUEST"
@@ -37,6 +42,10 @@ export type MessageRequest =
   | { action: "PIN_HISTORY"; payload: { id: string } }
   | { action: "CLEAR_HISTORY" }
   | { action: "PING" }
+  | {
+      action: "VALIDATE_PROVIDER_CONNECTIVITY"
+      payload: ProviderConnectivityPayload
+    }
   | {
       action: "SHOW_FLOATING_WINDOW"
       payload: {

@@ -2,7 +2,7 @@ import type { MessageRequest, MessageResponse } from "~types/messages"
 import { parseIntentLocally } from "~utils/intent"
 import { logTiming, markTiming } from "~utils/timing"
 
-import { handleAIRequest } from "./ai-client"
+import { handleAIRequest, handleProviderConnectivityTest } from "./ai-client"
 import {
   handleContextMenuClick,
   registerContextMenus,
@@ -187,6 +187,12 @@ async function handleMessage(
           success: true,
           data: parseIntentLocally(request.payload.input)
         })
+        break
+      }
+
+      case "VALIDATE_PROVIDER_CONNECTIVITY": {
+        const summary = await handleProviderConnectivityTest(request.payload)
+        sendResponse({ success: true, data: summary })
         break
       }
 
