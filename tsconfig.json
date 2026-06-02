@@ -2,7 +2,8 @@
   "extends": "plasmo/templates/tsconfig.base",
   "exclude": [
     "node_modules",
-    "tests"
+    "tests",
+    "website"
   ],
   "include": [
     ".plasmo/index.d.ts",

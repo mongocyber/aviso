@@ -5,6 +5,7 @@ import { expandTemplate } from "~utils/template"
 import { normalizeError } from "~utils/errors"
 import { assertSupportedImageSrc } from "~utils/image-src"
 import { parseIntentLocally } from "~utils/intent"
+import { resolveModelRoute } from "~utils/model-registry"
 import { logTiming, markTiming } from "~utils/timing"
 import type { AIRequestPayload } from "~types/messages"
 import type { PromptTemplate } from "~types/history"
@@ -38,27 +39,31 @@ export async function handleAIRequest(
     }
   }
 
-  const model = payload.model ?? settings.defaultModel ?? "gpt-4o-mini"
+  const route = resolveModelRoute(payload.model, settings)
 
   try {
-    if (model.startsWith("claude")) {
-      await callAnthropic(model, payload, apiKeys.anthropic, onChunk, {
-        requestId: options.requestId
-      })
-    } else if (model === "doubao") {
-      // 豆包/火山方舟：OpenAI 兼容协议，换 baseURL + 用户配置的接入点 ID
-      const endpoint = settings.doubaoModel?.trim()
-      if (!endpoint) {
+    if (route.provider.id === "anthropic") {
+      await callAnthropic(
+        route.requestModel,
+        payload,
+        apiKeys.anthropic,
+        onChunk,
+        {
+          requestId: options.requestId
+        }
+      )
+    } else if (route.provider.id === "doubao") {
+      if (route.missingConfig === "doubaoModel") {
         throw new Error("豆包接入点 ID 未配置，请在设置的 API Key 页填写")
       }
-      await callOpenAI(endpoint, payload, apiKeys.doubao, onChunk, {
-        baseURL: DOUBAO_BASE_URL,
+      await callOpenAI(route.requestModel, payload, apiKeys.doubao, onChunk, {
+        baseURL: route.provider.baseURL,
         keyLabel: "豆包",
         requestId: options.requestId
       })
     } else {
-      await callOpenAI(model, payload, apiKeys.openai, onChunk, {
-        keyLabel: "OpenAI",
+      await callOpenAI(route.requestModel, payload, apiKeys.openai, onChunk, {
+        keyLabel: route.provider.displayName,
         requestId: options.requestId
       })
     }
@@ -66,9 +71,6 @@ export async function handleAIRequest(
     throw new Error(normalizeError(err))
   }
 }
-
-// 火山方舟（豆包）OpenAI 兼容网关
-const DOUBAO_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
 
 async function callOpenAI(
   model: string,

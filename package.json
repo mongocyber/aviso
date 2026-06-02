@@ -34,6 +34,8 @@
     "name": "Aviso",
     "description": "智能浏览器助手，感知操作对象，就地调用 AI，浮窗展示结果。",
     "host_permissions": [
+      "https://api.openai.com/*",
+      "https://api.anthropic.com/*",
       "https://ark.cn-beijing.volces.com/*"
     ],
     "permissions": [

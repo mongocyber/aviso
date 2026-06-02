@@ -64,9 +64,9 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 
 ## 3. 权限、隐私与 API Key
 
-- [ ] `manifest.permissions` 只包含实际使用的权限。
-- [ ] `host_permissions` 没有为链接正文抓取扩大到广域权限。
-- [x] OpenAI / Anthropic provider host permission 产品决策已记录；当前任务未改 manifest。
+- [x] `manifest.permissions` 只包含实际使用的权限。V2-003 构建产物已核对，未新增普通权限。
+- [x] `host_permissions` 没有为链接正文抓取扩大到广域权限；仅包含 OpenAI、Anthropic 和 Ark Beijing 三个已批准 provider host。
+- [x] OpenAI / Anthropic provider host permission 产品决策已记录，且 V2-003 已落到 `package.json` manifest。
 - [ ] Popup 隐私说明与实际实现一致。
 - [ ] 商店隐私文案与 Popup 隐私说明一致。
 - [ ] API Key 不出现在日志、构建产物、截图、提交记录或 issue 文档中。
@@ -76,9 +76,9 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 
 ## 4. 构建产物
 
-- [x] `npm test` 通过。2026-05-29 22:48 CST，18 项测试通过；存在 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
-- [x] `npx tsc --noEmit` 通过。2026-05-29 22:48 CST，无错误输出。
-- [x] `npm run build` 通过。2026-05-29 22:48 CST，生成 `build/chrome-mv3-prod`；默认沙箱内被系统拦截为 `Operation not permitted`，沙箱外重跑通过。
+- [x] `npm test` 通过。2026-06-02，28 项测试通过；存在 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
+- [x] `npx tsc --noEmit` 通过。2026-06-02，无错误输出。
+- [x] `npm run build` 通过。2026-06-02，生成 `build/chrome-mv3-prod`；默认沙箱内仍被系统拦截为 `Operation not permitted`，沙箱外重跑通过。
 - [ ] `npm run package` 通过，并生成可提交 zip。
 - [ ] Chrome 加载 `build/chrome-mv3-prod` 无安装报错。
 - [x] 版本号、扩展名称、描述、图标符合本次发布目标。Manifest 显示 `0.1.0` / `Aviso`，权限未扩大。
@@ -138,6 +138,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [x] v0.2-alpha 技术约束已记录到 `docs/03_TECH_SPEC.md`，包括当前真实 manifest 权限、host permissions、消息协议和 storage 边界。
 - [x] v0.2-alpha 隐私与风险已同步到 `docs/06_RISK_REGISTER.md` 和 `docs/07_PRIVACY_AND_SECURITY.md`。
 - [x] V2-002 provider validation / permission audit 的 host permission 产品决策已批准并记录到 `docs/decisions/001-v2-provider-host-permissions.md`。
-- [x] OpenAI / Anthropic 新增 provider host permission 已由用户确认，并同步到隐私、安全、风险和路线文档；实际 manifest 改动留给 V2-003。
+- [x] OpenAI / Anthropic 新增 provider host permission 已由用户确认，并已在 V2-003 同步到 `package.json` manifest；真实 provider 连通性验证仍留给 V2-004。
+- [x] V2-003 minimal model registry and routing 已实现，默认 `gpt-4o-mini` 和现有 OpenAI / Anthropic / 豆包路由行为保持兼容。
 - [ ] 任何真实 provider 连通性测试均由用户手动触发、一次只测单 provider，使用安全测试 Key，不记录 Key、raw prompt、raw response、私人网页内容或私密截图。
 - [ ] 截图、翻译、缓存或复制上下文能力上线前，已确认不会把敏感截图、缓存内容或私有网页信息写入日志、文档、截图或 release artifacts。

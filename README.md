@@ -113,7 +113,7 @@ Aviso 没有自建后端。AI 请求由浏览器扩展直接发往用户选择�
 - 设置、模板和历史保存在浏览器本地存储中。
 - 代码里保留少量 `contextai_*` 内部 storage key / DOM id，用于兼容改名前的本地设置、历史和已保存 Key；这不影响对外品牌名。
 - 项目不添加遥测、分析 SDK 或自建中转服务。
-- 当前 `host_permissions` 仅包含豆包/火山方舟 OpenAI 兼容网关：`https://ark.cn-beijing.volces.com/*`。
+- 当前 `host_permissions` 仅包含已批准 provider 网关：`https://api.openai.com/*`、`https://api.anthropic.com/*`、`https://ark.cn-beijing.volces.com/*`。
 - 远端链接正文总结未实现，因为它通常需要扩大 `host_permissions`，这与当前最小权限原则存在取舍。
 
 发布前必须再次确认 Popup 内隐私说明、商店隐私文案和实际权限一致。

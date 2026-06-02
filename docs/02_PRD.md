@@ -66,8 +66,8 @@ This version assumes users can provide their own API Keys and understand that mo
 | Build | Verified previously | `npm run build` produced `build/chrome-mv3-prod` outside the default sandbox; sandbox build may fail with `Operation not permitted`. |
 | Manual A-G QA | Verified by user feedback | User reported A-G basic pass for internal dogfood. Detailed Chrome version, OS, screenshots, and step notes remain incomplete. |
 | 豆包 / 火山方舟 | Verified by user feedback | User confirmed API usability. This Phase 1 docs work did not run a real API call. |
-| OpenAI | Host permission decision approved; live call unverified | Code exists. Product owner approved later adding `https://api.openai.com/*`, but the manifest has not been changed and no approved live-call record exists. |
-| Anthropic | Host permission decision approved; live call unverified | Code exists. Product owner approved later adding `https://api.anthropic.com/*`, but the manifest has not been changed and no approved live-call record exists. |
+| OpenAI | Host permission implemented; live call unverified | Code and model registry route exist. V2-003 added `https://api.openai.com/*`, but no approved live-call record exists. |
+| Anthropic | Host permission implemented; live call unverified | Code and model registry route exist. V2-003 added `https://api.anthropic.com/*`, but no approved live-call record exists. |
 
 ## Public Release Gates
 
@@ -75,7 +75,7 @@ Before public release, Aviso still needs:
 
 - OpenAI minimal real-call validation through the approved V2-004 manual single-provider flow with a safe test key.
 - Anthropic minimal real-call validation through the approved V2-004 manual single-provider flow with a safe test key.
-- Manifest host permission update for approved provider hosts, before claiming OpenAI or Anthropic support.
+- V2-004 live validation records before claiming OpenAI or Anthropic support.
 - A fresh provider and error-behavior record for 豆包 / 火山方舟.
 - `npm run package` and the final extension zip.
 - Chrome Web Store screenshots, description, support copy, and privacy declarations.
@@ -90,7 +90,7 @@ Before public release, Aviso still needs:
 - Page content is truncated to 5000 characters by default before model submission.
 - Remote link summary passes the URL as context; it does not fetch the remote page body.
 - Some remote image URLs may be accepted by format validation but still fail if the model provider cannot download them.
-- OpenAI and Anthropic are implemented, and their provider host permission decision is approved, but manifest implementation and live validation are not complete.
+- OpenAI and Anthropic are implemented and their provider host permissions are present in the manifest, but live validation is not complete.
 - Current internal validation is user-reported; public release needs stricter environment and evidence capture.
 
 ## v0.2-alpha Product Direction
@@ -116,7 +116,7 @@ Those drafts are useful inputs, but they are not the canonical project spec. Thi
 | Priority | Capability | Scope |
 |----------|------------|-------|
 | P0 | Provider validation and permission audit | Host permission decision is approved for OpenAI, Anthropic, and 豆包 / 火山方舟. Record minimal live-call behavior only through user-triggered single-provider checks with safe test keys. |
-| P0 | Minimal model registry and routing | Support task-based routing for existing providers first. Do not add every provider from the desktop draft in the first implementation slice. |
+| P0 | Minimal model registry and routing | Implemented in V2-003 for existing providers only. Registry exposes provider/model metadata for V2-004 and preserves current defaults. |
 | P0 | Manual model connectivity test | Add user-triggered connectivity checks with readable errors and latency notes. Do not auto-test all keys on settings open. |
 | P1 | Screenshot to AI | Add a user-triggered capture flow for visible-page regions and send base64 image input to a configured vision-capable model. |
 | P1 | Copy current context | Let users copy a structured context bundle with title, URL, optional selection, and truncated page text. |
@@ -142,7 +142,6 @@ Those drafts are useful inputs, but they are not the canonical project spec. Thi
 
 ## Open Questions
 
-- When should V2-003 land the approved OpenAI / Anthropic host permissions in the manifest?
 - Which single additional OpenAI-compatible provider, if any, should be added first after the existing providers are stable?
 - Should AI/translation result caching be enabled by default, and should users get a visible clear-cache control?
 - What level of provider latency should be described as acceptable in public copy?
@@ -150,6 +149,7 @@ Those drafts are useful inputs, but they are not the canonical project spec. Thi
 
 ## Changelog
 
-- 2026-06-02: Recorded the approved OpenAI / Anthropic provider host permission decision while keeping manifest implementation and live validation as later gates.
+- 2026-06-02: Implemented V2-003 minimal model registry/routing and landed approved OpenAI / Anthropic host permissions while keeping live validation as a V2-004 gate.
+- 2026-06-02: In V2-002A, recorded the approved OpenAI / Anthropic provider host permission decision as docs-only, before V2-003 implementation.
 - 2026-06-02: Converted the desktop v0.2 drafts into a narrower v0.2-alpha internal dogfood scope, with high-permission Agent, tab, translation-fallback, and voice features moved out of the MVP.
 - 2026-06-01: Created Phase 1 internal PRD from current source, docs, release checklist, and test structure.

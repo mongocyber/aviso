@@ -305,3 +305,30 @@ v0.2-alpha MVP 当前建议：
 - 连通性测试和验证记录不得写入 API Key、raw prompt、raw response、私人网页内容或私密截图。
 - 公开发布只宣称已完成验证记录的 provider。
 - 远端链接正文抓取、多 Tab、Tab 分组、语音、第三方翻译兜底、YouTube 字幕和复杂全页 DOM 翻译仍不在 v0.2-alpha MVP。
+
+## V2-003 minimal model registry and routing
+
+时间：2026-06-02 CST。
+
+状态：实现完成；未运行真实 provider 调用，未读取或输出 API Key，未提交 Git，未打包或发布。
+
+实现内容：
+
+- 新增 `src/utils/model-registry.ts`，只登记当前三类 provider：OpenAI、Anthropic、豆包 / 火山方舟。
+- Registry 暴露 provider id、display name、SDK 类型、host permission、API Key storage key、vision 静态标记、是否需要 endpoint 配置、Ark base URL 和当前模型元数据。
+- `src/background/ai-client.ts` 改为通过 registry route 选择 provider/model；默认仍为 `gpt-4o-mini`，`claude*` 仍走 Anthropic，`doubao` 仍走火山方舟 OpenAI-compatible base URL 和用户填写的接入点 ID，未知非 Claude 模型仍按原兼容行为走 OpenAI。
+- `package.json` manifest 已新增批准的 `https://api.openai.com/*` 和 `https://api.anthropic.com/*`，并保留 `https://ark.cn-beijing.volces.com/*`；未新增普通 `permissions`。
+- API Key 存储未改，仍为 encrypted `chrome.storage.local` 的 `contextai_api_keys`。
+- 根 `tsconfig.json` 排除独立 Docusaurus `website/` 子项目，避免扩展类型检查被网站依赖污染；网站仍保留自己的 `website/tsconfig.json`。
+
+自动化检查：
+
+- `npm test`：通过，28 项测试通过；存在既有 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
+- `npx tsc --noEmit`：通过。第一次运行前工作树缺少本地 TypeScript 可执行文件，已按现有依赖执行 `npm install` 后重跑通过；未新增依赖声明。
+- `npm run build`：默认沙箱内仍出现既有 `Operation not permitted`；沙箱外重跑通过，`build/chrome-mv3-prod/manifest.json` 核对到普通权限未变，host permissions 精确为 OpenAI、Anthropic、Ark 三条。
+
+剩余门禁：
+
+- OpenAI / Anthropic 真实最小调用仍未验证，继续留给 V2-004 手动单 provider connectivity test。
+- 豆包 / 火山方舟仍缺 fresh structured validation record。
+- `npm run package`、Chrome Web Store 素材、最终隐私政策、tag 和回滚点仍未完成。

@@ -48,7 +48,7 @@ Aviso should move from internal dogfood to public release through evidence, not 
 |-------|----------|------|------------|----------------|
 | V2-001 scope and technical spec cleanup | P0 | Keep PRD, tech spec, roadmap, privacy, risk, and release checklist aligned with the approved v0.2-alpha MVP. | Product-owner approval | Docs-only, single thread |
 | V2-002 provider validation plan and permission audit | P0 | Decide exact host permissions and validation protocol for OpenAI, Anthropic, and 豆包 / 火山方舟 without exposing secrets. | V2-001 | Decision docs complete; no manifest change in V2-002A |
-| V2-003 minimal model registry and routing | P0 | Route tasks to existing provider/model choices while preserving current defaults and local API Key storage. | V2-002A decision docs | Single implementation thread |
+| V2-003 minimal model registry and routing | P0 | Route tasks to existing provider/model choices while preserving current defaults and local API Key storage. | V2-002A decision docs | Implemented; live provider calls not run |
 | V2-004 manual connectivity test UI | P0 | Let users test configured providers on demand, with latency and readable failure reasons. | V2-003 | Single implementation thread |
 | V2-005 screenshot to AI | P1 | Capture a user-selected visible-page region and send it to a vision-capable configured model. | V2-002, V2-003 | Plan mode because capture and image data flow affect privacy |
 | V2-006 copy current context | P1 | Copy title, URL, optional selection, and truncated page text as clean structured text. | V2-001 | Single implementation thread |
@@ -66,6 +66,16 @@ Acceptance:
 - `docs/issues/002-v2-provider-host-permission-handoff.md` gives V2-003 and V2-004 execution agents a direct boundary.
 - Existing docs distinguish approved host permission decisions from unimplemented manifest changes and unverified live provider calls.
 - No code, manifest, dependency, package, API Key, release, tag, or Git remote action is performed in V2-002A.
+
+### V2-003 Implementation
+
+V2-003 adds the minimal registry/routing surface needed by V2-004:
+
+- Registry covers only OpenAI, Anthropic, and 豆包 / 火山方舟.
+- Default model remains `gpt-4o-mini`.
+- `claude*` routes to Anthropic; `doubao` routes to the Ark Beijing OpenAI-compatible base URL plus the user-configured endpoint/model; unknown non-Claude models retain OpenAI fallback compatibility.
+- Manifest host permissions now include only `https://api.openai.com/*`, `https://api.anthropic.com/*`, and `https://ark.cn-beijing.volces.com/*`.
+- API Keys remain encrypted in `chrome.storage.local`; no provider connectivity test or real API call is included.
 
 ### Backlog Requiring Separate Approval
 
@@ -94,8 +104,8 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 1. Finish V2-001 docs-only scope cleanup.
 2. Use V2-002A decision docs as the boundary for provider host permissions.
 3. Decide whether v0.2-alpha should proceed before v0.1 public-release gates are closed.
-4. Implement V2-003 with only the approved provider hosts and existing API Key storage model.
-5. Implement V2-004 as a manual, single-provider connectivity test; do not auto-test all providers.
+4. Implement V2-004 as a manual, single-provider connectivity test; do not auto-test all providers.
+5. Use V2-003 registry metadata for provider display names, host boundaries, vision markers, required endpoint/model settings, and readable error setup.
 6. Implement P1 user-facing improvements in the order: screenshot to AI, copy context, translation MVP.
 7. Keep public release preparation separate: package, provider evidence, privacy policy, store assets, tag, and rollback.
 
@@ -109,5 +119,6 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 ## Changelog
 
 - 2026-06-02: Added V2-002A provider host permission decision docs and V2-003 / V2-004 handoff boundaries.
+- 2026-06-02: Marked V2-003 registry/routing implementation complete while keeping live provider validation in V2-004.
 - 2026-06-02: Replaced the broad v0.2 candidate backlog with a v0.2-alpha issue map, recommended sequence, and high-permission discovery backlog.
 - 2026-06-01: Created Phase 1 roadmap from current internal dogfood baseline and release checklist.

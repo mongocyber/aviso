@@ -47,7 +47,7 @@ Status: Internal technical baseline plus v0.2-alpha technical constraints
 
 `src/background/frame-router.ts` centralizes frame-aware delivery. It sends display messages to the top frame first, with source-frame fallback when necessary.
 
-`src/background/ai-client.ts` chooses the provider based on the selected model and streams chunks back to the floating UI.
+`src/background/ai-client.ts` resolves provider/model routes through `src/utils/model-registry.ts` and streams chunks back to the floating UI.
 
 ### Content Scripts
 
@@ -81,7 +81,15 @@ Status: Internal technical baseline plus v0.2-alpha technical constraints
 5. Background handles `AI_REQUEST`, resolves settings/API Keys, calls the provider, and streams `AI_STREAM_CHUNK`.
 6. Floating UI renders chunks and can save final output to local history.
 
-## Provider Selection
+## Provider Registry And Selection
+
+`src/utils/model-registry.ts` is the V2-003 registry surface for provider and model metadata. It intentionally covers only the current approved provider set:
+
+| Provider id | Display name | SDK path | Host permission | Vision marker | Endpoint/model config |
+|-------------|--------------|----------|-----------------|---------------|-----------------------|
+| `openai` | OpenAI | OpenAI SDK | `https://api.openai.com/*` | supported | Not required. |
+| `anthropic` | Anthropic | Anthropic SDK | `https://api.anthropic.com/*` | supported | Not required. |
+| `doubao` | 豆包 / 火山方舟 | OpenAI-compatible | `https://ark.cn-beijing.volces.com/*` | model-dependent | Requires `doubaoModel` endpoint/model setting. |
 
 | Model choice | Code path | Validation status |
 |--------------|-----------|-------------------|
@@ -89,7 +97,7 @@ Status: Internal technical baseline plus v0.2-alpha technical constraints
 | `claude-*` | Anthropic SDK | Implemented, not live-validated. |
 | `doubao` | OpenAI SDK with 火山方舟 base URL and user endpoint | Implemented; user confirmed API usability. |
 
-Default model is `gpt-4o-mini`.
+Default model is `gpt-4o-mini`. Unknown non-Claude model IDs continue to fall back to the OpenAI route for compatibility with any existing saved OpenAI model value.
 
 ## Storage
 
@@ -111,14 +119,11 @@ Current manifest permissions from `package.json`:
 - `bookmarks`
 - `clipboardWrite`
 
-Current host permission:
-
-- `https://ark.cn-beijing.volces.com/*`
-
-Approved provider host permissions for the next implementation slice, not yet present in the manifest:
+Current host permissions:
 
 - `https://api.openai.com/*`
 - `https://api.anthropic.com/*`
+- `https://ark.cn-beijing.volces.com/*`
 
 Aviso does not currently request broad host permissions for arbitrary page fetching.
 
@@ -132,7 +137,7 @@ Aviso does not currently request broad host permissions for arbitrary page fetch
 
 Current test and manual assets:
 
-- `tests/unit.test.ts`: unit coverage for clipboard type detection, sensitive filtering, template expansion, error normalization, image source validation, local intent parsing, and page truncation.
+- `tests/unit.test.ts`: unit coverage for clipboard type detection, sensitive filtering, template expansion, error normalization, image source validation, local intent parsing, page truncation, provider/model route resolution, and approved host boundaries.
 - `tests/manual-test.html`: A-G manual QA fixture.
 - `tests/iframe-fixture.html`: iframe validation fixture for Hugging Face Spaces / Gradio-like embedding behavior.
 
@@ -145,7 +150,7 @@ npm run build
 npm run package
 ```
 
-`npm run build` may fail in the default sandbox with `Operation not permitted`; the known successful path is running the same command outside the sandbox.
+`npx tsc --noEmit` is the root extension type check. The Docusaurus `website/` subproject has its own `website/tsconfig.json` and is excluded from the root extension check. `npm run build` may fail in the default sandbox with `Operation not permitted`; the known successful path is running the same command outside the sandbox.
 
 ## Not Implemented In v0.1
 
@@ -182,20 +187,13 @@ The current `package.json` manifest permissions are:
 - `bookmarks`
 - `clipboardWrite`
 
-The current `host_permissions` list only contains:
-
-- `https://ark.cn-beijing.volces.com/*`
-
-The desktop v0.2 draft incorrectly treats `history`, `commands`, `scripting`, `clipboardRead`, `tabs`, `https://api.openai.com/*`, and `https://api.anthropic.com/*` as already present. They are not present in the current manifest.
-
-V2-002A approves adding only these provider hosts in a later implementation task:
+The current `host_permissions` list contains only the approved provider hosts:
 
 - `https://api.openai.com/*`
 - `https://api.anthropic.com/*`
-
-The existing Ark Beijing gateway remains:
-
 - `https://ark.cn-beijing.volces.com/*`
+
+The desktop v0.2 draft incorrectly treats `history`, `commands`, `scripting`, `clipboardRead`, and `tabs` as already present. They are not present in the current manifest.
 
 Any other new permission or host permission still requires a separate product/security decision before implementation.
 
@@ -211,7 +209,7 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 
 ### v0.2-alpha Implementation Constraints
 
-- Model routing should first support existing providers: OpenAI, Anthropic, and 豆包 / 火山方舟.
+- Model routing supports existing providers only: OpenAI, Anthropic, and 豆包 / 火山方舟.
 - Provider connectivity checks must be explicit user-triggered checks, or directly tied to a just-edited key. Settings-page open must not automatically spend tokens across all configured providers.
 - V2-004 must test one provider at a time and must not auto-test all configured providers.
 - Provider validation records must not include API Keys, raw prompts, raw responses, private webpages, or screenshots with private data.
@@ -233,11 +231,11 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 - Should `clipboard.tsx` remain all-frame, or should it be narrowed after more iframe dogfood evidence?
 - Should `contextai_*` storage keys be migrated before public release?
 - Should provider SDK use in-browser `dangerouslyAllowBrowser` remain the long-term architecture, or should v0.2 evaluate a privacy-preserving proxy?
-- Should V2-003 land the approved OpenAI and Anthropic host permissions together with the model registry, or as a tiny manifest-only precursor inside the same issue?
 - Should the first v0.2 model-routing implementation support only existing providers, or add one approved OpenAI-compatible provider in the same slice?
 
 ## Changelog
 
-- 2026-06-02: Recorded approved OpenAI / Anthropic provider host permissions for V2-003 while keeping the current manifest unchanged in this docs task.
+- 2026-06-02: Implemented V2-003 provider/model registry, route fallback, approved host permissions, and root extension type-check boundary.
+- 2026-06-02: In V2-002A, recorded approved OpenAI / Anthropic provider host permissions for V2-003 as a docs-only decision.
 - 2026-06-02: Added v0.2-alpha technical delta constraints and corrected the desktop draft assumptions about file names, message contracts, manifest permissions, host permissions, storage, and MVP boundaries.
 - 2026-06-01: Created Phase 1 internal technical specification from current code structure and package manifest.

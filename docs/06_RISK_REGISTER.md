@@ -14,8 +14,8 @@ Aviso's current risk profile is less about missing core code and more about rele
 
 | ID | Risk | Status | Impact | Mitigation | Next action |
 |----|------|--------|--------|------------|-------------|
-| R-001 | OpenAI path is implemented and host permission decision is approved, but live validation is incomplete. | Open | Public users may hit untested provider behavior. | Add approved host permission in V2-003, then run user-triggered minimal validation with safe test key in V2-004. | Keep public claims blocked until validation record exists. |
-| R-002 | Anthropic path is implemented and host permission decision is approved, but live validation is incomplete. | Open | Public users may hit untested provider behavior. | Add approved host permission in V2-003, then run user-triggered minimal validation with safe test key in V2-004. | Keep public claims blocked until validation record exists. |
+| R-001 | OpenAI path and host permission are implemented, but live validation is incomplete. | Open | Public users may hit untested provider behavior. | Use V2-004 user-triggered minimal validation with safe test key. | Keep public claims blocked until validation record exists. |
+| R-002 | Anthropic path and host permission are implemented, but live validation is incomplete. | Open | Public users may hit untested provider behavior. | Use V2-004 user-triggered minimal validation with safe test key. | Keep public claims blocked until validation record exists. |
 | R-003 | 豆包 / 火山方舟 is user-confirmed but lacks a fresh structured validation record. | Open | Release evidence may be too informal. | Record endpoint, action, result, and latency note without exposing secrets. | Add provider validation note before public release. |
 | R-004 | Public privacy policy does not exist. | Open | Chrome Web Store release blocked. | Derive policy from `docs/07_PRIVACY_AND_SECURITY.md` and Popup copy. | Prepare public policy page in a separate task. |
 | R-005 | Store screenshots or docs may accidentally expose API Keys or private pages. | Open | Security and trust risk. | Use sanitized fixtures and run a final leakage check. | Define screenshot capture rules. |
@@ -34,14 +34,14 @@ Aviso's current risk profile is less about missing core code and more about rele
 | ID | Risk | Status | Impact | Mitigation | Next action |
 |----|------|--------|--------|------------|-------------|
 | R-101 | Desktop v0.2 drafts over-expand scope into a 30-42 day feature set. | Controlled | Development could drift away from release evidence and privacy constraints. | Treat project docs as canonical; keep v0.2-alpha MVP narrow. | Use V2-001 issue map before implementation. |
-| R-102 | New provider hosts will expand `host_permissions`. | Controlled | Chrome Web Store review and user trust risk. | Add only approved provider hosts: OpenAI, Anthropic, and the existing Ark Beijing gateway. Keep broad page-fetching hosts out of MVP. | Implement only through V2-003 after decision docs. |
+| R-102 | Provider hosts expanded to the approved OpenAI / Anthropic / Ark set. | Controlled | Chrome Web Store review and user trust risk. | Keep host permissions limited to the three approved provider hosts and keep broad page-fetching hosts out of MVP. | Re-audit before package or store submission. |
 | R-103 | Connectivity checks can spend tokens or leak test prompts if auto-run. | Controlled | Unexpected cost and privacy risk. | Make checks explicit user-triggered actions and keep test payload minimal. | Specify no auto-test-on-open behavior. |
 | R-104 | Model routing could store API Keys in synced settings. | Controlled | Secrets could sync unexpectedly across devices. | Keep API Keys encrypted in `chrome.storage.local`; store only route IDs in sync. | Enforce in V2-003 acceptance. |
 | R-105 | Screenshot-to-AI may capture private page content. | Open | Sensitive data could be sent to a provider. | Require user-triggered selection, clear preview/confirmation, and no screenshot logging. | Review capture UX before implementation. |
 | R-106 | Result caching may retain sensitive translated or AI-generated text locally. | Open | Local privacy risk if users expect no persistence. | Include operation-aware cache keys, TTL, clear-cache control, and privacy copy. | Decide whether caching is default-on. |
 | R-107 | Third-party translation fallback could contradict no-extra-network expectations. | Controlled | Data may be sent to Google/Baidu/Youdao without the user understanding it. | Keep out of MVP until provider copy and host permissions are approved. | Move to discovery backlog. |
 | R-108 | Multi-tab, tab grouping, and voice features require high-sensitivity permissions. | Controlled | Store review, microphone trust, and broad browsing-data access risk. | Keep out of MVP; evaluate with decision docs before coding. | Create discovery issue only if user approves. |
-| R-109 | Future implementation may confuse host permission approval with completed validation. | Controlled | Docs or public copy could overstate provider support. | Keep manifest implementation in V2-003 and live validation in V2-004; public copy claims only validated providers. | Use the V2-002A handoff issue before coding. |
+| R-109 | Future implementation may confuse host permission implementation with completed validation. | Controlled | Docs or public copy could overstate provider support. | Keep live validation in V2-004; public copy claims only validated providers. | Use registry metadata but keep provider claims blocked until validation records exist. |
 
 ## Accepted v0.1 Limitations
 
@@ -49,7 +49,7 @@ Aviso's current risk profile is less about missing core code and more about rele
 - Long content is truncated.
 - Remote link body extraction is not implemented.
 - Some image sources are unsupported or may fail provider-side.
-- OpenAI and Anthropic host permission decisions are approved, but manifest implementation and live validation are not complete.
+- OpenAI and Anthropic host permissions are implemented, but live validation is not complete.
 
 ## Not Accepted For Public Release
 
@@ -70,6 +70,7 @@ Aviso's current risk profile is less about missing core code and more about rele
 
 ## Changelog
 
+- 2026-06-02: Updated provider host permission risks after V2-003 landed OpenAI / Anthropic manifest hosts and minimal registry/routing, while live validation remains open for V2-004.
 - 2026-06-02: Updated provider host permission risks after OpenAI / Anthropic host decisions were approved for V2-003, while live validation remains open for V2-004.
 - 2026-06-02: Added v0.2-alpha planning risks for scope expansion, host permissions, provider checks, model-route storage, screenshots, caching, third-party translation, and high-permission tab/voice features.
 - 2026-06-01: Created Phase 1 risk register from current release checklist, status file, and technical baseline.

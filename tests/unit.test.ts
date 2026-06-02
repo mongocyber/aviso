@@ -1,5 +1,6 @@
 import { test } from "node:test"
 import assert from "node:assert/strict"
+import { readFileSync } from "node:fs"
 
 import {
   detectType,
@@ -17,6 +18,14 @@ import {
   UNSUPPORTED_IMAGE_SRC_MESSAGE,
   parseSupportedImageSrc
 } from "../src/utils/image-src.ts"
+import {
+  APPROVED_PROVIDER_HOST_PERMISSIONS,
+  DEFAULT_MODEL_ID,
+  DOUBAO_BASE_URL,
+  MODEL_REGISTRY,
+  PROVIDER_REGISTRY,
+  resolveModelRoute
+} from "../src/utils/model-registry.ts"
 
 test("detectType 识别 URL", () => {
   assert.equal(detectType("https://example.com/path?q=1"), "url")
@@ -181,4 +190,77 @@ test("truncatePageContent 保守截断长正文", () => {
   assert.match(out, /正文过长已截断/)
   assert.ok(out.length < longText.length)
   assert.ok(out.startsWith("x".repeat(100)))
+})
+
+test("model registry 仅覆盖当前批准的三类 provider", () => {
+  assert.deepEqual(Object.keys(PROVIDER_REGISTRY).sort(), [
+    "anthropic",
+    "doubao",
+    "openai"
+  ])
+  assert.deepEqual(Object.keys(MODEL_REGISTRY).sort(), [
+    "claude-haiku-4-5-20251001",
+    "claude-sonnet-4-6",
+    "doubao",
+    "gpt-4o",
+    "gpt-4o-mini"
+  ])
+  assert.equal(
+    PROVIDER_REGISTRY.openai.hostPermission,
+    "https://api.openai.com/*"
+  )
+  assert.equal(
+    PROVIDER_REGISTRY.anthropic.hostPermission,
+    "https://api.anthropic.com/*"
+  )
+  assert.equal(
+    PROVIDER_REGISTRY.doubao.hostPermission,
+    "https://ark.cn-beijing.volces.com/*"
+  )
+})
+
+test("resolveModelRoute 默认回到 gpt-4o-mini / OpenAI", () => {
+  const route = resolveModelRoute(undefined, {})
+
+  assert.equal(route.selectedModel, DEFAULT_MODEL_ID)
+  assert.equal(route.requestModel, DEFAULT_MODEL_ID)
+  assert.equal(route.provider.id, "openai")
+  assert.equal(route.isFallback, false)
+})
+
+test("resolveModelRoute 保持 claude 与未知模型兼容路由", () => {
+  const claudeRoute = resolveModelRoute("claude-custom-test", {})
+  const openaiRoute = resolveModelRoute("gpt-4.1-mini", {})
+
+  assert.equal(claudeRoute.provider.id, "anthropic")
+  assert.equal(claudeRoute.requestModel, "claude-custom-test")
+  assert.equal(claudeRoute.isFallback, true)
+  assert.equal(openaiRoute.provider.id, "openai")
+  assert.equal(openaiRoute.requestModel, "gpt-4.1-mini")
+  assert.equal(openaiRoute.isFallback, true)
+})
+
+test("resolveModelRoute 将 doubao 路由到 Ark OpenAI-compatible endpoint", () => {
+  const configured = resolveModelRoute("doubao", {
+    doubaoModel: " ep-2026-test "
+  })
+  const missing = resolveModelRoute("doubao", {})
+
+  assert.equal(configured.provider.id, "doubao")
+  assert.equal(configured.provider.sdk, "openai-compatible")
+  assert.equal(configured.provider.baseURL, DOUBAO_BASE_URL)
+  assert.equal(configured.requestModel, "ep-2026-test")
+  assert.equal(configured.missingConfig, undefined)
+  assert.equal(missing.missingConfig, "doubaoModel")
+})
+
+test("package host_permissions 精确匹配批准 provider 边界", () => {
+  const pkg = JSON.parse(
+    readFileSync(new URL("../package.json", import.meta.url), "utf8")
+  )
+
+  assert.deepEqual(
+    [...pkg.manifest.host_permissions].sort(),
+    [...APPROVED_PROVIDER_HOST_PERMISSIONS].sort()
+  )
 })

@@ -1,6 +1,6 @@
 # Issue 002: V2-002A Provider Host Permission Decision Handoff
 
-Status: Ready for V2-003 / V2-004 planning
+Status: V2-003 consumed; ready for V2-004 planning
 
 Date: 2026-06-02
 
@@ -10,16 +10,13 @@ Decision source: `docs/decisions/001-v2-provider-host-permissions.md`
 
 V2-002 provider permission audit is complete. The product owner approved documenting the host permission decision for v0.2-alpha provider work.
 
-Current manifest host permission remains:
-
-- `https://ark.cn-beijing.volces.com/*`
-
-Approved for a later implementation task:
+V2-003 implementation has updated the manifest host permissions to:
 
 - `https://api.openai.com/*`
 - `https://api.anthropic.com/*`
+- `https://ark.cn-beijing.volces.com/*`
 
-This issue is a handoff document only. This docs task does not change source code, `package.json`, manifest permissions, dependencies, build artifacts, API Keys, or release state.
+This issue began as a handoff document. After V2-003, it remains useful as the V2-004 boundary: source routing and manifest host permissions are implemented, but no live provider connectivity validation has been run.
 
 ## V2-003 Handoff
 
@@ -43,9 +40,16 @@ Implementation constraints:
 
 Acceptance for V2-003:
 
-- Manifest host permission changes, if made, are limited to the approved OpenAI and Anthropic provider hosts plus the existing Ark Beijing gateway.
+- Manifest host permission changes are limited to the approved OpenAI and Anthropic provider hosts plus the existing Ark Beijing gateway.
 - Provider registry/routing documentation is updated in PRD, tech spec, risk, privacy/security, release checklist, and status.
 - No provider is claimed as verified unless a validation record exists.
+
+V2-003 result:
+
+- Done. Minimal registry/routing exists for OpenAI, Anthropic, and 豆包 / 火山方舟 only.
+- Done. Default `gpt-4o-mini` and existing route behavior are preserved.
+- Done. API Keys remain encrypted in `chrome.storage.local` under `contextai_api_keys`.
+- Not done. Live provider calls remain in V2-004.
 
 ## V2-004 Handoff
 
@@ -92,7 +96,7 @@ Acceptance for V2-004:
 | Gate | State |
 |------|-------|
 | Provider host permission product decision | Approved and documented. |
-| Manifest host permission implementation | Not done; belongs to V2-003. |
+| Manifest host permission implementation | Done in V2-003. |
 | OpenAI live connectivity validation | Not done; belongs to V2-004. |
 | Anthropic live connectivity validation | Not done; belongs to V2-004. |
 | 豆包 / 火山方舟 structured validation record | Not refreshed; belongs to V2-004 or release prep. |
