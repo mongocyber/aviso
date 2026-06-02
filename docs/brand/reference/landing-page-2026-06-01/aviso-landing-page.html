@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aviso — 任意网页,随手问 AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;500;600;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<link href="tokens.css" rel="stylesheet">
+<link href="components/aviso-components.css" rel="stylesheet">
+<link href="components/aviso-landing.css" rel="stylesheet">
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<nav class="nav">
+  <div class="wrap row">
+    <a class="brand" href="#top"><span class="mk" data-mk></span>Aviso</a>
+    <div class="links">
+      <a href="#features" data-zh="功能" data-en="Features">功能</a>
+      <a href="#privacy" data-zh="隐私" data-en="Privacy">隐私</a>
+      <a href="Aviso Docs.html" data-zh="文档" data-en="Docs">文档</a>
+      <a href="#github" data-zh="GitHub" data-en="GitHub">GitHub</a>
+    </div>
+    <div class="right">
+      <div class="langtog" id="langtog">
+        <button data-lang="zh" class="on">中</button>
+        <button data-lang="en">EN</button>
+      </div>
+      <a class="btn btn-ghost" href="Aviso Docs.html" data-zh="产品文档" data-en="Docs">产品文档</a>
+      <a class="btn btn-primary" href="#install"><span class="mk" data-mk></span><span data-zh="添加到浏览器" data-en="Add to browser">添加到浏览器</span></a>
+    </div>
+  </div>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero" id="top">
+  <div class="wrap">
+    <span class="eyebrow"><span class="mk" data-mk></span><span data-zh="免费 · 开源 · 隐私优先" data-en="Free · Open source · Privacy-first">免费 · 开源 · 隐私优先</span></span>
+    <h1 data-zh-html="会留意的 <em>AI</em>" data-en-html="AI that <em>notices</em>.">会留意的 <em>AI</em></h1>
+    <p class="sub" data-zh="把你已有的 ChatGPT 或 Claude 订阅,带到浏览器的每一个角落 —— 需要时随手即得。右键任何内容。零额外费用,零数据收集。" data-en="Aviso brings your ChatGPT or Claude subscription to every corner of your browser — right when you need it. Right-click anything. Zero extra fees. Zero data collection.">把你已有的 ChatGPT 或 Claude 订阅,带到浏览器的每一个角落 —— 需要时随手即得。右键任何内容。零额外费用,零数据收集。</p>
+    <div class="cta-row">
+      <a class="btn btn-primary btn-lg" href="#install"><span class="mk" data-mk></span><span data-zh="免费添加到浏览器" data-en="Add to browser — free">免费添加到浏览器</span></a>
+      <a class="btn btn-ghost btn-lg" href="#demo" data-zh="看看演示" data-en="Watch demo">看看演示</a>
+    </div>
+    <p class="micro"><span class="ic" data-ic="shield"></span><span data-zh="兼容 Chrome 114+ · 无需注册账号" data-en="Works with Chrome 114+ · No account required">兼容 Chrome 114+ · 无需注册账号</span></p>
+
+    <!-- BROWSER MOCKUP -->
+    <div class="bw-scale">
+    <div class="bw">
+      <div class="bw-bar">
+        <span class="bw-dots"><i></i><i></i><i></i></span>
+        <span class="bw-url"><span class="ic" data-ic="shield"></span>react.dev/learn/synchronizing-with-effects</span>
+        <span class="bw-ext"><span class="ext-tile"><span class="mk" data-mk></span></span></span>
+      </div>
+      <div class="bw-page">
+        <div class="doc">
+          <p class="kick" data-zh="文档 · EFFECT" data-en="DOCS · EFFECTS">文档 · EFFECT</p>
+          <h2 data-zh="与外部系统同步" data-en="Synchronizing with Effects">与外部系统同步</h2>
+          <p data-zh-html="有些组件需要与外部系统保持同步。例如,你可能想根据 React 状态控制非 React 组件、建立服务器连接,或在组件出现在屏幕上时发送日志。" data-en-html="Some components need to stay connected to external systems. For example, you might want to control a non-React component, set up a server connection, or send an analytics log when a component appears.">有些组件需要与外部系统保持同步。例如,你可能想根据 React 状态控制非 React 组件、建立服务器连接,或在组件出现在屏幕上时发送日志。</p>
+          <p data-zh-html='<span class="hl">清理函数会在组件卸载前,以及下一次 effect 重新运行前执行,用来撤销上一次的副作用。</span>返回的函数即清理函数。' data-en-html='<span class="hl">The cleanup function runs before the component unmounts and before the effect re-runs, undoing whatever the last effect did.</span> The function you return is the cleanup.'><span class="hl">清理函数会在组件卸载前,以及下一次 effect 重新运行前执行,用来撤销上一次的副作用。</span>返回的函数即清理函数。</p>
+          <p data-zh="依赖数组发生变化时,React 会先清理旧的 effect,再执行新的。" data-en="When the dependencies change, React cleans up the old effect before running the new one.">依赖数组发生变化时,React 会先清理旧的 effect,再执行新的。</p>
+        </div>
+
+        <!-- floating result window (real component) -->
+        <div class="bw-float win">
+          <div class="win lite" id="hero-win">
+            <div class="win-head">
+              <span class="mk" data-mk></span>
+              <span class="win-title">Aviso</span>
+              <span class="win-model">Claude · Sonnet</span>
+              <span class="spacer"></span>
+              <button class="iconbtn"><span class="ic" data-ic="close"></span></button>
+            </div>
+            <div class="win-body">
+              <div class="userline"><span class="ic" data-ic="explain" style="width:14px;height:14px;opacity:.6"></span><span data-zh="解释" data-en="Explain">解释</span><span class="q" data-zh="清理函数会在组件卸载前…" data-en="The cleanup function runs before…">清理函数会在组件卸载前…</span></div>
+              <div class="stream-target" data-zh-html="<p><strong>清理函数</strong>用来撤销上一次 effect 的副作用——取消订阅、清除定时器、断开连接,避免内存泄漏。</p><p>它在两种时机执行:组件卸载前,以及下一次 effect 运行前。</p>" data-en-html="<p>The <strong>cleanup function</strong> undoes the previous effect's side-effects — unsubscribing, clearing timers, closing connections — to prevent memory leaks.</p><p>It runs at two moments: before unmount, and before the effect re-runs.</p>"></div>
+            </div>
+            <div class="win-actions">
+              <button class="act" data-feedback="已复制"><span class="ic" data-ic="copy"></span><span class="lab" data-zh="复制" data-en="Copy">复制</span></button>
+              <button class="act" data-feedback="已保存"><span class="ic" data-ic="save"></span><span class="lab" data-zh="保存" data-en="Save">保存</span></button>
+              <span class="spacer"></span>
+              <button class="act close"><span class="ic" data-ic="close"></span><span class="lab" data-zh="关闭" data-en="Close">关闭</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    </div>
+  </div>
+</header>
+
+<!-- ============ TRUST BAR ============ -->
+<section class="trustbar" id="trust">
+  <div class="wrap">
+    <p class="lab" data-zh="兼容你已有的订阅" data-en="Works with your existing subscription">兼容你已有的订阅</p>
+    <div class="logos">
+      <span>ChatGPT Plus</span><span class="d"></span>
+      <span>Claude Pro</span><span class="d"></span>
+      <span>OpenAI API</span><span class="d"></span>
+      <span>Anthropic API</span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PROBLEM → SOLUTION ============ -->
+<section class="block" id="why">
+  <div class="wrap">
+    <p class="sec-tag" data-zh="为什么是 Aviso" data-en="Why Aviso">为什么是 Aviso</p>
+    <h2 class="title" data-zh="别再每次都这样了。" data-en="Stop doing this every time.">别再每次都这样了。</h2>
+    <div class="ps">
+      <div class="ps-card bad reveal">
+        <div class="ps-h"><span class="ic" data-ic="close"></span><span data-zh="没有 Aviso" data-en="Without Aviso">没有 Aviso</span></div>
+        <ul class="ps-list">
+          <li><span class="n">1</span><span data-zh="在页面上选中文字" data-en="Select text on a page">在页面上选中文字</span></li>
+          <li><span class="n">2</span><span data-zh="按 Ctrl + C 复制" data-en="Press Ctrl + C">按 Ctrl + C 复制</span></li>
+          <li><span class="n">3</span><span data-zh="切换到新标签页" data-en="Switch to a new tab">切换到新标签页</span></li>
+          <li><span class="n">4</span><span data-zh="打开 ChatGPT 或 Claude" data-en="Open ChatGPT or Claude">打开 ChatGPT 或 Claude</span></li>
+          <li><span class="n">5</span><span data-zh="粘贴文字" data-en="Paste the text">粘贴文字</span></li>
+          <li><span class="n">6</span><span data-zh="等待回复" data-en="Wait for response">等待回复</span></li>
+          <li><span class="n">7</span><span data-zh="再切回来" data-en="Switch back">再切回来</span></li>
+        </ul>
+        <div class="ps-foot" data-zh="7 步。每。一。次。" data-en="7 steps. Every. Single. Time.">7 步。每。一。次。</div>
+      </div>
+      <div class="ps-card good reveal">
+        <div class="ps-h"><span class="ic" data-ic="check"></span><span data-zh="有了 Aviso" data-en="With Aviso">有了 Aviso</span></div>
+        <ul class="ps-list">
+          <li><span class="n">1</span><span data-zh="选中文字" data-en="Select text">选中文字</span></li>
+          <li><span class="n">2</span><span data-zh="右键 → 问 AI" data-en="Right-click → Ask AI">右键 → 问 AI</span></li>
+        </ul>
+        <div class="ps-foot" data-zh="2 步。就在你眼前。" data-en="2 steps. Right where you are.">2 步。就在你眼前。</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEATURES ============ -->
+<section class="block" id="features">
+  <div class="wrap">
+    <p class="sec-tag" data-zh="能做什么" data-en="What it does">能做什么</p>
+    <h2 class="title" data-zh="阅读、写作、查证 —— 都不必离开当前页面" data-en="Read, write, fact-check — without ever leaving the page">阅读、写作、查证 —— 都不必离开当前页面</h2>
+    <p class="lede" data-zh="Aviso 把 AI 叠加在你正在看的任何网页之上。轻量、克制,只在你需要的那一刻出现。" data-en="Aviso layers AI over whatever page you're on. Light, restrained, and there only the moment you need it.">Aviso 把 AI 叠加在你正在看的任何网页之上。轻量、克制,只在你需要的那一刻出现。</p>
+
+    <div class="feat-grid">
+      <!-- selection toolbar (wide) -->
+      <div class="feat wide reveal">
+        <div class="ficon"><span class="ic" data-ic="send"></span></div>
+        <h3 data-zh="划词工具栏" data-en="Selection toolbar">划词工具栏</h3>
+        <p data-zh="选中网页文字,工具栏就地浮出。解释、翻译、润色、总结一键直达,或直接发给 AI 自由提问。" data-en="Select text and the toolbar appears in place. Explain, translate, refine, summarize in one tap — or send it straight to the AI.">选中网页文字,工具栏就地浮出。解释、翻译、润色、总结一键直达,或直接发给 AI 自由提问。</p>
+        <div class="mini mini-toolbar">
+          <div class="toolbar-wrap lite" style="position:relative; display:inline-block;">
+            <div class="sel-toolbar lite">
+              <span class="sel-brand"><span class="mk" data-mk></span></span>
+              <span class="sel-sep"></span>
+              <button class="sel-btn"><span class="ic" data-ic="explain"></span><span data-zh="解释" data-en="Explain">解释</span></button>
+              <button class="sel-btn"><span class="ic" data-ic="refine"></span><span data-zh="润色" data-en="Refine">润色</span></button>
+              <span class="sel-sep"></span>
+              <button class="sel-btn primary"><span class="ic" data-ic="send"></span><span data-zh="发给 AI" data-en="Ask AI">发给 AI</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- command palette (wide) -->
+      <div class="feat wide reveal">
+        <div class="ficon"><span class="ic" data-ic="command"></span></div>
+        <h3 data-zh-html="命令面板 <span class='kbd'>⌘⇧Space</span>" data-en-html="Command palette <span class='kbd'>⌘⇧Space</span>">命令面板 <span class="kbd">⌘⇧Space</span></h3>
+        <p data-zh="一个快捷键,随处唤起。搜索历史与书签,或直接把问题交给 AI 按意图处理。" data-en="One shortcut, anywhere. Search history and bookmarks, or hand a question straight to the AI to act on intent.">一个快捷键,随处唤起。搜索历史与书签,或直接把问题交给 AI 按意图处理。</p>
+        <div class="mini mini-cmd">
+          <div class="inp"><span class="mk" data-mk></span><span data-zh="搜索历史、书签,或发问 AI…" data-en="Search history, bookmarks, or ask AI…">搜索历史、书签,或发问 AI…</span></div>
+          <div class="r sel"><span class="ic" data-ic="history"></span><span data-zh="总结:智能人机交互方案" data-en="Summary: HCI interaction spec">总结:智能人机交互方案</span><span class="badge" data-zh="历史" data-en="History">历史</span></div>
+          <div class="r"><span class="ic" data-ic="bookmark"></span><span data-zh="工信部 · 食品数据" data-en="MIIT · food data report">工信部 · 食品数据</span><span class="badge" data-zh="书签" data-en="Mark">书签</span></div>
+        </div>
+      </div>
+
+      <!-- context menu -->
+      <div class="feat reveal">
+        <div class="ficon"><span class="ic" data-ic="more"></span></div>
+        <h3 data-zh="右键菜单" data-en="Right-click menu">右键菜单</h3>
+        <p data-zh="融入原生右键菜单,条目随选区、图片、链接自动变化。" data-en="Woven into the native context menu, with entries that adapt to text, images, or links.">融入原生右键菜单,条目随选区、图片、链接自动变化。</p>
+        <div class="mini mini-ctx">
+          <div class="it"><span class="ic" data-ic="copy"></span><span data-zh="复制" data-en="Copy">复制</span></div>
+          <div class="sep"></div>
+          <div class="it av"><span class="ic" data-mk></span><span data-zh="解释所选" data-en="Explain selection">解释所选</span></div>
+          <div class="it av"><span class="ic" data-ic="send"></span><span data-zh="发给 Aviso" data-en="Send to Aviso">发给 Aviso</span></div>
+        </div>
+      </div>
+
+      <!-- clipboard nudge -->
+      <div class="feat reveal">
+        <div class="ficon"><span class="ic" data-ic="copy"></span></div>
+        <h3 data-zh="剪贴板感知" data-en="Clipboard-aware">剪贴板感知</h3>
+        <p data-zh="复制普通文字后轻轻提示,3 秒消失。敏感内容绝不触发。" data-en="A gentle nudge after you copy plain text, gone in 3s. Never fires on sensitive content.">复制普通文字后轻轻提示,3 秒消失。敏感内容绝不触发。</p>
+        <div class="mini mini-nudge">
+          <span class="mk" data-mk></span>
+          <span class="t"><b data-zh="已复制一段文字" data-en="Copied some text">已复制一段文字</b><small data-zh="需要翻译吗?" data-en="Translate it?">需要翻译吗?</small></span>
+          <span class="go" data-zh="翻译" data-en="Translate">翻译</span>
+        </div>
+      </div>
+
+      <!-- templates -->
+      <div class="feat reveal">
+        <div class="ficon"><span class="ic" data-ic="refine"></span></div>
+        <h3 data-zh="自定义模板" data-en="Prompt templates">自定义模板</h3>
+        <p data-zh-html="自己的 Prompt,最多 20 条,出现在右键菜单。支持 <code>{{selection}}</code> 等占位符。" data-en-html="Your own prompts, up to 20, surfaced in the right-click menu. Placeholders like <code>{{selection}}</code>.">自己的 Prompt,最多 20 条,出现在右键菜单。</p>
+        <div class="mini mini-tpl">
+          <div class="tp"><span class="ic" data-ic="refine"></span><span data-zh="改写得更专业" data-en="Rewrite professionally">改写得更专业</span></div>
+          <div class="tp"><span class="ic" data-ic="summarize"></span><span data-zh="三句话总结本页" data-en="Summarize page in 3">三句话总结本页</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ HOW ============ -->
+<section class="block" id="how" style="background:linear-gradient(180deg,var(--sage-50),transparent);">
+  <div class="wrap">
+    <p class="sec-tag" data-zh="三步上手" data-en="Three steps">三步上手</p>
+    <h2 class="title" data-zh="从选中,到答案,几秒就好" data-en="From selection to answer in seconds">从选中,到答案,几秒就好</h2>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="bar"></div>
+        <h3 data-zh="选中文字" data-en="Select text">选中文字</h3>
+        <p data-zh="在任意网页上划选你想处理的内容,工具栏立即就地浮出。" data-en="Highlight anything on any page. The toolbar floats up right where you are.">在任意网页上划选你想处理的内容,工具栏立即就地浮出。</p>
+      </div>
+      <div class="step reveal">
+        <div class="bar"></div>
+        <h3 data-zh="选个动作" data-en="Pick an action">选个动作</h3>
+        <p data-zh="解释、翻译、润色、总结,或直接发给 AI 自由提问 —— 一次点击。" data-en="Explain, translate, refine, summarize, or just ask the AI freely — one click.">解释、翻译、润色、总结,或直接发给 AI 自由提问 —— 一次点击。</p>
+      </div>
+      <div class="step reveal">
+        <div class="bar"></div>
+        <h3 data-zh="就地拿到答案" data-en="Answer in place">就地拿到答案</h3>
+        <p data-zh="结果浮在原文旁,流式输出。复制、保存,或继续追问,都不必离开页面。" data-en="The answer streams in beside the text. Copy, save, or keep asking — never leaving the page.">结果浮在原文旁,流式输出。复制、保存,或继续追问,都不必离开页面。</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ PRIVACY · full-bleed statement band ============ -->
+<section class="privacy-band" id="privacy" data-screen-label="隐私">
+  <span class="priv-watermark mk" data-mk></span>
+  <div class="wrap priv-inner">
+    <div class="priv-copy reveal">
+      <p class="sec-tag" data-zh="隐私优先" data-en="Privacy first">隐私优先</p>
+      <h2 data-zh-html="你的 Key,你的数据,<em>永远</em>留在你这里" data-en-html="Your keys, your data,<br><em>never</em> leave your machine">你的 Key,你的数据,<em>永远</em>留在你这里</h2>
+      <p class="priv-lede" data-zh="Aviso 直连你自己的模型提供商。我们不做中转、不设服务器、不碰你的内容。它该有的样子,本就如此。" data-en="Aviso connects straight to your own model provider. No relay, no servers, no access to your content. This is simply how it should be.">Aviso 直连你自己的模型提供商。我们不做中转、不设服务器、不碰你的内容。它该有的样子,本就如此。</p>
+      <ul class="priv-list">
+        <li>
+          <span class="pic"><span class="ic" data-ic="shield"></span></span>
+          <div class="pl"><b data-zh="Key 本地加密,绝不上传" data-en="Keys encrypted locally, never uploaded">Key 本地加密,绝不上传</b><span data-zh="经 AES-256 加密,仅存于此设备的浏览器内。" data-en="AES-256 encrypted, stored only inside this browser.">经 AES-256 加密,仅存于此设备的浏览器内。</span></div>
+        </li>
+        <li>
+          <span class="pic"><span class="ic" data-ic="check"></span></span>
+          <div class="pl"><b data-zh="不收集、不分析你的浏览内容" data-en="Nothing you browse is collected">不收集、不分析你的浏览内容</b><span data-zh="没有遥测,没有用户画像,没有第三方。" data-en="No telemetry, no profiling, no third parties.">没有遥测,没有用户画像,没有第三方。</span></div>
+        </li>
+        <li>
+          <span class="pic"><span class="ic" data-ic="key"></span></span>
+          <div class="pl"><b data-zh="敏感内容,自动跳过" data-en="Sensitive copies are skipped">敏感内容,自动跳过</b><span data-zh="复制密码、手机号时,绝不弹出任何提示。" data-en="Never nudges when you copy passwords or phone numbers.">复制密码、手机号时,绝不弹出任何提示。</span></div>
+        </li>
+      </ul>
+    </div>
+    <aside class="priv-card reveal">
+      <div class="pc-head"><span class="ic" data-ic="key"></span><span data-zh="API Key · 本地" data-en="API Keys · local">API Key · 本地</span><span class="aes">AES-256</span></div>
+      <div class="priv-key"><span class="ic" data-ic="model"></span><span class="nm">Anthropic · Claude</span><span class="dot"></span></div>
+      <div class="priv-key"><span class="ic" data-ic="model"></span><span class="nm">OpenAI · ChatGPT</span><span class="dot"></span></div>
+      <div class="priv-key"><span class="ic" data-ic="key"></span><code>sk-ant-••••••••••••</code></div>
+      <div class="pc-foot"><span class="ic" data-ic="shield"></span><span data-zh="加密存储 · 仅此设备 · 绝不离开浏览器" data-en="Encrypted · this device only · never leaves the browser">加密存储 · 仅此设备 · 绝不离开浏览器</span></div>
+    </aside>
+  </div>
+  <div class="wrap">
+    <p class="priv-research" data-zh="伦敦大学学院(UCL)与加州大学戴维斯分校的研究发现:多数 AI 浏览器扩展会收集敏感数据 —— 包括病历和身份证号。Aviso 不一样。" data-en="Research from UCL and UC Davis found that most AI browser extensions collect sensitive user data — including medical records and social security numbers. Aviso is different.">伦敦大学学院(UCL)与加州大学戴维斯分校的研究发现:多数 AI 浏览器扩展会收集敏感数据 —— 包括病历和身份证号。Aviso 不一样。</p>
+    <div class="metrics">
+      <div class="metric reveal"><div class="num">0</div><div class="desc" data-zh="字节浏览数据被收集" data-en="bytes of browsing data collected">字节浏览数据被收集</div></div>
+      <div class="metric reveal"><div class="num">0</div><div class="desc" data-zh="个第三方分析 SDK" data-en="third-party analytics SDKs">个第三方分析 SDK</div></div>
+      <div class="metric reveal"><div class="num">100%</div><div class="desc" data-zh="开源、可审计的代码" data-en="open source, auditable code">开源、可审计的代码</div></div>
+    </div>
+    <a class="priv-policy" href="#privacy-policy" data-zh="阅读完整隐私政策 →" data-en="Read the full privacy policy →">阅读完整隐私政策 →</a>
+  </div>
+</section>
+
+<!-- ============ MODELS ============ -->
+<section class="block" id="models">
+  <div class="wrap">
+    <p class="sec-tag" data-zh="你的模型" data-en="Your models">你的模型</p>
+    <h2 class="title" data-zh="用你信任的模型,随时切换" data-en="Bring the model you trust — switch anytime">用你信任的模型,随时切换</h2>
+    <p class="lede" data-zh="云端或本地,自带 Key 直连。在设置里或右键菜单里随时切换。" data-en="Cloud or local, connected with your own key. Switch from settings or the right-click menu anytime.">云端或本地,自带 Key 直连。在设置里或右键菜单里随时切换。</p>
+    <div class="models">
+      <div class="model-chip reveal"><span class="mi" style="background:var(--sage-600)">C</span><span class="mtxt"><b>Claude</b><small>Sonnet · Opus</small></span></div>
+      <div class="model-chip reveal"><span class="mi" style="background:var(--ink)">G</span><span class="mtxt"><b>ChatGPT</b><small>4o · o-series</small></span></div>
+      <div class="model-chip reveal"><span class="mi" style="background:oklch(0.62 0.13 28)">豆</span><span class="mtxt"><b data-zh="豆包" data-en="Doubao">豆包</b><small>火山方舟 ARK</small></span></div>
+      <div class="model-chip reveal"><span class="mi" style="background:var(--ink-2)"><span class="ic" data-ic="model" style="width:18px;height:18px;color:var(--paper)"></span></span><span class="mtxt"><b data-zh="本地模型" data-en="Local model">本地模型</b><small>Ollama · LM Studio</small></span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FAQ ============ -->
+<section class="block" id="faq">
+  <div class="wrap">
+    <p class="sec-tag" data-zh="常见问题" data-en="FAQ">常见问题</p>
+    <h2 class="title" data-zh="还有疑问?" data-en="Questions?">还有疑问?</h2>
+    <div class="faq">
+      <div class="faq-item">
+        <button class="faq-q"><span data-zh="Aviso 真的免费吗?" data-en="Is Aviso really free?">Aviso 真的免费吗?</span><span class="pm"></span></button>
+        <div class="faq-a"><p data-zh="是的。扩展核心永久免费。你只为自己的 AI 订阅(ChatGPT Plus 或 Claude Pro)付费 —— 就是你已经有的那个。Aviso 本身不收一分钱。" data-en="Yes. The core extension is free forever. You pay only for your AI subscription (ChatGPT Plus or Claude Pro) — the same one you already have. Aviso itself costs nothing.">是的。扩展核心永久免费。你只为自己的 AI 订阅(ChatGPT Plus 或 Claude Pro)付费 —— 就是你已经有的那个。Aviso 本身不收一分钱。</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q"><span data-zh="Aviso 会收集我的浏览数据吗?" data-en="Does Aviso collect my browsing data?">Aviso 会收集我的浏览数据吗?</span><span class="pm"></span></button>
+        <div class="faq-a"><p data-zh="不会。Aviso 没有后端服务器。你的浏览数据、API Key 和 AI 对话都只留在本机。代码开源,你可以自己上 GitHub 核实。" data-en="No. Aviso has no backend server. Your browsing data, API keys, and AI conversations stay entirely on your device. The code is open source — you can verify this yourself on GitHub.">不会。Aviso 没有后端服务器。你的浏览数据、API Key 和 AI 对话都只留在本机。代码开源,你可以自己上 GitHub 核实。</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q"><span data-zh="必须有 ChatGPT 或 Claude 订阅吗?" data-en="Do I need a ChatGPT or Claude subscription?">必须有 ChatGPT 或 Claude 订阅吗?</span><span class="pm"></span></button>
+        <div class="faq-a"><p data-zh="不必。你可以用 OpenAI 或 Anthropic 的 API Key(按量付费,日常用很便宜)。而 Plus / Pro 订阅可解锁浏览器会话模式 —— 完全没有 API 费用。" data-en="You can use Aviso with an OpenAI or Anthropic API key (pay-per-use, very cheap for everyday tasks). A Plus or Pro subscription unlocks Browser Session mode — no API costs at all.">不必。你可以用 OpenAI 或 Anthropic 的 API Key(按量付费,日常用很便宜)。而 Plus / Pro 订阅可解锁浏览器会话模式 —— 完全没有 API 费用。</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q"><span data-zh="会拖慢我的浏览器吗?" data-en="Will it slow down my browser?">会拖慢我的浏览器吗?</span><span class="pm"></span></button>
+        <div class="faq-a"><p data-zh="没有可察觉的影响。Aviso 的内容脚本给页面加载增加不到 50ms,且在你交互之前一直闲置。" data-en="No measurable impact. Aviso's content script adds less than 50ms to page load time and sits idle until you interact with it.">没有可察觉的影响。Aviso 的内容脚本给页面加载增加不到 50ms,且在你交互之前一直闲置。</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q"><span data-zh="每个网站都能用吗?" data-en="Does it work on every website?">每个网站都能用吗?</span><span class="pm"></span></button>
+        <div class="faq-a"><p data-zh="几乎所有网站。右键菜单和命令面板处处可用。少数站点(如 Google Docs)有自定义右键菜单 —— 在那些站点上,划词工具栏和快捷键依然好用。" data-en="Almost every website. The right-click menu and command palette work everywhere. A small number of sites (like Google Docs) have custom right-click menus — on those, the text selection toolbar and keyboard shortcut still work perfectly.">几乎所有网站。右键菜单和命令面板处处可用。少数站点(如 Google Docs)有自定义右键菜单 —— 在那些站点上,划词工具栏和快捷键依然好用。</p></div>
+      </div>
+      <div class="faq-item">
+        <button class="faq-q"><span data-zh="代码真的开源吗?" data-en="Is the code really open source?">代码真的开源吗?</span><span class="pm"></span></button>
+        <div class="faq-a"><p data-zh="是的。Aviso 采用 MIT 许可证,在 GitHub 上完全公开。我们相信:一个要求读取你浏览器的扩展,你理应能读它的代码。" data-en="Yes. Aviso is MIT licensed and fully open on GitHub. We believe that if an extension asks to read your browser, you should be able to read its code.">是的。Aviso 采用 MIT 许可证,在 GitHub 上完全公开。我们相信:一个要求读取你浏览器的扩展,你理应能读它的代码。</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FINAL CTA ============ -->
+<section class="final" id="install">
+  <div class="wrap">
+    <span class="mk-big" data-mk></span>
+    <h2 data-zh="把 AI 留在你需要的那一刻" data-en="Keep AI for the moment you need it">把 AI 留在你需要的那一刻</h2>
+    <p data-zh="免费、开源、隐私优先。装好就能用,几秒就好。" data-en="Free, open, privacy-first. Install and go — it takes seconds.">免费、开源、隐私优先。装好就能用,几秒就好。</p>
+    <div class="cta-row" style="justify-content:center;">
+      <a class="btn btn-primary btn-lg" href="#"><span class="mk" data-mk></span><span data-zh="免费添加到浏览器" data-en="Add to browser — free">免费添加到浏览器</span></a>
+      <a class="btn btn-ghost btn-lg" href="Aviso Docs.html" data-zh="产品文档" data-en="Product docs">产品文档</a>
+    </div>
+    <div class="final-badges">
+      <span class="fb"><span class="ic" data-ic="shield"></span><span data-zh="开源" data-en="Open source">开源</span></span>
+      <span class="fb"><span class="ic" data-ic="check"></span><span data-zh="不收集数据" data-en="No data collected">不收集数据</span></span>
+      <span class="fb"><span class="ic" data-ic="key"></span><span data-zh="永久免费" data-en="Free forever">永久免费</span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer class="footer">
+  <div class="wrap row">
+    <a class="brand" href="#top"><span class="mk" data-mk></span>Aviso</a>
+    <nav class="fnav">
+      <a href="#features" data-zh="功能" data-en="Features">功能</a>
+      <a href="#privacy" data-zh="隐私" data-en="Privacy">隐私</a>
+      <a href="Aviso Design System.html" data-zh="设计系统" data-en="Design system">设计系统</a>
+      <a href="Aviso Components.html" data-zh="组件库" data-en="Components">组件库</a>
+    </nav>
+    <p class="copy" data-zh="© 2026 Aviso · 恰当的时机,被悄然留意到了。" data-en="© 2026 Aviso · The right moment, noticed.">© 2026 Aviso · 恰当的时机,被悄然留意到了。</p>
+  </div>
+</footer>
+
+<script src="components/aviso-ui.js"></script>
+<script>
+(function(){
+  document.documentElement.classList.add('js');
+  /* ---------- i18n ---------- */
+  function applyLang(lang){
+    document.documentElement.lang = (lang==='en'?'en':'zh');
+    document.querySelectorAll('[data-zh],[data-en]').forEach(el=>{
+      const txt = el.getAttribute('data-'+lang);
+      if(txt!==null && !el.hasAttribute('data-'+lang+'-html-skip')) el.textContent = txt;
+    });
+    document.querySelectorAll('[data-zh-html],[data-en-html]').forEach(el=>{
+      const html = el.getAttribute('data-'+lang+'-html');
+      if(html!==null){ el.innerHTML = html; window.AvisoIcons && window.AvisoIcons.hydrate(el); }
+    });
+    document.querySelectorAll('#langtog button').forEach(b=>b.classList.toggle('on', b.dataset.lang===lang));
+    try{ localStorage.setItem('aviso-lang', lang); }catch(e){}
+  }
+  document.getElementById('langtog').addEventListener('click', e=>{
+    const b=e.target.closest('button'); if(b) applyLang(b.dataset.lang);
+  });
+  let saved='zh';
+  try{ saved = localStorage.getItem('aviso-lang') || 'zh'; }catch(e){}
+
+  /* ---------- scale the frozen 1000px browser mockup to fit ---------- */
+  function fitBW(){
+    document.querySelectorAll('.bw-scale').forEach(wrap=>{
+      const bw = wrap.querySelector('.bw');
+      if(!bw) return;
+      const scale = Math.min(1, wrap.clientWidth / 1000);
+      bw.style.transform = 'translateX(-50%) scale(' + scale + ')';
+      wrap.style.height = (bw.offsetHeight * scale) + 'px';
+    });
+  }
+  window.addEventListener('resize', fitBW);
+  fitBW();
+
+  /* ---------- reveal on scroll (no IntersectionObserver dependency) ---------- */
+  function revealInView(){
+    document.querySelectorAll('.reveal:not(.in)').forEach(el=>{
+      if(el.getBoundingClientRect().top < window.innerHeight * 0.92) el.classList.add('in');
+    });
+  }
+  window.addEventListener('scroll', revealInView, {passive:true});
+  window.addEventListener('resize', revealInView);
+  revealInView();
+
+  /* ---------- FAQ accordion ---------- */
+  document.querySelectorAll('.faq-item').forEach(it=>{
+    const q=it.querySelector('.faq-q');
+    if(q) q.addEventListener('click', ()=> it.classList.toggle('open'));
+  });
+  /* failsafe: never leave anything hidden, even if scroll never fires */
+  setTimeout(()=>document.querySelectorAll('.reveal').forEach(el=>el.classList.add('in')), 1500);
+
+  /* ---------- hero stream on load ---------- */
+  window.addEventListener('load', ()=>{
+    applyLang(saved);
+    fitBW();
+    revealInView();
+    const body=document.querySelector('#hero-win .stream-target');
+    if(body && window.AvisoStream){
+      const lang = (function(){try{return localStorage.getItem('aviso-lang')||'zh';}catch(e){return 'zh';}})();
+      const html = body.getAttribute('data-'+lang+'-html') || body.innerHTML;
+      setTimeout(()=>window.AvisoStream(body, html, {speed:26}), 650);
+    }
+    setTimeout(fitBW, 400);
+  });
+})();
+</script>
+</body>
+</html>

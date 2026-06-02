@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Aviso — Logo 探索</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Hanken+Grotesk:wght@400;500;600;700;800&family=Newsreader:ital,opsz,wght@0,18,400;0,18,500;1,18,400;1,18,500&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    /* —— Sage scale —— */
+    --sage-900: oklch(0.30 0.030 152);
+    --sage-700: oklch(0.42 0.045 150);
+    --sage-600: oklch(0.50 0.052 150);
+    --sage-500: oklch(0.60 0.055 150);  /* primary */
+    --sage-400: oklch(0.70 0.052 150);
+    --sage-300: oklch(0.81 0.040 150);
+    --sage-200: oklch(0.89 0.026 150);
+    --sage-100: oklch(0.94 0.016 150);
+    --sage-50:  oklch(0.975 0.008 150);
+    /* —— Neutrals (warm-cool, slight green undertone) —— */
+    --ink:     oklch(0.24 0.012 155);
+    --ink-2:   oklch(0.44 0.010 155);
+    --ink-3:   oklch(0.60 0.008 155);
+    --paper:   oklch(0.987 0.004 130);
+    --line:    oklch(0.91 0.010 150);
+    --dark:    oklch(0.215 0.016 158);
+    --dark-2:  oklch(0.27 0.018 158);
+    --dark-line: oklch(0.34 0.018 158);
+    --paper-dim: oklch(0.90 0.012 150);
+    --radius: 16px;
+  }
+  *{box-sizing:border-box;}
+  html{-webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;}
+  body{
+    margin:0; background:var(--paper); color:var(--ink);
+    font-family:"Hanken Grotesk", system-ui, sans-serif;
+    line-height:1.55;
+  }
+  .wrap{max-width:1080px; margin:0 auto; padding:0 32px;}
+  .mono{font-family:"Space Mono", monospace;}
+
+  /* ——— Header ——— */
+  header{padding:72px 0 40px;}
+  .kicker{
+    font-family:"Space Mono", monospace; font-size:12px; letter-spacing:0.18em;
+    text-transform:uppercase; color:var(--sage-600); margin:0 0 20px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .kicker::before{content:""; width:26px; height:1.5px; background:var(--sage-400); display:inline-block;}
+  h1{
+    font-family:"Hanken Grotesk", sans-serif; font-weight:800;
+    font-size:48px; line-height:1.04; letter-spacing:-0.03em; margin:0 0 18px;
+  }
+  .lede{font-size:18px; color:var(--ink-2); max-width:62ch; margin:0;}
+  .persona{display:flex; flex-wrap:wrap; gap:8px; margin-top:26px;}
+  .chip{
+    font-family:"Space Mono", monospace; font-size:12px; letter-spacing:0.04em;
+    padding:6px 12px; border:1px solid var(--line); border-radius:999px;
+    color:var(--ink-2); background:var(--sage-50);
+  }
+
+  /* ——— Section ——— */
+  section{padding:30px 0 56px; border-top:1px solid var(--line);}
+  .sec-head{display:flex; align-items:baseline; gap:16px; margin:30px 0 28px;}
+  .sec-num{font-family:"Space Mono",monospace; font-size:13px; color:var(--sage-600);}
+  .sec-title{font-size:13px; letter-spacing:0.16em; text-transform:uppercase; color:var(--ink-3); font-weight:600;}
+
+  /* ——— Color strip ——— */
+  .swatches{display:grid; grid-template-columns:repeat(9,1fr); gap:10px;}
+  .sw{border-radius:10px; overflow:hidden; border:1px solid var(--line);}
+  .sw .chip-c{height:64px;}
+  .sw .meta{padding:7px 9px 9px; font-family:"Space Mono",monospace; font-size:10px; line-height:1.4; color:var(--ink-2);}
+  .sw .meta b{display:block; color:var(--ink); font-weight:700; font-size:11px;}
+
+  /* ——— Option header ——— */
+  .opt-tag{
+    display:inline-flex; align-items:center; gap:10px; margin-bottom:14px;
+  }
+  .opt-tag .n{font-family:"Space Mono",monospace; font-size:13px; color:var(--paper); background:var(--sage-600); padding:3px 9px; border-radius:6px;}
+  .opt-tag .nm{font-family:"Hanken Grotesk"; font-weight:800; font-size:26px; letter-spacing:-0.02em;}
+  .opt-tag .zh{color:var(--ink-3); font-size:15px; font-weight:500;}
+  .opt-desc{color:var(--ink-2); max-width:64ch; margin:0 0 30px; font-size:15.5px;}
+
+  /* ——— Mark hero cards ——— */
+  .hero-row{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:18px;}
+  .markpod{
+    border-radius:var(--radius); border:1px solid var(--line);
+    aspect-ratio:16/10; display:flex; align-items:center; justify-content:center;
+    position:relative; overflow:hidden;
+  }
+  .markpod.light{background:var(--sage-50);}
+  .markpod.dark{background:var(--dark); border-color:var(--dark-line);}
+  .markpod .mark{width:38%; color:var(--sage-600); position:relative; z-index:1;}
+  .markpod.dark .mark{color:var(--sage-300);}
+  .markpod .tag{
+    position:absolute; left:16px; bottom:14px; font-family:"Space Mono",monospace;
+    font-size:11px; letter-spacing:0.06em; color:var(--ink-3);
+  }
+  .markpod.dark .tag{color:var(--paper-dim);}
+  .ping{position:absolute; z-index:0; width:38%; aspect-ratio:1; border-radius:50%; border:2px solid currentColor; background:transparent; opacity:0; pointer-events:none;}
+
+  .mark svg{display:block; width:100%; height:100%;}
+
+  /* ——— sub grids ——— */
+  .grid3{display:grid; grid-template-columns:repeat(3,1fr); gap:18px;}
+  .grid2{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  .card{
+    border:1px solid var(--line); border-radius:var(--radius); padding:24px;
+    background:var(--paper);
+  }
+  .card .label{font-family:"Space Mono",monospace; font-size:11px; letter-spacing:0.06em; color:var(--ink-3); margin:0 0 18px; text-transform:uppercase;}
+
+  /* wordmark specimens */
+  .wm{display:flex; align-items:center; gap:0; color:var(--ink); white-space:nowrap;}
+  .wm .dot{color:var(--sage-600);}
+  .wm-grotesk{font-family:"Space Grotesk"; font-weight:500; font-size:42px; letter-spacing:-0.03em;}
+  .wm-hanken{font-family:"Hanken Grotesk"; font-weight:700; font-size:42px; letter-spacing:-0.035em;}
+  .wm-serif{font-family:"Newsreader"; font-weight:500; font-style:italic; font-size:46px; letter-spacing:-0.01em;}
+  .wm-note{font-family:"Space Mono",monospace; font-size:11px; color:var(--ink-3); margin-top:16px;}
+
+  /* lockups */
+  .lockup-h{display:flex; align-items:center; gap:18px; justify-content:center; padding:14px 0;}
+  .lockup-h .mark{width:62px; color:var(--sage-600); flex:none;}
+  .lockup-h .txt{font-family:"Space Grotesk"; font-weight:600; font-size:40px; letter-spacing:-0.035em; color:var(--ink);}
+  .lockup-v{display:flex; flex-direction:column; align-items:center; gap:16px; padding:14px 0;}
+  .lockup-v .mark{width:64px; color:var(--sage-600);}
+  .lockup-v .txt{font-family:"Space Grotesk"; font-weight:500; font-size:24px; letter-spacing:0.32em; text-transform:uppercase; color:var(--ink); padding-left:0.32em;}
+  .lockup-card.dark{background:var(--dark); border-color:var(--dark-line);}
+  .lockup-card.dark .txt{color:var(--paper);}
+  .lockup-card.dark .mark{color:var(--sage-300);}
+
+  /* monochrome row */
+  .mono-row{display:grid; grid-template-columns:repeat(4,1fr); gap:18px;}
+  .mono-pod{border:1px solid var(--line); border-radius:var(--radius); aspect-ratio:1; display:flex; align-items:center; justify-content:center;}
+  .mono-pod .mark{width:46%;}
+  .mp-ink{background:var(--paper);} .mp-ink .mark{color:var(--ink);}
+  .mp-sage{background:var(--sage-50);} .mp-sage .mark{color:var(--sage-600);}
+  .mp-rev{background:var(--ink); border-color:var(--ink);} .mp-rev .mark{color:var(--paper);}
+  .mp-fill{background:var(--sage-600); border-color:var(--sage-600);} .mp-fill .mark{color:var(--paper);}
+
+  /* favicon + tab */
+  .fav-wrap{display:flex; gap:30px; align-items:center; flex-wrap:wrap;}
+  .fav-sizes{display:flex; align-items:flex-end; gap:22px;}
+  .fav-sizes .fb{display:flex; flex-direction:column; align-items:center; gap:9px;}
+  .fav-sizes .fb .box{display:flex; align-items:center; justify-content:center; color:var(--sage-600);}
+  .fav-sizes .fb .box svg{width:100%; height:100%;}
+  .fav-sizes .fb .cap{font-family:"Space Mono",monospace; font-size:10px; color:var(--ink-3);}
+  .b16{width:16px;height:16px;} .b24{width:24px;height:24px;} .b32{width:32px;height:32px;} .b48{width:48px;height:48px;}
+  /* app tile */
+  .tile{width:72px;height:72px;border-radius:18px;background:var(--sage-600);display:flex;align-items:center;justify-content:center;}
+  .tile .mark{width:56%;color:var(--paper);}
+  /* fake browser tab */
+  .browser{flex:1; min-width:300px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--paper);}
+  .btabs{display:flex; align-items:center; gap:0; background:var(--sage-50); padding:8px 8px 0; border-bottom:1px solid var(--line);}
+  .btab{display:flex; align-items:center; gap:8px; background:var(--paper); border:1px solid var(--line); border-bottom:none; border-radius:8px 8px 0 0; padding:8px 14px; font-size:12.5px; color:var(--ink); max-width:200px;}
+  .btab .fv{width:16px;height:16px;color:var(--sage-600);flex:none;}
+  .btab .fv svg{width:100%;height:100%;}
+  .btab.dim{background:transparent; border-color:transparent; color:var(--ink-3);}
+  .btab.dim .fv{color:var(--ink-3);}
+  .burl{padding:10px 14px; font-family:"Space Mono",monospace; font-size:11px; color:var(--ink-3); border-bottom:1px solid var(--line);}
+  .bbody{height:64px; background:repeating-linear-gradient(135deg, var(--sage-50), var(--sage-50) 11px, var(--paper) 11px, var(--paper) 22px);}
+
+  /* construction */
+  .construct{display:flex; gap:22px; align-items:center;}
+  .construct .grid-pod{width:150px; height:150px; flex:none; border:1px solid var(--line); border-radius:12px; background:
+    linear-gradient(var(--sage-100) 1px, transparent 1px) 0 0/100% 25%,
+    linear-gradient(90deg, var(--sage-100) 1px, transparent 1px) 0 0/25% 100%,
+    var(--sage-50); display:flex; align-items:center; justify-content:center; position:relative;}
+  .construct .grid-pod .mark{width:74%; color:var(--sage-600);}
+  .construct .ctext{font-size:14px; color:var(--ink-2);}
+  .construct .ctext b{color:var(--ink);}
+
+  /* scale test */
+  .scaletest{display:flex; align-items:flex-end; gap:34px; flex-wrap:wrap; padding:8px 0;}
+  .scaletest .st{display:flex; flex-direction:column; align-items:center; gap:10px;}
+  .scaletest .st .box{color:var(--sage-600); display:flex; align-items:center; justify-content:center;}
+  .scaletest .st .box svg{width:100%;height:100%;}
+  .scaletest .cap{font-family:"Space Mono",monospace; font-size:10px; color:var(--ink-3);}
+
+  .two-up{display:grid; grid-template-columns:1fr 1fr; gap:46px;}
+  @media(max-width:760px){
+    .hero-row,.grid3,.grid2,.two-up,.mono-row,.swatches{grid-template-columns:1fr 1fr;}
+    h1{font-size:34px;} .swatches{grid-template-columns:repeat(3,1fr);}
+  }
+
+  footer{border-top:1px solid var(--line); padding:40px 0 90px; color:var(--ink-2); font-size:14.5px;}
+  footer h3{font-family:"Hanken Grotesk"; font-weight:800; font-size:20px; letter-spacing:-0.02em; color:var(--ink); margin:0 0 14px;}
+  footer ol{margin:0; padding-left:20px;} footer li{margin:6px 0;}
+  .reco{display:inline-block; font-family:"Space Mono",monospace; font-size:10px; letter-spacing:0.05em; color:var(--sage-700); background:var(--sage-100); border:1px solid var(--sage-200); padding:3px 8px; border-radius:6px; margin-left:10px; vertical-align:middle;}
+
+  @media (prefers-reduced-motion: no-preference){
+    .markpod .ping{animation:ping 4.6s ease-out infinite;}
+    .markpod.dark .ping{animation-delay:.4s;}
+  }
+  @keyframes ping{
+    0%{transform:scale(.55); opacity:.0;}
+    18%{opacity:.5;}
+    70%{transform:scale(1.7); opacity:0;}
+    100%{transform:scale(1.7); opacity:0;}
+  }
+</style>
+</head>
+<body>
+
+<header class="wrap" data-screen-label="封面">
+  <p class="kicker">Brand Exploration · 品牌图形探索</p>
+  <h1>Aviso —— 涟漪即留意。</h1>
+  <p class="lede">两个同源、性格相反的方向。共享语言:一个<b>焦点圆点</b>(被注意到的信号)+ <b>涟漪弧</b>(感知的扩散)。一个偏「留意 / 抬头」的沉静敏锐,一个偏「光圈 / 聚焦」的迅捷。两者都能在 16px 收敛成一个清晰的符号。</p>
+  <div class="persona">
+    <span class="chip">敏锐 Perceptive</span>
+    <span class="chip">极简 Minimal</span>
+    <span class="chip">可信 Trustworthy</span>
+    <span class="chip">迅捷 Swift</span>
+  </div>
+</header>
+
+<!-- COLOR FOUNDATION -->
+<section class="wrap">
+  <div class="sec-head"><span class="sec-num">00</span><span class="sec-title">色彩基底 · Sage Scale</span></div>
+  <div class="swatches" id="swatches"></div>
+</section>
+
+<!-- OPTION 01 -->
+<section class="wrap" data-screen-label="方案一 Resonance">
+  <div class="sec-head"><span class="sec-num">01</span><span class="sec-title">Option One</span></div>
+  <div class="opt-tag"><span class="n">01</span><span class="nm">Resonance</span><span class="zh">留意 · 抬头注意</span></div>
+  <p class="opt-desc">涟漪在焦点上方展开,像一道被轻轻扬起的「注意」——抬眼、留神的瞬间。沉静、对称、可信。收到 16px 时只剩圆点与一道弧,依然是一个清晰的「heads-up」符号。</p>
+
+  <div class="hero-row">
+    <div class="markpod light"><span class="ping" style="color:var(--sage-400)"></span><span class="mark" data-kind="1"></span><span class="tag">primary / on light</span></div>
+    <div class="markpod dark"><span class="ping" style="color:var(--sage-300)"></span><span class="mark" data-kind="1"></span><span class="tag">on dark</span></div>
+  </div>
+
+  <div class="grid2" style="margin-bottom:18px;">
+    <div class="card">
+      <p class="label">几何构成 · Construction</p>
+      <div class="construct">
+        <div class="grid-pod"><span class="mark" data-kind="1"></span></div>
+        <p class="ctext"><b>同心圆律。</b>三道涟漪以 1 : 1.8 : 2.55 的半径递增,弧宽随距离衰减(9→6.5→4.2),圆点半径 = 8。弧段固定 136°,开口朝下——避免 Wi-Fi 信号的俗套。</p>
+      </div>
+    </div>
+    <div class="card">
+      <p class="label">单色 & 反白 · Monochrome</p>
+      <div class="mono-row" style="grid-template-columns:repeat(4,1fr);">
+        <div class="mono-pod mp-ink"><span class="mark" data-kind="1"></span></div>
+        <div class="mono-pod mp-sage"><span class="mark" data-kind="1"></span></div>
+        <div class="mono-pod mp-rev"><span class="mark" data-kind="1"></span></div>
+        <div class="mono-pod mp-fill"><span class="mark" data-kind="1"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="label" style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.06em; color:var(--ink-3); margin:26px 0 14px; text-transform:uppercase;">字标排版探索 · Wordmark</p>
+  <div class="grid3" style="margin-bottom:18px;">
+    <div class="card"><span class="wm wm-grotesk">Av<span class="dot">i</span>so</span><p class="wm-note">Space Grotesk · 几何,有机械记忆点 <span class="reco">推荐</span></p></div>
+    <div class="card"><span class="wm wm-hanken">Av<span class="dot">i</span>so</span><p class="wm-note">Hanken Grotesk · 人文,亲和稳重</p></div>
+    <div class="card"><span class="wm wm-serif">Av<span class="dot">i</span>so</span><p class="wm-note">Newsreader Italic · 高级,带笔触性格</p></div>
+  </div>
+
+  <p class="label" style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.06em; color:var(--ink-3); margin:26px 0 14px; text-transform:uppercase;">组合标 · Lockups</p>
+  <div class="grid3">
+    <div class="card"><div class="lockup-h"><span class="mark" data-kind="1"></span><span class="txt">Aviso</span></div></div>
+    <div class="card"><div class="lockup-v"><span class="mark" data-kind="1"></span><span class="txt">Aviso</span></div></div>
+    <div class="card lockup-card dark"><div class="lockup-h"><span class="mark" data-kind="1"></span><span class="txt">Aviso</span></div></div>
+  </div>
+
+  <p class="label" style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.06em; color:var(--ink-3); margin:26px 0 14px; text-transform:uppercase;">16px 实测 · Favicon & Tab</p>
+  <div class="card">
+    <div class="fav-wrap">
+      <div class="fav-sizes">
+        <div class="fb"><div class="box b16"><span class="mark-raw" data-kind="1"></span></div><span class="cap">16</span></div>
+        <div class="fb"><div class="box b24"><span class="mark-raw" data-kind="1"></span></div><span class="cap">24</span></div>
+        <div class="fb"><div class="box b32"><span class="mark-raw" data-kind="1"></span></div><span class="cap">32</span></div>
+        <div class="fb"><div class="box b48"><span class="mark-raw" data-kind="1"></span></div><span class="cap">48</span></div>
+        <div class="fb"><div class="tile"><span class="mark" data-kind="1"></span></div><span class="cap">tile</span></div>
+      </div>
+      <div class="browser">
+        <div class="btabs">
+          <div class="btab"><span class="fv"><span class="mark-raw" data-kind="1"></span></span>Aviso — Settings</div>
+          <div class="btab dim"><span class="fv">◔</span>docs.example.com</div>
+        </div>
+        <div class="burl">chrome-extension://aviso/popup.html</div>
+        <div class="bbody"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- OPTION 02 -->
+<section class="wrap" data-screen-label="方案二 Aperture">
+  <div class="sec-head"><span class="sec-num">02</span><span class="sec-title">Option Two</span></div>
+  <div class="opt-tag"><span class="n">02</span><span class="nm">Aperture</span><span class="zh">聚焦 · 光圈</span></div>
+  <p class="opt-desc">同样的圆点与涟漪,但弧段错位旋转,形成一个收束的光圈 / 旋涡——「迅速锁定恰当时机」的动势。更有活力、更具记忆点。16px 时旋转缺口仍可辨,带来独有的辨识度。</p>
+
+  <div class="hero-row">
+    <div class="markpod light"><span class="ping" style="color:var(--sage-400)"></span><span class="mark" data-kind="2"></span><span class="tag">primary / on light</span></div>
+    <div class="markpod dark"><span class="ping" style="color:var(--sage-300)"></span><span class="mark" data-kind="2"></span><span class="tag">on dark</span></div>
+  </div>
+
+  <div class="grid2" style="margin-bottom:18px;">
+    <div class="card">
+      <p class="label">几何构成 · Construction</p>
+      <div class="construct">
+        <div class="grid-pod"><span class="mark" data-kind="2"></span></div>
+        <p class="ctext"><b>旋涡律。</b>三道 300° 弧段以 +45° 递进错位,缺口连成一条向心螺旋,指向焦点。弧宽 8→6→4.2,圆点半径 = 6.5。旋转动势暗示「捕捉」与「迅捷」。</p>
+      </div>
+    </div>
+    <div class="card">
+      <p class="label">单色 & 反白 · Monochrome</p>
+      <div class="mono-row" style="grid-template-columns:repeat(4,1fr);">
+        <div class="mono-pod mp-ink"><span class="mark" data-kind="2"></span></div>
+        <div class="mono-pod mp-sage"><span class="mark" data-kind="2"></span></div>
+        <div class="mono-pod mp-rev"><span class="mark" data-kind="2"></span></div>
+        <div class="mono-pod mp-fill"><span class="mark" data-kind="2"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <p class="label" style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.06em; color:var(--ink-3); margin:26px 0 14px; text-transform:uppercase;">字标排版探索 · Wordmark</p>
+  <div class="grid3" style="margin-bottom:18px;">
+    <div class="card"><span class="wm wm-grotesk">Av<span class="dot">i</span>so</span><p class="wm-note">Space Grotesk · 几何,有机械记忆点</p></div>
+    <div class="card"><span class="wm wm-hanken">Av<span class="dot">i</span>so</span><p class="wm-note">Hanken Grotesk · 人文,亲和稳重 <span class="reco">推荐</span></p></div>
+    <div class="card"><span class="wm wm-serif">Av<span class="dot">i</span>so</span><p class="wm-note">Newsreader Italic · 高级,带笔触性格</p></div>
+  </div>
+
+  <p class="label" style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.06em; color:var(--ink-3); margin:26px 0 14px; text-transform:uppercase;">组合标 · Lockups</p>
+  <div class="grid3">
+    <div class="card"><div class="lockup-h"><span class="mark" data-kind="2"></span><span class="txt" style="font-family:'Hanken Grotesk';font-weight:700;">Aviso</span></div></div>
+    <div class="card"><div class="lockup-v"><span class="mark" data-kind="2"></span><span class="txt">Aviso</span></div></div>
+    <div class="card lockup-card dark"><div class="lockup-h"><span class="mark" data-kind="2"></span><span class="txt" style="font-family:'Hanken Grotesk';font-weight:700;">Aviso</span></div></div>
+  </div>
+
+  <p class="label" style="font-family:'Space Mono',monospace; font-size:11px; letter-spacing:0.06em; color:var(--ink-3); margin:26px 0 14px; text-transform:uppercase;">16px 实测 · Favicon & Tab</p>
+  <div class="card">
+    <div class="fav-wrap">
+      <div class="fav-sizes">
+        <div class="fb"><div class="box b16"><span class="mark-raw" data-kind="2"></span></div><span class="cap">16</span></div>
+        <div class="fb"><div class="box b24"><span class="mark-raw" data-kind="2"></span></div><span class="cap">24</span></div>
+        <div class="fb"><div class="box b32"><span class="mark-raw" data-kind="2"></span></div><span class="cap">32</span></div>
+        <div class="fb"><div class="box b48"><span class="mark-raw" data-kind="2"></span></div><span class="cap">48</span></div>
+        <div class="fb"><div class="tile"><span class="mark" data-kind="2"></span></div><span class="cap">tile</span></div>
+      </div>
+      <div class="browser">
+        <div class="btabs">
+          <div class="btab"><span class="fv"><span class="mark-raw" data-kind="2"></span></span>Aviso — Settings</div>
+          <div class="btab dim"><span class="fv">◔</span>docs.example.com</div>
+        </div>
+        <div class="burl">chrome-extension://aviso/popup.html</div>
+        <div class="bbody"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCALE COMPARISON -->
+<section class="wrap" data-screen-label="缩放对比">
+  <div class="sec-head"><span class="sec-num">03</span><span class="sec-title">缩放韧性 · Scale Test</span></div>
+  <div class="two-up">
+    <div>
+      <p class="wm-note" style="margin:0 0 14px;">01 · Resonance</p>
+      <div class="scaletest">
+        <div class="st"><div class="box b16"><span class="mark-raw" data-kind="1"></span></div><span class="cap">16</span></div>
+        <div class="st"><div class="box" style="width:24px;height:24px;"><span class="mark-raw" data-kind="1"></span></div><span class="cap">24</span></div>
+        <div class="st"><div class="box" style="width:40px;height:40px;"><span class="mark-raw" data-kind="1"></span></div><span class="cap">40</span></div>
+        <div class="st"><div class="box" style="width:72px;height:72px;"><span class="mark-raw" data-kind="1"></span></div><span class="cap">72</span></div>
+      </div>
+    </div>
+    <div>
+      <p class="wm-note" style="margin:0 0 14px;">02 · Aperture</p>
+      <div class="scaletest">
+        <div class="st"><div class="box b16"><span class="mark-raw" data-kind="2"></span></div><span class="cap">16</span></div>
+        <div class="st"><div class="box" style="width:24px;height:24px;"><span class="mark-raw" data-kind="2"></span></div><span class="cap">24</span></div>
+        <div class="st"><div class="box" style="width:40px;height:40px;"><span class="mark-raw" data-kind="2"></span></div><span class="cap">40</span></div>
+        <div class="st"><div class="box" style="width:72px;height:72px;"><span class="mark-raw" data-kind="2"></span></div><span class="cap">72</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer class="wrap">
+  <h3>下一步 · Next steps</h3>
+  <ol>
+    <li>告诉我你更偏向哪个方向(或某些元素的混搭),我会把它精修成最终图标。</li>
+    <li>字标:确认字体后,我会做字距微调与「i」上焦点圆点的定制细节。</li>
+    <li>选定后可继续:导出多尺寸 favicon、扩展图标、以及把这套图形语言带入完整 UI 组件与配色系统。</li>
+  </ol>
+</footer>
+
+<script>
+  const NS="http://www.w3.org/2000/svg";
+  function pol(cx,cy,r,deg){const a=deg*Math.PI/180;return [cx+r*Math.cos(a), cy+r*Math.sin(a)];}
+  function arcPath(cx,cy,r,a0,a1){
+    const [sx,sy]=pol(cx,cy,r,a0), [ex,ey]=pol(cx,cy,r,a1);
+    const large=((a1-a0+360)%360)>180?1:0;
+    return `M ${sx.toFixed(2)} ${sy.toFixed(2)} A ${r} ${r} 0 ${large} 1 ${ex.toFixed(2)} ${ey.toFixed(2)}`;
+  }
+  function buildMark(kind){
+    const svg=document.createElementNS(NS,"svg");
+    svg.setAttribute("viewBox","0 0 100 100");
+    svg.setAttribute("fill","none");
+    const col="currentColor";
+    function arc(cx,cy,r,a0,a1,w){
+      const p=document.createElementNS(NS,"path");
+      p.setAttribute("d",arcPath(cx,cy,r,a0,a1));
+      p.setAttribute("stroke",col); p.setAttribute("stroke-width",w);
+      p.setAttribute("stroke-linecap","round"); p.setAttribute("fill","none");
+      svg.appendChild(p);
+    }
+    function dot(cx,cy,r){
+      const c=document.createElementNS(NS,"circle");
+      c.setAttribute("cx",cx); c.setAttribute("cy",cy); c.setAttribute("r",r);
+      c.setAttribute("fill",col); svg.appendChild(c);
+    }
+    if(kind==="1"){
+      const cx=50, cy=63;
+      arc(cx,cy,42,202,338,4.2);
+      arc(cx,cy,29,202,338,6.5);
+      arc(cx,cy,16,202,338,9);
+      dot(cx,cy,8);
+    } else {
+      const cx=50, cy=50;
+      arc(cx,cy,42,110,110+300,4.2);
+      arc(cx,cy,29,65,65+300,6);
+      arc(cx,cy,17,20,20+300,8);
+      dot(cx,cy,6.5);
+    }
+    return svg;
+  }
+  document.querySelectorAll(".mark, .mark-raw").forEach(el=>{
+    el.appendChild(buildMark(el.dataset.kind));
+  });
+
+  // color swatches
+  const scale=[
+    ["sage-900","--sage-900"],["sage-700","--sage-700"],["sage-600","--sage-600"],
+    ["sage-500","--sage-500"],["sage-400","--sage-400"],["sage-300","--sage-300"],
+    ["sage-200","--sage-200"],["sage-100","--sage-100"],["sage-50","--sage-50"]
+  ];
+  const sw=document.getElementById("swatches");
+  scale.forEach(([name,varn])=>{
+    const d=document.createElement("div"); d.className="sw";
+    d.innerHTML=`<div class="chip-c" style="background:var(${varn})"></div><div class="meta"><b>${name}</b>${varn}</div>`;
+    sw.appendChild(d);
+  });
+</script>
+</body>
+</html>
