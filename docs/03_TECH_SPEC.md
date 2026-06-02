@@ -1,10 +1,10 @@
 # Aviso Technical Specification
 
-Version: v0.1.0 internal dogfood / Phase 1 docs
+Version: v0.1.0 internal dogfood / v0.2-alpha planning
 
-Date: 2026-06-01
+Date: 2026-06-02
 
-Status: Internal technical baseline; pending engineering review
+Status: Internal technical baseline plus v0.2-alpha technical constraints
 
 ## Stack
 
@@ -151,12 +151,74 @@ npm run package
 - Docusaurus or public docs build.
 - Release automation such as release-please, commitlint, or husky.
 
+## v0.2-alpha Technical Delta
+
+The desktop draft `/Users/jonyliu/Desktop/TECH_SPEC_v0.2_delta.md` is a planning input only. It must be corrected against the current repository before any development agent uses it as an implementation spec.
+
+### Correct Current File Names And Contracts
+
+Use the existing project structure:
+
+| Draft name to avoid | Current project file |
+|---------------------|----------------------|
+| `src/contents/command-palette.tsx` | `src/contents/command.tsx` |
+| `src/contents/clipboard-sensor.tsx` | `src/contents/clipboard.tsx` |
+| `src/contents/page-reader.ts` | `src/contents/readability.ts` |
+
+Background messages currently use the `action` field in `src/types/messages.ts`. New v0.2 messages should extend the existing `MessageRequest` union instead of introducing a parallel `type`-based protocol.
+
+### Permission Baseline
+
+The current `package.json` manifest permissions are:
+
+- `contextMenus`
+- `activeTab`
+- `storage`
+- `bookmarks`
+- `clipboardWrite`
+
+The current `host_permissions` list only contains:
+
+- `https://ark.cn-beijing.volces.com/*`
+
+The desktop v0.2 draft incorrectly treats `history`, `commands`, `scripting`, `clipboardRead`, `tabs`, `https://api.openai.com/*`, and `https://api.anthropic.com/*` as already present. They are not present in the current manifest. Any new permission or host permission must be documented as a product/security decision before implementation.
+
+### Storage And API Keys
+
+Keep the existing split:
+
+- API Keys: encrypted values in `chrome.storage.local` under `contextai_api_keys`.
+- Settings: non-secret settings in `chrome.storage.sync` under `contextai_settings`.
+- History: local records in `chrome.storage.local` under `contextai_history`.
+
+Do not store provider API Keys inside a synced model-route object. New model-routing settings may reference provider/model IDs, but the secret values must remain in encrypted local storage.
+
+### v0.2-alpha Implementation Constraints
+
+- Model routing should first support existing providers: OpenAI, Anthropic, and 豆包 / 火山方舟.
+- Provider connectivity checks must be explicit user-triggered checks, or directly tied to a just-edited key. Settings-page open must not automatically spend tokens across all configured providers.
+- Result caching may be added only with a clear key design that includes operation, input, target language, provider, model, endpoint/base URL, and template version where relevant. A clear-cache control is required if caching ships.
+- Screenshot-to-AI should use the existing `activeTab` user-triggered boundary where possible. If the implementation needs broader capture, scripting, or tab permissions, stop and record the decision before code changes.
+- Translation MVP should reuse existing floating-window and selection flows first. Full-page DOM translation, YouTube subtitle translation, and third-party translation engines are separate discovery items.
+- No new dependency should be added unless the executing agent proves the existing browser storage APIs are insufficient for the approved slice.
+
+### Draft Items Moved Out Of MVP
+
+- Broad third-party translation fallback through Google Translate, 百度, or 有道.
+- Multi-tab content aggregation requiring `tabs` / `scripting`.
+- Tab grouping requiring `tabGroups`.
+- Voice input requiring `offscreen` and microphone access.
+- Full internal migration from `contextai_*` keys.
+
 ## Open Questions
 
 - Should `clipboard.tsx` remain all-frame, or should it be narrowed after more iframe dogfood evidence?
 - Should `contextai_*` storage keys be migrated before public release?
 - Should provider SDK use in-browser `dangerouslyAllowBrowser` remain the long-term architecture, or should v0.2 evaluate a privacy-preserving proxy?
+- Which host permissions should be added first for OpenAI and Anthropic live validation, and should they be added before or during the provider-validation issue?
+- Should the first v0.2 model-routing implementation support only existing providers, or add one approved OpenAI-compatible provider in the same slice?
 
 ## Changelog
 
+- 2026-06-02: Added v0.2-alpha technical delta constraints and corrected the desktop draft assumptions about file names, message contracts, manifest permissions, host permissions, storage, and MVP boundaries.
 - 2026-06-01: Created Phase 1 internal technical specification from current code structure and package manifest.

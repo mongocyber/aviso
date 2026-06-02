@@ -1,10 +1,10 @@
 # Aviso Risk Register
 
-Version: v0.1.0 internal dogfood / Phase 1 docs
+Version: v0.1.0 internal dogfood / v0.2-alpha planning
 
-Date: 2026-06-01
+Date: 2026-06-02
 
-Status: Internal risk register; active for dogfood and release prep
+Status: Internal risk register; active for dogfood, release prep, and v0.2-alpha planning
 
 ## Risk Summary
 
@@ -29,6 +29,19 @@ Aviso's current risk profile is less about missing core code and more about rele
 | R-013 | Manual A-G QA lacks full environment evidence. | Open | Harder to reproduce issues or prove release readiness. | Record Chrome version, OS, tester, date, and exceptions. | Update release checklist after next QA pass. |
 | R-014 | Release automation exists but public publishing is not ready. | Controlled | Accidental store submission risk if secrets and workflow are triggered without review. | Keep workflow manual and do not trigger without approval. | Review workflow only during release prep. |
 
+## v0.2-alpha Planning Risks
+
+| ID | Risk | Status | Impact | Mitigation | Next action |
+|----|------|--------|--------|------------|-------------|
+| R-101 | Desktop v0.2 drafts over-expand scope into a 30-42 day feature set. | Controlled | Development could drift away from release evidence and privacy constraints. | Treat project docs as canonical; keep v0.2-alpha MVP narrow. | Use V2-001 issue map before implementation. |
+| R-102 | New provider hosts may expand `host_permissions`. | Open | Chrome Web Store review and user trust risk. | Add only approved hosts, one provider slice at a time, with documented reason. | Run V2-002 permission audit. |
+| R-103 | Connectivity checks can spend tokens or leak test prompts if auto-run. | Controlled | Unexpected cost and privacy risk. | Make checks explicit user-triggered actions and keep test payload minimal. | Specify no auto-test-on-open behavior. |
+| R-104 | Model routing could store API Keys in synced settings. | Controlled | Secrets could sync unexpectedly across devices. | Keep API Keys encrypted in `chrome.storage.local`; store only route IDs in sync. | Enforce in V2-003 acceptance. |
+| R-105 | Screenshot-to-AI may capture private page content. | Open | Sensitive data could be sent to a provider. | Require user-triggered selection, clear preview/confirmation, and no screenshot logging. | Review capture UX before implementation. |
+| R-106 | Result caching may retain sensitive translated or AI-generated text locally. | Open | Local privacy risk if users expect no persistence. | Include operation-aware cache keys, TTL, clear-cache control, and privacy copy. | Decide whether caching is default-on. |
+| R-107 | Third-party translation fallback could contradict no-extra-network expectations. | Controlled | Data may be sent to Google/Baidu/Youdao without the user understanding it. | Keep out of MVP until provider copy and host permissions are approved. | Move to discovery backlog. |
+| R-108 | Multi-tab, tab grouping, and voice features require high-sensitivity permissions. | Controlled | Store review, microphone trust, and broad browsing-data access risk. | Keep out of MVP; evaluate with decision docs before coding. | Create discovery issue only if user approves. |
+
 ## Accepted v0.1 Limitations
 
 - Provider latency can vary.
@@ -44,13 +57,17 @@ Aviso's current risk profile is less about missing core code and more about rele
 - Shipping screenshots or docs containing real API Keys or private account data.
 - Shipping without package artifact, tag, and rollback point.
 - Expanding permissions without product-owner approval.
+- Shipping v0.2-alpha provider, screenshot, translation, tab, or voice features without updated privacy/security docs.
 
 ## Open Questions
 
 - What is the minimum evidence package required before public release?
 - Should public release be provider-limited if OpenAI or Anthropic validation is delayed?
 - Should store screenshots use only local fixtures, or include sanitized real webpages?
+- Should v0.2-alpha result caching be default-on, default-off, or disabled until public release?
+- Which high-permission discovery item, if any, is worth an explicit decision doc first?
 
 ## Changelog
 
+- 2026-06-02: Added v0.2-alpha planning risks for scope expansion, host permissions, provider checks, model-route storage, screenshots, caching, third-party translation, and high-permission tab/voice features.
 - 2026-06-01: Created Phase 1 risk register from current release checklist, status file, and technical baseline.

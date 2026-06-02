@@ -251,11 +251,38 @@ v0.1 结论：前端触发链路已能立即响应，默认模型保持较快的
 
 公开发布前仍需关闭这些门禁：OpenAI / Anthropic 真实最小调用、`npm run package`、商店素材、外部隐私政策页面、git/tag/回滚点。
 
-## v0.2 候选问题
+## v0.2-alpha 规划状态
 
-1. 远端链接正文总结：是否接受扩大 `host_permissions`，还是继续保持只透传 URL。
-2. 任意网页图片解释：若要提升成功率，需要评估浏览器本地截图或转 base64 的方案，而不是继续依赖模型侧下载远端图片。
-3. 长文总结：当前 v0.1 默认截断 5000 字符；v0.2 可评估分段总结、继续总结或页面结构化摘取。
-4. provider 体验：对 OpenAI / Anthropic / 豆包做真实调用矩阵、错误分类和首 token 延迟记录，再决定是否优化模型默认值或接入方式。
-5. 公开发布准备：商店素材、隐私政策、发布说明、版本号、git tag 和回滚流程可作为单独发布工程任务处理。
-6. 内部命名迁移：`contextai_*` storage key、context menu id 和 Shadow DOM host id 当前为兼容保留；若公开发布前要彻底更名，需要单独设计迁移，避免丢失本地数据。
+时间：2026-06-02 CST。
+
+用户提供的桌面草案已完成只读评估：
+
+- `/Users/jonyliu/Desktop/Aviso_PRD_v0.2.md`
+- `/Users/jonyliu/Desktop/TECH_SPEC_v0.2_delta.md`
+
+结论：桌面草案有价值，但范围过大，且部分技术假设与当前仓库不一致。项目内文档已将其收敛为 `v0.2-alpha internal dogfood` 规划，不直接作为公开发布规格。
+
+已同步更新：
+
+- `docs/02_PRD.md`：新增 v0.2-alpha 目标、范围、非范围、验收标准和待确认问题。
+- `docs/03_TECH_SPEC.md`：新增 v0.2-alpha 技术约束，修正桌面 tech draft 中的文件名、消息协议、权限、host permissions 和 storage 假设。
+- `docs/04_ROADMAP.md`：新增 V2-001 到 V2-009 issue map、推荐顺序和高权限 discovery backlog。
+- `docs/06_RISK_REGISTER.md`：新增 v0.2-alpha 范围、权限、provider 检测、截图、缓存、第三方翻译和 tab/voice 风险。
+- `docs/07_PRIVACY_AND_SECURITY.md`：新增 v0.2-alpha 数据流、权限原则和高权限非范围。
+- `RELEASE_CHECKLIST.md`：新增 v0.2-alpha 规划门禁。
+
+v0.2-alpha MVP 当前建议：
+
+1. P0：provider validation / permission audit、最小模型注册与路由、手动模型连通性检测。
+2. P1：截图发给 AI、复制当前上下文、翻译 MVP。
+3. P2：主题与 Aviso 面板命名优化。
+
+暂不进入 v0.2-alpha MVP：
+
+- 远端链接正文抓取。
+- Google Translate / 百度 / 有道默认兜底。
+- 多 Tab 聚合、Tab 分组、语音输入。
+- YouTube 字幕翻译、复杂全页 DOM 翻译。
+- `contextai_*` storage key 迁移。
+
+本次只改文档；未改源码、未安装依赖、未运行真实 API、未执行 `npm run package`、未提交 Git。

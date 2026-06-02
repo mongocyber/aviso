@@ -1,10 +1,10 @@
 # Aviso Product Requirements Document
 
-Version: v0.1.0 internal dogfood / Phase 1 docs
+Version: v0.1.0 internal dogfood / v0.2-alpha planning
 
-Date: 2026-06-01
+Date: 2026-06-02
 
-Status: Internal PRD baseline; pending product-owner review
+Status: Internal PRD baseline plus approved v0.2-alpha planning scope
 
 ## Product Summary
 
@@ -92,22 +92,61 @@ Before public release, Aviso still needs:
 - OpenAI and Anthropic are implemented but not validated live.
 - Current internal validation is user-reported; public release needs stricter environment and evidence capture.
 
-## v0.2 Candidates
+## v0.2-alpha Product Direction
 
-- Browser-local image capture or conversion for stronger image explain success rate.
-- Long-page chunking, continuation, or structured page extraction.
-- Remote link content extraction after a product decision on host permissions.
-- Provider matrix with model defaults, latency bands, and readable failure taxonomy.
-- Public docs generated from this internal source set.
-- Internal storage key migration plan, only if migration risk is acceptable.
+v0.2-alpha is an internal dogfood iteration, not a public Chrome Web Store release. It should turn the existing v0.1 pain points into a smaller, safer development sequence before any broad Agent, voice, or multi-tab expansion.
+
+The working source drafts reviewed for this scope were:
+
+- `/Users/jonyliu/Desktop/Aviso_PRD_v0.2.md`
+- `/Users/jonyliu/Desktop/TECH_SPEC_v0.2_delta.md`
+
+Those drafts are useful inputs, but they are not the canonical project spec. This PRD is the canonical internal scope until replaced by a later approved project document.
+
+### v0.2-alpha Goals
+
+- Improve provider confidence through explicit validation records and readable error states.
+- Improve image reliability through browser-local screenshot/capture paths, instead of relying only on model-side remote image URL downloads.
+- Improve everyday translation and context-copy workflows without changing the privacy model or adding broad permissions by default.
+- Keep v0.2-alpha suitable for internal dogfood while preserving a credible public-release path.
+
+### v0.2-alpha Scope
+
+| Priority | Capability | Scope |
+|----------|------------|-------|
+| P0 | Provider validation and permission audit | Record OpenAI, Anthropic, and 豆包 / 火山方舟 minimal live-call behavior only after explicit approval and safe test keys. Confirm required `host_permissions` before implementation. |
+| P0 | Minimal model registry and routing | Support task-based routing for existing providers first. Do not add every provider from the desktop draft in the first implementation slice. |
+| P0 | Manual model connectivity test | Add user-triggered connectivity checks with readable errors and latency notes. Do not auto-test all keys on settings open. |
+| P1 | Screenshot to AI | Add a user-triggered capture flow for visible-page regions and send base64 image input to a configured vision-capable model. |
+| P1 | Copy current context | Let users copy a structured context bundle with title, URL, optional selection, and truncated page text. |
+| P1 | Translation MVP | Improve selection translation and floating-window translation actions first. Page-wide DOM translation and YouTube subtitles are discovery/backlog until risk is reviewed. |
+| P2 | Theme and Aviso panel naming | Improve UI consistency only after P0/P1 flows are stable. Preserve the existing keyboard shortcut behavior. |
+
+### Explicit Non-Scope For v0.2-alpha MVP
+
+- No broad remote-link body fetching without a separate host-permission decision.
+- No default Google Translate / 百度 / 有道 fallback until privacy copy and host permissions are approved.
+- No multi-tab aggregation, tab grouping, or voice input in the MVP. These require separate permission and privacy review.
+- No `contextai_*` storage-key migration in the MVP; compatibility remains more important than internal brand cleanup.
+- No public Chrome Web Store submission, release tag, or provider claims until the release checklist gates are closed.
+
+### Acceptance Criteria
+
+- All P0 changes keep API Keys in encrypted `chrome.storage.local`; settings stay in `chrome.storage.sync`.
+- Connectivity tests are initiated by the user or by an immediately related key edit, not by passive settings-page opening.
+- Provider validation records do not include API Keys, raw prompts, raw responses, private webpages, or screenshots with private data.
+- Screenshot and translation features show clear user feedback when the selected provider/model cannot support the requested operation.
+- Any new permission or host permission is documented in `docs/03_TECH_SPEC.md`, `docs/06_RISK_REGISTER.md`, `docs/07_PRIVACY_AND_SECURITY.md`, and `RELEASE_CHECKLIST.md` before implementation is accepted.
 
 ## Open Questions
 
-- Which provider should be recommended for first public users?
-- What minimum Chrome version and OS matrix should be officially supported?
-- Should public release happen before OpenAI and Anthropic are both live-validated?
-- Should public copy mention 豆包 / 火山方舟 as a supported provider before a formal validation record is added?
+- Should v0.2-alpha add OpenAI / Anthropic host permissions now, or keep them blocked until live provider validation is scheduled?
+- Which single additional OpenAI-compatible provider, if any, should be added first after the existing providers are stable?
+- Should AI/translation result caching be enabled by default, and should users get a visible clear-cache control?
+- What level of provider latency should be described as acceptable in public copy?
+- Should public release be provider-limited if OpenAI or Anthropic validation is delayed?
 
 ## Changelog
 
+- 2026-06-02: Converted the desktop v0.2 drafts into a narrower v0.2-alpha internal dogfood scope, with high-permission Agent, tab, translation-fallback, and voice features moved out of the MVP.
 - 2026-06-01: Created Phase 1 internal PRD from current source, docs, release checklist, and test structure.

@@ -126,3 +126,17 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [ ] Chrome 商店截图、描述、发布说明等素材准备完成。
 - [ ] 外部隐私政策最终版本准备完成并与 Popup 隐私说明、Chrome Web Store 隐私声明一致。
 - [ ] 发布前存在可追踪 git 提交或 tag，并记录回滚点。
+
+## 9. v0.2-alpha 规划门禁
+
+> v0.2-alpha 是下一轮内部试用规划，不代表公开发布门禁已关闭。
+
+- [x] v0.2 desktop PRD / tech draft 已完成只读评估，并收敛为项目内 v0.2-alpha 范围。
+- [x] v0.2-alpha MVP 不默认包含多 Tab 聚合、Tab 分组、语音输入、第三方免费翻译兜底、远端链接正文抓取或内部 storage key 迁移。
+- [x] v0.2-alpha issue map 已记录到 `docs/04_ROADMAP.md`。
+- [x] v0.2-alpha 技术约束已记录到 `docs/03_TECH_SPEC.md`，包括当前真实 manifest 权限、host permissions、消息协议和 storage 边界。
+- [x] v0.2-alpha 隐私与风险已同步到 `docs/06_RISK_REGISTER.md` 和 `docs/07_PRIVACY_AND_SECURITY.md`。
+- [ ] V2-002 provider validation / permission audit 已批准。
+- [ ] 任何新增 `host_permissions` 均已由用户确认，并同步到隐私、安全、风险和商店文案。
+- [ ] 任何真实 provider 连通性测试均由用户明确批准，使用安全测试 Key，不记录 Key、raw prompt、raw response 或私人网页内容。
+- [ ] 截图、翻译、缓存或复制上下文能力上线前，已确认不会把敏感截图、缓存内容或私有网页信息写入日志、文档、截图或 release artifacts。

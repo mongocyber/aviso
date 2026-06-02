@@ -1,10 +1,10 @@
 # Aviso Privacy And Security
 
-Version: v0.1.0 internal dogfood / Phase 1 docs
+Version: v0.1.0 internal dogfood / v0.2-alpha planning
 
-Date: 2026-06-01
+Date: 2026-06-02
 
-Status: Internal privacy and security baseline; not a public privacy policy
+Status: Internal privacy and security baseline plus v0.2-alpha planning notes; not a public privacy policy
 
 ## Current Privacy Model
 
@@ -90,6 +90,28 @@ Aviso does not currently request broad host permissions for arbitrary remote pag
 - Store screenshots must be sanitized.
 - Final secret/API Key leakage scan should run on docs, screenshots, build output, and package artifact.
 
+## v0.2-alpha Privacy Notes
+
+v0.2-alpha planning keeps the v0.1 privacy model: no project-owned backend, no telemetry, no analytics, and no automatic provider calls without user action.
+
+### Planned Or Candidate Data Flows
+
+| Capability | Data involved | Privacy stance |
+|------------|---------------|----------------|
+| Provider connectivity test | Minimal test prompt, selected provider endpoint, user API Key | Must be user-triggered or directly tied to a just-edited key. Do not run all tests automatically when settings opens. Do not log raw prompts, raw responses, or keys. |
+| Model routing | Feature route IDs, provider/model IDs, non-secret settings | Store route configuration in `chrome.storage.sync`; keep API Keys encrypted in `chrome.storage.local`. |
+| Screenshot to AI | User-selected visible-page image region and optional prompt | Must be explicitly triggered by the user. Show clear feedback and do not write screenshot data to logs, docs, or screenshots. |
+| Copy current context | Page title, URL, optional selection, truncated page text | Copies to the user's clipboard only. No provider call unless the user separately sends it to AI. |
+| Translation MVP | Selected text, target language, provider/model choice | Use existing provider flow first. Third-party translation fallback is not in MVP until host permissions and public copy are approved. |
+| Local result cache | Operation, input hash/content depending on implementation, output, provider/model metadata, expiry time | Requires TTL, clear-cache control, and privacy copy before shipping. |
+
+### v0.2-alpha Permission Principles
+
+- New `host_permissions` require a documented provider or translation decision before implementation.
+- `tabs`, `scripting`, `tabGroups`, `offscreen`, microphone access, and broad remote-link fetching are not part of the v0.2-alpha MVP.
+- If a future issue needs one of those permissions, create a decision note first and update this document, `docs/06_RISK_REGISTER.md`, and `RELEASE_CHECKLIST.md`.
+- Chrome Web Store and public privacy copy must match the final manifest, not the planning draft.
+
 ## Not In v0.1
 
 - Server-side account system.
@@ -97,6 +119,7 @@ Aviso does not currently request broad host permissions for arbitrary remote pag
 - Telemetry or analytics.
 - Remote link body fetching through broad host permissions.
 - Full internal storage namespace migration.
+- v0.2-alpha MVP does not include default Google/Baidu/Youdao translation fallback, multi-tab aggregation, tab grouping, or voice input.
 
 ## Open Questions
 
@@ -104,7 +127,10 @@ Aviso does not currently request broad host permissions for arbitrary remote pag
 - Should public release include all provider options if only 豆包 has been user-confirmed?
 - Is API Key local encryption sufficient for public messaging, or should the product explain browser-local risk more explicitly?
 - Should history be optional or default-on for public release?
+- Should local AI/translation cache be default-on, default-off, or unavailable until public release copy is finalized?
+- What screenshot confirmation UX is enough before sending a selected region to a provider?
 
 ## Changelog
 
+- 2026-06-02: Added v0.2-alpha privacy notes covering provider checks, model routing, screenshot-to-AI, copy context, translation MVP, local cache, and high-permission non-scope.
 - 2026-06-01: Created Phase 1 internal privacy and security baseline from current implementation and release checklist.

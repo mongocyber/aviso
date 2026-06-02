@@ -1,14 +1,14 @@
 # Aviso Roadmap
 
-Version: v0.1.0 internal dogfood / Phase 1 docs
+Version: v0.1.0 internal dogfood / v0.2-alpha planning
 
-Date: 2026-06-01
+Date: 2026-06-02
 
-Status: Internal planning baseline; pending product-owner review
+Status: Internal planning baseline plus approved v0.2-alpha issue map
 
 ## Roadmap Principle
 
-Aviso should move from internal dogfood to public release through evidence, not feature expansion. The next steps should close release gates, capture provider behavior, and improve documentation before adding larger v0.2 capabilities.
+Aviso should move from internal dogfood to public release through evidence, not uncontrolled feature expansion. v0.2-alpha may improve the dogfood product, but it must keep permissions, privacy claims, and release gates explicit.
 
 ## Current Milestones
 
@@ -18,7 +18,7 @@ Aviso should move from internal dogfood to public release through evidence, not 
 | v0.1 internal dogfood | In progress | Use current build internally and record real issues. | A-G manual QA user feedback is basically passed; detailed environment evidence remains incomplete. |
 | Phase 1 internal docs | In progress | Create production-grade internal docs as the source for future public docs. | This document set is part of that phase. |
 | Public release preparation | Not started | Prepare provider validation, package, privacy policy, store assets, tag, and rollback. | No store submission yet. |
-| v0.2 product planning | Candidate | Decide next product bets after release gates are closed. | Must avoid turning v0.1 stabilization into uncontrolled feature work. |
+| v0.2-alpha product planning | Active | Convert the desktop v0.2 drafts into a narrower internal dogfood issue map. | High-permission Agent, tab, translation-fallback, and voice work is outside the MVP. |
 
 ## v0.1 Internal Dogfood Tasks
 
@@ -42,16 +42,43 @@ Aviso should move from internal dogfood to public release through evidence, not 
 - Git tag and rollback point.
 - Final secret/API Key leakage check.
 
-## v0.2 Candidate Backlog
+## v0.2-alpha Issue Map
 
-| Candidate | Why it matters | Decision needed |
-|-----------|----------------|-----------------|
-| Remote link body summary | Users expect link summary to read actual content, not only receive a URL. | Accept broader host permissions or keep current boundary. |
-| Browser-local image capture | Model-side URL download can fail due to anti-hotlinking, auth, timeout, or region limits. | Decide whether local capture/upload is acceptable. |
-| Long-document summary | Current 5000-character truncation is safer and faster but incomplete for long pages. | Decide on chunking, continuation, or structured extraction. |
-| Provider matrix | Public release needs clear behavior across OpenAI, Anthropic, and 豆包. | Define minimum models, latency notes, and error taxonomy. |
-| Public docs site | Internal docs need user-facing adaptation. | Decide Docusaurus structure after internal docs stabilize. |
-| Storage namespace migration | `contextai_*` keys are legacy-compatible but not brand-clean. | Decide if migration value outweighs local-data risk. |
+| Issue | Priority | Goal | Depends on | Execution mode |
+|-------|----------|------|------------|----------------|
+| V2-001 scope and technical spec cleanup | P0 | Keep PRD, tech spec, roadmap, privacy, risk, and release checklist aligned with the approved v0.2-alpha MVP. | Product-owner approval | Docs-only, single thread |
+| V2-002 provider validation plan and permission audit | P0 | Decide exact host permissions and validation protocol for OpenAI, Anthropic, and 豆包 / 火山方舟 without exposing secrets. | V2-001 | Plan mode before any manifest change |
+| V2-003 minimal model registry and routing | P0 | Route tasks to existing provider/model choices while preserving current defaults and local API Key storage. | V2-002 | Single implementation thread |
+| V2-004 manual connectivity test UI | P0 | Let users test configured providers on demand, with latency and readable failure reasons. | V2-003 | Single implementation thread |
+| V2-005 screenshot to AI | P1 | Capture a user-selected visible-page region and send it to a vision-capable configured model. | V2-002, V2-003 | Plan mode because capture and image data flow affect privacy |
+| V2-006 copy current context | P1 | Copy title, URL, optional selection, and truncated page text as clean structured text. | V2-001 | Single implementation thread |
+| V2-007 translation MVP | P1 | Improve selection translation and floating-window translation output without third-party default fallback. | V2-003 | Single implementation thread |
+| V2-008 theme and Aviso panel polish | P2 | Add theme setting and user-facing panel naming changes without breaking shortcuts or iframe behavior. | V2-001 | Single implementation thread |
+| V2-009 high-permission discovery backlog | P3 | Separately evaluate multi-tab aggregation, tab grouping, voice input, full-page translation, YouTube subtitles, and remote-link body extraction. | V2-001 | Read-only discovery / decision docs |
+
+### First Executable Issue
+
+V2-001 is the first executable issue and is docs-only. It should not change source code, permissions, package dependencies, build scripts, release automation, or provider configuration.
+
+Acceptance:
+
+- `docs/02_PRD.md` defines v0.2-alpha goals, scope, non-scope, and acceptance criteria.
+- `docs/03_TECH_SPEC.md` corrects the desktop tech draft assumptions against the current repository.
+- `docs/04_ROADMAP.md` contains this issue map and recommended sequence.
+- `docs/06_RISK_REGISTER.md`, `docs/07_PRIVACY_AND_SECURITY.md`, `RELEASE_CHECKLIST.md`, and `STATUS.md` reflect the same v0.2-alpha boundary.
+- No code, manifest, dependency, package, API Key, release, tag, or Git remote action is performed.
+
+### Backlog Requiring Separate Approval
+
+These items remain valid product ideas but should not be pulled into v0.2-alpha MVP by default:
+
+- Remote link body summary with broader host permissions.
+- Full-page DOM translation and YouTube subtitle translation.
+- Google Translate / 百度 / 有道 default fallback.
+- Multi-tab aggregation with `tabs` / `scripting`.
+- Tab grouping with `tabGroups`.
+- Voice input with `offscreen` and microphone access.
+- Internal `contextai_*` storage namespace migration.
 
 ## Not Planned For v0.1
 
@@ -65,20 +92,21 @@ Aviso should move from internal dogfood to public release through evidence, not 
 
 ## Suggested Next Sequence
 
-1. Review Phase 1 internal docs and correct factual gaps.
-2. Decide whether to commit the docs-only changes.
-3. Run release-prep verification in a separate task: tests, typecheck, build, package.
-4. Perform approved provider validation with safe test keys.
-5. Prepare privacy policy and store assets.
-6. Create release tag and rollback point only after package and release materials are ready.
-7. Derive public Docusaurus docs from these internal docs.
+1. Finish V2-001 docs-only scope cleanup.
+2. Review and approve the exact V2-002 provider/permission validation plan.
+3. Decide whether v0.2-alpha should proceed before v0.1 public-release gates are closed.
+4. Implement V2-003 and V2-004 only after provider/permission decisions are explicit.
+5. Implement P1 user-facing improvements in the order: screenshot to AI, copy context, translation MVP.
+6. Keep public release preparation separate: package, provider evidence, privacy policy, store assets, tag, and rollback.
 
 ## Open Questions
 
-- Which v0.2 candidate should be first after public-release gates are closed?
+- Should v0.2-alpha implementation start before v0.1 public-release gates are closed?
+- Which P1 improvement should be first after P0 provider/model work: screenshot, copy context, or translation MVP?
 - Should public release wait for both OpenAI and Anthropic validation, or can a provider-limited release be acceptable?
 - What dogfood issue format should be used for real-page bugs?
 
 ## Changelog
 
+- 2026-06-02: Replaced the broad v0.2 candidate backlog with a v0.2-alpha issue map, recommended sequence, and high-permission discovery backlog.
 - 2026-06-01: Created Phase 1 roadmap from current internal dogfood baseline and release checklist.
