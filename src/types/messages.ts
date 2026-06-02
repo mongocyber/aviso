@@ -77,6 +77,10 @@ export type MessageRequest =
       }
     }
   | {
+      action: "WRITE_CURRENT_CONTEXT_TO_CLIPBOARD"
+      payload: { text: string }
+    }
+  | {
       action: "SHOW_FLOATING_WINDOW"
       payload: {
         requestId?: string
@@ -127,6 +131,22 @@ export type MessageRequest =
   | {
       action: "SHOW_CLIPBOARD_TOAST"
       payload: { text: string; type: ClipboardType; pageUrl: string }
+    }
+  | {
+      action: "REQUEST_COPY_CONTEXT_TOAST"
+      payload: {
+        status: "success" | "failure"
+        message: string
+        detail?: string
+      }
+    }
+  | {
+      action: "SHOW_COPY_CONTEXT_TOAST"
+      payload: {
+        status: "success" | "failure"
+        message: string
+        detail?: string
+      }
     }
   | { action: "UPDATE_TEMPLATES" }
 

@@ -18,15 +18,15 @@ Status: Internal technical baseline plus v0.2-alpha technical constraints
 
 ## Directory Structure
 
-| Path | Purpose |
-|------|---------|
-| `src/background/` | MV3 background logic: context menus, command routing, AI request handling, bookmarks, history, frame-aware delivery. |
-| `src/contents/` | Content scripts: floating window, command palette, selection toolbar, clipboard sensing, iframe bridge, readability extraction. |
-| `src/popup/` | Popup settings UI for providers, API Keys, toggles, templates, history, and privacy copy. |
-| `src/utils/` | Shared helpers for storage, errors, intent parsing, image source validation, template expansion, page truncation, timing logs. |
-| `src/types/` | Message, history, settings, and template types. |
-| `tests/` | Unit tests plus manual and iframe validation fixtures. |
-| `docs/brand/` | Visual reference assets and HTML/CSS/JS examples, not production runtime code. |
+| Path              | Purpose                                                                                                                         |
+| ----------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `src/background/` | MV3 background logic: context menus, command routing, AI request handling, bookmarks, history, frame-aware delivery.            |
+| `src/contents/`   | Content scripts: floating window, command palette, selection toolbar, clipboard sensing, iframe bridge, readability extraction. |
+| `src/popup/`      | Popup settings UI for providers, API Keys, toggles, templates, history, and privacy copy.                                       |
+| `src/utils/`      | Shared helpers for storage, errors, intent parsing, image source validation, template expansion, page truncation, timing logs.  |
+| `src/types/`      | Message, history, settings, and template types.                                                                                 |
+| `tests/`          | Unit tests plus manual and iframe validation fixtures.                                                                          |
+| `docs/brand/`     | Visual reference assets and HTML/CSS/JS examples, not production runtime code.                                                  |
 
 ## Runtime Components
 
@@ -53,16 +53,18 @@ Status: Internal technical baseline plus v0.2-alpha technical constraints
 
 For V2-004, `src/background/ai-client.ts` also exposes a manual provider connectivity path through `handleProviderConnectivityTest`. It uses the same provider route metadata, sends only a fixed public test prompt, and returns a summary object instead of raw provider content.
 
+For V2-006, `src/background/context-menus.ts` adds the manual `复制当前上下文` page/selection menu item. It requests existing page extraction from the clicked frame, formats title, URL, optional selection, and truncated page text with `src/utils/page-content.ts`, then asks the content script to write the text to the clipboard. This path does not call `AI_REQUEST`, provider connectivity, model routing, history, storage writes, or perf summaries.
+
 ### Content Scripts
 
-| Script | Frame scope | Purpose |
-|--------|-------------|---------|
-| `floating.tsx` | top frame only | Shows single in-page result UI and receives stream chunks. |
-| `command.tsx` | top frame only | Opens command palette, searches history/bookmarks, and starts AI requests. |
-| `toolbar.tsx` | all frames | Shows selection toolbar near selected text, including iframe selections. |
-| `clipboard.tsx` | all frames | Detects copy events and asks background to show top-level toast when allowed. |
-| `frame-bridge.ts` | all frames, document start | Lets iframe focus contexts request the top-level command palette. |
-| `readability.ts` | all frames, document idle | Extracts current frame/page text for summary flows. |
+| Script            | Frame scope                | Purpose                                                                       |
+| ----------------- | -------------------------- | ----------------------------------------------------------------------------- |
+| `floating.tsx`    | top frame only             | Shows single in-page result UI and receives stream chunks.                    |
+| `command.tsx`     | top frame only             | Opens command palette, searches history/bookmarks, and starts AI requests.    |
+| `toolbar.tsx`     | all frames                 | Shows selection toolbar near selected text, including iframe selections.      |
+| `clipboard.tsx`   | all frames                 | Detects copy events and asks background to show top-level toast when allowed. |
+| `frame-bridge.ts` | all frames, document start | Lets iframe focus contexts request the top-level command palette.             |
+| `readability.ts`  | all frames, document idle  | Extracts current frame/page text for summary flows.                           |
 
 ### Popup
 
@@ -102,21 +104,29 @@ Manual provider connectivity is separate from the floating-window flow:
 4. Background sends the fixed public test prompt only to the selected provider.
 5. Popup displays the returned summary fields; raw prompt, raw response, API Key, page content, screenshots, and clipboard content are not displayed or stored by this flow.
 
+Copy current context is separate from the floating-window and provider flows:
+
+1. User clicks the right-click menu item `复制当前上下文`.
+2. Background requests `EXTRACT_PAGE_CONTENT` from the clicked frame and combines it with the tab/frame title, URL, and optional selected text.
+3. `formatCurrentContext` returns Markdown-like structured text and applies the same page-body truncation boundary as page summary.
+4. Background sends `WRITE_CURRENT_CONTEXT_TO_CLIPBOARD` to the content script.
+5. Content script writes to the user clipboard with existing clipboard write capability and shows a success/failure toast through `SHOW_COPY_CONTEXT_TOAST`.
+
 ## Provider Registry And Selection
 
 `src/utils/model-registry.ts` is the V2-003 registry surface for provider and model metadata. It intentionally covers only the current approved provider set:
 
-| Provider id | Display name | SDK path | Host permission | Vision marker | Endpoint/model config |
-|-------------|--------------|----------|-----------------|---------------|-----------------------|
-| `openai` | OpenAI | OpenAI SDK | `https://api.openai.com/*` | supported | Not required. |
-| `anthropic` | Anthropic | Anthropic SDK | `https://api.anthropic.com/*` | supported | Not required. |
-| `doubao` | 豆包 / 火山方舟 | OpenAI-compatible | `https://ark.cn-beijing.volces.com/*` | model-dependent | Requires `doubaoModel` endpoint/model setting. |
+| Provider id | Display name    | SDK path          | Host permission                       | Vision marker   | Endpoint/model config                          |
+| ----------- | --------------- | ----------------- | ------------------------------------- | --------------- | ---------------------------------------------- |
+| `openai`    | OpenAI          | OpenAI SDK        | `https://api.openai.com/*`            | supported       | Not required.                                  |
+| `anthropic` | Anthropic       | Anthropic SDK     | `https://api.anthropic.com/*`         | supported       | Not required.                                  |
+| `doubao`    | 豆包 / 火山方舟 | OpenAI-compatible | `https://ark.cn-beijing.volces.com/*` | model-dependent | Requires `doubaoModel` endpoint/model setting. |
 
-| Model choice | Code path | Validation status |
-|--------------|-----------|-------------------|
-| `gpt-4o-mini` / `gpt-4o` | OpenAI SDK | Implemented, not live-validated. |
-| `claude-*` | Anthropic SDK | Implemented, not live-validated. |
-| `doubao` | OpenAI SDK with 火山方舟 base URL and user endpoint | Implemented; user confirmed API usability. |
+| Model choice             | Code path                                           | Validation status                          |
+| ------------------------ | --------------------------------------------------- | ------------------------------------------ |
+| `gpt-4o-mini` / `gpt-4o` | OpenAI SDK                                          | Implemented, not live-validated.           |
+| `claude-*`               | Anthropic SDK                                       | Implemented, not live-validated.           |
+| `doubao`                 | OpenAI SDK with 火山方舟 base URL and user endpoint | Implemented; user confirmed API usability. |
 
 Default model is `gpt-4o-mini`. Unknown non-Claude model IDs continue to fall back to the OpenAI route for compatibility with any existing saved OpenAI model value.
 
@@ -144,11 +154,11 @@ The Popup adds one test button per approved provider. It disables concurrent tes
 
 ## Storage
 
-| Data | Storage area | Key | Notes |
-|------|--------------|-----|-------|
-| Settings | `chrome.storage.sync` | `contextai_settings` | Keeps legacy namespace for compatibility after rename. |
+| Data     | Storage area           | Key                  | Notes                                                              |
+| -------- | ---------------------- | -------------------- | ------------------------------------------------------------------ |
+| Settings | `chrome.storage.sync`  | `contextai_settings` | Keeps legacy namespace for compatibility after rename.             |
 | API Keys | `chrome.storage.local` | `contextai_api_keys` | Encrypted with CryptoJS AES using extension-specific key material. |
-| History | `chrome.storage.local` | `contextai_history` | Stores local request/response history entries. |
+| History  | `chrome.storage.local` | `contextai_history`  | Stores local request/response history entries.                     |
 
 The `contextai_*` keys are intentionally retained for upgrade compatibility. A migration would need a separate plan to avoid losing local user data.
 
@@ -181,6 +191,17 @@ V2-005 implements an internal dogfood screenshot-to-AI MVP without changing mani
 - Privacy boundary: screenshot/base64 is not stored in `chrome.storage`, history input, files, docs, console logs, release artifacts, or validation records. The screenshot request does not attach the full page URL to the provider payload.
 - Provider boundary: screenshot images are allowed only for routes that are vision-capable. 豆包 / 火山方舟 remains `model-dependent`; the current endpoint is blocked for screenshot understanding until a vision-capable endpoint is explicitly validated.
 
+## Copy Current Context
+
+V2-006 implements an internal dogfood copy-context MVP without changing manifest permissions:
+
+- Entry point: the right-click page/selection menu item `复制当前上下文` under the Aviso root menu.
+- Content format: Markdown-like text containing title, URL, optional selected text, and page text.
+- Extraction: page text reuses the existing `EXTRACT_PAGE_CONTENT` content-script path and `truncatePageContent` default 5000 character boundary.
+- Clipboard flow: `src/contents/clipboard.tsx` writes the formatted text to the clipboard using `navigator.clipboard.writeText` with a DOM copy fallback.
+- Feedback: the same content script shows visible success/failure toast messages.
+- Privacy boundary: copied content is not sent to AI providers, not persisted in history or `chrome.storage`, not logged to console, not written to files or docs, and not included in perf summaries or telemetry.
+
 ## Error Handling And Timing
 
 - `src/utils/errors.ts` normalizes provider and network errors into readable Chinese messages.
@@ -198,6 +219,7 @@ V2-005 implements an internal dogfood screenshot-to-AI MVP without changing mani
 Current test and manual assets:
 
 - `tests/unit.test.ts`: unit coverage for clipboard type detection, sensitive filtering, template expansion, error normalization, image source validation, local intent parsing, page truncation, provider/model route resolution, approved host boundaries, and provider connectivity summary rules.
+- V2-006 unit coverage includes copy-context formatting, body truncation, missing-field fallbacks, and manifest permission boundary checks.
 - `tests/manual-test.html`: A-G manual QA fixture.
 - `tests/iframe-fixture.html`: iframe validation fixture for Hugging Face Spaces / Gradio-like embedding behavior.
 
@@ -230,11 +252,11 @@ The desktop draft `/Users/jonyliu/Desktop/TECH_SPEC_v0.2_delta.md` is a planning
 
 Use the existing project structure:
 
-| Draft name to avoid | Current project file |
-|---------------------|----------------------|
-| `src/contents/command-palette.tsx` | `src/contents/command.tsx` |
-| `src/contents/clipboard-sensor.tsx` | `src/contents/clipboard.tsx` |
-| `src/contents/page-reader.ts` | `src/contents/readability.ts` |
+| Draft name to avoid                 | Current project file          |
+| ----------------------------------- | ----------------------------- |
+| `src/contents/command-palette.tsx`  | `src/contents/command.tsx`    |
+| `src/contents/clipboard-sensor.tsx` | `src/contents/clipboard.tsx`  |
+| `src/contents/page-reader.ts`       | `src/contents/readability.ts` |
 
 Background messages currently use the `action` field in `src/types/messages.ts`. New v0.2 messages should extend the existing `MessageRequest` union instead of introducing a parallel `type`-based protocol.
 
@@ -277,6 +299,7 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 - V2-004B latency baseline is limited to local console summaries for ordinary floating-window AI requests. It must not change provider routing, model defaults, token limits, API Key storage, storage key names, or manifest permissions.
 - V2-004C follow-up speed guard is limited to context budgeting, waiting copy, slow-first-chunk hint, UI stop/ignore behavior, background abort signal, and fixed `user_cancelled` classification. It must not add model summarization, caching, new provider calls, new dependencies, new permissions, or raw-content logging.
 - V2-005 screenshot-to-AI is limited to the existing `activeTab` boundary and right-click user trigger. It must not add `tabs`, `scripting`, `<all_urls>` host permissions, new providers, new dependencies, screenshot persistence, or full-page scrolling capture.
+- V2-006 copy current context is limited to manual right-click clipboard writes. It must not call providers, trigger `AI_REQUEST`, persist copied text, add permissions, add host permissions, add dependencies, or log raw copied content.
 - Result caching may be added only with a clear key design that includes operation, input, target language, provider, model, endpoint/base URL, and template version where relevant. A clear-cache control is required if caching ships.
 - Translation MVP should reuse existing floating-window and selection flows first. Full-page DOM translation, YouTube subtitle translation, and third-party translation engines are separate discovery items.
 - No new dependency should be added unless the executing agent proves the existing browser storage APIs are insufficient for the approved slice.
@@ -303,6 +326,7 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 - 2026-06-02: Implemented V2-004B local-console latency baseline with fixed redacted `[Aviso perf]` summaries for ordinary AI requests.
 - 2026-06-02: Implemented V2-004C follow-up speed guard with bounded prior context, slow response hint, stop waiting, background abort signal, and fixed `user_cancelled` perf classification.
 - 2026-06-02: Implemented V2-005 screenshot-to-AI internal dogfood MVP with right-click selection, in-memory crop, existing image flow reuse, and no new manifest permissions.
+- 2026-06-02: Implemented V2-006 copy current context internal dogfood MVP with manual right-click clipboard write, structured Markdown formatting, page truncation, visible feedback, and no provider/storage/permission expansion.
 - 2026-06-02: In V2-002A, recorded approved OpenAI / Anthropic provider host permissions for V2-003 as a docs-only decision.
 - 2026-06-02: Added v0.2-alpha technical delta constraints and corrected the desktop draft assumptions about file names, message contracts, manifest permissions, host permissions, storage, and MVP boundaries.
 - 2026-06-01: Created Phase 1 internal technical specification from current code structure and package manifest.

@@ -26,6 +26,7 @@ import {
   resolveModelRoute
 } from "../src/utils/model-registry.ts"
 import {
+  formatCurrentContext,
   MAX_PAGE_CONTENT_CHARS,
   truncatePageContent
 } from "../src/utils/page-content.ts"
@@ -226,6 +227,57 @@ test("truncatePageContent 保守截断长正文", () => {
   assert.ok(out.startsWith("x".repeat(100)))
 })
 
+test("formatCurrentContext 输出可粘贴的结构化上下文", () => {
+  const out = formatCurrentContext({
+    title: "Example Page",
+    url: "https://example.com/article",
+    selectionText: "selected paragraph",
+    pageContent: "main article body"
+  })
+
+  assert.equal(
+    out,
+    [
+      "# 当前页面上下文",
+      "",
+      "标题：Example Page",
+      "URL：https://example.com/article",
+      "",
+      "## 选中文本",
+      "selected paragraph",
+      "",
+      "## 页面正文",
+      "main article body"
+    ].join("\n")
+  )
+})
+
+test("formatCurrentContext 对长正文明确截断", () => {
+  const out = formatCurrentContext({
+    title: "Long Page",
+    url: "https://example.com/long",
+    pageContent: "x".repeat(12),
+    maxPageContentChars: 8
+  })
+
+  assert.match(out, /## 页面正文（已截断到 8 字符）/)
+  assert.match(out, /正文过长已截断/)
+})
+
+test("formatCurrentContext 缺失字段使用可读兜底且不输出空选区", () => {
+  const out = formatCurrentContext({
+    title: "",
+    url: "",
+    selectionText: "  ",
+    pageContent: ""
+  })
+
+  assert.match(out, /标题：未命名页面/)
+  assert.match(out, /URL：未知 URL/)
+  assert.match(out, /未能读取页面正文。/)
+  assert.doesNotMatch(out, /## 选中文本/)
+})
+
 test("model registry 仅覆盖当前批准的三类 provider", () => {
   assert.deepEqual(Object.keys(PROVIDER_REGISTRY).sort(), [
     "anthropic",
@@ -297,6 +349,20 @@ test("package host_permissions 精确匹配批准 provider 边界", () => {
     [...pkg.manifest.host_permissions].sort(),
     [...APPROVED_PROVIDER_HOST_PERMISSIONS].sort()
   )
+})
+
+test("package 普通权限保持最小边界且包含 clipboardWrite", () => {
+  const pkg = JSON.parse(
+    readFileSync(new URL("../package.json", import.meta.url), "utf8")
+  )
+
+  assert.deepEqual([...pkg.manifest.permissions].sort(), [
+    "activeTab",
+    "bookmarks",
+    "clipboardWrite",
+    "contextMenus",
+    "storage"
+  ])
 })
 
 test("connectivity test payload 只包含固定公开短句，不带页面私有上下文", () => {

@@ -3,7 +3,7 @@ import {
   isSupportedImageSrc,
   UNSUPPORTED_IMAGE_SRC_MESSAGE
 } from "~utils/image-src"
-import { truncatePageContent } from "~utils/page-content"
+import { formatCurrentContext, truncatePageContent } from "~utils/page-content"
 import { WAITING_MODEL_RESPONSE_TEXT } from "~utils/response-guard"
 import { getSettings, saveSettings } from "~utils/storage"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
@@ -26,6 +26,7 @@ const MENU_ID_SUMMARIZE_LINK = "contextai-summarize-link"
 const MENU_ID_SUMMARIZE_PAGE = "contextai-summarize-page"
 const MENU_ID_IMAGE_EXPLAIN = "contextai-image-explain"
 const MENU_ID_SCREENSHOT_ASK = "contextai-screenshot-ask"
+const MENU_ID_COPY_CONTEXT = "contextai-copy-context"
 const MENU_ID_TEMPLATES = "contextai-templates"
 const MENU_ID_MODEL_SEPARATOR = "contextai-model-sep"
 const MENU_ID_MODEL_PREFIX = "contextai-model-"
@@ -162,6 +163,14 @@ export async function registerContextMenus() {
       contexts: ["page"]
     })
 
+    // 手动复制当前页面上下文到剪贴板，不调用 AI，不持久化。
+    chrome.contextMenus.create({
+      id: MENU_ID_COPY_CONTEXT,
+      parentId: MENU_ID_ROOT,
+      title: "复制当前上下文",
+      contexts: ["page", "selection"]
+    })
+
     // 自定义模板子菜单（仅在有模板时创建，子项随设置动态生成）
     if (templates.length > 0) {
       chrome.contextMenus.create({
@@ -295,6 +304,52 @@ export async function handleContextMenuClick(
         label: "context-menu-start-screenshot-selection"
       }
     )
+    return
+  }
+
+  if (menuItemId === MENU_ID_COPY_CONTEXT) {
+    const extracted = await requestPageContentForCopy(
+      tabId,
+      sourceFrameId,
+      sourceFrameUrl
+    )
+    const text = formatCurrentContext({
+      title: extracted.title || tab.title,
+      url: sourcePageUrl,
+      selectionText: info.selectionText,
+      pageContent: extracted.textContent
+    })
+    const writeResult = await sendMessageToFrame<MessageResponse>(
+      tabId,
+      {
+        action: "WRITE_CURRENT_CONTEXT_TO_CLIPBOARD",
+        payload: { text }
+      },
+      {
+        frameId: sourceFrameId,
+        frameUrl: sourceFrameUrl,
+        label: "context-menu-write-copy-context"
+      }
+    )
+
+    if (writeResult.ok === false) {
+      await sendMessageToDisplayFrame(
+        tabId,
+        {
+          action: "SHOW_COPY_CONTEXT_TOAST",
+          payload: {
+            status: "failure",
+            message: "复制失败",
+            detail: "当前页面无法接收剪贴板写入请求。"
+          }
+        },
+        {
+          fallbackFrameId: sourceFrameId,
+          fallbackFrameUrl: sourceFrameUrl,
+          label: "context-menu-copy-context-failure-toast"
+        }
+      )
+    }
     return
   }
 
@@ -552,4 +607,32 @@ async function requestPageContent(
     error: result.error
   })
   return { pageContent: "", timing: nextTiming }
+}
+
+async function requestPageContentForCopy(
+  tabId: number,
+  frameId: number,
+  frameUrl?: string
+): Promise<{ title?: string; textContent?: string }> {
+  const result = await sendMessageToFrame<MessageResponse>(
+    tabId,
+    {
+      action: "EXTRACT_PAGE_CONTENT"
+    },
+    {
+      frameId,
+      frameUrl,
+      label: "context-menu-copy-extract-page-content"
+    }
+  )
+
+  if (result.ok !== true) return {}
+
+  const data = result.response?.data as
+    | { title?: string; textContent?: string }
+    | undefined
+  return {
+    title: data?.title,
+    textContent: data?.textContent
+  }
 }

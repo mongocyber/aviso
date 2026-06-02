@@ -44,6 +44,7 @@ Aviso's current risk profile is less about missing core code and more about rele
 | R-109 | Future implementation may confuse host permission implementation with completed validation. | Controlled | Docs or public copy could overstate provider support. | Keep live validation in V2-004; public copy claims only validated providers. | Use registry metadata but keep provider claims blocked until validation records exist. |
 | R-110 | Performance logs could accidentally expose private context if raw inputs are logged. | Controlled | Console output may reveal selected text, page content, URLs, image/base64 payloads, or API Keys. | V2-004B uses fixed fields, size buckets, context types, sanitized provider/model labels, and no persistence or telemetry. | Keep tests covering field shape, buckets, missing timing, error categories, and redaction. |
 | R-111 | Follow-up requests can become slow by resending long prior answers. | Controlled | Each follow-up may feel like a fresh long request and increase first-token latency. | V2-004C sends only bounded recent `priorContext` and adds slow hint plus stop waiting. | Watch dogfood cases where users expect deeper long-history memory; do not add model summarization or caching without a separate decision. |
+| R-112 | Copy current context can place private page text into the system clipboard. | Controlled | User may paste sensitive content elsewhere after copying. | V2-006 is manual right-click only, shows visible feedback, truncates long page text, and does not call AI, provider, history, storage, files, docs, console, or telemetry. | Complete installed-extension QA and keep public copy explicit that this writes to clipboard only. |
 
 ## Accepted v0.1 Limitations
 
@@ -63,6 +64,7 @@ Aviso's current risk profile is less about missing core code and more about rele
 - Expanding permissions without product-owner approval.
 - Persisting performance logs or sending them to any remote service without a separate privacy decision.
 - Shipping v0.2-alpha provider, screenshot, translation, tab, or voice features without updated privacy/security docs.
+- Shipping copy-current-context without installed-extension QA for normal pages, selected text, missing body, and clipboard-write failure feedback.
 
 ## Open Questions
 
@@ -79,6 +81,7 @@ Aviso's current risk profile is less about missing core code and more about rele
 - 2026-06-02: Added V2-004B latency-baseline risk controls for local-only redacted `[Aviso perf]` summaries.
 - 2026-06-02: Added V2-004C follow-up speed guard risk controls for bounded prior context, slow-response hint, stop waiting, and `user_cancelled` classification.
 - 2026-06-02: Updated V2-005 screenshot-to-AI risk controls after adding user-confirmed visible-region capture, in-memory crop, no new permissions, and no screenshot persistence.
+- 2026-06-02: Added V2-006 copy-current-context risk controls for manual clipboard-only writes, page truncation, visible feedback, and no provider/storage/logging expansion.
 - 2026-06-02: Updated provider host permission risks after OpenAI / Anthropic host decisions were approved for V2-003, while live validation remains open for V2-004.
 - 2026-06-02: Added v0.2-alpha planning risks for scope expansion, host permissions, provider checks, model-route storage, screenshots, caching, third-party translation, and high-permission tab/voice features.
 - 2026-06-01: Created Phase 1 risk register from current release checklist, status file, and technical baseline.

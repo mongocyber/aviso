@@ -312,6 +312,36 @@ async function handleMessage(
         break
       }
 
+      case "REQUEST_COPY_CONTEXT_TOAST": {
+        if (!senderTabId) {
+          sendResponse({
+            success: false,
+            error: "Cannot show copy context toast without sender tab"
+          })
+          break
+        }
+
+        const result = await sendMessageToDisplayFrame(
+          senderTabId,
+          {
+            action: "SHOW_COPY_CONTEXT_TOAST",
+            payload: request.payload
+          },
+          {
+            fallbackFrameId: sender.frameId,
+            fallbackFrameUrl: sender.url,
+            label: "frame-request-copy-context-toast"
+          }
+        )
+
+        sendResponse(
+          result.ok === true
+            ? { success: true }
+            : { success: false, error: result.error }
+        )
+        break
+      }
+
       // ── 历史管理 ──────────────────────────────────────────────────────────
       case "SAVE_HISTORY": {
         await addHistoryEntry(request.payload)

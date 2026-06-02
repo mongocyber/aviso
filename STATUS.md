@@ -68,12 +68,12 @@ Vercel 项目配置：
 
 线上页面验证结果：
 
-| 页面 | 状态 |
-|------|------|
-| `/` | 200 |
-| `/docs/intro/` | 200 |
-| `/docs/privacy-policy/` | 200 |
-| `/docs/install/` | 200 |
+| 页面                    | 状态 |
+| ----------------------- | ---- |
+| `/`                     | 200  |
+| `/docs/intro/`          | 200  |
+| `/docs/privacy-policy/` | 200  |
+| `/docs/install/`        | 200  |
 
 当前限制与风险：
 
@@ -94,6 +94,7 @@ Vercel 项目配置：
 - V2-004B：真实浮窗 AI 请求已新增请求级 `[Aviso perf]` 脱敏性能摘要，覆盖 trigger、provider、model/endpoint、输入长度分桶、context type、UI/background/provider start/first chunk/done 阶段耗时和错误分类。该日志只输出到本地 console，不写入 storage，不发送远端 telemetry。
 - V2-004C：Follow-up speed guard 已实现。追问只携带最近对话节选并按字符预算裁剪；普通请求和追问等待文案改为“等待模型响应…”；超过 9 秒未收到首段内容时浮窗提示“模型响应较慢，可继续等待或停止”；用户可停止当前等待，浮窗会忽略该 requestId 后续 chunk，并向 background 发送取消信号。
 - V2-005：Screenshot to AI internal dogfood MVP 已实现为右键页面菜单“截图提问”：用户手动框选可见区域并确认后才截图，裁剪后的图片复用现有 `image_explain` 浮窗流。未新增 manifest 权限、host permission、provider 或依赖；未运行真实 provider API。
+- V2-006：Copy current context internal dogfood MVP 已实现为右键页面菜单“复制当前上下文”：用户手动触发后把页面标题、URL、可选选中文本和可选截断正文整理为 Markdown 文本写入剪贴板。该流程不调用 AI、不调用 provider、不写入 history / `chrome.storage` / 文件 / 文档 / console，未新增权限、host permission、provider 或依赖。
 - 当前生产 zip 包已生成：`build/chrome-mv3-prod.zip`，约 1.1 MB；包内 manifest 已核对为 `Aviso` / `0.1.0`，普通权限未新增，host permissions 仍为 OpenAI / Anthropic / Ark。
 
 V2-004 边界：
@@ -130,6 +131,13 @@ V2-005 边界：
 - 豆包 / 火山方舟截图理解按 model-dependent 处理：当前接入点未验证 vision 时会在发送 provider 前拦截并提示切换已确认支持视觉输入的模型。
 - 已完成一轮重新加载后的手动 UI QA：取消流程正常，确认流程正常，豆包 / 火山方舟未验证 vision endpoint 被拦截并显示可读错误，Service Worker Console 可见 `[Aviso perf]` 摘要入口。记录来源：2026-06-02 用户本地截图测试反馈。
 - 该 QA 不包含真实 OpenAI / Anthropic vision provider 验证；不代表 Chrome Web Store 公开发布能力已关闭验收。
+
+V2-006 边界：
+
+- 入口仅为用户手动触发的右键页面菜单“复制当前上下文”，在页面或选中文本右键场景可用。
+- 复制内容包含标题、URL、选中文本（如有）和页面正文；页面正文复用现有 `EXTRACT_PAGE_CONTENT`，并按当前 5000 字符默认边界截断。
+- 剪贴板写入由 content script 在当前页面执行，使用既有 `clipboardWrite` 能力；失败时显示可读 toast。
+- 复制内容只写入用户剪贴板；不会进入 AI 请求、provider、history、`chrome.storage`、文件、文档、console、性能摘要或远端 telemetry。
 
 已补录的 V2-004 脱敏验证结果：
 

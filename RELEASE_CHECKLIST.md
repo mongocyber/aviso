@@ -21,6 +21,7 @@
 - [x] 自定义模板：新增、编辑、删除、右键同步、占位符展开均正常。用户手动验收基本通过。
 - [x] 浮窗与历史：流式输出、复制、保存去重、继续追问、历史管理均正常。用户手动验收基本通过。
 - [x] iframe 场景：iframe 内划词、右键触发、命令面板快捷键、剪贴板提示和单实例 UI 基本通过。
+- [x] V2-006 复制当前上下文：右键页面菜单手动触发，把标题、URL、可选选中文本和截断正文复制到剪贴板；不调用 AI。自动化覆盖已补齐，安装后人工 dogfood 仍待记录。
 
 ## 2. 手动 QA 记录
 
@@ -36,14 +37,14 @@ build/chrome-mv3-prod
 tests/manual-test.html
 ```
 
-| 清单 | 结果 | 记录 |
-|------|------|------|
-| A · 右键菜单 | 基本通过 | 用户反馈已验证基本通过；作为内部试用通过记录。 |
-| B · 划词工具栏 | 基本通过 | 用户反馈已验证基本通过；作为内部试用通过记录。 |
-| C · 命令面板 | 基本通过 | 用户反馈已验证基本通过；作为内部试用通过记录。 |
-| D · 剪贴板感知 | 基本通过 | 用户反馈已验证基本通过；作为内部试用通过记录。 |
-| E · 自定义模板 | 基本通过 | 用户反馈已验证基本通过；作为内部试用通过记录。 |
-| F · 浮窗与历史 | 基本通过 | 用户反馈已验证基本通过；作为内部试用通过记录。 |
+| 清单                                             | 结果     | 记录                                                                                |
+| ------------------------------------------------ | -------- | ----------------------------------------------------------------------------------- |
+| A · 右键菜单                                     | 基本通过 | 用户反馈已验证基本通过；作为内部试用通过记录。                                      |
+| B · 划词工具栏                                   | 基本通过 | 用户反馈已验证基本通过；作为内部试用通过记录。                                      |
+| C · 命令面板                                     | 基本通过 | 用户反馈已验证基本通过；作为内部试用通过记录。                                      |
+| D · 剪贴板感知                                   | 基本通过 | 用户反馈已验证基本通过；作为内部试用通过记录。                                      |
+| E · 自定义模板                                   | 基本通过 | 用户反馈已验证基本通过；作为内部试用通过记录。                                      |
+| F · 浮窗与历史                                   | 基本通过 | 用户反馈已验证基本通过；作为内部试用通过记录。                                      |
 | G · iframe / Hugging Face Spaces / Gradio 嵌入页 | 基本通过 | 用户反馈已验证基本通过；覆盖 iframe 内划词、右键、命令面板、剪贴板提示和单实例 UI。 |
 
 Chrome 版本：用户未补录
@@ -73,6 +74,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [x] Provider 连接测试入口为用户手动触发、一次只测单 provider，并返回脱敏摘要；不会在设置页打开时自动测试全部 provider。
 - [x] V2-004B `[Aviso perf]` 性能摘要只输出到本地 console，不写入 `chrome.storage`，不发送远端 telemetry，不包含 raw prompt、raw response、页面正文、选中文本、完整 URL、图片/base64 或 API Key。
 - [x] V2-004C follow-up speed guard 已实现：追问只携带预算后的近期对话节选；慢响应提示和停止等待不记录 raw 内容；取消分类仅输出 `user_cancelled` 等脱敏类别。
+- [x] V2-006 复制当前上下文使用既有 `clipboardWrite` 能力，未新增 manifest permission 或 host permission；复制内容只写入用户剪贴板，不进入 provider、AI 请求、history、`chrome.storage`、文件、文档、console 或 telemetry。
 - [ ] 真实 OpenAI 调用已通过用户手动触发的单 provider 最小样例验证。公开发布门禁未关闭。
 - [ ] 真实 Anthropic 调用已通过用户手动触发的单 provider 最小样例验证。公开发布门禁未关闭。
 - [x] 真实豆包/火山方舟调用已通过 V2-004 手动单 provider 连接测试。脱敏记录：`provider=doubao`，`model_or_endpoint=doubao-seed-2-0-lite-260428`，`host_permission_present=true`，`result=success`，`latency_note=约 2505 ms`，`error_category=none`，`secret_leak_check=pass`，`raw_prompt_logged=no`，`raw_response_logged=no`，`private_page_data_logged=no`。记录来源：2026-06-02 用户在已加载扩展的 Popup 手动触发。
@@ -151,6 +153,8 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [x] V2-004C follow-up speed guard 已实现：未运行真实 provider、未新增 provider、未改变 manifest 权限、未改变 API Key / storage key 边界。
 - [x] V2-005 screenshot to AI internal dogfood MVP 已实现：右键页面菜单手动触发，确认选区后才截图；截图/base64 不写入 history、storage、docs、console 或 release artifacts；未新增权限、provider、依赖或真实 API 验证。
 - [x] V2-005 已重新加载本地扩展并完成 internal dogfood 人工 UI QA：取消流程正常，确认流程正常，豆包 / 火山方舟未验证 vision endpoint 被拦截并显示可读错误，Service Worker Console 可见 `[Aviso perf]` 摘要入口。记录来源：2026-06-02 用户本地截图测试反馈。
+- [x] V2-006 copy current context internal dogfood MVP 已实现：右键页面菜单手动触发，复制 Markdown 结构化上下文到剪贴板，正文按默认 5000 字符边界截断；未新增权限、provider、依赖、storage、history 或真实 API 调用。
+- [ ] V2-006 已重新加载本地扩展并完成人工 UI QA：页面正文可复制、选中文本可复制、正文缺失和剪贴板失败有可读反馈。
 - [ ] V2-005 真实 vision provider 验证仍未完成；OpenAI / Anthropic 原生 API Key 验证前，截图理解不能对外宣称 provider 已验证。
 - [ ] OpenAI / Anthropic 真实 provider 最小验证记录仍待原生 API Key 手动触发并补录；OpenAI / Anthropic 仍不可对外宣称已验证。
 - [ ] 翻译、缓存或复制上下文能力上线前，已确认不会把缓存内容或私有网页信息写入日志、文档、截图或 release artifacts。

@@ -12,13 +12,13 @@ Aviso should move from internal dogfood to public release through evidence, not 
 
 ## Current Milestones
 
-| Phase | Status | Goal | Notes |
-|-------|--------|------|-------|
-| v0.1 implementation | Done | Core extension flows exist. | Main code baseline is committed locally. |
-| v0.1 internal dogfood | In progress | Use current build internally and record real issues. | A-G manual QA user feedback is basically passed; detailed environment evidence remains incomplete. |
-| Phase 1 internal docs | In progress | Create production-grade internal docs as the source for future public docs. | This document set is part of that phase. |
-| Public release preparation | Not started | Prepare provider validation, package, privacy policy, store assets, tag, and rollback. | No store submission yet. |
-| v0.2-alpha product planning | Active | Convert the desktop v0.2 drafts into a narrower internal dogfood issue map. | High-permission Agent, tab, translation-fallback, and voice work is outside the MVP. |
+| Phase                       | Status      | Goal                                                                                   | Notes                                                                                              |
+| --------------------------- | ----------- | -------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
+| v0.1 implementation         | Done        | Core extension flows exist.                                                            | Main code baseline is committed locally.                                                           |
+| v0.1 internal dogfood       | In progress | Use current build internally and record real issues.                                   | A-G manual QA user feedback is basically passed; detailed environment evidence remains incomplete. |
+| Phase 1 internal docs       | In progress | Create production-grade internal docs as the source for future public docs.            | This document set is part of that phase.                                                           |
+| Public release preparation  | Not started | Prepare provider validation, package, privacy policy, store assets, tag, and rollback. | No store submission yet.                                                                           |
+| v0.2-alpha product planning | Active      | Convert the desktop v0.2 drafts into a narrower internal dogfood issue map.            | High-permission Agent, tab, translation-fallback, and voice work is outside the MVP.               |
 
 ## v0.1 Internal Dogfood Tasks
 
@@ -53,7 +53,7 @@ Aviso should move from internal dogfood to public release through evidence, not 
 | V2-004B latency baseline | P0 | Add a redacted request-level local console summary for ordinary AI requests so slow replies can be attributed to UI, background, provider first chunk, done, or failure. | V2-004 | Implemented; no provider/model/token/permission changes |
 | V2-004C follow-up speed guard | P0 | Reduce perceived wait for follow-ups and long first-token delays through bounded prior context, clearer waiting copy, slow hint, and stop waiting. | V2-004B | Implemented; no provider/model/permission changes |
 | V2-005 screenshot to AI | P1 | Capture a user-selected visible-page region and send it to a vision-capable configured model. | V2-004C | Implemented for internal dogfood; loaded-extension UI QA completed; real vision provider validation still open |
-| V2-006 copy current context | P1 | Copy title, URL, optional selection, and truncated page text as clean structured text. | V2-001 | Single implementation thread |
+| V2-006 copy current context | P1 | Copy title, URL, optional selection, and truncated page text as clean structured text. | V2-001 | Implemented for internal dogfood; installed-extension QA still open |
 | V2-007 translation MVP | P1 | Improve selection translation and floating-window translation output without third-party default fallback. | V2-003 | Single implementation thread |
 | V2-008 theme and Aviso panel polish | P2 | Add theme setting and user-facing panel naming changes without breaking shortcuts or iframe behavior. | V2-001 | Single implementation thread |
 | V2-009 high-permission discovery backlog | P3 | Separately evaluate multi-tab aggregation, tab grouping, voice input, full-page translation, YouTube subtitles, and remote-link body extraction. | V2-001 | Read-only discovery / decision docs |
@@ -124,6 +124,17 @@ V2-005 adds the screenshot-to-AI internal dogfood MVP:
 - 豆包 / 火山方舟 screenshot understanding remains blocked until a vision-capable endpoint is explicitly validated.
 - Loaded-extension UI QA has covered cancel, confirm, 豆包 / 火山方舟 unverified-vision endpoint blocking, and Service Worker Console `[Aviso perf]` visibility. Real vision provider validation is still required before treating this as a release-ready feature.
 
+### V2-006 Implementation
+
+V2-006 adds the copy-current-context internal dogfood MVP:
+
+- The first entry point is the right-click page/selection menu item `复制当前上下文`.
+- The copied text is Markdown-like structured context: page title, page URL, selected text when present, and page body.
+- Page body extraction reuses the existing `EXTRACT_PAGE_CONTENT` content-script path and the same default 5000 character truncation boundary.
+- Clipboard writing uses the existing content script and `clipboardWrite` permission path; no manifest permission, host permission, provider, dependency, storage key, cache, telemetry, package, tag, or release action is added.
+- The copy flow does not call `AI_REQUEST`, does not call any provider, does not emit `[Aviso perf]`, and does not write copied content to history, `chrome.storage`, files, docs, console, or release artifacts.
+- Visible success/failure toast feedback is shown through the existing page UI layer. Installed-extension QA is still needed for normal pages, selected text, missing body, and clipboard-write failure behavior.
+
 ### Backlog Requiring Separate Approval
 
 These items remain valid product ideas but should not be pulled into v0.2-alpha MVP by default:
@@ -152,7 +163,7 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 2. Use V2-002A decision docs as the boundary for provider host permissions.
 3. Decide whether v0.2-alpha should proceed before v0.1 public-release gates are closed.
 4. Keep public provider claims limited to 豆包 / 火山方舟 until OpenAI / Anthropic native-key checks are completed.
-5. Implement P1 user-facing improvements in the order: screenshot to AI, copy context, translation MVP.
+5. Implement P1 user-facing improvements in the order: screenshot to AI, copy context, translation MVP. Screenshot and copy context are now implemented for internal dogfood; translation MVP remains next.
 6. Keep public release preparation separate: package, provider evidence, privacy policy, store assets, tag, and rollback.
 
 ## Open Questions
@@ -171,5 +182,6 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 - 2026-06-02: Marked V2-004C follow-up speed guard implemented with bounded prior context, slow-response hint, stop waiting, background abort signal, and `user_cancelled` classification.
 - 2026-06-02: Marked V2-005 screenshot-to-AI internal dogfood MVP implemented while keeping loaded-extension QA and release claims open.
 - 2026-06-02: Recorded V2-005 loaded-extension UI QA for cancel, confirm, 豆包 / 火山方舟 unverified-vision blocking, and Service Worker Console `[Aviso perf]` visibility.
+- 2026-06-02: Marked V2-006 copy current context internal dogfood MVP implemented while keeping installed-extension QA open.
 - 2026-06-02: Replaced the broad v0.2 candidate backlog with a v0.2-alpha issue map, recommended sequence, and high-permission discovery backlog.
 - 2026-06-01: Created Phase 1 roadmap from current internal dogfood baseline and release checklist.

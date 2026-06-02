@@ -23,15 +23,25 @@ export const getShadowHostId: PlasmoGetShadowHostId = () =>
 
 type ToastState = {
   visible: boolean
+  mode: "clipboard" | "copy-context"
   text: string
   type: ClipboardType
   pageUrl: string
+  status: "success" | "failure"
+  message: string
+  detail?: string
 }
 
 type ClipboardToastPayload = {
   text: string
   type: ClipboardType
   pageUrl: string
+}
+
+type CopyContextToastPayload = {
+  status: "success" | "failure"
+  message: string
+  detail?: string
 }
 
 function isTopFrame(): boolean {
@@ -45,17 +55,89 @@ function isTopFrame(): boolean {
 function ClipboardToast() {
   const [toast, setToast] = useState<ToastState>({
     visible: false,
+    mode: "clipboard",
     text: "",
     type: "other",
-    pageUrl: ""
+    pageUrl: "",
+    status: "success",
+    message: ""
   })
 
-  const showToast = useCallback((payload: ClipboardToastPayload) => {
-    setToast({ visible: true, ...payload })
+  const showClipboardToast = useCallback((payload: ClipboardToastPayload) => {
+    setToast({
+      visible: true,
+      mode: "clipboard",
+      status: "success",
+      message: "",
+      detail: undefined,
+      ...payload
+    })
   }, [])
+
+  const showCopyContextToast = useCallback(
+    (payload: CopyContextToastPayload) => {
+      setToast({
+        visible: true,
+        mode: "copy-context",
+        text: "",
+        type: "other",
+        pageUrl: "",
+        ...payload
+      })
+    },
+    []
+  )
+
+  const requestCopyContextToast = useCallback(
+    (payload: CopyContextToastPayload) => {
+      chrome.runtime.sendMessage({
+        action: "REQUEST_COPY_CONTEXT_TOAST",
+        payload
+      })
+    },
+    []
+  )
+
+  const showCopyContextToastThroughBackground = useCallback(
+    (payload: CopyContextToastPayload) => {
+      requestCopyContextToast(payload)
+    },
+    [requestCopyContextToast]
+  )
+
+  const writeCurrentContextToClipboard = useCallback(
+    async (text: string): Promise<MessageResponse> => {
+      try {
+        await writeTextToClipboard(text)
+        showCopyContextToastThroughBackground({
+          status: "success",
+          message: "当前上下文已复制",
+          detail: "只写入剪贴板，未发送给 AI。"
+        })
+        return { success: true }
+      } catch (err) {
+        const error = err instanceof Error ? err.message : String(err)
+        showCopyContextToastThroughBackground({
+          status: "failure",
+          message: "复制失败",
+          detail: "请确认当前页面允许剪贴板写入后重试。"
+        })
+        return { success: false, error }
+      }
+    },
+    [showCopyContextToastThroughBackground]
+  )
+
+  const showToast = useCallback(
+    (payload: ClipboardToastPayload) => {
+      showClipboardToast(payload)
+    },
+    [showClipboardToast]
+  )
 
   useEffect(() => {
     let hideTimer: ReturnType<typeof setTimeout>
+    let copyContextHideTimer: ReturnType<typeof setTimeout>
 
     const showAndScheduleHide = (payload: ClipboardToastPayload) => {
       showToast(payload)
@@ -63,6 +145,17 @@ function ClipboardToast() {
       hideTimer = setTimeout(
         () => setToast((prev) => ({ ...prev, visible: false })),
         3000
+      )
+    }
+
+    const showAndScheduleCopyContextHide = (
+      payload: CopyContextToastPayload
+    ) => {
+      showCopyContextToast(payload)
+      clearTimeout(copyContextHideTimer)
+      copyContextHideTimer = setTimeout(
+        () => setToast((prev) => ({ ...prev, visible: false })),
+        2600
       )
     }
 
@@ -120,9 +213,22 @@ function ClipboardToast() {
       _sender: chrome.runtime.MessageSender,
       sendResponse: (response: MessageResponse) => void
     ) => {
-      if (request.action !== "SHOW_CLIPBOARD_TOAST") return
-      showAndScheduleHide(request.payload)
-      sendResponse({ success: true })
+      if (request.action === "SHOW_CLIPBOARD_TOAST") {
+        showAndScheduleHide(request.payload)
+        sendResponse({ success: true })
+        return
+      }
+
+      if (request.action === "SHOW_COPY_CONTEXT_TOAST") {
+        showAndScheduleCopyContextHide(request.payload)
+        sendResponse({ success: true })
+        return
+      }
+
+      if (request.action === "WRITE_CURRENT_CONTEXT_TO_CLIPBOARD") {
+        writeCurrentContextToClipboard(request.payload.text).then(sendResponse)
+        return true
+      }
     }
 
     document.addEventListener("copy", handleCopy)
@@ -131,8 +237,9 @@ function ClipboardToast() {
       document.removeEventListener("copy", handleCopy)
       chrome.runtime.onMessage.removeListener(handleMessage)
       clearTimeout(hideTimer)
+      clearTimeout(copyContextHideTimer)
     }
-  }, [showToast])
+  }, [showCopyContextToast, showToast, writeCurrentContextToClipboard])
 
   const handleSendToAI = () => {
     setToast((prev) => ({ ...prev, visible: false }))
@@ -159,6 +266,12 @@ function ClipboardToast() {
 
   if (!toast.visible) return null
 
+  const isCopyContextToast = toast.mode === "copy-context"
+  const iconColor =
+    isCopyContextToast && toast.status === "failure"
+      ? aviso.danger
+      : aviso.sage400
+
   return (
     <div
       style={{
@@ -182,12 +295,28 @@ function ClipboardToast() {
         animation: "slide-in 0.2s ease-out",
         ...visuallyStable
       }}>
-      <AvisoMark size={20} style={{ color: aviso.sage400 }} />
+      <AvisoMark size={20} style={{ color: iconColor }} />
       <span style={{ flex: 1, minWidth: 0 }}>
         <strong style={{ fontWeight: 600 }}>
-          已复制 {TYPE_LABELS[toast.type]}
+          {isCopyContextToast
+            ? toast.message
+            : `已复制 ${TYPE_LABELS[toast.type]}`}
         </strong>
-        {toast.text.length > 20 && (
+        {isCopyContextToast && toast.detail && (
+          <span
+            style={{
+              color: aviso.darkText3,
+              display: "block",
+              fontSize: "11.5px",
+              marginTop: "2px",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap"
+            }}>
+            {toast.detail}
+          </span>
+        )}
+        {!isCopyContextToast && toast.text.length > 20 && (
           <span
             style={{
               color: aviso.darkText3,
@@ -202,26 +331,28 @@ function ClipboardToast() {
           </span>
         )}
       </span>
-      <button
-        onClick={handleSendToAI}
-        style={{
-          display: "inline-flex",
-          alignItems: "center",
-          gap: 6,
-          background: `color-mix(in oklab, ${aviso.sage400} 16%, transparent)`,
-          border: "none",
-          borderRadius: "8px",
-          color: aviso.sage300,
-          padding: "5px 9px",
-          fontFamily: aviso.font,
-          fontSize: "12.5px",
-          fontWeight: 600,
-          cursor: "pointer",
-          whiteSpace: "nowrap"
-        }}>
-        <AvisoIcon name="send" size={14} />
-        发给 AI
-      </button>
+      {!isCopyContextToast && (
+        <button
+          onClick={handleSendToAI}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 6,
+            background: `color-mix(in oklab, ${aviso.sage400} 16%, transparent)`,
+            border: "none",
+            borderRadius: "8px",
+            color: aviso.sage300,
+            padding: "5px 9px",
+            fontFamily: aviso.font,
+            fontSize: "12.5px",
+            fontWeight: 600,
+            cursor: "pointer",
+            whiteSpace: "nowrap"
+          }}>
+          <AvisoIcon name="send" size={14} />
+          发给 AI
+        </button>
+      )}
       <span
         style={{
           position: "absolute",
@@ -229,9 +360,11 @@ function ClipboardToast() {
           bottom: 0,
           height: 2,
           width: "100%",
-          background: aviso.sage400,
+          background: iconColor,
           transformOrigin: "left",
-          animation: "timer 3s linear forwards"
+          animation: `timer ${
+            isCopyContextToast ? "2.6s" : "3s"
+          } linear forwards`
         }}
       />
       <style>{`
@@ -245,6 +378,35 @@ function ClipboardToast() {
       `}</style>
     </div>
   )
+}
+
+async function writeTextToClipboard(text: string): Promise<void> {
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(text)
+      return
+    } catch {
+      // Fall through to the DOM copy fallback below.
+    }
+  }
+
+  const textarea = document.createElement("textarea")
+  textarea.value = text
+  textarea.setAttribute("readonly", "true")
+  textarea.style.position = "fixed"
+  textarea.style.top = "-1000px"
+  textarea.style.left = "-1000px"
+  textarea.style.opacity = "0"
+  const target = document.body ?? document.documentElement
+  target.appendChild(textarea)
+  textarea.select()
+
+  try {
+    const copied = document.execCommand("copy")
+    if (!copied) throw new Error("Clipboard write was rejected")
+  } finally {
+    textarea.remove()
+  }
 }
 
 export default ClipboardToast
