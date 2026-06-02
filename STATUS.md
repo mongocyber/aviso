@@ -239,7 +239,7 @@ v0.1 结论：前端触发链路已能立即响应，默认模型保持较快的
 
 ## 仍需人工确认
 
-1. OpenAI / Anthropic 真实最小调用尚未验证。必须由用户另行明确批准，并用安全测试 Key 验证。
+1. OpenAI / Anthropic 真实最小调用尚未验证。用户已批准后续 V2-004 只做手动触发、一次一个 provider 的安全测试 Key 验证；当前尚未执行。
 2. `npm run package` 尚未执行，尚未生成可提交商店的 zip。
 3. 商店截图、描述、发布说明、外部隐私政策页面、发布账号和发布密钥仍未确认。
 4. 当前只有本地 Git 基线提交。公开发布前仍需确认 GitHub 远端、release tag、发布记录和回滚方案。
@@ -286,3 +286,22 @@ v0.2-alpha MVP 当前建议：
 - `contextai_*` storage key 迁移。
 
 本次只改文档；未改源码、未安装依赖、未运行真实 API、未执行 `npm run package`、未提交 Git。
+
+## V2-002A provider host permission decision docs
+
+时间：2026-06-02 CST。
+
+状态：docs-only 决策记录完成。本轮只记录用户已确认的 provider host permission 产品/权限决策，不改源码、不改 `package.json` / manifest、不运行真实 API、不读取或输出 API Key、不安装依赖、不打包、不发布。
+
+新增记录：
+
+- `docs/decisions/001-v2-provider-host-permissions.md`：记录批准后续新增 `https://api.openai.com/*` 和 `https://api.anthropic.com/*`，并保留豆包 / 火山方舟北京网关 `https://ark.cn-beijing.volces.com/*`。
+- `docs/issues/002-v2-provider-host-permission-handoff.md`：给 V2-003 / V2-004 执行 agent 使用，明确 host permission、手动单 provider 连通性测试、脱敏记录和非范围。
+
+当前门禁口径：
+
+- V2-003 可以在实现最小模型注册与路由时，只按上述三个 provider host 边界落 manifest 改动。
+- V2-004 只能做用户手动触发、一次一个 provider 的连通性测试；不能在设置页打开时自动测试全部 provider。
+- 连通性测试和验证记录不得写入 API Key、raw prompt、raw response、私人网页内容或私密截图。
+- 公开发布只宣称已完成验证记录的 provider。
+- 远端链接正文抓取、多 Tab、Tab 分组、语音、第三方翻译兜底、YouTube 字幕和复杂全页 DOM 翻译仍不在 v0.2-alpha MVP。

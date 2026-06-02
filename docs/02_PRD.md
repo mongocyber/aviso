@@ -40,7 +40,7 @@ This version assumes users can provide their own API Keys and understand that mo
 - Do not promise model responses will be instant.
 - Do not fetch arbitrary remote link content in v0.1.
 - Do not support every image source in v0.1.
-- Do not validate OpenAI or Anthropic without explicit approval and safe test keys.
+- Do not run automatic or unapproved OpenAI / Anthropic validation. V2-004 validation is approved only as a user-triggered, single-provider test with safe test keys and summary-only records.
 
 ## v0.1 Functional Scope
 
@@ -66,15 +66,16 @@ This version assumes users can provide their own API Keys and understand that mo
 | Build | Verified previously | `npm run build` produced `build/chrome-mv3-prod` outside the default sandbox; sandbox build may fail with `Operation not permitted`. |
 | Manual A-G QA | Verified by user feedback | User reported A-G basic pass for internal dogfood. Detailed Chrome version, OS, screenshots, and step notes remain incomplete. |
 | 豆包 / 火山方舟 | Verified by user feedback | User confirmed API usability. This Phase 1 docs work did not run a real API call. |
-| OpenAI | Unverified | Code exists, but no approved live-call record exists. |
-| Anthropic | Unverified | Code exists, but no approved live-call record exists. |
+| OpenAI | Host permission decision approved; live call unverified | Code exists. Product owner approved later adding `https://api.openai.com/*`, but the manifest has not been changed and no approved live-call record exists. |
+| Anthropic | Host permission decision approved; live call unverified | Code exists. Product owner approved later adding `https://api.anthropic.com/*`, but the manifest has not been changed and no approved live-call record exists. |
 
 ## Public Release Gates
 
 Before public release, Aviso still needs:
 
-- OpenAI minimal real-call validation with explicit approval.
-- Anthropic minimal real-call validation with explicit approval.
+- OpenAI minimal real-call validation through the approved V2-004 manual single-provider flow with a safe test key.
+- Anthropic minimal real-call validation through the approved V2-004 manual single-provider flow with a safe test key.
+- Manifest host permission update for approved provider hosts, before claiming OpenAI or Anthropic support.
 - A fresh provider and error-behavior record for 豆包 / 火山方舟.
 - `npm run package` and the final extension zip.
 - Chrome Web Store screenshots, description, support copy, and privacy declarations.
@@ -89,7 +90,7 @@ Before public release, Aviso still needs:
 - Page content is truncated to 5000 characters by default before model submission.
 - Remote link summary passes the URL as context; it does not fetch the remote page body.
 - Some remote image URLs may be accepted by format validation but still fail if the model provider cannot download them.
-- OpenAI and Anthropic are implemented but not validated live.
+- OpenAI and Anthropic are implemented, and their provider host permission decision is approved, but manifest implementation and live validation are not complete.
 - Current internal validation is user-reported; public release needs stricter environment and evidence capture.
 
 ## v0.2-alpha Product Direction
@@ -114,7 +115,7 @@ Those drafts are useful inputs, but they are not the canonical project spec. Thi
 
 | Priority | Capability | Scope |
 |----------|------------|-------|
-| P0 | Provider validation and permission audit | Record OpenAI, Anthropic, and 豆包 / 火山方舟 minimal live-call behavior only after explicit approval and safe test keys. Confirm required `host_permissions` before implementation. |
+| P0 | Provider validation and permission audit | Host permission decision is approved for OpenAI, Anthropic, and 豆包 / 火山方舟. Record minimal live-call behavior only through user-triggered single-provider checks with safe test keys. |
 | P0 | Minimal model registry and routing | Support task-based routing for existing providers first. Do not add every provider from the desktop draft in the first implementation slice. |
 | P0 | Manual model connectivity test | Add user-triggered connectivity checks with readable errors and latency notes. Do not auto-test all keys on settings open. |
 | P1 | Screenshot to AI | Add a user-triggered capture flow for visible-page regions and send base64 image input to a configured vision-capable model. |
@@ -135,12 +136,13 @@ Those drafts are useful inputs, but they are not the canonical project spec. Thi
 - All P0 changes keep API Keys in encrypted `chrome.storage.local`; settings stay in `chrome.storage.sync`.
 - Connectivity tests are initiated by the user or by an immediately related key edit, not by passive settings-page opening.
 - Provider validation records do not include API Keys, raw prompts, raw responses, private webpages, or screenshots with private data.
+- Approved provider hosts are limited to `https://api.openai.com/*`, `https://api.anthropic.com/*`, and `https://ark.cn-beijing.volces.com/*` until a later decision changes this.
 - Screenshot and translation features show clear user feedback when the selected provider/model cannot support the requested operation.
 - Any new permission or host permission is documented in `docs/03_TECH_SPEC.md`, `docs/06_RISK_REGISTER.md`, `docs/07_PRIVACY_AND_SECURITY.md`, and `RELEASE_CHECKLIST.md` before implementation is accepted.
 
 ## Open Questions
 
-- Should v0.2-alpha add OpenAI / Anthropic host permissions now, or keep them blocked until live provider validation is scheduled?
+- When should V2-003 land the approved OpenAI / Anthropic host permissions in the manifest?
 - Which single additional OpenAI-compatible provider, if any, should be added first after the existing providers are stable?
 - Should AI/translation result caching be enabled by default, and should users get a visible clear-cache control?
 - What level of provider latency should be described as acceptable in public copy?
@@ -148,5 +150,6 @@ Those drafts are useful inputs, but they are not the canonical project spec. Thi
 
 ## Changelog
 
+- 2026-06-02: Recorded the approved OpenAI / Anthropic provider host permission decision while keeping manifest implementation and live validation as later gates.
 - 2026-06-02: Converted the desktop v0.2 drafts into a narrower v0.2-alpha internal dogfood scope, with high-permission Agent, tab, translation-fallback, and voice features moved out of the MVP.
 - 2026-06-01: Created Phase 1 internal PRD from current source, docs, release checklist, and test structure.

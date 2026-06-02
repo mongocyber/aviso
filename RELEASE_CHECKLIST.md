@@ -66,11 +66,12 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 
 - [ ] `manifest.permissions` 只包含实际使用的权限。
 - [ ] `host_permissions` 没有为链接正文抓取扩大到广域权限。
+- [x] OpenAI / Anthropic provider host permission 产品决策已记录；当前任务未改 manifest。
 - [ ] Popup 隐私说明与实际实现一致。
 - [ ] 商店隐私文案与 Popup 隐私说明一致。
 - [ ] API Key 不出现在日志、构建产物、截图、提交记录或 issue 文档中。
-- [ ] 真实 OpenAI 调用已在用户批准后用最小样例验证。公开发布门禁未关闭。
-- [ ] 真实 Anthropic 调用已在用户批准后用最小样例验证。公开发布门禁未关闭。
+- [ ] 真实 OpenAI 调用已通过用户手动触发的单 provider 最小样例验证。公开发布门禁未关闭。
+- [ ] 真实 Anthropic 调用已通过用户手动触发的单 provider 最小样例验证。公开发布门禁未关闭。
 - [x] 真实豆包/火山方舟调用已由用户确认 API 可用。本次未运行真实 API。
 
 ## 4. 构建产物
@@ -136,7 +137,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [x] v0.2-alpha issue map 已记录到 `docs/04_ROADMAP.md`。
 - [x] v0.2-alpha 技术约束已记录到 `docs/03_TECH_SPEC.md`，包括当前真实 manifest 权限、host permissions、消息协议和 storage 边界。
 - [x] v0.2-alpha 隐私与风险已同步到 `docs/06_RISK_REGISTER.md` 和 `docs/07_PRIVACY_AND_SECURITY.md`。
-- [ ] V2-002 provider validation / permission audit 已批准。
-- [ ] 任何新增 `host_permissions` 均已由用户确认，并同步到隐私、安全、风险和商店文案。
-- [ ] 任何真实 provider 连通性测试均由用户明确批准，使用安全测试 Key，不记录 Key、raw prompt、raw response 或私人网页内容。
+- [x] V2-002 provider validation / permission audit 的 host permission 产品决策已批准并记录到 `docs/decisions/001-v2-provider-host-permissions.md`。
+- [x] OpenAI / Anthropic 新增 provider host permission 已由用户确认，并同步到隐私、安全、风险和路线文档；实际 manifest 改动留给 V2-003。
+- [ ] 任何真实 provider 连通性测试均由用户手动触发、一次只测单 provider，使用安全测试 Key，不记录 Key、raw prompt、raw response、私人网页内容或私密截图。
 - [ ] 截图、翻译、缓存或复制上下文能力上线前，已确认不会把敏感截图、缓存内容或私有网页信息写入日志、文档、截图或 release artifacts。

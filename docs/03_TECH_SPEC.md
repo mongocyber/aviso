@@ -115,6 +115,11 @@ Current host permission:
 
 - `https://ark.cn-beijing.volces.com/*`
 
+Approved provider host permissions for the next implementation slice, not yet present in the manifest:
+
+- `https://api.openai.com/*`
+- `https://api.anthropic.com/*`
+
 Aviso does not currently request broad host permissions for arbitrary page fetching.
 
 ## Error Handling And Timing
@@ -181,7 +186,18 @@ The current `host_permissions` list only contains:
 
 - `https://ark.cn-beijing.volces.com/*`
 
-The desktop v0.2 draft incorrectly treats `history`, `commands`, `scripting`, `clipboardRead`, `tabs`, `https://api.openai.com/*`, and `https://api.anthropic.com/*` as already present. They are not present in the current manifest. Any new permission or host permission must be documented as a product/security decision before implementation.
+The desktop v0.2 draft incorrectly treats `history`, `commands`, `scripting`, `clipboardRead`, `tabs`, `https://api.openai.com/*`, and `https://api.anthropic.com/*` as already present. They are not present in the current manifest.
+
+V2-002A approves adding only these provider hosts in a later implementation task:
+
+- `https://api.openai.com/*`
+- `https://api.anthropic.com/*`
+
+The existing Ark Beijing gateway remains:
+
+- `https://ark.cn-beijing.volces.com/*`
+
+Any other new permission or host permission still requires a separate product/security decision before implementation.
 
 ### Storage And API Keys
 
@@ -197,6 +213,8 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 
 - Model routing should first support existing providers: OpenAI, Anthropic, and 豆包 / 火山方舟.
 - Provider connectivity checks must be explicit user-triggered checks, or directly tied to a just-edited key. Settings-page open must not automatically spend tokens across all configured providers.
+- V2-004 must test one provider at a time and must not auto-test all configured providers.
+- Provider validation records must not include API Keys, raw prompts, raw responses, private webpages, or screenshots with private data.
 - Result caching may be added only with a clear key design that includes operation, input, target language, provider, model, endpoint/base URL, and template version where relevant. A clear-cache control is required if caching ships.
 - Screenshot-to-AI should use the existing `activeTab` user-triggered boundary where possible. If the implementation needs broader capture, scripting, or tab permissions, stop and record the decision before code changes.
 - Translation MVP should reuse existing floating-window and selection flows first. Full-page DOM translation, YouTube subtitle translation, and third-party translation engines are separate discovery items.
@@ -215,10 +233,11 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 - Should `clipboard.tsx` remain all-frame, or should it be narrowed after more iframe dogfood evidence?
 - Should `contextai_*` storage keys be migrated before public release?
 - Should provider SDK use in-browser `dangerouslyAllowBrowser` remain the long-term architecture, or should v0.2 evaluate a privacy-preserving proxy?
-- Which host permissions should be added first for OpenAI and Anthropic live validation, and should they be added before or during the provider-validation issue?
+- Should V2-003 land the approved OpenAI and Anthropic host permissions together with the model registry, or as a tiny manifest-only precursor inside the same issue?
 - Should the first v0.2 model-routing implementation support only existing providers, or add one approved OpenAI-compatible provider in the same slice?
 
 ## Changelog
 
+- 2026-06-02: Recorded approved OpenAI / Anthropic provider host permissions for V2-003 while keeping the current manifest unchanged in this docs task.
 - 2026-06-02: Added v0.2-alpha technical delta constraints and corrected the desktop draft assumptions about file names, message contracts, manifest permissions, host permissions, storage, and MVP boundaries.
 - 2026-06-01: Created Phase 1 internal technical specification from current code structure and package manifest.

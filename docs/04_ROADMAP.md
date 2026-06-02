@@ -47,8 +47,8 @@ Aviso should move from internal dogfood to public release through evidence, not 
 | Issue | Priority | Goal | Depends on | Execution mode |
 |-------|----------|------|------------|----------------|
 | V2-001 scope and technical spec cleanup | P0 | Keep PRD, tech spec, roadmap, privacy, risk, and release checklist aligned with the approved v0.2-alpha MVP. | Product-owner approval | Docs-only, single thread |
-| V2-002 provider validation plan and permission audit | P0 | Decide exact host permissions and validation protocol for OpenAI, Anthropic, and 豆包 / 火山方舟 without exposing secrets. | V2-001 | Plan mode before any manifest change |
-| V2-003 minimal model registry and routing | P0 | Route tasks to existing provider/model choices while preserving current defaults and local API Key storage. | V2-002 | Single implementation thread |
+| V2-002 provider validation plan and permission audit | P0 | Decide exact host permissions and validation protocol for OpenAI, Anthropic, and 豆包 / 火山方舟 without exposing secrets. | V2-001 | Decision docs complete; no manifest change in V2-002A |
+| V2-003 minimal model registry and routing | P0 | Route tasks to existing provider/model choices while preserving current defaults and local API Key storage. | V2-002A decision docs | Single implementation thread |
 | V2-004 manual connectivity test UI | P0 | Let users test configured providers on demand, with latency and readable failure reasons. | V2-003 | Single implementation thread |
 | V2-005 screenshot to AI | P1 | Capture a user-selected visible-page region and send it to a vision-capable configured model. | V2-002, V2-003 | Plan mode because capture and image data flow affect privacy |
 | V2-006 copy current context | P1 | Copy title, URL, optional selection, and truncated page text as clean structured text. | V2-001 | Single implementation thread |
@@ -56,17 +56,16 @@ Aviso should move from internal dogfood to public release through evidence, not 
 | V2-008 theme and Aviso panel polish | P2 | Add theme setting and user-facing panel naming changes without breaking shortcuts or iframe behavior. | V2-001 | Single implementation thread |
 | V2-009 high-permission discovery backlog | P3 | Separately evaluate multi-tab aggregation, tab grouping, voice input, full-page translation, YouTube subtitles, and remote-link body extraction. | V2-001 | Read-only discovery / decision docs |
 
-### First Executable Issue
+### V2-002A Decision Docs
 
-V2-001 is the first executable issue and is docs-only. It should not change source code, permissions, package dependencies, build scripts, release automation, or provider configuration.
+V2-002A is docs-only and records the provider host permission decision for the next implementation slices.
 
 Acceptance:
 
-- `docs/02_PRD.md` defines v0.2-alpha goals, scope, non-scope, and acceptance criteria.
-- `docs/03_TECH_SPEC.md` corrects the desktop tech draft assumptions against the current repository.
-- `docs/04_ROADMAP.md` contains this issue map and recommended sequence.
-- `docs/06_RISK_REGISTER.md`, `docs/07_PRIVACY_AND_SECURITY.md`, `RELEASE_CHECKLIST.md`, and `STATUS.md` reflect the same v0.2-alpha boundary.
-- No code, manifest, dependency, package, API Key, release, tag, or Git remote action is performed.
+- `docs/decisions/001-v2-provider-host-permissions.md` records approved OpenAI / Anthropic host permissions and the retained Ark Beijing gateway.
+- `docs/issues/002-v2-provider-host-permission-handoff.md` gives V2-003 and V2-004 execution agents a direct boundary.
+- Existing docs distinguish approved host permission decisions from unimplemented manifest changes and unverified live provider calls.
+- No code, manifest, dependency, package, API Key, release, tag, or Git remote action is performed in V2-002A.
 
 ### Backlog Requiring Separate Approval
 
@@ -93,11 +92,12 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 ## Suggested Next Sequence
 
 1. Finish V2-001 docs-only scope cleanup.
-2. Review and approve the exact V2-002 provider/permission validation plan.
+2. Use V2-002A decision docs as the boundary for provider host permissions.
 3. Decide whether v0.2-alpha should proceed before v0.1 public-release gates are closed.
-4. Implement V2-003 and V2-004 only after provider/permission decisions are explicit.
-5. Implement P1 user-facing improvements in the order: screenshot to AI, copy context, translation MVP.
-6. Keep public release preparation separate: package, provider evidence, privacy policy, store assets, tag, and rollback.
+4. Implement V2-003 with only the approved provider hosts and existing API Key storage model.
+5. Implement V2-004 as a manual, single-provider connectivity test; do not auto-test all providers.
+6. Implement P1 user-facing improvements in the order: screenshot to AI, copy context, translation MVP.
+7. Keep public release preparation separate: package, provider evidence, privacy policy, store assets, tag, and rollback.
 
 ## Open Questions
 
@@ -108,5 +108,6 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 
 ## Changelog
 
+- 2026-06-02: Added V2-002A provider host permission decision docs and V2-003 / V2-004 handoff boundaries.
 - 2026-06-02: Replaced the broad v0.2 candidate backlog with a v0.2-alpha issue map, recommended sequence, and high-permission discovery backlog.
 - 2026-06-01: Created Phase 1 roadmap from current internal dogfood baseline and release checklist.
