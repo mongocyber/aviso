@@ -9,6 +9,10 @@ import {
 } from "../src/utils/clipboard-detect.ts"
 import { normalizeError } from "../src/utils/errors.ts"
 import {
+  DEFAULT_FOLLOW_UP_CONTEXT_BUDGET,
+  buildFollowUpPriorContext
+} from "../src/utils/follow-up-context.ts"
+import {
   parseSupportedImageSrc,
   UNSUPPORTED_IMAGE_SRC_MESSAGE
 } from "../src/utils/image-src.ts"
@@ -40,6 +44,10 @@ import {
   isSupportedScreenshotDataUrl,
   normalizeScreenshotRegion
 } from "../src/utils/screenshot.ts"
+import {
+  SLOW_FIRST_CHUNK_MS,
+  shouldShowSlowResponseHint
+} from "../src/utils/response-guard.ts"
 import { expandTemplate } from "../src/utils/template.ts"
 import {
   bucketInputSize,
@@ -297,9 +305,82 @@ test("connectivity test payload 只包含固定公开短句，不带页面私有
   assert.equal(payload.userMessage, CONNECTIVITY_TEST_PROMPT)
   assert.equal(hasPrivateContextPayload(payload), false)
   assert.equal(payload.selectionText, undefined)
+  assert.equal(payload.priorContext, undefined)
   assert.equal(payload.pageContent, undefined)
   assert.equal(payload.srcUrl, undefined)
   assert.equal(payload.pageUrl, undefined)
+})
+
+test("connectivity 私有上下文检查覆盖追问 priorContext", () => {
+  assert.equal(
+    hasPrivateContextPayload({
+      operation: "custom",
+      userMessage: CONNECTIVITY_TEST_PROMPT,
+      priorContext: "用户：上一轮私有上下文"
+    }),
+    true
+  )
+})
+
+test("follow-up 上下文只保留最近消息并限制片段长度", () => {
+  const longAssistant = "a".repeat(
+    DEFAULT_FOLLOW_UP_CONTEXT_BUDGET.maxAssistantChars + 200
+  )
+  const context = buildFollowUpPriorContext([
+    { role: "user", content: "旧问题" },
+    { role: "assistant", content: "旧回答" },
+    { role: "user", content: "最近问题一" },
+    { role: "assistant", content: longAssistant },
+    { role: "user", content: "最近问题二" },
+    { role: "assistant", content: "最近回答二" }
+  ])
+
+  assert.match(context, /最近问题一/)
+  assert.match(context, /最近回答二/)
+  assert.doesNotMatch(context, /旧问题|旧回答/)
+  assert.match(context, /已截断/)
+  assert.ok(
+    context.length <=
+      DEFAULT_FOLLOW_UP_CONTEXT_BUDGET.maxTotalChars +
+        "以下是最近对话节选（已按长度裁剪）：\n".length
+  )
+})
+
+test("follow-up 上下文空消息不产生 priorContext", () => {
+  assert.equal(
+    buildFollowUpPriorContext([
+      { role: "user", content: " " },
+      { role: "assistant", content: "" }
+    ]),
+    ""
+  )
+})
+
+test("慢响应提示只在等待且首段未返回超过阈值时出现", () => {
+  assert.equal(
+    shouldShowSlowResponseHint({
+      loading: true,
+      hasFirstChunk: false,
+      elapsedMs: SLOW_FIRST_CHUNK_MS
+    }),
+    true
+  )
+  assert.equal(
+    shouldShowSlowResponseHint({
+      loading: true,
+      hasFirstChunk: true,
+      elapsedMs: SLOW_FIRST_CHUNK_MS + 1
+    }),
+    false
+  )
+  assert.equal(
+    shouldShowSlowResponseHint({
+      loading: false,
+      hasFirstChunk: false,
+      elapsedMs: SLOW_FIRST_CHUNK_MS + 1
+    }),
+    false
+  )
 })
 
 test("connectivity route 每次只解析当前 provider", () => {
@@ -495,6 +576,9 @@ test("perf 错误分类覆盖 key、限流、网络、超时和 provider 错误"
   assert.equal(categorizePerfError(new Error("fetch failed")), "network_error")
   assert.equal(categorizePerfError(new Error("timeout")), "timeout")
   assert.equal(categorizePerfError({ status: 503 }), "provider_error")
+  const abortError = new Error("user_cancelled")
+  abortError.name = "AbortError"
+  assert.equal(categorizePerfError(abortError), "user_cancelled")
 })
 
 test("screenshot region 归一化并过滤过小区域", () => {

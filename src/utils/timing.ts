@@ -34,6 +34,7 @@ export type PerfErrorCategory =
   | "network_error"
   | "provider_error"
   | "unsupported_image_input"
+  | "user_cancelled"
   | "unknown_error"
 
 export type PerfSummary = {
@@ -138,6 +139,8 @@ export function logPerfSummary(input: PerfSummaryInput): void {
 }
 
 export function categorizePerfError(err: unknown): PerfErrorCategory {
+  if (isAbortLikeError(err)) return "user_cancelled"
+
   const status = getErrorStatus(err)
   const message =
     err instanceof Error
@@ -213,4 +216,22 @@ function getErrorStatus(err: unknown): number | undefined {
   if (typeof err !== "object" || err === null) return undefined
   const status = (err as { status?: unknown }).status
   return typeof status === "number" ? status : undefined
+}
+
+function isAbortLikeError(err: unknown): boolean {
+  if (typeof err === "object" && err !== null) {
+    const name = (err as { name?: unknown }).name
+    if (name === "AbortError") return true
+  }
+
+  const message =
+    err instanceof Error
+      ? err.message
+      : typeof err === "string"
+        ? err
+        : JSON.stringify(err ?? "")
+
+  return /aborted|aborterror|cancelled|canceled|user_cancelled|已停止等待/i.test(
+    message
+  )
 }

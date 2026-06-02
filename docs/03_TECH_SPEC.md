@@ -35,6 +35,7 @@ Status: Internal technical baseline plus v0.2-alpha technical constraints
 `src/background/index.ts` registers extension listeners and routes messages:
 
 - `AI_REQUEST`
+- `CANCEL_AI_REQUEST`
 - `SHOW_FLOATING_WINDOW`
 - `VALIDATE_PROVIDER_CONNECTIVITY`
 - `PARSE_INTENT`
@@ -84,6 +85,14 @@ For V2-004, `src/background/ai-client.ts` also exposes a manual provider connect
 4. Floating UI opens immediately and either starts `AI_REQUEST` or waits for page-content extraction.
 5. Background handles `AI_REQUEST`, resolves settings/API Keys, calls the provider, and streams `AI_STREAM_CHUNK`.
 6. Floating UI renders chunks and can save final output to local history.
+
+Follow-up speed guard is part of the floating-window flow:
+
+- Follow-up requests build a bounded `priorContext` from recent non-empty chat messages instead of resending the full conversation history.
+- The default budget is 4 recent messages, 600 characters per user segment, 1200 characters per assistant segment, and 3000 characters for the prior-context body.
+- The floating UI uses “等待模型响应…” for model wait states. If the current request has no assistant text after 9 seconds, it shows “模型响应较慢，可继续等待或停止” while keeping the same request active.
+- The user can stop the current wait. The floating UI marks the request inactive, stops loading, ignores later chunks/errors for that requestId, and sends `CANCEL_AI_REQUEST` to background.
+- Background keeps an in-memory requestId to `AbortController` map for active AI requests. Cancellation sends an abort signal to the OpenAI / Anthropic SDK request where supported; no new provider, permission, dependency, or storage key is introduced.
 
 Manual provider connectivity is separate from the floating-window flow:
 
@@ -180,6 +189,7 @@ V2-005 implements an internal dogfood screenshot-to-AI MVP without changing mani
 - V2-004B adds one local-console `[Aviso perf]` summary per ordinary floating-window AI request. The summary contains only fixed redacted fields: `trigger`, `provider`, `model_or_endpoint`, `input_size_bucket`, `context_type`, `t_ui_visible_ms`, `t_background_received_ms`, `t_provider_start_ms`, `t_first_chunk_ms`, `t_done_ms`, and `error_category`.
 - `input_size_bucket` is bucketed as `0-500`, `501-2000`, `2001-5000`, or `5001+`; raw prompt text, selected text, page content, full URLs, image/base64 payloads, provider responses, and API Keys are not included in the perf summary.
 - `context_type` is limited to `selection`, `page_summary`, `image_explain`, `command`, `follow_up`, or `unknown`. Missing timing marks are represented as `null` so failed, first-chunk-missing, and done-missing paths remain diagnosable without inventing raw data.
+- V2-004C adds `user_cancelled` as a perf error category for stopped/aborted requests. It is a fixed category only; the raw prompt, raw response, page content, selected text, full URL, image/base64, screenshot, and API Key remain excluded.
 - `[Aviso perf]` is not persisted to `chrome.storage` and is not sent to a remote logging or telemetry service.
 - V2-005 adds screenshot capture/crop timing marks and image-size/region buckets only. Raw image data, base64, page URLs, selected text, prompts, responses, and API Keys are not logged.
 
@@ -265,6 +275,7 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 - V2-004 tests one provider at a time and must not auto-test all configured providers.
 - Provider validation records must not include API Keys, raw prompts, raw responses, private webpages, or screenshots with private data.
 - V2-004B latency baseline is limited to local console summaries for ordinary floating-window AI requests. It must not change provider routing, model defaults, token limits, API Key storage, storage key names, or manifest permissions.
+- V2-004C follow-up speed guard is limited to context budgeting, waiting copy, slow-first-chunk hint, UI stop/ignore behavior, background abort signal, and fixed `user_cancelled` classification. It must not add model summarization, caching, new provider calls, new dependencies, new permissions, or raw-content logging.
 - V2-005 screenshot-to-AI is limited to the existing `activeTab` boundary and right-click user trigger. It must not add `tabs`, `scripting`, `<all_urls>` host permissions, new providers, new dependencies, screenshot persistence, or full-page scrolling capture.
 - Result caching may be added only with a clear key design that includes operation, input, target language, provider, model, endpoint/base URL, and template version where relevant. A clear-cache control is required if caching ships.
 - Translation MVP should reuse existing floating-window and selection flows first. Full-page DOM translation, YouTube subtitle translation, and third-party translation engines are separate discovery items.
@@ -290,6 +301,7 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 - 2026-06-02: Implemented V2-003 provider/model registry, route fallback, approved host permissions, and root extension type-check boundary.
 - 2026-06-02: Implemented V2-004 manual single-provider connectivity flow, summary-only validation contract, Popup UI, and tests.
 - 2026-06-02: Implemented V2-004B local-console latency baseline with fixed redacted `[Aviso perf]` summaries for ordinary AI requests.
+- 2026-06-02: Implemented V2-004C follow-up speed guard with bounded prior context, slow response hint, stop waiting, background abort signal, and fixed `user_cancelled` perf classification.
 - 2026-06-02: Implemented V2-005 screenshot-to-AI internal dogfood MVP with right-click selection, in-memory crop, existing image flow reuse, and no new manifest permissions.
 - 2026-06-02: In V2-002A, recorded approved OpenAI / Anthropic provider host permissions for V2-003 as a docs-only decision.
 - 2026-06-02: Added v0.2-alpha technical delta constraints and corrected the desktop draft assumptions about file names, message contracts, manifest permissions, host permissions, storage, and MVP boundaries.

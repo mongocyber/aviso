@@ -72,15 +72,16 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [ ] API Key 不出现在日志、构建产物、截图、提交记录或 issue 文档中。
 - [x] Provider 连接测试入口为用户手动触发、一次只测单 provider，并返回脱敏摘要；不会在设置页打开时自动测试全部 provider。
 - [x] V2-004B `[Aviso perf]` 性能摘要只输出到本地 console，不写入 `chrome.storage`，不发送远端 telemetry，不包含 raw prompt、raw response、页面正文、选中文本、完整 URL、图片/base64 或 API Key。
+- [x] V2-004C follow-up speed guard 已实现：追问只携带预算后的近期对话节选；慢响应提示和停止等待不记录 raw 内容；取消分类仅输出 `user_cancelled` 等脱敏类别。
 - [ ] 真实 OpenAI 调用已通过用户手动触发的单 provider 最小样例验证。公开发布门禁未关闭。
 - [ ] 真实 Anthropic 调用已通过用户手动触发的单 provider 最小样例验证。公开发布门禁未关闭。
 - [x] 真实豆包/火山方舟调用已通过 V2-004 手动单 provider 连接测试。脱敏记录：`provider=doubao`，`model_or_endpoint=doubao-seed-2-0-lite-260428`，`host_permission_present=true`，`result=success`，`latency_note=约 2505 ms`，`error_category=none`，`secret_leak_check=pass`，`raw_prompt_logged=no`，`raw_response_logged=no`，`private_page_data_logged=no`。记录来源：2026-06-02 用户在已加载扩展的 Popup 手动触发。
 
 ## 4. 构建产物
 
-- [x] `npm test` 通过。2026-06-02，28 项测试通过；存在 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
+- [x] `npm test` 通过。2026-06-02，46 项测试通过；存在 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
 - [x] `npx tsc --noEmit` 通过。2026-06-02，无错误输出。
-- [x] `npm run build` 通过。2026-06-02，生成 `build/chrome-mv3-prod`；默认沙箱内仍被系统拦截为 `Operation not permitted`，沙箱外重跑通过。
+- [x] `npm run build` 通过。2026-06-02，生成 `build/chrome-mv3-prod`；默认沙箱内仍被系统拦截为 `Operation not permitted`，沙箱外同命令重跑通过。
 - [x] `npm run package` 通过，并生成当前 zip：`build/chrome-mv3-prod.zip`，约 1.1 MB。2026-06-02，沙箱外重跑通过；包内 manifest 权限边界已核对。
 - [ ] Chrome 加载 `build/chrome-mv3-prod` 无安装报错。
 - [x] 版本号、扩展名称、描述、图标符合本次发布目标。Manifest 显示 `0.1.0` / `Aviso`，权限未扩大。
@@ -110,8 +111,9 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 ## 7. v0.1 已知限制记录
 
 - [x] 前端触发链路已优化：用户点击/发送后应立即看到浮窗和明确等待状态。
-- [x] 已保留响应速度优化：立即显示浮窗、正在连接模型、timing 日志、页面正文 5000 字符截断、默认 `max_tokens` 1024。
+- [x] 已保留响应速度优化：立即显示浮窗、等待模型响应、timing 日志、页面正文 5000 字符截断、默认 `max_tokens` 1024。
 - [x] 已新增 V2-004B 脱敏性能基线：普通浮窗 AI 请求输出一条 `[Aviso perf]` 摘要，可区分 UI 可见、background 接收、provider start、first chunk、done、缺失阶段和错误失败。
+- [x] 已新增 V2-004C 追问速度保护：追问上下文预算、9 秒慢响应提示、停止等待并忽略后续 chunk、background abort signal、`user_cancelled` 脱敏分类。
 - [x] 默认模型为较快的 `gpt-4o-mini`。
 - [x] provider 首 token 仍可能受模型、网络、API Key 状态、provider 负载和输入长度影响。
 - [x] Aviso v0.1 不承诺模型秒回；本版本不做后端中转、不扩大权限、不新增依赖、不继续重构 AI 客户端。
@@ -146,6 +148,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [x] V2-004 manual connectivity test UI 已实现：用户手动触发、一次只测单 provider，摘要不记录 Key、raw prompt、raw response、私人网页内容或私密截图。
 - [x] 豆包 / 火山方舟真实 provider 最小验证记录已补录。
 - [x] V2-004B latency baseline 已实现为本地 console 脱敏摘要；未运行真实 provider、未新增 provider、未改变 manifest 权限。
+- [x] V2-004C follow-up speed guard 已实现：未运行真实 provider、未新增 provider、未改变 manifest 权限、未改变 API Key / storage key 边界。
 - [x] V2-005 screenshot to AI internal dogfood MVP 已实现：右键页面菜单手动触发，确认选区后才截图；截图/base64 不写入 history、storage、docs、console 或 release artifacts；未新增权限、provider、依赖或真实 API 验证。
 - [x] V2-005 已重新加载本地扩展并完成 internal dogfood 人工 UI QA：取消流程正常，确认流程正常，豆包 / 火山方舟未验证 vision endpoint 被拦截并显示可读错误，Service Worker Console 可见 `[Aviso perf]` 摘要入口。记录来源：2026-06-02 用户本地截图测试反馈。
 - [ ] V2-005 真实 vision provider 验证仍未完成；OpenAI / Anthropic 原生 API Key 验证前，截图理解不能对外宣称 provider 已验证。

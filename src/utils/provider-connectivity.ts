@@ -55,6 +55,7 @@ export function buildConnectivityTestPayload(): AIRequestPayload {
 export function hasPrivateContextPayload(payload: AIRequestPayload): boolean {
   return Boolean(
     payload.selectionText ||
+      payload.priorContext ||
       payload.pageContent ||
       payload.linkUrl ||
       payload.srcUrl ||

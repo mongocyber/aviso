@@ -21,6 +21,7 @@ import {
 } from "./history"
 
 const MAX_BOOKMARK_RESULTS = 12
+const activeAIRequests = new Map<string, AbortController>()
 
 type BookmarkSearchSource = "native" | "tree-fallback"
 
@@ -124,6 +125,10 @@ async function handleMessage(
       case "AI_REQUEST": {
         const tabId = senderTabId
         const responseFrameId = sender.frameId ?? 0
+        activeAIRequests.get(request.requestId)?.abort()
+        const abortController = new AbortController()
+        activeAIRequests.set(request.requestId, abortController)
+
         try {
           const timing = markTiming(
             request.payload.timing,
@@ -136,6 +141,7 @@ async function handleMessage(
             {
               operation: request.payload.operation,
               pageContentChars: request.payload.pageContent?.length ?? 0,
+              priorContextChars: request.payload.priorContext?.length ?? 0,
               selectionChars: request.payload.selectionText?.length ?? 0,
               userMessageChars: request.payload.userMessage?.length ?? 0
             }
@@ -158,7 +164,10 @@ async function handleMessage(
                 )
               }
             },
-            { requestId: request.requestId }
+            {
+              requestId: request.requestId,
+              signal: abortController.signal
+            }
           )
           sendResponse({ success: true })
         } catch (err) {
@@ -178,7 +187,19 @@ async function handleMessage(
             )
           }
           sendResponse({ success: false, error })
+        } finally {
+          activeAIRequests.delete(request.requestId)
         }
+        break
+      }
+
+      case "CANCEL_AI_REQUEST": {
+        const controller = activeAIRequests.get(request.payload.requestId)
+        controller?.abort()
+        sendResponse({
+          success: true,
+          data: { cancelled: Boolean(controller) }
+        })
         break
       }
 

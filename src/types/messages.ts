@@ -18,6 +18,7 @@ export type AIRequestPayload = {
   selectionText?: string
   pageContent?: string
   userMessage?: string
+  priorContext?: string
   linkUrl?: string
   srcUrl?: string
   pageUrl?: string
@@ -44,6 +45,10 @@ export type MessageRequest =
       payload: AIRequestPayload
       requestId: string
       // tabId intentionally omitted: background resolves from sender.tab.id
+    }
+  | {
+      action: "CANCEL_AI_REQUEST"
+      payload: { requestId: string }
     }
   | { action: "SAVE_HISTORY"; payload: import("~types/history").HistoryEntry }
   | { action: "GET_HISTORY" }

@@ -51,7 +51,8 @@ Aviso should move from internal dogfood to public release through evidence, not 
 | V2-003 minimal model registry and routing | P0 | Route tasks to existing provider/model choices while preserving current defaults and local API Key storage. | V2-002A decision docs | Implemented; live provider calls not run |
 | V2-004 manual connectivity test UI | P0 | Let users test configured providers on demand, with latency and readable failure reasons. | V2-003 | Implemented; live evidence still user-triggered |
 | V2-004B latency baseline | P0 | Add a redacted request-level local console summary for ordinary AI requests so slow replies can be attributed to UI, background, provider first chunk, done, or failure. | V2-004 | Implemented; no provider/model/token/permission changes |
-| V2-005 screenshot to AI | P1 | Capture a user-selected visible-page region and send it to a vision-capable configured model. | V2-004B | Implemented for internal dogfood; loaded-extension UI QA completed; real vision provider validation still open |
+| V2-004C follow-up speed guard | P0 | Reduce perceived wait for follow-ups and long first-token delays through bounded prior context, clearer waiting copy, slow hint, and stop waiting. | V2-004B | Implemented; no provider/model/permission changes |
+| V2-005 screenshot to AI | P1 | Capture a user-selected visible-page region and send it to a vision-capable configured model. | V2-004C | Implemented for internal dogfood; loaded-extension UI QA completed; real vision provider validation still open |
 | V2-006 copy current context | P1 | Copy title, URL, optional selection, and truncated page text as clean structured text. | V2-001 | Single implementation thread |
 | V2-007 translation MVP | P1 | Improve selection translation and floating-window translation output without third-party default fallback. | V2-003 | Single implementation thread |
 | V2-008 theme and Aviso panel polish | P2 | Add theme setting and user-facing panel naming changes without breaking shortcuts or iframe behavior. | V2-001 | Single implementation thread |
@@ -99,6 +100,17 @@ V2-004B adds the latency baseline for ordinary floating-window AI requests:
 - The timing stages cover UI visible, background received, provider request start, first chunk, done, and error/missing-stage categories.
 - It does not run real providers during implementation, does not add OpenRouter, does not add dependencies or permissions, and does not change provider routing, model defaults, token limits, API Key storage, or `contextai_*` storage keys.
 - V2-004 manual connectivity-test summaries remain separate and unchanged.
+
+### V2-004C Implementation
+
+V2-004C adds a speed guard for ordinary and follow-up floating-window requests:
+
+- Follow-up requests no longer resend the full visible conversation. They send a bounded `priorContext` containing recent non-empty chat messages only, with per-role and total character limits.
+- The model wait copy is now “等待模型响应…”, while page extraction still uses “正在读取页面内容…” before the AI request starts.
+- If the current request has no assistant text after 9 seconds, the floating UI shows a slow-response hint and offers stop waiting.
+- Stop waiting immediately stops the UI loading state and ignores later chunks/errors for that requestId. Background sends an abort signal to the provider request when it is still active.
+- `[Aviso perf]` can classify stopped requests as `user_cancelled`, without logging raw prompts, responses, page text, selected text, full URLs, images/base64, screenshots, or API Keys.
+- This slice adds no provider, dependency, manifest permission, host permission, model default change, API Key storage change, cache, or model summarization call.
 
 ### V2-005 Implementation
 
@@ -156,6 +168,7 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 - 2026-06-02: Marked V2-003 registry/routing implementation complete while keeping live provider validation in V2-004.
 - 2026-06-02: Marked V2-004 manual connectivity test UI implemented while keeping real provider evidence as a release gate.
 - 2026-06-02: Marked V2-004B latency baseline implemented as local-console redacted perf summaries for ordinary AI requests.
+- 2026-06-02: Marked V2-004C follow-up speed guard implemented with bounded prior context, slow-response hint, stop waiting, background abort signal, and `user_cancelled` classification.
 - 2026-06-02: Marked V2-005 screenshot-to-AI internal dogfood MVP implemented while keeping loaded-extension QA and release claims open.
 - 2026-06-02: Recorded V2-005 loaded-extension UI QA for cancel, confirm, 豆包 / 火山方舟 unverified-vision blocking, and Service Worker Console `[Aviso perf]` visibility.
 - 2026-06-02: Replaced the broad v0.2 candidate backlog with a v0.2-alpha issue map, recommended sequence, and high-permission discovery backlog.

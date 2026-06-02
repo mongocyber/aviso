@@ -4,6 +4,7 @@ import {
   UNSUPPORTED_IMAGE_SRC_MESSAGE
 } from "~utils/image-src"
 import { truncatePageContent } from "~utils/page-content"
+import { WAITING_MODEL_RESPONSE_TEXT } from "~utils/response-guard"
 import { getSettings, saveSettings } from "~utils/storage"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
 
@@ -410,7 +411,7 @@ export async function handleContextMenuClick(
             payload: {
               requestId,
               timing: contentTiming,
-              statusText: "正在连接模型…",
+              statusText: WAITING_MODEL_RESPONSE_TEXT,
               aiPayload: {
                 trigger: "context-menu",
                 operation: builtinAction,

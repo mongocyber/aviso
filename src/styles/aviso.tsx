@@ -81,6 +81,7 @@ export type AvisoIconName =
   | "send"
   | "shield"
   | "summarize"
+  | "stop"
   | "translate"
   | "warning"
 
@@ -104,6 +105,7 @@ const ICONS: Record<AvisoIconName, string> = {
   send: '<path d="M21 3 3 10.5l7 2.6L12.5 20 21 3z"/><path d="M21 3 10 13.1"/>',
   shield:
     '<path d="M12 3.2l7 2.8v5.2c0 4.2-3 7.3-7 8.6-4-1.3-7-4.4-7-8.6V6l7-2.8z"/><path d="M9 11.6l2.1 2.1L15.5 9.5"/>',
+  stop: '<rect x="7" y="7" width="10" height="10" rx="2"/>',
   summarize: '<path d="M5 7h14M5 12h10M5 17h6"/>',
   translate:
     '<text x="3.5" y="11" font-family="Hanken Grotesk,sans-serif" font-size="9.5" font-weight="700" fill="currentColor" stroke="none">A</text><text x="11" y="20.5" font-family="sans-serif" font-size="10" font-weight="600" fill="currentColor" stroke="none">文</text><path d="M3.5 14.5h6"/>',

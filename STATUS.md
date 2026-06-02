@@ -92,6 +92,7 @@ Vercel 项目配置：
 - V2-003：minimal model registry and routing 已实现并提交，默认 `gpt-4o-mini`、`claude*` 路由和豆包 / 火山方舟北京网关行为保持兼容。
 - V2-004：Popup API Key 页已新增用户手动触发的单 provider 连接测试入口，background 通过独立 `VALIDATE_PROVIDER_CONNECTIVITY` 消息返回脱敏 validation 摘要。
 - V2-004B：真实浮窗 AI 请求已新增请求级 `[Aviso perf]` 脱敏性能摘要，覆盖 trigger、provider、model/endpoint、输入长度分桶、context type、UI/background/provider start/first chunk/done 阶段耗时和错误分类。该日志只输出到本地 console，不写入 storage，不发送远端 telemetry。
+- V2-004C：Follow-up speed guard 已实现。追问只携带最近对话节选并按字符预算裁剪；普通请求和追问等待文案改为“等待模型响应…”；超过 9 秒未收到首段内容时浮窗提示“模型响应较慢，可继续等待或停止”；用户可停止当前等待，浮窗会忽略该 requestId 后续 chunk，并向 background 发送取消信号。
 - V2-005：Screenshot to AI internal dogfood MVP 已实现为右键页面菜单“截图提问”：用户手动框选可见区域并确认后才截图，裁剪后的图片复用现有 `image_explain` 浮窗流。未新增 manifest 权限、host permission、provider 或依赖；未运行真实 provider API。
 - 当前生产 zip 包已生成：`build/chrome-mv3-prod.zip`，约 1.1 MB；包内 manifest 已核对为 `Aviso` / `0.1.0`，普通权限未新增，host permissions 仍为 OpenAI / Anthropic / Ark。
 
@@ -110,6 +111,15 @@ V2-004B 边界：
 - `context_type` 区分 `selection`、`page_summary`、`image_explain`、`command`、`follow_up`、`unknown`。
 - 该性能基线不改变默认 provider、模型、token 上限、API Key 存储位置、`contextai_*` storage key 或 manifest 权限。
 - V2-004 手动连接测试摘要保持原结构；本轮未运行真实 provider API。
+
+V2-004C 边界：
+
+- Follow-up 上下文预算在浮窗侧执行：最多带最近 4 条非空消息，用户片段最多 600 字符、助手片段最多 1200 字符、上下文主体最多 3000 字符，并标记已截断内容。
+- 追问 payload 使用 `priorContext` 字段传递预算后的近期对话节选，不再把完整长历史无限拼入 `selectionText`。
+- 慢响应提示只在当前 requestId 仍处于 loading 且尚无首段助手内容时出现；提示不记录 raw prompt、raw response、页面正文、选中文本、完整 URL、图片/base64 或 API Key。
+- 停止等待会让浮窗立即停止 loading，并忽略同一 requestId 后续 chunk / error；background 会对仍在进行的 provider 请求发送 abort signal。
+- `[Aviso perf]` 可将用户停止归类为 `user_cancelled`，仍只输出固定脱敏字段，不写入 storage，不发送远端 telemetry。
+- 本轮未新增 manifest permission、host permission、provider、依赖、API Key 存储位置、默认 provider、默认模型或 `contextai_*` storage key；未运行真实 provider API。
 
 V2-005 边界：
 
@@ -281,8 +291,9 @@ v0.1 结论：前端触发链路已能立即响应，默认模型保持较快的
 
 ## v0.1 已知限制
 
-- 前端响应链路已优化：触发后浮窗应立即出现，并显示“正在读取页面内容…”或“正在连接模型…”等等待状态。
+- 前端响应链路已优化：触发后浮窗应立即出现，并显示“正在读取页面内容…”或“等待模型响应…”等等待状态。
 - 模型首 token 仍可能较慢，受模型、网络、API Key、provider 状态、输入长度和页面正文长度影响。
+- 追问已增加上下文预算、慢响应提示和停止等待能力；停止后 UI 会忽略后续 chunk。Provider 是否能立即中断仍取决于 SDK / 网络层对 abort signal 的响应。
 - Aviso v0.1 不承诺模型秒回；当前不接入后端中转、不扩大权限、不新增依赖，也不继续重构 AI 客户端。
 
 ## 仍需人工确认

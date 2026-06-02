@@ -134,7 +134,7 @@ export async function handleProviderConnectivityTest(
 export async function handleAIRequest(
   payload: AIRequestPayload,
   onChunk: (chunk: StreamChunk) => void,
-  options: { requestId?: string } = {}
+  options: { requestId?: string; signal?: AbortSignal } = {}
 ): Promise<void> {
   const [settings, apiKeys] = await Promise.all([getSettings(), getApiKeys()])
 
@@ -177,6 +177,7 @@ export async function handleAIRequest(
         onChunk,
         {
           requestId: options.requestId,
+          signal: options.signal,
           logPerf: true
         }
       )
@@ -189,6 +190,7 @@ export async function handleAIRequest(
         baseURL: route.provider.baseURL,
         keyLabel: "豆包",
         requestId: options.requestId,
+        signal: options.signal,
         providerId: route.provider.id,
         logPerf: true
       })
@@ -196,6 +198,7 @@ export async function handleAIRequest(
       await callOpenAI(route.requestModel, payload, apiKeys.openai, onChunk, {
         keyLabel: route.provider.displayName,
         requestId: options.requestId,
+        signal: options.signal,
         providerId: route.provider.id,
         logPerf: true
       })
@@ -214,6 +217,7 @@ async function callOpenAI(
     baseURL?: string
     keyLabel?: string
     requestId?: string
+    signal?: AbortSignal
     providerId?: ProviderId
     logPerf?: boolean
   }
@@ -226,6 +230,7 @@ async function callOpenAI(
 
   try {
     if (!apiKey) throw new Error(`${opts?.keyLabel ?? "OpenAI"} API Key 未配置`)
+    throwIfAborted(opts?.signal)
 
     const client = new OpenAI({
       apiKey,
@@ -247,16 +252,20 @@ async function callOpenAI(
       inputChars: estimatePayloadChars(payload)
     })
 
-    const stream = await client.chat.completions.create({
-      model,
-      messages: messages as Parameters<
-        typeof client.chat.completions.create
-      >[0]["messages"],
-      stream: true,
-      max_tokens: maxTokens
-    })
+    const stream = await client.chat.completions.create(
+      {
+        model,
+        messages: messages as Parameters<
+          typeof client.chat.completions.create
+        >[0]["messages"],
+        stream: true,
+        max_tokens: maxTokens
+      },
+      opts?.signal ? { signal: opts.signal } : undefined
+    )
 
     for await (const chunk of stream) {
+      throwIfAborted(opts?.signal)
       const text = chunk.choices[0]?.delta?.content ?? ""
       const done = chunk.choices[0]?.finish_reason != null
       if (text && !sawFirstChunk) {
@@ -315,7 +324,7 @@ async function callAnthropic(
   payload: AIRequestPayload,
   apiKey: string,
   onChunk: (chunk: StreamChunk) => void,
-  opts: { requestId?: string; logPerf?: boolean } = {}
+  opts: { requestId?: string; signal?: AbortSignal; logPerf?: boolean } = {}
 ): Promise<void> {
   const requestId = opts.requestId ?? "unknown"
   let timing: RequestTiming | undefined = payload.timing
@@ -325,6 +334,7 @@ async function callAnthropic(
 
   try {
     if (!apiKey) throw new Error("Anthropic API Key 未配置")
+    throwIfAborted(opts.signal)
 
     const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true })
 
@@ -342,15 +352,19 @@ async function callAnthropic(
       inputChars: estimatePayloadChars(payload)
     })
 
-    const stream = client.messages.stream({
-      model,
-      messages: messages as Parameters<
-        typeof client.messages.stream
-      >[0]["messages"],
-      max_tokens: maxTokens
-    })
+    const stream = client.messages.stream(
+      {
+        model,
+        messages: messages as Parameters<
+          typeof client.messages.stream
+        >[0]["messages"],
+        max_tokens: maxTokens
+      },
+      opts.signal ? { signal: opts.signal } : undefined
+    )
 
     for await (const event of stream) {
+      throwIfAborted(opts.signal)
       if (
         event.type === "content_block_delta" &&
         event.delta.type === "text_delta"
@@ -441,6 +455,7 @@ function estimatePayloadChars(payload: AIRequestPayload): number {
     payload.selectionText,
     payload.pageContent,
     payload.userMessage,
+    payload.priorContext,
     payload.linkUrl,
     payload.srcUrl,
     payload.pageUrl,
@@ -576,6 +591,10 @@ function buildUserContent(payload: AIRequestPayload): string {
   if (payload.selectionText) {
     parts.push(`选中内容：\n${payload.selectionText}`)
   }
+  // 追问携带的近期对话节选，已在浮窗侧做长度预算
+  if (payload.priorContext) {
+    parts.push(`对话上文：\n${payload.priorContext}`)
+  }
   // 用户在命令面板直接输入的文本
   if (payload.userMessage) {
     parts.push(payload.userMessage)
@@ -610,4 +629,11 @@ export async function parseIntent(input: string): Promise<{
   params: Record<string, unknown>
 }> {
   return parseIntentLocally(input)
+}
+
+function throwIfAborted(signal?: AbortSignal): void {
+  if (!signal?.aborted) return
+  const err = new Error("user_cancelled")
+  err.name = "AbortError"
+  throw err
 }

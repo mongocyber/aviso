@@ -7,6 +7,14 @@ import type {
   MessageRequest,
   MessageResponse
 } from "~types/messages"
+import { buildFollowUpPriorContext } from "~utils/follow-up-context"
+import {
+  SLOW_FIRST_CHUNK_MS,
+  SLOW_MODEL_RESPONSE_TEXT,
+  USER_CANCELLED_ASSISTANT_TEXT,
+  WAITING_MODEL_RESPONSE_TEXT,
+  shouldShowSlowResponseHint
+} from "~utils/response-guard"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
 
 export const config: PlasmoCSConfig = {
@@ -76,6 +84,18 @@ function lastByRole(messages: ChatMsg[], role: "user" | "assistant"): string {
   return ""
 }
 
+function hasAssistantContentForRequest(
+  messages: ChatMsg[],
+  requestId: string
+): boolean {
+  return messages.some(
+    (message) =>
+      message.role === "assistant" &&
+      message.reqId === requestId &&
+      message.content.trim().length > 0
+  )
+}
+
 function LoadingMessage({ text }: { text: string }) {
   return (
     <div className="aviso-loading-message" role="status" aria-live="polite">
@@ -97,11 +117,12 @@ function FloatingWindow() {
   const contentRef = useRef<HTMLDivElement>(null)
   const activeRequestRef = useRef("")
   const copyTimer = useRef<ReturnType<typeof setTimeout>>()
+  const slowTimer = useRef<ReturnType<typeof setTimeout>>()
 
   const sendAIRequest = (
     requestId: string,
     payload: AIRequestPayload,
-    statusText = "正在连接模型…"
+    statusText = WAITING_MODEL_RESPONSE_TEXT
   ) => {
     if (activeRequestRef.current !== requestId) {
       logTiming("ai_request_skipped", requestId, payload.timing, {
@@ -114,6 +135,7 @@ function FloatingWindow() {
     logTiming("ai_request_sent", requestId, timing, {
       operation: payload.operation,
       pageContentChars: payload.pageContent?.length ?? 0,
+      priorContextChars: payload.priorContext?.length ?? 0,
       selectionChars: payload.selectionText?.length ?? 0,
       userMessageChars: payload.userMessage?.length ?? 0
     })
@@ -137,7 +159,8 @@ function FloatingWindow() {
         // sendMessage 回调兜底：如 AI_STREAM_ERROR 消息未到达时仍能停止 loading
         if (response && !response.success && response.error) {
           setState((prev) =>
-            prev.requestId === requestId
+            prev.requestId === requestId &&
+            activeRequestRef.current === requestId
               ? {
                   ...prev,
                   loading: false,
@@ -149,6 +172,13 @@ function FloatingWindow() {
         }
       }
     )
+  }
+
+  const cancelBackgroundRequest = (requestId: string) => {
+    chrome.runtime.sendMessage({
+      action: "CANCEL_AI_REQUEST",
+      payload: { requestId }
+    })
   }
 
   useEffect(() => {
@@ -231,7 +261,7 @@ function FloatingWindow() {
           requestId,
           trigger,
           operation,
-          statusText: statusText ?? "正在连接模型…",
+          statusText: statusText ?? WAITING_MODEL_RESPONSE_TEXT,
           messages
         })
         setSavedId("")
@@ -253,7 +283,7 @@ function FloatingWindow() {
               templateId,
               timing
             },
-            statusText ?? "正在连接模型…"
+            statusText ?? WAITING_MODEL_RESPONSE_TEXT
           )
         }
       }
@@ -267,7 +297,7 @@ function FloatingWindow() {
             ...aiPayload,
             timing: timing ?? aiPayload.timing
           },
-          statusText ?? "正在连接模型…"
+          statusText ?? WAITING_MODEL_RESPONSE_TEXT
         )
       }
 
@@ -275,7 +305,12 @@ function FloatingWindow() {
         handled = true
         const { chunk, requestId } = message.payload
         setState((prev) => {
-          if (prev.requestId !== requestId) return prev
+          if (
+            prev.requestId !== requestId ||
+            activeRequestRef.current !== requestId
+          ) {
+            return prev
+          }
           const messages = prev.messages.map((m) =>
             m.reqId === requestId
               ? { ...m, content: m.content + chunk.text }
@@ -294,7 +329,7 @@ function FloatingWindow() {
         handled = true
         const { error, requestId } = message.payload
         setState((prev) =>
-          prev.requestId === requestId
+          prev.requestId === requestId && activeRequestRef.current === requestId
             ? { ...prev, loading: false, error, statusText: "" }
             : prev
         )
@@ -317,6 +352,37 @@ function FloatingWindow() {
   useEffect(() => {
     return () => clearTimeout(copyTimer.current)
   }, [])
+
+  useEffect(() => {
+    clearTimeout(slowTimer.current)
+
+    if (!state.loading || !state.requestId) return
+
+    const requestId = state.requestId
+    slowTimer.current = setTimeout(() => {
+      setState((prev) => {
+        const hasFirstChunk = hasAssistantContentForRequest(
+          prev.messages,
+          requestId
+        )
+        if (
+          prev.requestId !== requestId ||
+          activeRequestRef.current !== requestId ||
+          !shouldShowSlowResponseHint({
+            loading: prev.loading,
+            hasFirstChunk,
+            elapsedMs: SLOW_FIRST_CHUNK_MS
+          })
+        ) {
+          return prev
+        }
+
+        return { ...prev, statusText: SLOW_MODEL_RESPONSE_TEXT }
+      })
+    }, SLOW_FIRST_CHUNK_MS)
+
+    return () => clearTimeout(slowTimer.current)
+  }, [state.loading, state.requestId])
 
   const handleCopy = async () => {
     const output = lastByRole(state.messages, "assistant")
@@ -357,17 +423,14 @@ function FloatingWindow() {
       trigger: "follow-up",
       operation: "custom"
     })
-    // 携带上文：把已有往返拼成上下文一起发给模型
-    const priorContext = state.messages
-      .map((m) => `${m.role === "user" ? "用户" : "助手"}：${m.content}`)
-      .join("\n")
+    const priorContext = buildFollowUpPriorContext(state.messages)
 
     setState((prev) => ({
       ...prev,
       loading: true,
       error: "",
       requestId,
-      statusText: "正在连接模型…",
+      statusText: WAITING_MODEL_RESPONSE_TEXT,
       messages: [
         ...prev.messages,
         { role: "user", content: q },
@@ -382,14 +445,46 @@ function FloatingWindow() {
         trigger: "follow-up",
         operation: "custom",
         userMessage: q,
-        selectionText: priorContext,
+        priorContext,
         timing
       },
-      "正在连接模型…"
+      WAITING_MODEL_RESPONSE_TEXT
+    )
+  }
+
+  const handleStopWaiting = () => {
+    if (!state.loading || !state.requestId) return
+
+    const requestId = state.requestId
+    activeRequestRef.current = ""
+    clearTimeout(slowTimer.current)
+    cancelBackgroundRequest(requestId)
+
+    setState((prev) =>
+      prev.requestId === requestId
+        ? {
+            ...prev,
+            loading: false,
+            statusText: "",
+            messages: prev.messages.map((message) =>
+              message.role === "assistant" && message.reqId === requestId
+                ? {
+                    ...message,
+                    content: message.content.trim()
+                      ? `${message.content}\n\n${USER_CANCELLED_ASSISTANT_TEXT}`
+                      : USER_CANCELLED_ASSISTANT_TEXT
+                  }
+                : message
+            )
+          }
+        : prev
     )
   }
 
   const handleClose = () => {
+    if (state.loading && state.requestId) {
+      cancelBackgroundRequest(state.requestId)
+    }
     activeRequestRef.current = ""
     setState(INITIAL_STATE)
   }
@@ -592,7 +687,17 @@ function FloatingWindow() {
             icon: "save" as const,
             onClick: handleSave,
             active: savedId === state.requestId && !!state.requestId
-          }
+          },
+          ...(state.loading
+            ? [
+                {
+                  label: "停止",
+                  icon: "stop" as const,
+                  onClick: handleStopWaiting,
+                  active: false
+                }
+              ]
+            : [])
         ].map(({ label, icon, onClick, active }) => (
           <button
             key={icon}
