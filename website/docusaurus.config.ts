@@ -3,9 +3,10 @@ import type * as Preset from "@docusaurus/preset-classic";
 import {themes as prismThemes} from "prism-react-renderer";
 
 const config: Config = {
-  title: "Aviso 用户帮助",
-  tagline: "在当前网页就地调用 AI 的 Chrome 扩展",
-  url: "https://aviso.local",
+  title: "Aviso",
+  tagline: "会留意的 AI",
+  favicon: "img/aviso-icon.png",
+  url: "https://aviso-nine.vercel.app",
   baseUrl: "/",
   onBrokenLinks: "throw",
   markdown: {
@@ -37,22 +38,31 @@ const config: Config = {
     image: "img/aviso-social-card.png",
     navbar: {
       title: "Aviso",
+      logo: {
+        alt: "Aviso",
+        src: "img/aviso-mark-sage.svg"
+      },
       items: [
         {
-          type: "docSidebar",
-          sidebarId: "guideSidebar",
+          href: "/?section=features",
           position: "left",
-          label: "用户文档"
+          label: "功能"
         },
         {
-          to: "/docs/privacy-policy",
+          to: "/docs/privacy-policy/",
           position: "left",
-          label: "隐私政策"
+          label: "隐私"
         },
         {
-          to: "/docs/support-feedback",
+          to: "/docs/intro/",
+          position: "left",
+          label: "文档"
+        },
+        {
+          to: "/docs/install/",
           position: "right",
-          label: "支持反馈"
+          label: "添加到浏览器",
+          className: "navbar-cta"
         }
       ]
     },
@@ -98,8 +108,8 @@ const config: Config = {
     },
     colorMode: {
       defaultMode: "light",
-      disableSwitch: false,
-      respectPrefersColorScheme: true
+      disableSwitch: true,
+      respectPrefersColorScheme: false
     },
     prism: {
       theme: prismThemes.github,
