@@ -21,7 +21,7 @@
 - [x] 自定义模板：新增、编辑、删除、右键同步、占位符展开均正常。用户手动验收基本通过。
 - [x] 浮窗与历史：流式输出、复制、保存去重、继续追问、历史管理均正常。用户手动验收基本通过。
 - [x] iframe 场景：iframe 内划词、右键触发、命令面板快捷键、剪贴板提示和单实例 UI 基本通过。
-- [x] V2-006 复制当前上下文：右键页面菜单手动触发，把标题、URL、可选选中文本和截断正文复制到剪贴板；不调用 AI。自动化覆盖已补齐，安装后人工 dogfood 仍待记录。
+- [x] V2-006 复制当前上下文：右键页面菜单手动触发，把标题、URL、可选选中文本和截断正文复制到剪贴板；不调用 AI。自动化覆盖已补齐，安装后人工 dogfood 用户反馈通过。
 
 ## 2. 手动 QA 记录
 
@@ -46,18 +46,20 @@ tests/manual-test.html
 | E · 自定义模板                                   | 基本通过 | 用户反馈已验证基本通过；作为内部试用通过记录。                                      |
 | F · 浮窗与历史                                   | 基本通过 | 用户反馈已验证基本通过；作为内部试用通过记录。                                      |
 | G · iframe / Hugging Face Spaces / Gradio 嵌入页 | 基本通过 | 用户反馈已验证基本通过；覆盖 iframe 内划词、右键、命令面板、剪贴板提示和单实例 UI。 |
+| V2-004C · 追问速度保护                           | 通过     | 用户反馈已验收；覆盖追问上下文预算、慢响应提示和停止等待。                          |
+| V2-006 · 复制当前上下文                           | 通过     | 用户反馈已验收；覆盖右键复制当前上下文 internal dogfood 主路径。                    |
 
 Chrome 版本：用户未补录
 
 操作系统：用户未补录
 
-验收时间：2026-06-01 用户反馈
+验收时间：2026-06-01 / 2026-06-02 用户反馈
 
 A-G 是否全部通过：基本通过，进入 v0.1 内部试用
 
 Aviso 命名可见项：用户未补录逐项截图；当前按 A-G 基本通过记录
 
-AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider 首 token 仍按 v0.1 已知限制记录
+AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追问速度保护用户已验收；provider 首 token 仍按已知限制记录
 
 异常截图或录屏：用户未补录
 
@@ -85,7 +87,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [x] `npx tsc --noEmit` 通过。2026-06-02，无错误输出。
 - [x] `npm run build` 通过。2026-06-02，生成 `build/chrome-mv3-prod`；默认沙箱内仍被系统拦截为 `Operation not permitted`，沙箱外同命令重跑通过。
 - [x] `npm run package` 通过，并生成当前 zip：`build/chrome-mv3-prod.zip`，约 1.1 MB。2026-06-02，沙箱外重跑通过；包内 manifest 权限边界已核对。
-- [ ] Chrome 加载 `build/chrome-mv3-prod` 无安装报错。
+- [x] Chrome 加载 `build/chrome-mv3-prod` 无安装报错。2026-06-02 用户本地验收通过。
 - [x] 版本号、扩展名称、描述、图标符合本次发布目标。Manifest 显示 `0.1.0` / `Aviso`，权限未扩大。
 
 ## 5. 商店素材
@@ -151,10 +153,11 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；provider �
 - [x] 豆包 / 火山方舟真实 provider 最小验证记录已补录。
 - [x] V2-004B latency baseline 已实现为本地 console 脱敏摘要；未运行真实 provider、未新增 provider、未改变 manifest 权限。
 - [x] V2-004C follow-up speed guard 已实现：未运行真实 provider、未新增 provider、未改变 manifest 权限、未改变 API Key / storage key 边界。
+- [x] V2-004C 已重新加载本地扩展并完成人工 UI QA：追问、慢响应提示和停止等待主路径用户反馈通过。记录来源：2026-06-02 用户反馈。
 - [x] V2-005 screenshot to AI internal dogfood MVP 已实现：右键页面菜单手动触发，确认选区后才截图；截图/base64 不写入 history、storage、docs、console 或 release artifacts；未新增权限、provider、依赖或真实 API 验证。
 - [x] V2-005 已重新加载本地扩展并完成 internal dogfood 人工 UI QA：取消流程正常，确认流程正常，豆包 / 火山方舟未验证 vision endpoint 被拦截并显示可读错误，Service Worker Console 可见 `[Aviso perf]` 摘要入口。记录来源：2026-06-02 用户本地截图测试反馈。
 - [x] V2-006 copy current context internal dogfood MVP 已实现：右键页面菜单手动触发，复制 Markdown 结构化上下文到剪贴板，正文按默认 5000 字符边界截断；未新增权限、provider、依赖、storage、history 或真实 API 调用。
-- [ ] V2-006 已重新加载本地扩展并完成人工 UI QA：页面正文可复制、选中文本可复制、正文缺失和剪贴板失败有可读反馈。
+- [x] V2-006 已重新加载本地扩展并完成人工 UI QA：右键复制当前上下文 internal dogfood 主路径用户反馈通过。记录来源：2026-06-02 用户反馈。
 - [ ] V2-005 真实 vision provider 验证仍未完成；OpenAI / Anthropic 原生 API Key 验证前，截图理解不能对外宣称 provider 已验证。
 - [ ] OpenAI / Anthropic 真实 provider 最小验证记录仍待原生 API Key 手动触发并补录；OpenAI / Anthropic 仍不可对外宣称已验证。
 - [ ] 翻译、缓存或复制上下文能力上线前，已确认不会把缓存内容或私有网页信息写入日志、文档、截图或 release artifacts。

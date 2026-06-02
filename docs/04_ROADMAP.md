@@ -51,9 +51,9 @@ Aviso should move from internal dogfood to public release through evidence, not 
 | V2-003 minimal model registry and routing | P0 | Route tasks to existing provider/model choices while preserving current defaults and local API Key storage. | V2-002A decision docs | Implemented; live provider calls not run |
 | V2-004 manual connectivity test UI | P0 | Let users test configured providers on demand, with latency and readable failure reasons. | V2-003 | Implemented; live evidence still user-triggered |
 | V2-004B latency baseline | P0 | Add a redacted request-level local console summary for ordinary AI requests so slow replies can be attributed to UI, background, provider first chunk, done, or failure. | V2-004 | Implemented; no provider/model/token/permission changes |
-| V2-004C follow-up speed guard | P0 | Reduce perceived wait for follow-ups and long first-token delays through bounded prior context, clearer waiting copy, slow hint, and stop waiting. | V2-004B | Implemented; no provider/model/permission changes |
+| V2-004C follow-up speed guard | P0 | Reduce perceived wait for follow-ups and long first-token delays through bounded prior context, clearer waiting copy, slow hint, and stop waiting. | V2-004B | Implemented; installed-extension QA completed; no provider/model/permission changes |
 | V2-005 screenshot to AI | P1 | Capture a user-selected visible-page region and send it to a vision-capable configured model. | V2-004C | Implemented for internal dogfood; loaded-extension UI QA completed; real vision provider validation still open |
-| V2-006 copy current context | P1 | Copy title, URL, optional selection, and truncated page text as clean structured text. | V2-001 | Implemented for internal dogfood; installed-extension QA still open |
+| V2-006 copy current context | P1 | Copy title, URL, optional selection, and truncated page text as clean structured text. | V2-001 | Implemented for internal dogfood; installed-extension QA completed |
 | V2-007 translation MVP | P1 | Improve selection translation and floating-window translation output without third-party default fallback. | V2-003 | Single implementation thread |
 | V2-008 theme and Aviso panel polish | P2 | Add theme setting and user-facing panel naming changes without breaking shortcuts or iframe behavior. | V2-001 | Single implementation thread |
 | V2-009 high-permission discovery backlog | P3 | Separately evaluate multi-tab aggregation, tab grouping, voice input, full-page translation, YouTube subtitles, and remote-link body extraction. | V2-001 | Read-only discovery / decision docs |
@@ -111,6 +111,7 @@ V2-004C adds a speed guard for ordinary and follow-up floating-window requests:
 - Stop waiting immediately stops the UI loading state and ignores later chunks/errors for that requestId. Background sends an abort signal to the provider request when it is still active.
 - `[Aviso perf]` can classify stopped requests as `user_cancelled`, without logging raw prompts, responses, page text, selected text, full URLs, images/base64, screenshots, or API Keys.
 - This slice adds no provider, dependency, manifest permission, host permission, model default change, API Key storage change, cache, or model summarization call.
+- Installed-extension UI QA has covered follow-up, slow-response hint, and stop waiting for internal dogfood. Provider first-token latency can still vary by model, network, key state, provider load, and input length.
 
 ### V2-005 Implementation
 
@@ -133,7 +134,7 @@ V2-006 adds the copy-current-context internal dogfood MVP:
 - Page body extraction reuses the existing `EXTRACT_PAGE_CONTENT` content-script path and the same default 5000 character truncation boundary.
 - Clipboard writing uses the existing content script and `clipboardWrite` permission path; no manifest permission, host permission, provider, dependency, storage key, cache, telemetry, package, tag, or release action is added.
 - The copy flow does not call `AI_REQUEST`, does not call any provider, does not emit `[Aviso perf]`, and does not write copied content to history, `chrome.storage`, files, docs, console, or release artifacts.
-- Visible success/failure toast feedback is shown through the existing page UI layer. Installed-extension QA is still needed for normal pages, selected text, missing body, and clipboard-write failure behavior.
+- Visible success/failure toast feedback is shown through the existing page UI layer. Installed-extension QA has covered the right-click copy-current-context internal dogfood main path.
 
 ### Backlog Requiring Separate Approval
 
@@ -182,6 +183,7 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 - 2026-06-02: Marked V2-004C follow-up speed guard implemented with bounded prior context, slow-response hint, stop waiting, background abort signal, and `user_cancelled` classification.
 - 2026-06-02: Marked V2-005 screenshot-to-AI internal dogfood MVP implemented while keeping loaded-extension QA and release claims open.
 - 2026-06-02: Recorded V2-005 loaded-extension UI QA for cancel, confirm, 豆包 / 火山方舟 unverified-vision blocking, and Service Worker Console `[Aviso perf]` visibility.
-- 2026-06-02: Marked V2-006 copy current context internal dogfood MVP implemented while keeping installed-extension QA open.
+- 2026-06-02: Marked V2-006 copy current context internal dogfood MVP implemented with installed-extension QA now completed for the internal dogfood main path.
+- 2026-06-02: Recorded installed-extension QA completion for V2-004C follow-up speed guard and V2-006 copy current context based on user feedback.
 - 2026-06-02: Replaced the broad v0.2 candidate backlog with a v0.2-alpha issue map, recommended sequence, and high-permission discovery backlog.
 - 2026-06-01: Created Phase 1 roadmap from current internal dogfood baseline and release checklist.

@@ -121,6 +121,7 @@ V2-004C 边界：
 - 停止等待会让浮窗立即停止 loading，并忽略同一 requestId 后续 chunk / error；background 会对仍在进行的 provider 请求发送 abort signal。
 - `[Aviso perf]` 可将用户停止归类为 `user_cancelled`，仍只输出固定脱敏字段，不写入 storage，不发送远端 telemetry。
 - 本轮未新增 manifest permission、host permission、provider、依赖、API Key 存储位置、默认 provider、默认模型或 `contextai_*` storage key；未运行真实 provider API。
+- 已完成重新加载后的人工 UI QA：追问、慢响应提示和停止等待主路径用户反馈通过。记录来源：2026-06-02 用户反馈。
 
 V2-005 边界：
 
@@ -138,6 +139,7 @@ V2-006 边界：
 - 复制内容包含标题、URL、选中文本（如有）和页面正文；页面正文复用现有 `EXTRACT_PAGE_CONTENT`，并按当前 5000 字符默认边界截断。
 - 剪贴板写入由 content script 在当前页面执行，使用既有 `clipboardWrite` 能力；失败时显示可读 toast。
 - 复制内容只写入用户剪贴板；不会进入 AI 请求、provider、history、`chrome.storage`、文件、文档、console、性能摘要或远端 telemetry。
+- 已完成重新加载后的人工 UI QA：右键复制当前上下文 internal dogfood 主路径用户反馈通过。记录来源：2026-06-02 用户反馈。
 
 已补录的 V2-004 脱敏验证结果：
 
