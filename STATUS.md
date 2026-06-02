@@ -96,6 +96,7 @@ Vercel 项目配置：
 - V2-005：Screenshot to AI internal dogfood MVP 已实现为右键页面菜单“截图提问”：用户手动框选可见区域并确认后才截图，裁剪后的图片复用现有 `image_explain` 浮窗流。未新增 manifest 权限、host permission、provider 或依赖；未运行真实 provider API。
 - V2-006：Copy current context internal dogfood MVP 已实现为右键页面菜单“复制当前上下文”：用户手动触发后把页面标题、URL、可选选中文本和可选截断正文整理为 Markdown 文本写入剪贴板。该流程不调用 AI、不调用 provider、不写入 history / `chrome.storage` / 文件 / 文档 / console，未新增权限、host permission、provider 或依赖。
 - V2-007：Translation MVP 已实现为现有翻译流体验改进。选区右键、划词工具栏和命令面板本地 intent 继续复用 `operation=translate`、当前 configured provider/model、浮窗 streaming、history、provider routing 和脱敏 `[Aviso perf]` 摘要；翻译 prompt 改为只输出译文，浮窗标题、用户气泡、等待状态和失败提示更明确；右键 page 上下文不再提供空选区“翻译”入口，避免把页面 URL 当作翻译内容。
+- V2-008：Theme / Aviso panel polish 已实现为界面一致性收敛。Popup、结果面板、命令面板、划词工具栏、Toast 和截图 overlay 复用 `src/styles/aviso.tsx` 的共享视觉 token；用户可见命名收敛为“划词工具栏 / 结果面板 / 命令面板”；按钮 hover/focus、状态色、错误态、等待态和截图 overlay 质感统一。未新增 manifest 权限、host permission、provider、依赖、storage key、主题设置、真实 API 调用或发布动作。
 - 当前生产 zip 包已生成：`build/chrome-mv3-prod.zip`，约 1.1 MB；包内 manifest 已核对为 `Aviso` / `0.1.0`，普通权限未新增，host permissions 仍为 OpenAI / Anthropic / Ark。
 
 V2-004 边界：
@@ -151,6 +152,14 @@ V2-007 边界：
 - 空翻译输入会在 provider 前拦截并显示可读错误，不运行真实 provider API。
 - `[Aviso perf]` 仍只输出脱敏字段和输入长度分桶；不记录 raw prompt、raw response、页面正文、选中文本、完整 URL、图片/base64、截图或 API Key。
 - 已完成重新加载后的人工 UI QA：右键选区“翻译”、划词工具栏“翻译”和命令面板“翻译 hello”三条主路径用户反馈通过。记录来源：2026-06-03 用户反馈。
+
+V2-008 边界：
+
+- 本轮只做 UI polish 和文案收敛，不新增功能入口、不改变快捷键、不改变 AI 请求 payload、provider routing、默认模型、token 上限、API Key 存储或 `contextai_*` storage key。
+- Popup、结果面板、命令面板、划词工具栏、Toast 和截图 overlay 的圆角、边框、阴影、hover/focus、强调色、危险态和等待态复用 Aviso theme token。
+- 截图 overlay 仍是用户手动拖选并确认后才截图；取消 / Esc 不调用 `captureVisibleTab` 或 provider。
+- V2-004B `[Aviso perf]`、V2-004C 追问速度保护、V2-005 截图提问、V2-006 复制当前上下文、V2-007 翻译 MVP 的行为边界保持不变。
+- 该 polish 不代表公开发布门禁关闭；安装后人工 UI QA 仍需覆盖右键选区翻译、划词翻译、命令面板“翻译 hello”、截图取消/确认、复制当前上下文、追问/停止等待。
 
 已补录的 V2-004 脱敏验证结果：
 

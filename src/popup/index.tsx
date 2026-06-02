@@ -339,11 +339,41 @@ function Popup() {
         button {
           font: inherit;
         }
+        button {
+          -webkit-tap-highlight-color: transparent;
+        }
+        button:focus-visible,
+        input:focus-visible,
+        textarea:focus-visible,
+        .aviso-dropdown-trigger:focus-visible,
+        .aviso-dropdown-option:focus-visible {
+          outline: 2px solid ${aviso.sage400};
+          outline-offset: 2px;
+          box-shadow: ${aviso.focusRing};
+        }
+        .aviso-popup-button {
+          transition:
+            background .15s ${aviso.ease},
+            border-color .15s ${aviso.ease},
+            color .15s ${aviso.ease},
+            transform .15s ${aviso.ease};
+        }
+        .aviso-popup-button:hover:not(:disabled) {
+          background: ${aviso.darkSurface2} !important;
+          border-color: ${aviso.sage600} !important;
+        }
+        .aviso-popup-button:active:not(:disabled),
+        .aviso-tab-button:active {
+          transform: translateY(1px);
+        }
+        .aviso-tab-button:hover {
+          color: ${aviso.darkText2} !important;
+        }
         .aviso-dropdown-trigger:hover {
           border-color: ${aviso.sage500};
         }
         .aviso-dropdown-option:hover {
-          background: color-mix(in oklab, ${aviso.sage400} 16%, transparent);
+          background: ${aviso.accentSurface};
         }
       `}</style>
       <header style={styles.header}>
@@ -360,6 +390,7 @@ function Popup() {
           <button
             key={t}
             onClick={() => setTab(t)}
+            className="aviso-tab-button"
             style={{
               ...styles.tabBtn,
               ...(tab === t ? styles.tabBtnActive : {})
@@ -464,7 +495,7 @@ function Popup() {
               <label style={styles.label}>功能开关</label>
               {(
                 [
-                  ["enableToolbar", "划词浮动工具栏"],
+                  ["enableToolbar", "划词工具栏"],
                   ["enableClipboardSense", "剪贴板感知提示"],
                   [
                     "enableCommandPalette",
@@ -478,6 +509,7 @@ function Popup() {
                   <div style={styles.toggleRow}>
                     <span style={styles.toggleLabel}>{label}</span>
                     <button
+                      className="aviso-popup-button"
                       onClick={() => updateSetting(key, !settings[key] as any)}
                       style={{
                         ...styles.toggle,
@@ -561,13 +593,14 @@ function Popup() {
                   </span>
                   <button
                     type="button"
+                    className="aviso-popup-button"
                     onClick={() => testProviderConnectivity(provider, value)}
                     disabled={testingProvider !== null}
                     style={{
                       ...styles.editBtn,
                       ...(testingProvider !== null ? styles.disabledBtn : {})
                     }}>
-                    {testingProvider === provider ? "测试中..." : "测试连接"}
+                    {testingProvider === provider ? "测试中…" : "测试连接"}
                   </button>
                 </div>
                 {connectivityResults[provider] && (
@@ -612,11 +645,13 @@ function Popup() {
               <div key={t.id} style={styles.templateRow}>
                 <span style={styles.templateName}>{t.name}</span>
                 <button
+                  className="aviso-popup-button"
                   onClick={() => setDraft({ ...t, contexts: [...t.contexts] })}
                   style={styles.editBtn}>
                   编辑
                 </button>
                 <button
+                  className="aviso-popup-button"
                   onClick={() =>
                     updateSetting(
                       "templates",
@@ -654,6 +689,7 @@ function Popup() {
                   {TEMPLATE_CONTEXTS.map((c) => (
                     <button
                       key={c.value}
+                      className="aviso-popup-button"
                       onClick={() => toggleDraftContext(c.value)}
                       style={{
                         ...styles.chip,
@@ -666,10 +702,14 @@ function Popup() {
                   ))}
                 </div>
                 <div style={{ display: "flex", gap: "8px" }}>
-                  <button onClick={commitDraft} style={styles.primaryBtn}>
+                  <button
+                    className="aviso-popup-button"
+                    onClick={commitDraft}
+                    style={styles.primaryBtn}>
                     完成
                   </button>
                   <button
+                    className="aviso-popup-button"
                     onClick={() => setDraft(null)}
                     style={styles.deleteBtn}>
                     取消
@@ -679,6 +719,7 @@ function Popup() {
             ) : (
               settings.templates.length < 20 && (
                 <button
+                  className="aviso-popup-button"
                   onClick={() =>
                     setDraft({
                       id: `tpl-${Date.now()}`,
@@ -688,7 +729,7 @@ function Popup() {
                     })
                   }
                   style={styles.addBtn}>
-                  + 添加模板
+                  添加模板
                 </button>
               )
             )}
@@ -708,7 +749,10 @@ function Popup() {
                     justifyContent: "flex-end",
                     marginBottom: 8
                   }}>
-                  <button onClick={clearAll} style={styles.deleteBtn}>
+                  <button
+                    className="aviso-popup-button"
+                    onClick={clearAll}
+                    style={styles.deleteBtn}>
                     清空全部
                   </button>
                 </div>
@@ -741,12 +785,14 @@ function Popup() {
                       {!e.pinned && (
                         <button
                           onClick={() => pinEntry(e.id)}
+                          className="aviso-popup-button"
                           style={styles.editBtn}>
                           置顶
                         </button>
                       )}
                       <button
                         onClick={() => deleteEntry(e.id)}
+                        className="aviso-popup-button"
                         style={styles.deleteBtn}>
                         删除
                       </button>
@@ -771,7 +817,10 @@ function Popup() {
         <span style={styles.autoSaveHint}>
           {saved ? "✓ 已保存" : "改动自动保存"}
         </span>
-        <button onClick={() => setShowPrivacy((v) => !v)} style={styles.link}>
+        <button
+          className="aviso-popup-button"
+          onClick={() => setShowPrivacy((v) => !v)}
+          style={styles.link}>
           隐私说明
         </button>
       </footer>

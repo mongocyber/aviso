@@ -223,6 +223,16 @@ V2-007 improves the existing translation action without changing providers or pe
 - UI behavior: floating title shows translation, the user bubble labels the text as `待翻译文本`, waiting copy says `正在翻译…`, and errors are prefixed with `翻译失败`.
 - Privacy and permission boundary: no manifest permission, host permission, provider, dependency, third-party translation service, cache, telemetry, storage key, default model, token limit, or API Key storage change.
 
+## Theme And Panel Polish
+
+V2-008 improves visual consistency without changing runtime data flow:
+
+- `src/styles/aviso.tsx` now carries shared theme tokens for radius, focus ring, accent surfaces, and danger surfaces.
+- Popup, floating result panel, command palette, selection toolbar, clipboard/copy-context toast, and screenshot overlay reuse those tokens for borders, hover/focus, selected states, waiting states, and error states.
+- User-facing naming is tightened around `划词工具栏`, `结果面板`, and `命令面板`; internal `contextai_*` IDs and storage keys remain unchanged for compatibility.
+- Screenshot overlay styling is aligned with Aviso theme, but the capture contract is unchanged: user drag-selects a visible region, confirms, then the existing screenshot-to-AI path runs.
+- This slice adds no manifest permission, host permission, provider, dependency, storage migration, theme storage setting, telemetry, cache, package, tag, release action, or provider validation call.
+
 ## Error Handling And Timing
 
 - `src/utils/errors.ts` normalizes provider and network errors into readable Chinese messages.
@@ -235,6 +245,7 @@ V2-007 improves the existing translation action without changing providers or pe
 - `[Aviso perf]` is not persisted to `chrome.storage` and is not sent to a remote logging or telemetry service.
 - V2-005 adds screenshot capture/crop timing marks and image-size/region buckets only. Raw image data, base64, page URLs, selected text, prompts, responses, and API Keys are not logged.
 - V2-007 keeps translation perf summaries on the existing redacted `[Aviso perf]` path. Translation source text is counted only by size bucket; raw text, page URL, link URL, page body, prompts, responses, screenshots, and API Keys are not logged or persisted.
+- V2-008 keeps existing perf and privacy behavior unchanged. Visual polish must not add raw-content logging, storage writes, remote calls, or telemetry.
 
 ## Testing
 
@@ -243,6 +254,7 @@ Current test and manual assets:
 - `tests/unit.test.ts`: unit coverage for clipboard type detection, sensitive filtering, template expansion, error normalization, image source validation, local intent parsing, page truncation, provider/model route resolution, approved host boundaries, and provider connectivity summary rules.
 - V2-006 unit coverage includes copy-context formatting, body truncation, missing-field fallbacks, and manifest permission boundary checks.
 - V2-007 unit coverage includes local translation intent target extraction, translation prompt shape, translation payload input boundary, user-visible translation copy, and the unchanged manifest permission boundary.
+- V2-008 is a CSS/theme and user-visible copy polish. It is covered by type check and build; no new pure logic test was added because provider payloads, permissions, storage keys, routing, and message contracts are unchanged.
 - `tests/manual-test.html`: A-G manual QA fixture.
 - `tests/iframe-fixture.html`: iframe validation fixture for Hugging Face Spaces / Gradio-like embedding behavior.
 
@@ -323,6 +335,7 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 - V2-004C follow-up speed guard is limited to context budgeting, waiting copy, slow-first-chunk hint, UI stop/ignore behavior, background abort signal, and fixed `user_cancelled` classification. It must not add model summarization, caching, new provider calls, new dependencies, new permissions, or raw-content logging.
 - V2-005 screenshot-to-AI is limited to the existing `activeTab` boundary and right-click user trigger. It must not add `tabs`, `scripting`, `<all_urls>` host permissions, new providers, new dependencies, screenshot persistence, or full-page scrolling capture.
 - V2-006 copy current context is limited to manual right-click clipboard writes. It must not call providers, trigger `AI_REQUEST`, persist copied text, add permissions, add host permissions, add dependencies, or log raw copied content.
+- V2-008 theme and panel polish is limited to user-facing UI consistency. It must not add a stored theme setting, migrate `contextai_*` keys, introduce a new design system dependency, or change provider/data-flow contracts.
 - Result caching may be added only with a clear key design that includes operation, input, target language, provider, model, endpoint/base URL, and template version where relevant. A clear-cache control is required if caching ships.
 - Translation MVP should reuse existing floating-window and selection flows first. Full-page DOM translation, YouTube subtitle translation, and third-party translation engines are separate discovery items.
 - No new dependency should be added unless the executing agent proves the existing browser storage APIs are insufficient for the approved slice.
@@ -350,6 +363,7 @@ Do not store provider API Keys inside a synced model-route object. New model-rou
 - 2026-06-02: Implemented V2-004C follow-up speed guard with bounded prior context, slow response hint, stop waiting, background abort signal, and fixed `user_cancelled` perf classification.
 - 2026-06-02: Implemented V2-005 screenshot-to-AI internal dogfood MVP with right-click selection, in-memory crop, existing image flow reuse, and no new manifest permissions.
 - 2026-06-02: Implemented V2-006 copy current context internal dogfood MVP with manual right-click clipboard write, structured Markdown formatting, page truncation, visible feedback, and no provider/storage/permission expansion.
+- 2026-06-03: Implemented V2-008 theme and Aviso panel polish across Popup, result panel, command palette, selection toolbar, Toast, and screenshot overlay without changing permissions, storage, provider routing, or data flow.
 - 2026-06-02: In V2-002A, recorded approved OpenAI / Anthropic provider host permissions for V2-003 as a docs-only decision.
 - 2026-06-02: Added v0.2-alpha technical delta constraints and corrected the desktop draft assumptions about file names, message contracts, manifest permissions, host permissions, storage, and MVP boundaries.
 - 2026-06-01: Created Phase 1 internal technical specification from current code structure and package manifest.

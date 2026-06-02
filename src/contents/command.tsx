@@ -393,7 +393,7 @@ function CommandPalette() {
           maxWidth: "100%",
           background: aviso.darkSurface,
           border: `1px solid ${aviso.darkLine}`,
-          borderRadius: "16px",
+          borderRadius: aviso.radiusLg,
           boxShadow: aviso.popShadow,
           overflow: "hidden",
           color: aviso.darkText,
@@ -416,6 +416,7 @@ function CommandPalette() {
           }}>
           <AvisoMark size={18} style={{ color: aviso.sage400 }} />
           <input
+            className="aviso-command-input"
             ref={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
@@ -426,7 +427,7 @@ function CommandPalette() {
               isComposingRef.current = false
             }}
             onKeyDown={handleKeyDown}
-            placeholder="搜索已保存历史、书签，或发问 AI…"
+            placeholder="搜索历史、书签，或直接发给 AI…"
             style={{
               flex: 1,
               minWidth: 0,
@@ -475,7 +476,7 @@ function CommandPalette() {
                   cursor: "pointer",
                   background:
                     idx === selectedIndex
-                      ? `color-mix(in oklab, ${aviso.sage400} 16%, transparent)`
+                      ? aviso.accentSurface
                       : "transparent",
                   display: "flex",
                   gap: "13px",
@@ -523,7 +524,7 @@ function CommandPalette() {
                     fontFamily: aviso.mono,
                     fontSize: "10.5px",
                     padding: "2px 7px",
-                    borderRadius: 6,
+                    borderRadius: aviso.radiusSm,
                     border: `1px solid ${aviso.darkLine}`,
                     color: aviso.darkText3
                   }}>
@@ -584,6 +585,14 @@ function CommandPalette() {
             无结果时 <kbd style={styles.kbd}>Enter</kbd> 发给 AI
           </span>
         </div>
+        <style>{`
+          .aviso-command-input::placeholder {
+            color: ${aviso.darkText3};
+          }
+          .aviso-command-input:focus-visible {
+            outline: none;
+          }
+        `}</style>
       </div>
     </div>
   )

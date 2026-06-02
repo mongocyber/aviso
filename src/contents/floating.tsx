@@ -526,7 +526,7 @@ function FloatingWindow() {
         maxHeight: "min(520px, calc(100vh - 48px))",
         background: aviso.darkSurface,
         border: `1px solid ${aviso.darkLine}`,
-        borderRadius: "16px",
+        borderRadius: aviso.radiusLg,
         boxShadow: aviso.panelShadow,
         display: "flex",
         flexDirection: "column",
@@ -561,7 +561,7 @@ function FloatingWindow() {
               fontWeight: 700,
               letterSpacing: "-0.01em"
             }}>
-            Aviso
+            Aviso 结果面板
           </span>
           <span
             style={{
@@ -573,8 +573,8 @@ function FloatingWindow() {
               fontSize: "10.5px",
               letterSpacing: "0.02em",
               padding: "2px 7px",
-              borderRadius: 6,
-              background: `color-mix(in oklab, ${aviso.sage400} 18%, transparent)`,
+              borderRadius: aviso.radiusSm,
+              background: aviso.accentSurface,
               color: aviso.sage300
             }}>
             {operationLabel(state.operation)}
@@ -592,7 +592,7 @@ function FloatingWindow() {
             height: 28,
             background: "transparent",
             border: "none",
-            borderRadius: 8,
+            borderRadius: aviso.radiusSm,
             color: aviso.darkText3,
             cursor: "pointer",
             padding: 0,
@@ -630,7 +630,7 @@ function FloatingWindow() {
                 alignSelf: isUser ? "flex-end" : "flex-start",
                 maxWidth: "85%",
                 background: isUser ? aviso.darkSurface2 : "transparent",
-                borderRadius: isUser ? "10px" : 0,
+                borderRadius: isUser ? aviso.radiusMd : 0,
                 padding: isUser ? "8px 12px" : 0,
                 color: isUser ? aviso.darkText2 : aviso.darkText,
                 whiteSpace: "pre-wrap",
@@ -666,8 +666,8 @@ function FloatingWindow() {
               alignItems: "flex-start",
               gap: 8,
               color: aviso.darkText2,
-              background: `color-mix(in oklab, ${aviso.danger} 14%, transparent)`,
-              borderRadius: 10,
+              background: aviso.dangerSurface,
+              borderRadius: aviso.radiusMd,
               padding: "10px 12px",
               fontSize: "13px",
               lineHeight: "1.5"
@@ -735,7 +735,7 @@ function FloatingWindow() {
               background: "transparent",
               border: "none",
               color: aviso.darkText,
-              borderRadius: "9px",
+              borderRadius: aviso.radiusSm,
               padding: "7px 11px",
               fontFamily: aviso.font,
               fontSize: "12.5px",
@@ -759,6 +759,7 @@ function FloatingWindow() {
           borderTop: `1px solid ${aviso.darkLine}`
         }}>
         <input
+          className="aviso-follow-up-input"
           value={followUp}
           onChange={(e) => setFollowUp(e.target.value)}
           onKeyDown={(e) =>
@@ -770,7 +771,7 @@ function FloatingWindow() {
             minWidth: 0,
             background: "transparent",
             border: "none",
-            borderRadius: "6px",
+            borderRadius: aviso.radiusSm,
             color: aviso.darkText,
             padding: "7px 4px",
             fontFamily: aviso.font,
@@ -787,7 +788,7 @@ function FloatingWindow() {
             gap: 6,
             background: aviso.sage500,
             border: "none",
-            borderRadius: "10px",
+            borderRadius: aviso.radiusMd,
             color: aviso.paper,
             padding: "8px 14px",
             fontFamily: aviso.font,
@@ -842,9 +843,11 @@ function FloatingWindow() {
         }
         .aviso-result-action:focus-visible,
         .aviso-send-button:focus-visible,
-        .aviso-icon-button:focus-visible {
+        .aviso-icon-button:focus-visible,
+        .aviso-follow-up-input:focus-visible {
           outline: 2px solid ${aviso.sage400};
           outline-offset: 2px;
+          box-shadow: ${aviso.focusRing};
         }
         .aviso-send-button {
           transition:

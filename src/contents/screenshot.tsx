@@ -5,6 +5,7 @@ import type {
   MessageResponse,
   ScreenshotRegion
 } from "~types/messages"
+import { aviso } from "~styles/aviso"
 import {
   bucketScreenshotDataUrl,
   isSupportedScreenshotDataUrl,
@@ -156,7 +157,7 @@ function startScreenshotSelection(payload: StartPayload) {
   session.confirmButton.addEventListener("click", async () => {
     if (!selectedRegion) return
     session.confirmButton.disabled = true
-    session.confirmButton.textContent = "处理中"
+    session.confirmButton.textContent = "处理中…"
     await confirmScreenshot(payload, selectedRegion, session)
   })
 
@@ -282,25 +283,24 @@ function createOverlay(): OverlaySession {
     inset: "0",
     zIndex: "2147483647",
     cursor: "crosshair",
-    background: "rgba(8, 15, 12, 0.22)",
-    fontFamily:
-      "Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif"
+    background: "oklch(0.12 0.018 155 / .24)",
+    fontFamily: aviso.font
   })
 
   const hint = document.createElement("div")
-  hint.textContent = "拖动选择截图区域，Esc 取消"
+  hint.textContent = "拖动选择截图区域，按 Esc 取消"
   Object.assign(hint.style, {
     position: "fixed",
     top: "16px",
     left: "50%",
     transform: "translateX(-50%)",
     padding: "8px 12px",
-    borderRadius: "8px",
-    background: "rgba(19, 31, 25, 0.94)",
-    border: "1px solid rgba(180, 204, 185, 0.32)",
-    color: "#dce8df",
+    borderRadius: `${aviso.radiusSm}px`,
+    background: aviso.darkSurface,
+    border: `1px solid ${aviso.darkLine}`,
+    color: aviso.darkText,
     fontSize: "13px",
-    boxShadow: "0 12px 28px rgba(0,0,0,.24)",
+    boxShadow: aviso.toolbarShadow,
     pointerEvents: "none"
   })
 
@@ -308,9 +308,9 @@ function createOverlay(): OverlaySession {
   Object.assign(rect.style, {
     display: "none",
     position: "fixed",
-    border: "2px solid #b7d5bf",
-    background: "rgba(183, 213, 191, 0.12)",
-    boxShadow: "0 0 0 9999px rgba(8, 15, 12, 0.34)",
+    border: `2px solid ${aviso.sage400}`,
+    background: aviso.accentSurface,
+    boxShadow: "0 0 0 9999px oklch(0.12 0.018 155 / .36)",
     pointerEvents: "none"
   })
 
@@ -321,10 +321,10 @@ function createOverlay(): OverlaySession {
     gap: "8px",
     alignItems: "center",
     padding: "6px",
-    borderRadius: "8px",
-    background: "rgba(19, 31, 25, 0.96)",
-    border: "1px solid rgba(180, 204, 185, 0.32)",
-    boxShadow: "0 12px 28px rgba(0,0,0,.24)"
+    borderRadius: `${aviso.radiusMd}px`,
+    background: aviso.darkSurface,
+    border: `1px solid ${aviso.darkLine}`,
+    boxShadow: aviso.toolbarShadow
   })
 
   const confirmButton = createButton("发送", true)
@@ -336,14 +336,36 @@ function createOverlay(): OverlaySession {
     bottom: "18px",
     transform: "translateX(-50%)",
     maxWidth: "min(560px, calc(100vw - 32px))",
-    color: "#ffd7d7",
+    color: aviso.danger,
     fontSize: "13px",
     lineHeight: "1.45",
     textAlign: "center"
   })
 
   panel.append(confirmButton, cancelButton)
-  root.append(hint, rect, panel, error)
+  const style = document.createElement("style")
+  style.textContent = `
+    .aviso-screenshot-button {
+      transition: background .15s ${aviso.ease}, border-color .15s ${aviso.ease}, transform .15s ${aviso.ease};
+    }
+    .aviso-screenshot-button:hover:not(:disabled) {
+      background: ${aviso.accentSurfaceStrong} !important;
+      border-color: ${aviso.sage500} !important;
+    }
+    .aviso-screenshot-button:active:not(:disabled) {
+      transform: translateY(1px);
+    }
+    .aviso-screenshot-button:focus-visible {
+      outline: 2px solid ${aviso.sage400};
+      outline-offset: 2px;
+      box-shadow: ${aviso.focusRing};
+    }
+    .aviso-screenshot-button:disabled {
+      cursor: not-allowed !important;
+      opacity: .55;
+    }
+  `
+  root.append(style, hint, rect, panel, error)
 
   return { root, rect, panel, error, confirmButton, cancelButton }
 }
@@ -351,15 +373,17 @@ function createOverlay(): OverlaySession {
 function createButton(label: string, primary: boolean): HTMLButtonElement {
   const button = document.createElement("button")
   button.textContent = label
+  button.className = "aviso-screenshot-button"
   Object.assign(button.style, {
     minWidth: "64px",
     height: "32px",
-    borderRadius: "6px",
+    borderRadius: `${aviso.radiusSm}px`,
     border: primary
-      ? "1px solid rgba(183, 213, 191, .72)"
-      : "1px solid rgba(180, 204, 185, .32)",
-    background: primary ? "#b7d5bf" : "transparent",
-    color: primary ? "#112018" : "#dce8df",
+      ? `1px solid ${aviso.sage500}`
+      : `1px solid ${aviso.darkLine}`,
+    background: primary ? aviso.sage500 : "transparent",
+    color: primary ? aviso.paper : aviso.darkText2,
+    fontFamily: aviso.font,
     fontSize: "13px",
     fontWeight: "650",
     cursor: "pointer"

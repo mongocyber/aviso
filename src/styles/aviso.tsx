@@ -25,9 +25,20 @@ export const aviso = {
   ok: "oklch(0.62 0.10 150)",
   danger: "oklch(0.60 0.15 28)",
   radius: 14,
+  radiusSm: 8,
+  radiusMd: 10,
+  radiusLg: 16,
   font: '"Hanken Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif',
   mono: '"Space Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
   ease: "cubic-bezier(.2,.8,.2,1)",
+  focusRing:
+    "0 0 0 3px color-mix(in oklab, oklch(0.70 0.052 150) 24%, transparent)",
+  accentSurface:
+    "color-mix(in oklab, oklch(0.70 0.052 150) 16%, transparent)",
+  accentSurfaceStrong:
+    "color-mix(in oklab, oklch(0.70 0.052 150) 22%, transparent)",
+  dangerSurface:
+    "color-mix(in oklab, oklch(0.60 0.15 28) 14%, transparent)",
   panelShadow: "0 18px 50px -16px oklch(0.2 0.02 155 / .45)",
   popShadow: "0 24px 60px -18px oklch(0.15 0.02 155 / .6)",
   toolbarShadow: "0 8px 24px -10px oklch(0.3 0.03 155 / .35)"

@@ -279,8 +279,12 @@ function ClipboardToast() {
         bottom: "24px",
         right: "24px",
         background: aviso.darkSurface,
-        border: `1px solid ${aviso.darkLine}`,
-        borderRadius: "12px",
+        border: `1px solid ${
+          isCopyContextToast && toast.status === "failure"
+            ? aviso.danger
+            : aviso.darkLine
+        }`,
+        borderRadius: aviso.radiusMd,
         padding: "11px 12px 11px 14px",
         boxShadow: "0 12px 32px -12px oklch(0.2 0.02 155 / .45)",
         fontFamily: aviso.font,
@@ -333,14 +337,15 @@ function ClipboardToast() {
       </span>
       {!isCopyContextToast && (
         <button
+          className="aviso-toast-button"
           onClick={handleSendToAI}
           style={{
             display: "inline-flex",
             alignItems: "center",
             gap: 6,
-            background: `color-mix(in oklab, ${aviso.sage400} 16%, transparent)`,
+            background: aviso.accentSurface,
             border: "none",
-            borderRadius: "8px",
+            borderRadius: aviso.radiusSm,
             color: aviso.sage300,
             padding: "5px 9px",
             fontFamily: aviso.font,
@@ -374,6 +379,22 @@ function ClipboardToast() {
         }
         @keyframes timer {
           to { transform: scaleX(0); }
+        }
+        .aviso-toast-button {
+          transition:
+            background .15s ${aviso.ease},
+            transform .15s ${aviso.ease};
+        }
+        .aviso-toast-button:hover {
+          background: ${aviso.accentSurfaceStrong} !important;
+        }
+        .aviso-toast-button:active {
+          transform: translateY(1px);
+        }
+        .aviso-toast-button:focus-visible {
+          outline: 2px solid ${aviso.sage400};
+          outline-offset: 2px;
+          box-shadow: ${aviso.focusRing};
         }
       `}</style>
     </div>

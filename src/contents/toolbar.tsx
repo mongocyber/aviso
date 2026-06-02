@@ -254,7 +254,7 @@ function SelectionToolbar() {
           gap: "2px",
           background: aviso.darkSurface,
           border: `1px solid ${aviso.darkLine}`,
-          borderRadius: "14px",
+          borderRadius: aviso.radius,
           padding: "6px",
           boxShadow: aviso.toolbarShadow,
           fontFamily: aviso.font,
@@ -284,22 +284,22 @@ function SelectionToolbar() {
         {TOOLBAR_BUTTONS.map(({ op, label }) => (
           <button
             key={op}
+            className="aviso-toolbar-button"
+            data-primary={op === "send" ? "true" : "false"}
             onClick={() => handleOperation(op)}
             style={{
               display: "inline-flex",
               alignItems: "center",
               gap: 7,
               background:
-                op === "send"
-                  ? `color-mix(in oklab, ${aviso.sage400} 16%, transparent)`
-                  : "transparent",
+                op === "send" ? aviso.accentSurface : "transparent",
               border: "none",
               color: op === "send" ? aviso.sage300 : aviso.darkText,
               fontFamily: aviso.font,
               fontSize: "13.5px",
               fontWeight: 500,
               padding: "8px 12px",
-              borderRadius: "9px",
+              borderRadius: aviso.radiusSm,
               cursor: "pointer",
               whiteSpace: "nowrap",
               transition: `.16s ${aviso.ease}`,
@@ -308,14 +308,12 @@ function SelectionToolbar() {
             onMouseEnter={(e) =>
               ((e.currentTarget as HTMLButtonElement).style.background =
                 op === "send"
-                  ? `color-mix(in oklab, ${aviso.sage400} 22%, transparent)`
+                  ? aviso.accentSurfaceStrong
                   : aviso.darkSurface2)
             }
             onMouseLeave={(e) =>
               ((e.currentTarget as HTMLButtonElement).style.background =
-                op === "send"
-                  ? `color-mix(in oklab, ${aviso.sage400} 16%, transparent)`
-                  : "transparent")
+                op === "send" ? aviso.accentSurface : "transparent")
             }>
             <AvisoIcon
               name={OPERATION_ICON[op]}
@@ -354,6 +352,16 @@ function SelectionToolbar() {
               : undefined
         }}
       />
+      <style>{`
+        .aviso-toolbar-button:focus-visible {
+          outline: 2px solid ${aviso.sage400};
+          outline-offset: 2px;
+          box-shadow: ${aviso.focusRing};
+        }
+        .aviso-toolbar-button:active {
+          transform: translateY(1px);
+        }
+      `}</style>
     </div>
   )
 }

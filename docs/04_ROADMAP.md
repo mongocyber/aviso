@@ -55,7 +55,7 @@ Aviso should move from internal dogfood to public release through evidence, not 
 | V2-005 screenshot to AI                              | P1       | Capture a user-selected visible-page region and send it to a vision-capable configured model.                                                                            | V2-004C                | Implemented for internal dogfood; loaded-extension UI QA completed; real vision provider validation still open |
 | V2-006 copy current context                          | P1       | Copy title, URL, optional selection, and truncated page text as clean structured text.                                                                                   | V2-001                 | Implemented for internal dogfood; installed-extension QA completed                                             |
 | V2-007 translation MVP                               | P1       | Improve selection translation and floating-window translation output without third-party default fallback.                                                               | V2-003                 | Implemented for internal dogfood; installed-extension UI QA completed                                          |
-| V2-008 theme and Aviso panel polish                  | P2       | Add theme setting and user-facing panel naming changes without breaking shortcuts or iframe behavior.                                                                    | V2-001                 | Single implementation thread                                                                                   |
+| V2-008 theme and Aviso panel polish                  | P2       | Improve shared visual tokens and user-facing panel naming without breaking shortcuts or iframe behavior.                                                                 | V2-001                 | Implemented; loaded-extension UI QA still recommended                                                          |
 | V2-009 high-permission discovery backlog             | P3       | Separately evaluate multi-tab aggregation, tab grouping, voice input, full-page translation, YouTube subtitles, and remote-link body extraction.                         | V2-001                 | Read-only discovery / decision docs                                                                            |
 
 ### V2-002A Decision Docs
@@ -148,6 +148,16 @@ V2-007 improves translation as an existing AI operation, not as a separate trans
 - The implementation adds no manifest permission, host permission, provider, dependency, third-party translation fallback, cache, telemetry, package, tag, release action, default model change, token-limit change, API Key storage change, or `contextai_*` storage-key migration.
 - Installed-extension UI QA has covered right-click selection translation, toolbar translation, and command palette `翻译 hello` for internal dogfood.
 
+### V2-008 Implementation
+
+V2-008 polishes the existing Aviso interface without changing feature behavior:
+
+- Shared theme tokens in `src/styles/aviso.tsx` now cover radius, focus rings, accent surfaces, and danger surfaces.
+- Popup, result panel, command palette, selection toolbar, Toast, and screenshot overlay reuse the same button, focus, selected, waiting, and error-state language.
+- User-facing names are tightened around `划词工具栏`, `结果面板`, and `命令面板`; legacy internal `contextai_*` ids and storage keys remain unchanged.
+- No manifest permission, host permission, provider, dependency, storage migration, telemetry, cache, package, tag, release action, provider validation call, or new feature surface is added.
+- Loaded-extension UI QA is still recommended for the main visible flows: selected-text translation, toolbar translation, command palette `翻译 hello`, screenshot cancel/confirm, copy current context, and follow-up stop waiting.
+
 ### Backlog Requiring Separate Approval
 
 These items remain valid product ideas but should not be pulled into v0.2-alpha MVP by default:
@@ -176,7 +186,7 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 2. Use V2-002A decision docs as the boundary for provider host permissions.
 3. Decide whether v0.2-alpha should proceed before v0.1 public-release gates are closed.
 4. Keep public provider claims limited to 豆包 / 火山方舟 until OpenAI / Anthropic native-key checks are completed.
-5. P1 user-facing improvements for screenshot to AI, copy context, and translation MVP are implemented for internal dogfood. Keep V2-008 theme / panel polish as the next implementation candidate after V2-009 discovery is reviewed.
+5. P1 user-facing improvements and V2-008 theme / panel polish are implemented for internal dogfood. Keep loaded-extension UI QA and public-release gates separate from implementation status.
 6. Keep public release preparation separate: package, provider evidence, privacy policy, store assets, tag, and rollback.
 
 ## Open Questions
@@ -196,6 +206,7 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 - 2026-06-02: Marked V2-005 screenshot-to-AI internal dogfood MVP implemented while keeping loaded-extension QA and release claims open.
 - 2026-06-02: Recorded V2-005 loaded-extension UI QA for cancel, confirm, 豆包 / 火山方舟 unverified-vision blocking, and Service Worker Console `[Aviso perf]` visibility.
 - 2026-06-02: Marked V2-006 copy current context internal dogfood MVP implemented with installed-extension QA now completed for the internal dogfood main path.
+- 2026-06-03: Marked V2-008 theme and Aviso panel polish implemented without permission, provider, dependency, storage, or data-flow changes.
 - 2026-06-02: Recorded installed-extension QA completion for V2-004C follow-up speed guard and V2-006 copy current context based on user feedback.
 - 2026-06-02: Replaced the broad v0.2 candidate backlog with a v0.2-alpha issue map, recommended sequence, and high-permission discovery backlog.
 - 2026-06-01: Created Phase 1 roadmap from current internal dogfood baseline and release checklist.

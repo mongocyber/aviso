@@ -23,6 +23,7 @@
 - [x] iframe 场景：iframe 内划词、右键触发、命令面板快捷键、剪贴板提示和单实例 UI 基本通过。
 - [x] V2-006 复制当前上下文：右键页面菜单手动触发，把标题、URL、可选选中文本和截断正文复制到剪贴板；不调用 AI。自动化覆盖已补齐，安装后人工 dogfood 用户反馈通过。
 - [x] V2-007 翻译 MVP：选区右键、划词工具栏和命令面板输入继续使用现有 `operation=translate` 浮窗流；翻译 prompt、标题、用户气泡、等待状态和失败提示已明确为翻译；右键 page 上下文不再提供空选区翻译入口。
+- [x] V2-008 theme / Aviso panel polish：Popup、结果面板、命令面板、划词工具栏、Toast 和截图 overlay 的视觉 token、按钮状态、错误态、等待态和面板命名已收敛；不新增功能、权限、provider、依赖或 storage key。
 
 ## 2. 手动 QA 记录
 
@@ -50,6 +51,7 @@ tests/manual-test.html
 | V2-004C · 追问速度保护                           | 通过     | 用户反馈已验收；覆盖追问上下文预算、慢响应提示和停止等待。                          |
 | V2-006 · 复制当前上下文                          | 通过     | 用户反馈已验收；覆盖右键复制当前上下文 internal dogfood 主路径。                    |
 | V2-007 · 翻译 MVP                                 | 通过     | 用户反馈已验收；覆盖右键选区“翻译”、划词工具栏“翻译”和命令面板“翻译 hello”。       |
+| V2-008 · 界面 polish                              | 待人工复核 | 代码已实现并通过自动化检查后再加载扩展复核；建议覆盖 Popup、结果面板、命令面板、划词工具栏、Toast、截图取消/确认。 |
 
 Chrome 版本：用户未补录
 
@@ -80,15 +82,16 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] V2-004C follow-up speed guard 已实现：追问只携带预算后的近期对话节选；慢响应提示和停止等待不记录 raw 内容；取消分类仅输出 `user_cancelled` 等脱敏类别。
 - [x] V2-006 复制当前上下文使用既有 `clipboardWrite` 能力，未新增 manifest permission 或 host permission；复制内容只写入用户剪贴板，不进入 provider、AI 请求、history、`chrome.storage`、文件、文档、console 或 telemetry。
 - [x] V2-007 翻译 MVP 未新增 manifest permission、host permission、provider、依赖、远端服务或第三方翻译 fallback；translate payload 只使用选区或用户输入，不把页面 URL、链接 URL 或页面正文当作翻译内容。
+- [x] V2-008 theme / panel polish 未新增 manifest permission、host permission、provider、依赖、远端服务、telemetry、cache、theme storage 设置或 `contextai_*` storage key 迁移；不改变 AI 请求 payload、provider routing、默认模型或 token 上限。
 - [ ] 真实 OpenAI 调用已通过用户手动触发的单 provider 最小样例验证。公开发布门禁未关闭。
 - [ ] 真实 Anthropic 调用已通过用户手动触发的单 provider 最小样例验证。公开发布门禁未关闭。
 - [x] 真实豆包/火山方舟调用已通过 V2-004 手动单 provider 连接测试。脱敏记录：`provider=doubao`，`model_or_endpoint=doubao-seed-2-0-lite-260428`，`host_permission_present=true`，`result=success`，`latency_note=约 2505 ms`，`error_category=none`，`secret_leak_check=pass`，`raw_prompt_logged=no`，`raw_response_logged=no`，`private_page_data_logged=no`。记录来源：2026-06-02 用户在已加载扩展的 Popup 手动触发。
 
 ## 4. 构建产物
 
-- [x] `npm test` 通过。2026-06-02，V2-007 后 54 项测试通过；存在 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
-- [x] `npx tsc --noEmit` 通过。2026-06-02，V2-007 后无错误输出。
-- [x] `npm run build` 已有既有通过记录。2026-06-03 V2-007 合回主线后默认沙箱内仍被系统拦截为 `Operation not permitted`；沙箱外重跑通过，构建产物 manifest 权限边界已核对。
+- [x] `npm test` 通过。2026-06-03，V2-008 后 54 项测试通过；存在 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
+- [x] `npx tsc --noEmit` 通过。2026-06-03，V2-008 后无错误输出。
+- [x] `npm run build` 通过。2026-06-03 V2-008 后默认沙箱内仍被系统拦截为 `Operation not permitted`；沙箱外重跑通过，构建产物 manifest 权限边界已核对。
 - [x] `npm run package` 通过，并生成当前 zip：`build/chrome-mv3-prod.zip`，约 1.1 MB。2026-06-02，沙箱外重跑通过；包内 manifest 权限边界已核对。
 - [x] Chrome 加载 `build/chrome-mv3-prod` 无安装报错。2026-06-02 用户本地验收通过。
 - [x] 版本号、扩展名称、描述、图标符合本次发布目标。Manifest 显示 `0.1.0` / `Aviso`，权限未扩大。
@@ -163,6 +166,8 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] V2-006 已重新加载本地扩展并完成人工 UI QA：右键复制当前上下文 internal dogfood 主路径用户反馈通过。记录来源：2026-06-02 用户反馈。
 - [x] V2-007 translation MVP 已实现：选区/用户输入翻译继续复用现有 provider routing、streaming、history 和脱敏 perf；不做全页 DOM 翻译、不接第三方翻译服务、不扩大权限。
 - [x] V2-007 已重新加载本地扩展并完成人工 UI QA：右键选区“翻译”、划词工具栏“翻译”和命令面板“翻译 hello”三条主路径用户反馈通过。记录来源：2026-06-03 用户反馈。
+- [x] V2-008 theme / Aviso panel polish 已实现：复用 `src/styles/aviso.tsx` 的共享视觉 token，收敛 Popup、结果面板、命令面板、划词工具栏、Toast、截图 overlay 的按钮、状态、错误和等待呈现；未新增权限、provider、依赖、storage key 或真实 API 调用。
+- [ ] V2-008 installed-extension UI QA 仍待补录；建议覆盖右键选区翻译、划词翻译、命令面板“翻译 hello”、截图取消/确认、复制当前上下文、追问/停止等待。
 - [ ] V2-005 真实 vision provider 验证仍未完成；OpenAI / Anthropic 原生 API Key 验证前，截图理解不能对外宣称 provider 已验证。
 - [ ] OpenAI / Anthropic 真实 provider 最小验证记录仍待原生 API Key 手动触发并补录；OpenAI / Anthropic 仍不可对外宣称已验证。
 - [x] 翻译和复制上下文能力已确认不会把缓存内容或私有网页信息写入日志、文档、截图或 release artifacts；本轮未实现翻译缓存。

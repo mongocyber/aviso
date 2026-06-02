@@ -121,7 +121,7 @@ Those drafts are useful inputs, but they are not the canonical project spec. Thi
 | P1 | Screenshot to AI | Add a user-triggered capture flow for visible-page regions and send base64 image input to a configured vision-capable model. |
 | P1 | Copy current context | Let users copy a structured context bundle with title, URL, optional selection, and truncated page text. |
 | P1 | Translation MVP | Improve selection translation and floating-window translation actions first. Page-wide DOM translation and YouTube subtitles are discovery/backlog until risk is reviewed. |
-| P2 | Theme and Aviso panel naming | Improve UI consistency only after P0/P1 flows are stable. Preserve the existing keyboard shortcut behavior. |
+| P2 | Theme and Aviso panel naming | Implemented as visual polish and naming consistency across existing UI surfaces. No stored theme setting was added. Preserve the existing keyboard shortcut behavior. |
 
 ### Explicit Non-Scope For v0.2-alpha MVP
 
@@ -138,6 +138,7 @@ Those drafts are useful inputs, but they are not the canonical project spec. Thi
 - Provider validation records do not include API Keys, raw prompts, raw responses, private webpages, or screenshots with private data.
 - Approved provider hosts are limited to `https://api.openai.com/*`, `https://api.anthropic.com/*`, and `https://ark.cn-beijing.volces.com/*` until a later decision changes this.
 - Screenshot and translation features show clear user feedback when the selected provider/model cannot support the requested operation.
+- Theme and panel polish does not change permissions, storage keys, provider routing, payload boundaries, or shortcut behavior.
 - Any new permission or host permission is documented in `docs/03_TECH_SPEC.md`, `docs/06_RISK_REGISTER.md`, `docs/07_PRIVACY_AND_SECURITY.md`, and `RELEASE_CHECKLIST.md` before implementation is accepted.
 
 ## Open Questions
@@ -151,6 +152,7 @@ Those drafts are useful inputs, but they are not the canonical project spec. Thi
 
 - 2026-06-02: Implemented V2-003 minimal model registry/routing and landed approved OpenAI / Anthropic host permissions while keeping live validation as a V2-004 gate.
 - 2026-06-02: Implemented V2-004 manual single-provider connectivity test UI and summary-only validation surface; real provider evidence still requires user-triggered live runs.
+- 2026-06-03: Implemented V2-008 theme and Aviso panel polish as visual consistency work without adding stored theme settings, permissions, providers, dependencies, storage migration, or new data flow.
 - 2026-06-02: In V2-002A, recorded the approved OpenAI / Anthropic provider host permission decision as docs-only, before V2-003 implementation.
 - 2026-06-02: Converted the desktop v0.2 drafts into a narrower v0.2-alpha internal dogfood scope, with high-permission Agent, tab, translation-fallback, and voice features moved out of the MVP.
 - 2026-06-01: Created Phase 1 internal PRD from current source, docs, release checklist, and test structure.

@@ -87,6 +87,7 @@ Aviso does not currently request broad host permissions for arbitrary remote pag
 - V2-005 screenshot-to-AI is user-triggered and confirmation-gated. The extension captures only after the user selects a visible region and confirms, crops the image in memory, does not persist screenshot/base64 data, and does not attach the full page URL to the screenshot provider payload.
 - V2-006 copy current context is user-triggered from the right-click menu. It writes structured title, URL, optional selected text, and truncated page text to the user's clipboard only; it does not call AI providers, save to history, write to `chrome.storage`, log copied content, or send telemetry.
 - V2-007 translation is limited to selected text or command-palette user input. It reuses the existing configured provider/model and does not include page URL, link URL, remote link body, page body, screenshots, clipboard content, or full-page DOM content as translation input.
+- V2-008 theme / panel polish changes only visible UI styling and naming. It does not add stored theme settings, storage migrations, permissions, providers, dependencies, telemetry, cache, provider validation calls, or new data sent to providers.
 - Build artifacts, `node_modules`, environment files, caches, and key-like files are ignored by Git.
 
 ## Known Gaps Before Public Release
@@ -116,6 +117,7 @@ v0.2-alpha planning keeps the v0.1 privacy model: no project-owned backend, no t
 | Screenshot to AI | User-selected visible-page image region and optional prompt | Implemented in V2-005 for internal dogfood with right-click trigger, region selection, explicit confirmation, in-memory crop, no screenshot/base64 persistence, no full page URL in the screenshot provider payload, and no new manifest permissions. Loaded-extension QA is still required before release claims. |
 | Copy current context | Page title, URL, optional selection, truncated page text | Implemented in V2-006. Copies to the user's clipboard only. No provider call unless the user separately sends it to AI. No history/storage/log/telemetry persistence. |
 | Translation MVP | Selected text or command-palette user input, provider/model choice | Implemented in V2-007 through the existing provider flow. Third-party translation fallback, full-page DOM translation, link-body translation, and YouTube subtitles are not in MVP. Page URL, link URL, page body, screenshots, clipboard content, and raw provider responses are not added to translation input or logs. |
+| Theme / panel polish | Existing visible UI state only | Implemented in V2-008. No new user data, provider payload, storage key, permission, host permission, remote call, telemetry, cache, or API Key behavior is introduced. |
 | Local result cache | Operation, input hash/content depending on implementation, output, provider/model metadata, expiry time | Requires TTL, clear-cache control, and privacy copy before shipping. |
 
 ### v0.2-alpha Permission Principles
@@ -124,6 +126,7 @@ v0.2-alpha planning keeps the v0.1 privacy model: no project-owned backend, no t
 - `tabs`, `scripting`, `tabGroups`, `offscreen`, microphone access, and broad remote-link fetching are not part of the v0.2-alpha MVP.
 - Copy current context must continue using the existing `clipboardWrite` boundary and must not add `clipboardRead`, broader page host permissions, cache, telemetry, or provider calls.
 - Translation must continue using the existing provider host boundary and must not add Google/Baidu/Youdao fallback, broad page host permissions, full-page DOM translation, remote-link body fetching, cache, telemetry, or raw-content logging without a separate decision.
+- Theme / panel polish must remain visual-only. Do not use it to introduce persisted theme settings, storage namespace migration, telemetry, cache, new provider calls, or public release claims.
 - If a future issue needs one of those permissions, create a decision note first and update this document, `docs/06_RISK_REGISTER.md`, and `RELEASE_CHECKLIST.md`.
 - Chrome Web Store and public privacy copy must match the final manifest, not the planning draft.
 
@@ -154,6 +157,7 @@ v0.2-alpha planning keeps the v0.1 privacy model: no project-owned backend, no t
 - 2026-06-02: Added V2-005 screenshot-to-AI privacy controls for confirmation-gated visible-region capture, in-memory crop, no persistence, and no full page URL in screenshot provider payloads.
 - 2026-06-02: Added V2-006 copy-current-context privacy controls for manual clipboard-only writes, structured formatting, truncation, visible feedback, and no AI/provider/storage/logging path.
 - 2026-06-02: Added V2-007 translation privacy controls for selected/user-input-only translation, existing provider flow, no third-party fallback, no page-context translation, and no permission expansion.
+- 2026-06-03: Added V2-008 theme / panel polish privacy controls confirming no new data flow, storage, permission, provider call, telemetry, cache, or release claim.
 - 2026-06-02: Recorded approved OpenAI / Anthropic provider hosts as later implementation scope, with manual single-provider validation and no secret/raw-content logging.
 - 2026-06-02: Added v0.2-alpha privacy notes covering provider checks, model routing, screenshot-to-AI, copy context, translation MVP, local cache, and high-permission non-scope.
 - 2026-06-01: Created Phase 1 internal privacy and security baseline from current implementation and release checklist.
