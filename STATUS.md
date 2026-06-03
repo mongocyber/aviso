@@ -159,7 +159,8 @@ V2-008 边界：
 - Popup、结果面板、命令面板、划词工具栏、Toast 和截图 overlay 的圆角、边框、阴影、hover/focus、强调色、危险态和等待态复用 Aviso theme token。
 - 截图 overlay 仍是用户手动拖选并确认后才截图；取消 / Esc 不调用 `captureVisibleTab` 或 provider。
 - V2-004B `[Aviso perf]`、V2-004C 追问速度保护、V2-005 截图提问、V2-006 复制当前上下文、V2-007 翻译 MVP 的行为边界保持不变。
-- 该 polish 不代表公开发布门禁关闭；安装后人工 UI QA 仍需覆盖右键选区翻译、划词翻译、命令面板“翻译 hello”、截图取消/确认、复制当前上下文、追问/停止等待。
+- 已完成重新加载后的人工 UI QA：Popup、结果面板、命令面板、划词工具栏、Toast、截图取消 / 确认、复制当前上下文、追问 / 停止等待主路径用户反馈通过。记录来源：2026-06-03 用户反馈。
+- 该 polish 不代表公开发布门禁关闭；OpenAI / Anthropic 原生验证、真实 vision provider 验证、商店素材、隐私政策最终一致性、release tag 和回滚点仍未关闭。
 
 已补录的 V2-004 脱敏验证结果：
 

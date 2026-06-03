@@ -51,7 +51,7 @@ tests/manual-test.html
 | V2-004C · 追问速度保护                           | 通过     | 用户反馈已验收；覆盖追问上下文预算、慢响应提示和停止等待。                          |
 | V2-006 · 复制当前上下文                          | 通过     | 用户反馈已验收；覆盖右键复制当前上下文 internal dogfood 主路径。                    |
 | V2-007 · 翻译 MVP                                 | 通过     | 用户反馈已验收；覆盖右键选区“翻译”、划词工具栏“翻译”和命令面板“翻译 hello”。       |
-| V2-008 · 界面 polish                              | 待人工复核 | 代码已实现并通过自动化检查后再加载扩展复核；建议覆盖 Popup、结果面板、命令面板、划词工具栏、Toast、截图取消/确认。 |
+| V2-008 · 界面 polish                              | 通过     | 用户反馈已验收；覆盖 Popup、结果面板、命令面板、划词工具栏、Toast、截图取消 / 确认、复制当前上下文、追问 / 停止等待。 |
 
 Chrome 版本：用户未补录
 
@@ -167,7 +167,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] V2-007 translation MVP 已实现：选区/用户输入翻译继续复用现有 provider routing、streaming、history 和脱敏 perf；不做全页 DOM 翻译、不接第三方翻译服务、不扩大权限。
 - [x] V2-007 已重新加载本地扩展并完成人工 UI QA：右键选区“翻译”、划词工具栏“翻译”和命令面板“翻译 hello”三条主路径用户反馈通过。记录来源：2026-06-03 用户反馈。
 - [x] V2-008 theme / Aviso panel polish 已实现：复用 `src/styles/aviso.tsx` 的共享视觉 token，收敛 Popup、结果面板、命令面板、划词工具栏、Toast、截图 overlay 的按钮、状态、错误和等待呈现；未新增权限、provider、依赖、storage key 或真实 API 调用。
-- [ ] V2-008 installed-extension UI QA 仍待补录；建议覆盖右键选区翻译、划词翻译、命令面板“翻译 hello”、截图取消/确认、复制当前上下文、追问/停止等待。
+- [x] V2-008 已重新加载本地扩展并完成人工 UI QA：Popup、结果面板、命令面板、划词工具栏、Toast、截图取消 / 确认、复制当前上下文、追问 / 停止等待主路径用户反馈通过。记录来源：2026-06-03 用户反馈。
 - [ ] V2-005 真实 vision provider 验证仍未完成；OpenAI / Anthropic 原生 API Key 验证前，截图理解不能对外宣称 provider 已验证。
 - [ ] OpenAI / Anthropic 真实 provider 最小验证记录仍待原生 API Key 手动触发并补录；OpenAI / Anthropic 仍不可对外宣称已验证。
 - [x] 翻译和复制上下文能力已确认不会把缓存内容或私有网页信息写入日志、文档、截图或 release artifacts；本轮未实现翻译缓存。

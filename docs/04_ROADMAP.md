@@ -55,7 +55,7 @@ Aviso should move from internal dogfood to public release through evidence, not 
 | V2-005 screenshot to AI                              | P1       | Capture a user-selected visible-page region and send it to a vision-capable configured model.                                                                            | V2-004C                | Implemented for internal dogfood; loaded-extension UI QA completed; real vision provider validation still open |
 | V2-006 copy current context                          | P1       | Copy title, URL, optional selection, and truncated page text as clean structured text.                                                                                   | V2-001                 | Implemented for internal dogfood; installed-extension QA completed                                             |
 | V2-007 translation MVP                               | P1       | Improve selection translation and floating-window translation output without third-party default fallback.                                                               | V2-003                 | Implemented for internal dogfood; installed-extension UI QA completed                                          |
-| V2-008 theme and Aviso panel polish                  | P2       | Improve shared visual tokens and user-facing panel naming without breaking shortcuts or iframe behavior.                                                                 | V2-001                 | Implemented; loaded-extension UI QA still recommended                                                          |
+| V2-008 theme and Aviso panel polish                  | P2       | Improve shared visual tokens and user-facing panel naming without breaking shortcuts or iframe behavior.                                                                 | V2-001                 | Implemented for internal dogfood; loaded-extension UI QA completed                                             |
 | V2-009 high-permission discovery backlog             | P3       | Separately evaluate multi-tab aggregation, tab grouping, voice input, full-page translation, YouTube subtitles, and remote-link body extraction.                         | V2-001                 | Read-only discovery / decision docs                                                                            |
 
 ### V2-002A Decision Docs
@@ -156,7 +156,7 @@ V2-008 polishes the existing Aviso interface without changing feature behavior:
 - Popup, result panel, command palette, selection toolbar, Toast, and screenshot overlay reuse the same button, focus, selected, waiting, and error-state language.
 - User-facing names are tightened around `划词工具栏`, `结果面板`, and `命令面板`; legacy internal `contextai_*` ids and storage keys remain unchanged.
 - No manifest permission, host permission, provider, dependency, storage migration, telemetry, cache, package, tag, release action, provider validation call, or new feature surface is added.
-- Loaded-extension UI QA is still recommended for the main visible flows: selected-text translation, toolbar translation, command palette `翻译 hello`, screenshot cancel/confirm, copy current context, and follow-up stop waiting.
+- Loaded-extension UI QA has covered Popup, result panel, command palette, selection toolbar, Toast, screenshot cancel/confirm, copy current context, and follow-up stop waiting for internal dogfood.
 
 ### Backlog Requiring Separate Approval
 
@@ -207,6 +207,7 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 - 2026-06-02: Recorded V2-005 loaded-extension UI QA for cancel, confirm, 豆包 / 火山方舟 unverified-vision blocking, and Service Worker Console `[Aviso perf]` visibility.
 - 2026-06-02: Marked V2-006 copy current context internal dogfood MVP implemented with installed-extension QA now completed for the internal dogfood main path.
 - 2026-06-03: Marked V2-008 theme and Aviso panel polish implemented without permission, provider, dependency, storage, or data-flow changes.
+- 2026-06-03: Recorded V2-008 loaded-extension UI QA completion for Popup, result panel, command palette, selection toolbar, Toast, screenshot cancel/confirm, copy current context, and follow-up stop waiting.
 - 2026-06-02: Recorded installed-extension QA completion for V2-004C follow-up speed guard and V2-006 copy current context based on user feedback.
 - 2026-06-02: Replaced the broad v0.2 candidate backlog with a v0.2-alpha issue map, recommended sequence, and high-permission discovery backlog.
 - 2026-06-01: Created Phase 1 roadmap from current internal dogfood baseline and release checklist.
