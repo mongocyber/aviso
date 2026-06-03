@@ -20,6 +20,40 @@
 
 - `reference/landing-page-2026-06-01/`：2026-06-01 Aviso 官网落地页设计源文件归档，来自本地下载目录 `Aviso 2`。归档时已将顶层 HTML / Markdown 文件名规范化为小写短横线，保留 `assets/`、`components/`、`screenshots/`、`uploads/` 原目录。
 
+## reference 文案禁用口径（重要）
+
+`docs/brand/reference/` **只能作为视觉、排版、组件氛围参考**，用于还原设计来源、对齐品牌色板/字体/间距/质感。它**不是**官网、Chrome Web Store、PRD 或任何公开文案的事实源。
+
+`reference/landing-page-2026-06-01/` 是历史设计归档（改名前、v0.3 设想阶段的旧叙事），其文案已与当前真实状态冲突。**禁止把 reference 里的任何文案复制、改写或当作事实引用进官网、商店、PRD 或公开材料。**
+
+特别地，下列旧叙事一律不得复用，也不得改写后变相保留：
+
+- 兼容你已有的订阅 / Works with your existing subscription
+- ChatGPT Plus / Claude Pro
+- 复用订阅额度
+- Browser Session / 浏览器会话模式
+- no extra API fees / no API costs / 完全没有 API 费用 / 零 API 费用
+- 永久免费 / Free forever
+- 免 Key
+- hosted AI 已上线
+- 匿名额度已上线
+- 登录 / 订阅 / 支付已上线
+
+### 当前真实状态以这些为准
+
+事实源（不是 reference）：`STATUS.md`、`RELEASE_CHECKLIST.md`、`docs/specs/aviso-v1-public-launch.md`、生产 `website/`。
+
+当前官网真实口径：
+
+- `v0.1 internal dogfood`，BYOK（用户自带 API Key）直连所选 provider。
+- 无自建后端、无遥测、无分析 SDK；API Key 本地加密保存。
+- OpenAI / Anthropic 尚未真实验证；当前仅豆包 / 火山方舟已用户验证可用。
+- 尚未上架 Chrome Web Store。
+
+### v1.0 方向只能作为 planned / roadmap 表达
+
+`docs/specs/aviso-v1-public-launch.md` 里的默认 Aviso AI、匿名免费额度、登录、订阅、支付等是**正式产品方向但尚未实现**。这些只能用 planned / roadmap / coming soon 口径表达，并需带"未上线 / 以发布版本为准"标记；**绝不能写成已实现、已上线或已验证**。reference 里出现的相关老文案不构成"已实现"的依据。
+
 ## 公开使用注意
 
 - Aviso 当前口径仍是 `v0.1 internal dogfood / 内部试用版`，不是公开商店发布状态。

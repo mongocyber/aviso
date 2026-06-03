@@ -8,6 +8,8 @@ Aviso 是一个 Chrome MV3 浏览器扩展，技术栈为 Plasmo、React 18、Ty
 
 当前状态：v0.1.0 收口为 `v0.1 internal dogfood / 内部试用版`。A-G 手动验收用户已验证基本通过，豆包/火山方舟 API 用户确认可用；OpenAI / Anthropic 真实调用尚未验证。本版本用于内部试用，不进入公开发布，不提交商店。
 
+v1.0 当前正式需求源为 `docs/specs/aviso-v1-public-launch.md`。该文件只定义 v1.0 public launch 的产品需求方向；不代表默认 AI、后端、匿名额度、登录、订阅、支付、官网新路由、隐私政策重写或 Chrome Web Store 发布已经实现。
+
 ## Phase 1 内部文档体系
 
 状态：已创建，待用户验收。本文档体系不创建官网、不安装依赖、不配置自动化，作为后续上架、迭代、自动 changelog、release-please 和 Docusaurus 用户文档整理的内部事实源。

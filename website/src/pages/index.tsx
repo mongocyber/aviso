@@ -55,7 +55,7 @@ const copy = {
     copied: "复制",
     saved: "保存",
     close: "关闭",
-    trustLabel: "兼容你已有的订阅",
+    trustLabel: "自带 API Key，直连你信任的模型",
     whyTag: "为什么是 Aviso",
     whyTitle: "别再每次都这样了。",
     without: "没有 Aviso",
@@ -80,7 +80,7 @@ const copy = {
     privacyCta: "阅读完整隐私政策",
     modelTag: "你的模型",
     modelTitle: "用你信任的模型，随时切换",
-    modelLead: "云端或本地，自带 Key 直连。在设置里或右键菜单里随时切换。",
+    modelLead: "自带 API Key 直连。在设置或右键菜单里切换已配置的 provider。",
     faqTag: "常见问题",
     faqTitle: "还有疑问？",
     finalTitle: "把 AI 留在你需要的那一刻",
@@ -120,7 +120,7 @@ const copy = {
     copied: "Copy",
     saved: "Save",
     close: "Close",
-    trustLabel: "Works with your existing subscription",
+    trustLabel: "Bring your own API key — connect the model you trust",
     whyTag: "Why Aviso",
     whyTitle: "Stop doing this every time.",
     without: "Without Aviso",
@@ -145,7 +145,7 @@ const copy = {
     privacyCta: "Read the full privacy policy",
     modelTag: "Your models",
     modelTitle: "Bring the model you trust and switch anytime",
-    modelLead: "Cloud or local, connected with your own key. Switch from settings or the right-click menu anytime.",
+    modelLead: "Connected with your own API key. Switch configured providers from settings or the right-click menu.",
     faqTag: "FAQ",
     faqTitle: "Questions?",
     finalTitle: "Keep AI for the moment you need it",
@@ -156,20 +156,16 @@ const copy = {
 
 const trustItems = [
   {
-    zh: "ChatGPT Plus",
-    en: "ChatGPT Plus"
-  },
-  {
-    zh: "Claude Pro",
-    en: "Claude Pro"
-  },
-  {
     zh: "OpenAI API",
     en: "OpenAI API"
   },
   {
     zh: "Anthropic API",
     en: "Anthropic API"
+  },
+  {
+    zh: "豆包 / 火山方舟",
+    en: "Volcengine Ark"
   }
 ] as const;
 
@@ -303,14 +299,6 @@ const modelItems = [
     enTitle: "Doubao",
     zhText: "火山方舟 ARK",
     enText: "Volcengine Ark"
-  },
-  {
-    badge: "◇",
-    tone: "slate",
-    zhTitle: "本地模型",
-    enTitle: "Local model",
-    zhText: "Ollama · LM Studio",
-    enText: "Ollama · LM Studio"
   }
 ] as const;
 
