@@ -92,7 +92,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] `npm test` 通过。2026-06-03，V2-008 后 54 项测试通过；存在 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
 - [x] `npx tsc --noEmit` 通过。2026-06-03，V2-008 后无错误输出。
 - [x] `npm run build` 通过。2026-06-03 V2-008 后默认沙箱内仍被系统拦截为 `Operation not permitted`；沙箱外重跑通过，构建产物 manifest 权限边界已核对。
-- [x] `npm run package` 通过，并生成当前 zip：`build/chrome-mv3-prod.zip`，约 1.1 MB。2026-06-02，沙箱外重跑通过；包内 manifest 权限边界已核对。
+- [x] `npm run package` 通过，并生成当前 zip：`build/chrome-mv3-prod.zip`，约 1.16 MB。2026-06-03，V2-008 后默认沙箱内已生成 zip 但 npm registry 元信息检查受网络限制；沙箱外重跑干净通过；包内 manifest 权限边界已核对。
 - [x] Chrome 加载 `build/chrome-mv3-prod` 无安装报错。2026-06-02 用户本地验收通过。
 - [x] 版本号、扩展名称、描述、图标符合本次发布目标。Manifest 显示 `0.1.0` / `Aviso`，权限未扩大。
 
@@ -138,7 +138,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] 当前版本不进入公开发布，不提交 Chrome 商店。
 - [ ] OpenAI 真实最小调用验证完成。
 - [ ] Anthropic 真实最小调用验证完成。
-- [x] `npm run package` 通过并生成当前 zip：`build/chrome-mv3-prod.zip`。
+- [x] `npm run package` 通过并刷新当前 zip：`build/chrome-mv3-prod.zip`。
 - [ ] Chrome 商店截图、描述、发布说明等素材准备完成。
 - [ ] 外部隐私政策最终版本准备完成并与 Popup 隐私说明、Chrome Web Store 隐私声明一致。
 - [ ] 发布前存在可追踪 git 提交或 tag，并记录回滚点。
