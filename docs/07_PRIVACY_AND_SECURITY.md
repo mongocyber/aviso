@@ -92,7 +92,7 @@ Aviso does not currently request broad host permissions for arbitrary remote pag
 
 ## Known Gaps Before Public Release
 
-- Public privacy policy page is not prepared.
+- Public privacy policy page exists and has been aligned with the current Popup copy, implemented provider host permissions, and v0.2-alpha data-flow boundaries. Final Chrome Web Store declaration alignment is still not complete.
 - Chrome Web Store privacy declarations are not prepared.
 - OpenAI live validation is not complete.
 - Anthropic live validation is not complete.
@@ -100,7 +100,7 @@ Aviso does not currently request broad host permissions for arbitrary remote pag
 - 豆包 / 火山方舟 validation is recorded only as a summary. Do not add screenshots, API Keys, raw prompts, raw responses, or private page content to public docs or store assets.
 - Provider validation evidence should be recorded without exposing keys, private pages, or raw sensitive content.
 - Store screenshots must be sanitized.
-- Final secret/API Key leakage scan should run on docs, screenshots, build output, and package artifact.
+- Current source, Git history, and `build/chrome-mv3-prod.zip` passed local common API Key pattern scans on 2026-06-03. Source and zip were rescanned after the privacy-consistency update; store screenshots, store assets, and final release artifacts still need a final leakage scan.
 
 ## v0.2-alpha Privacy Notes
 
@@ -141,15 +141,16 @@ v0.2-alpha planning keeps the v0.1 privacy model: no project-owned backend, no t
 
 ## Open Questions
 
-- Where will the public privacy policy be hosted?
 - Should public release include all provider options if only 豆包 has been user-confirmed?
 - Is API Key local encryption sufficient for public messaging, or should the product explain browser-local risk more explicitly?
 - Should history be optional or default-on for public release?
 - Should local AI/translation cache be default-on, default-off, or unavailable until public release copy is finalized?
 - What screenshot confirmation UX is enough before sending a selected region to a provider?
+- What exact Chrome Web Store privacy declaration wording should be used for the final public submission?
 
 ## Changelog
 
+- 2026-06-03: Aligned Popup privacy copy and public privacy policy with the current provider host permissions, direct-provider data flow, v0.2-alpha feature privacy boundaries, and current leakage-scan state.
 - 2026-06-02: Updated V2-003 provider host implementation status and kept OpenAI / Anthropic live validation as a V2-004 gate.
 - 2026-06-02: Updated V2-004 privacy status after adding manual single-provider connectivity UI and summary-only validation fields.
 - 2026-06-02: Added V2-004B privacy controls for local-only redacted performance summaries.

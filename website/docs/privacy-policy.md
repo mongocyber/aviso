@@ -1,18 +1,18 @@
 ---
-title: 隐私政策草案
-description: Aviso 的公开隐私政策草案。
+title: 隐私政策
+description: Aviso 的隐私政策与权限说明。
 sidebar_position: 6
 ---
 
-# 隐私政策草案
+# 隐私政策
 
-本文是 Aviso 公开发布前的隐私政策草案，用于说明当前实现的数据流和权限边界。正式发布前，仍需要与 Chrome Web Store 隐私声明、Popup 内隐私说明和最终构建产物再次核对。
+本文说明 Aviso 当前实现的数据流和权限边界。正式提交 Chrome Web Store 前，仍需要与商店后台隐私声明、商店截图和最终构建产物再次核对。
 
 ## 概述
 
 Aviso 是一个 Chrome 浏览器扩展。它帮助用户在当前网页中调用 AI 解释、翻译、润色、总结或处理自定义提示词。
 
-Aviso 当前没有自建后端，不提供项目方账号系统，不添加遥测，不添加分析 SDK，也不使用项目方服务器中转模型请求。
+Aviso 当前没有自建后端，不提供项目方账号系统，不添加遥测，不添加分析 SDK，也不使用 Aviso 项目方服务器中转模型请求。你主动发起 AI 请求时，请求会由浏览器扩展直接发送到你选择的模型 provider。
 
 ## 本地保存的数据
 
@@ -20,7 +20,7 @@ Aviso 会在浏览器扩展存储中保存必要数据：
 
 | 数据类型 | 保存位置 | 说明 |
 | --- | --- | --- |
-| API Key | Chrome 本地扩展存储 | 保存前会使用 AES 加密。 |
+| API Key | Chrome 本地扩展存储 | 保存前会使用 AES 加密，仅用于你选择的模型 provider 请求。 |
 | 设置 | Chrome 扩展存储 | 包括模型选择、功能开关、自定义模板、豆包接入点和模型字段。 |
 | 历史记录 | Chrome 本地扩展存储 | 保存用户主动触发的请求结果，便于后续查看和复用。 |
 
@@ -37,8 +37,27 @@ Aviso 会在浏览器扩展存储中保存必要数据：
 - 支持的图片 URL 或支持格式的 base64 图片数据。
 - 用于页面总结的页面正文片段。
 - 自定义模板展开后的提示词内容。
+- 继续追问时的近期对话节选。
 
 页面总结默认会截断页面正文，减少发送内容长度。当前内部文档记录的默认截断长度为 5000 字符。
+
+### 翻译
+
+翻译功能只使用选中的文本或命令面板中用户输入的待翻译文本。当前 MVP 不会把页面 URL、链接 URL、页面正文、远端链接正文、截图或剪贴板内容作为翻译输入。
+
+### 截图提问
+
+截图提问必须由用户手动框选并确认。Aviso 只截取用户选择的可见页面区域，并在本次请求中使用；截图数据不会写入历史记录、扩展存储、文件、文档或日志。截图提问的 provider 支持取决于用户选择的模型是否支持视觉输入。
+
+### 复制当前上下文
+
+复制当前上下文只会把页面标题、URL、可选选中文本和截断后的页面正文写入用户剪贴板。这个动作本身不会调用 AI provider，不会保存到历史记录，也不会发送到 Aviso 或任何远端服务。
+
+### 连接测试与性能摘要
+
+Provider 连接测试只能由用户手动触发，一次只测试一个 provider。测试使用固定公开短句，不包含网页正文、选中文本、链接、图片、截图、剪贴板内容、API Key、raw prompt 或 raw response。
+
+Aviso 的性能摘要只输出到本地扩展 console，用于内部排查等待时间；摘要只包含固定阶段和分桶字段，不包含原文、完整 URL、图片/base64、截图、API Key、raw prompt 或 raw response，也不会发送到远端 telemetry。
 
 ## 不会发送给 Aviso 的数据
 
@@ -69,13 +88,30 @@ Aviso 当前使用的主要权限包括：
 - `bookmarks`：在命令面板中搜索书签。
 - `clipboardWrite`：支持从浮窗复制结果。
 
-当前 host permission 仅包含豆包 / 火山方舟 OpenAI 兼容网关：
+当前 host permissions 仅包含已经批准的 provider 域名：
 
 ```text
+https://api.openai.com/*
+https://api.anthropic.com/*
 https://ark.cn-beijing.volces.com/*
 ```
 
 Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文。
+
+OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，但真实最小调用仍待用户使用原生 API Key 手动验证。公开发布时只应宣称已经完成验证的 provider。当前豆包 / 火山方舟已完成用户手动单 provider 连接测试。
+
+## 当前不包含
+
+Aviso 当前不包含：
+
+- 广域 host permission。
+- 任意远端链接正文抓取。
+- 全页 DOM 翻译。
+- Google、百度、有道等第三方翻译 fallback。
+- 多 Tab 聚合或 Tab 分组。
+- 语音输入。
+- 本地结果缓存。
+- 项目方 telemetry、analytics 或远端日志。
 
 ## 用户控制
 
@@ -92,10 +128,11 @@ Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文�
 
 公开发布前仍需完成：
 
-- Chrome Web Store 隐私声明核对。
+- Chrome Web Store 隐私声明核对，并保持与本文、Popup 内隐私说明和最终 manifest 一致。
 - 最终商店截图脱敏检查。
-- 最终构建产物和权限核对。
+- 最终构建产物、商店素材和权限核对。
 - OpenAI 和 Anthropic 真实最小调用验证。
+- 真实 vision provider 验证。
 - 最终支持联系方式确认。
 
-本政策草案不会把上述事项写成已经完成。
+本文不会把上述事项写成已经完成。

@@ -43,15 +43,19 @@ Aviso 当前没有项目方后端，因此没有“发送到 Aviso 服务器”�
 | `bookmarks` | 在命令面板中搜索用户书签。 |
 | `clipboardWrite` | 允许从浮窗复制结果。 |
 
-## Host permission
+## Host permissions
 
-当前记录中的 host permission 为：
+当前 host permissions 仅包含已经批准的 provider 域名：
 
 ```text
+https://api.openai.com/*
+https://api.anthropic.com/*
 https://ark.cn-beijing.volces.com/*
 ```
 
-它用于豆包 / 火山方舟 OpenAI 兼容接口。Aviso 当前没有为了抓取任意网页正文而申请 `http://*/*` 或 `https://*/*` 这类广域 host permission。
+它们分别用于 OpenAI、Anthropic 和豆包 / 火山方舟 OpenAI 兼容接口。OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，但真实最小调用仍待用户使用原生 API Key 手动验证；公开发布时只应宣称已经完成验证的 provider。
+
+Aviso 当前没有为了抓取任意网页正文而申请 `http://*/*` 或 `https://*/*` 这类广域 host permission。
 
 ## 敏感内容处理
 

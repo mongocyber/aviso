@@ -503,7 +503,7 @@ function FeatureVisual({kind, lang}: {kind: string; lang: Lang}): JSX.Element {
       <div className="miniCommand" aria-hidden="true">
         <div className="miniCommandInput"><Mark />{lang === "zh" ? "搜索历史、书签，或发问 AI…" : "Search history, bookmarks, or ask AI…"}</div>
         <div className="miniCommandRow selected"><Icon name="history" />{lang === "zh" ? "总结：产品试用反馈" : "Summary: product dogfood notes"}<span>{lang === "zh" ? "历史" : "History"}</span></div>
-        <div className="miniCommandRow"><Icon name="bookmark" />{lang === "zh" ? "隐私政策草案" : "Privacy policy draft"}<span>{lang === "zh" ? "书签" : "Mark"}</span></div>
+        <div className="miniCommandRow"><Icon name="bookmark" />{lang === "zh" ? "隐私政策" : "Privacy policy"}<span>{lang === "zh" ? "书签" : "Mark"}</span></div>
       </div>
     );
   }

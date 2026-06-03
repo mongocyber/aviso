@@ -90,7 +90,7 @@ const config: Config = {
           title: "隐私与发布",
           items: [
             {
-              label: "隐私政策草案",
+              label: "隐私政策",
               to: "/docs/privacy-policy"
             },
             {

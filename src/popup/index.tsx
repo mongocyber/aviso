@@ -807,10 +807,9 @@ function Popup() {
 
       {showPrivacy && (
         <div style={styles.privacyBox}>
-          Aviso 不收集、不上传任何数据。API Key 经 AES-256 加密后仅存于本机； AI
-          请求由你的浏览器直连模型厂商（OpenAI / Anthropic /
-          豆包·火山方舟），不经过任何中间服务器。
-          历史记录与设置保存在浏览器本地存储中。
+          Aviso 不设项目方服务器，不收集或保存你的数据。API Key 经 AES-256
+          加密后仅存于本机；当你主动发起 AI 请求时，内容会由浏览器直连所选模型厂商（OpenAI
+          / Anthropic / 豆包·火山方舟），不经过 Aviso 中间服务器。历史记录与设置保存在浏览器本地存储中。
         </div>
       )}
       <footer style={styles.footer}>

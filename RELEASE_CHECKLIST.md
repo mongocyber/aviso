@@ -74,9 +74,9 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] `manifest.permissions` 只包含实际使用的权限。V2-003 构建产物已核对，未新增普通权限。
 - [x] `host_permissions` 没有为链接正文抓取扩大到广域权限；仅包含 OpenAI、Anthropic 和 Ark Beijing 三个已批准 provider host。
 - [x] OpenAI / Anthropic provider host permission 产品决策已记录，且 V2-003 已落到 `package.json` manifest。
-- [ ] Popup 隐私说明与实际实现一致。
+- [x] Popup 隐私说明与实际实现一致。2026-06-03 已修正为：Aviso 无项目方服务器、不收集或保存用户数据；用户主动发起 AI 请求时由浏览器直连所选模型厂商；历史记录与设置保存在浏览器本地。
 - [ ] 商店隐私文案与 Popup 隐私说明一致。
-- [x] 当前源码、Git 历史和 `build/chrome-mv3-prod.zip` 未命中常见真实 API Key 形态。2026-06-03 已做本地扫描；后续商店截图、商店素材和最终 release artifacts 生成后仍需再次检查。
+- [x] 当前源码、Git 历史和 `build/chrome-mv3-prod.zip` 未命中常见真实 API Key 形态。2026-06-03 隐私一致性更新后已重新扫描当前源码和 zip；Git 历史扫描此前同日通过。后续商店截图、商店素材和最终 release artifacts 生成后仍需再次检查。
 - [x] Provider 连接测试入口为用户手动触发、一次只测单 provider，并返回脱敏摘要；不会在设置页打开时自动测试全部 provider。
 - [x] V2-004B `[Aviso perf]` 性能摘要只输出到本地 console，不写入 `chrome.storage`，不发送远端 telemetry，不包含 raw prompt、raw response、页面正文、选中文本、完整 URL、图片/base64 或 API Key。
 - [x] V2-004C follow-up speed guard 已实现：追问只携带预算后的近期对话节选；慢响应提示和停止等待不记录 raw 内容；取消分类仅输出 `user_cancelled` 等脱敏类别。
@@ -89,10 +89,10 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 
 ## 4. 构建产物
 
-- [x] `npm test` 通过。2026-06-03，V2-008 后 54 项测试通过；存在 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
-- [x] `npx tsc --noEmit` 通过。2026-06-03，V2-008 后无错误输出。
-- [x] `npm run build` 通过。2026-06-03 V2-008 后默认沙箱内仍被系统拦截为 `Operation not permitted`；沙箱外重跑通过，构建产物 manifest 权限边界已核对。
-- [x] `npm run package` 通过，并生成当前 zip：`build/chrome-mv3-prod.zip`，约 1.16 MB。2026-06-03，V2-008 后默认沙箱内已生成 zip 但 npm registry 元信息检查受网络限制；沙箱外重跑干净通过；包内 manifest 权限边界已核对。
+- [x] `npm test` 通过。2026-06-03，隐私一致性更新后 54 项测试通过；存在 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
+- [x] `npx tsc --noEmit` 通过。2026-06-03，隐私一致性更新后无错误输出。
+- [x] `npm run build` 通过。2026-06-03 隐私一致性更新后默认沙箱内仍被系统拦截为 `Operation not permitted`；沙箱外重跑通过，构建产物 manifest 权限边界已核对。
+- [x] `npm run package` 通过，并生成当前 zip：`build/chrome-mv3-prod.zip`，约 1.16 MB。2026-06-03 隐私一致性更新后默认沙箱内已生成 zip 但 npm registry 元信息检查受网络限制；沙箱外重跑干净通过；包内 manifest 权限边界已核对。
 - [x] Chrome 加载 `build/chrome-mv3-prod` 无安装报错。2026-06-02 用户本地验收通过。
 - [x] 版本号、扩展名称、描述、图标符合本次发布目标。Manifest 显示 `0.1.0` / `Aviso`，权限未扩大。
 
@@ -104,8 +104,9 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] 托管文档站已通过 GitHub `main` 自动部署到 Vercel 生产环境：`https://aviso-nine.vercel.app/`。该状态不代表扩展已公开发布或已提交 Chrome Web Store。
 - [x] 新版官网首页已部署。设计源文件归档 commit：`6258c94`；官网首页刷新 commit：`cb801bc`。
 - [ ] `aviso-social-card.png` 仍待补齐。
-- [x] 隐私政策草案页面已有可访问 URL：`https://aviso-nine.vercel.app/docs/privacy-policy/`。
-- [ ] 隐私政策最终版本仍需与 Chrome Web Store 隐私声明、Popup 内隐私说明和最终构建产物再次核对。
+- [x] 隐私政策页面已有可访问 URL：`https://aviso-nine.vercel.app/docs/privacy-policy/`。
+- [x] 当前官网隐私政策已按现有 Popup 隐私说明、provider host permissions、v0.2-alpha 数据流和当前构建产物边界更新。2026-06-03 本地文档已更新，线上需等待 GitHub `main` 自动部署。
+- [ ] 隐私政策最终版本仍需与 Chrome Web Store 隐私声明、商店截图 / 素材和最终 release artifacts 再次核对。
 - [ ] 发布说明列出主要功能、已知限制和支持方式。
 
 ## 6. 发布与回滚
@@ -134,13 +135,13 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] A-G 手动验收用户已验证基本通过。
 - [x] 豆包/火山方舟 API 已通过 V2-004 手动单 provider 连接测试；本记录不包含 Key、raw prompt、raw response 或私人页面内容。
 - [x] Aviso 官网文档站已通过 GitHub `main` 自动部署到 Vercel，Root Directory 为 `website`，生产 URL 为 `https://aviso-nine.vercel.app/`。
-- [x] 已验证官网首页、介绍文档、隐私政策草案、安装文档均返回 200。
+- [x] 已验证官网首页、介绍文档、隐私政策、安装文档均返回 200。当前隐私政策文案已更新到本地，线上版本需等待 GitHub `main` 自动部署。
 - [x] 当前版本不进入公开发布，不提交 Chrome 商店。
 - [ ] OpenAI 真实最小调用验证完成。
 - [ ] Anthropic 真实最小调用验证完成。
 - [x] `npm run package` 通过并刷新当前 zip：`build/chrome-mv3-prod.zip`。
 - [ ] Chrome 商店截图、描述、发布说明等素材准备完成。
-- [ ] 外部隐私政策最终版本准备完成并与 Popup 隐私说明、Chrome Web Store 隐私声明一致。
+- [ ] 外部隐私政策最终版本准备完成并与 Popup 隐私说明、Chrome Web Store 隐私声明、商店截图 / 素材和最终 release artifacts 一致。当前官网隐私政策已完成本地一致性更新，但商店声明仍未准备。
 - [ ] 发布前存在可追踪 git 提交或 tag，并记录回滚点。
 
 ## 9. v0.2-alpha 规划门禁

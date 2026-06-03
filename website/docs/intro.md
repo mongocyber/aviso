@@ -49,4 +49,4 @@ Aviso 没有自建后端，不提供项目方账号系统，也不把请求转�
 2. [API Key 设置](./api-keys.md)
 3. [首次使用](./first-use.md)
 4. [核心功能](./core-features.md)
-5. [隐私政策草案](./privacy-policy.md)
+5. [隐私政策](./privacy-policy.md)

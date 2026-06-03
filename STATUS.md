@@ -79,7 +79,7 @@ Vercel 项目配置：
 
 - Vercel GitHub 集成已连上，GitHub `main` 自动部署已启用并已成功触发。
 - 新版官网首页已部署到生产 URL，但 `aviso-social-card.png` 仍待补齐。
-- 隐私政策页面仍为发布前草案，正式公开发布前仍需与 Chrome Web Store 隐私声明、Popup 内隐私说明和最终构建产物再次核对。
+- 隐私政策页面已在本地按当前 Popup 隐私说明、provider host permissions、v0.2-alpha 数据流和当前构建产物边界更新；正式公开发布前仍需与 Chrome Web Store 隐私声明、商店截图 / 素材和最终 release artifacts 再次核对。线上页面需等待 GitHub `main` 自动部署。
 - Aviso 仍保持 `v0.1 internal dogfood / 内部试用版` 口径；OpenAI / Anthropic 真实调用、Chrome Web Store 提交、最终 package zip、release tag 和回滚点仍未关闭。
 
 ## v0.2-alpha P0 Provider Work
@@ -97,7 +97,8 @@ Vercel 项目配置：
 - V2-006：Copy current context internal dogfood MVP 已实现为右键页面菜单“复制当前上下文”：用户手动触发后把页面标题、URL、可选选中文本和可选截断正文整理为 Markdown 文本写入剪贴板。该流程不调用 AI、不调用 provider、不写入 history / `chrome.storage` / 文件 / 文档 / console，未新增权限、host permission、provider 或依赖。
 - V2-007：Translation MVP 已实现为现有翻译流体验改进。选区右键、划词工具栏和命令面板本地 intent 继续复用 `operation=translate`、当前 configured provider/model、浮窗 streaming、history、provider routing 和脱敏 `[Aviso perf]` 摘要；翻译 prompt 改为只输出译文，浮窗标题、用户气泡、等待状态和失败提示更明确；右键 page 上下文不再提供空选区“翻译”入口，避免把页面 URL 当作翻译内容。
 - V2-008：Theme / Aviso panel polish 已实现为界面一致性收敛。Popup、结果面板、命令面板、划词工具栏、Toast 和截图 overlay 复用 `src/styles/aviso.tsx` 的共享视觉 token；用户可见命名收敛为“划词工具栏 / 结果面板 / 命令面板”；按钮 hover/focus、状态色、错误态、等待态和截图 overlay 质感统一。未新增 manifest 权限、host permission、provider、依赖、storage key、主题设置、真实 API 调用或发布动作。
-- 当前 V2-008 后生产 zip 包已刷新：`build/chrome-mv3-prod.zip`，约 1.16 MB；包内 manifest 已核对为 `Aviso` / `0.1.0`，普通权限未新增，host permissions 仍为 OpenAI / Anthropic / Ark。
+- 当前隐私一致性更新后生产 zip 包已刷新：`build/chrome-mv3-prod.zip`，约 1.16 MB；包内 manifest 已核对为 `Aviso` / `0.1.0`，普通权限未新增，host permissions 仍为 OpenAI / Anthropic / Ark。
+- 2026-06-03：隐私说明一致性已完成一轮本地更新。Popup 隐私说明已避免把项目方数据收集与用户主动 provider 请求混写，改为明确 Aviso 无项目方服务器、不收集或保存用户数据；用户主动发起 AI 请求时浏览器直连所选模型厂商。官网隐私政策已同步当前 provider host permissions、翻译 / 截图提问 / 复制上下文 / 连接测试 / 本地性能摘要边界。Chrome Web Store 隐私声明仍未准备，公开发布门禁未关闭。
 
 V2-004 边界：
 
@@ -169,8 +170,8 @@ V2-008 边界：
 仍未关闭：
 
 - OpenAI / Anthropic 真实最小调用记录仍未完成；用户当前没有原生 OpenAI / Anthropic API Key，OpenRouter Key 不作为这两条原生 provider 的验证依据。
-- 商店素材、最终隐私政策一致性、release tag 和回滚点仍未完成。
-- 2026-06-03 已完成当前源码、Git 历史和 `build/chrome-mv3-prod.zip` 的常见真实 API Key 形态扫描，未命中；后续商店截图、商店素材和最终 release artifacts 生成后仍需再次检查。
+- 商店素材、Chrome Web Store 隐私声明、最终 release artifact 一致性、release tag 和回滚点仍未完成。
+- 2026-06-03 已完成当前源码、Git 历史和 `build/chrome-mv3-prod.zip` 的常见真实 API Key 形态扫描，未命中；隐私一致性更新后已重新扫描当前源码和 zip，后续商店截图、商店素材和最终 release artifacts 生成后仍需再次检查。
 
 ## 本轮读取的来源
 
