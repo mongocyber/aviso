@@ -2,7 +2,7 @@
   "name": "aviso",
   "displayName": "Aviso",
   "version": "0.1.0",
-  "description": "智能浏览器助手，感知操作对象，就地调用 AI，浮窗展示结果。零额外费用、零数据收集、开源。",
+  "description": "智能浏览器助手，感知操作对象，就地调用 AI，浮窗展示结果。无项目方服务器，无遥测。",
   "author": "Aviso",
   "scripts": {
     "dev": "plasmo dev",

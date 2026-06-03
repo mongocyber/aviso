@@ -65,6 +65,12 @@ Current browser permissions:
 - `bookmarks`: search bookmarks from the command palette.
 - `clipboardWrite`: support copy actions from the floating UI.
 
+Current content script site access:
+
+- `content_scripts.matches` uses `<all_urls>` so Aviso can show the selection toolbar, command palette, in-page result panel, clipboard prompt, iframe bridge, and screenshot selection UI on webpages where the user invokes the extension.
+- This site access is not used for arbitrary remote link-body fetching, ads, telemetry, analytics, project-owned logging, or sending page content to an Aviso server.
+- Page content is sent to a model provider only when the user manually triggers an AI action that needs that content.
+
 Current host permissions:
 
 - `https://api.openai.com/*`: required for direct OpenAI API calls.
@@ -89,11 +95,12 @@ Aviso does not currently request broad host permissions for arbitrary remote pag
 - V2-007 translation is limited to selected text or command-palette user input. It reuses the existing configured provider/model and does not include page URL, link URL, remote link body, page body, screenshots, clipboard content, or full-page DOM content as translation input.
 - V2-008 theme / panel polish changes only visible UI styling and naming. It does not add stored theme settings, storage migrations, permissions, providers, dependencies, telemetry, cache, provider validation calls, or new data sent to providers.
 - Build artifacts, `node_modules`, environment files, caches, and key-like files are ignored by Git.
+- Chrome Web Store listing copy must disclose both the provider `host_permissions` and the broad content-script site access used for in-page UI surfaces.
 
 ## Known Gaps Before Public Release
 
 - Public privacy policy page exists and has been aligned with the current Popup copy, implemented provider host permissions, and v0.2-alpha data-flow boundaries. Final Chrome Web Store declaration alignment is still not complete.
-- Chrome Web Store privacy declarations are not prepared.
+- Chrome Web Store privacy declarations are drafted in `docs/store/chrome-web-store-submission-draft.md` but not yet entered in the dashboard or owner-approved.
 - OpenAI live validation is not complete.
 - Anthropic live validation is not complete.
 - OpenAI and Anthropic host permission manifest changes and manual validation UI are implemented, but validation records are still missing.
@@ -151,6 +158,8 @@ v0.2-alpha planning keeps the v0.1 privacy model: no project-owned backend, no t
 ## Changelog
 
 - 2026-06-03: Aligned Popup privacy copy and public privacy policy with the current provider host permissions, direct-provider data flow, v0.2-alpha feature privacy boundaries, and current leakage-scan state.
+- 2026-06-03: Added Chrome Web Store submission draft and explicit disclosure note for `<all_urls>` content-script site access.
+- 2026-06-03: Added Chrome Web Store Limited Use wording to the public privacy policy draft.
 - 2026-06-02: Updated V2-003 provider host implementation status and kept OpenAI / Anthropic live validation as a V2-004 gate.
 - 2026-06-02: Updated V2-004 privacy status after adding manual single-provider connectivity UI and summary-only validation fields.
 - 2026-06-02: Added V2-004B privacy controls for local-only redacted performance summaries.
