@@ -170,6 +170,7 @@ V2-008 边界：
 
 - OpenAI / Anthropic 真实最小调用记录仍未完成；用户当前没有原生 OpenAI / Anthropic API Key，OpenRouter Key 不作为这两条原生 provider 的验证依据。
 - 商店素材、最终隐私政策一致性、release tag 和回滚点仍未完成。
+- 2026-06-03 已完成当前源码、Git 历史和 `build/chrome-mv3-prod.zip` 的常见真实 API Key 形态扫描，未命中；后续商店截图、商店素材和最终 release artifacts 生成后仍需再次检查。
 
 ## 本轮读取的来源
 

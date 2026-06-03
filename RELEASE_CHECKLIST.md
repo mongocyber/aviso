@@ -76,7 +76,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] OpenAI / Anthropic provider host permission 产品决策已记录，且 V2-003 已落到 `package.json` manifest。
 - [ ] Popup 隐私说明与实际实现一致。
 - [ ] 商店隐私文案与 Popup 隐私说明一致。
-- [ ] API Key 不出现在日志、构建产物、截图、提交记录或 issue 文档中。
+- [x] 当前源码、Git 历史和 `build/chrome-mv3-prod.zip` 未命中常见真实 API Key 形态。2026-06-03 已做本地扫描；后续商店截图、商店素材和最终 release artifacts 生成后仍需再次检查。
 - [x] Provider 连接测试入口为用户手动触发、一次只测单 provider，并返回脱敏摘要；不会在设置页打开时自动测试全部 provider。
 - [x] V2-004B `[Aviso perf]` 性能摘要只输出到本地 console，不写入 `chrome.storage`，不发送远端 telemetry，不包含 raw prompt、raw response、页面正文、选中文本、完整 URL、图片/base64 或 API Key。
 - [x] V2-004C follow-up speed guard 已实现：追问只携带预算后的近期对话节选；慢响应提示和停止等待不记录 raw 内容；取消分类仅输出 `user_cancelled` 等脱敏类别。
