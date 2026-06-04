@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import { aviso, AvisoIcon, AvisoMark, visuallyStable } from "~styles/aviso"
 import type { HistoryEntry, PromptTemplate, Settings } from "~types/history"
 import type { ProviderId } from "~utils/model-registry"
-import { PROVIDER_REGISTRY } from "~utils/model-registry"
+import { PROVIDER_REGISTRY, resolveModelRoute } from "~utils/model-registry"
 import type { ConnectivityValidationSummary } from "~utils/provider-connectivity"
 import {
   getApiKeys,
@@ -289,6 +289,12 @@ function Popup() {
   const selectedModel =
     MODEL_OPTIONS.find((m) => m.value === settings.defaultModel) ??
     MODEL_OPTIONS[0]
+  const selectedRoute = resolveModelRoute(settings.defaultModel, settings)
+  const byokRouteLabel = `当前 AI 请求会使用你的 ${selectedRoute.provider.displayName} Key`
+  const byokRouteModelLabel =
+    selectedRoute.provider.id === "doubao"
+      ? selectedRoute.requestModel || "未配置接入点"
+      : selectedRoute.model.displayName
   const popupHeight =
     tab === "api" || tab === "templates"
       ? POPUP_FRAME.expandedHeight
@@ -398,7 +404,7 @@ function Popup() {
             {
               {
                 general: "常规",
-                api: "API Key",
+                api: "AI",
                 templates: "模板",
                 history: "历史"
               }[t]
@@ -544,12 +550,32 @@ function Popup() {
           </>
         )}
 
-        {/* API Key */}
+        {/* AI */}
         {tab === "api" && (
           <div style={panelSectionStyle}>
+            <div style={styles.plannedAiBox}>
+              <div style={styles.sectionHeaderRow}>
+                <span style={styles.sectionTitle}>Aviso AI</span>
+                <span style={styles.statusPill}>规划中</span>
+              </div>
+              <p style={styles.sectionBodyText}>
+                默认 Aviso AI、匿名额度、登录和订阅当前版本未上线。这里不提供登录、额度或支付入口。
+              </p>
+            </div>
+
+            <div style={styles.advancedHeader}>
+              <span style={styles.sectionTitle}>高级：使用自己的 API Key</span>
+              <span style={styles.routeLabel}>{byokRouteLabel}</span>
+              <span style={styles.routeDetail}>
+                选择模型：{selectedModel.label}；请求模型 / 接入点：
+                {byokRouteModelLabel}
+              </span>
+            </div>
+
             <p style={styles.privacyNote}>
               <AvisoIcon name="shield" size={15} />
-              API Key 使用 AES-256 加密存储在本地，不会上传到任何服务器。
+              API Key 使用 AES-256 加密存储在本地。当前版本的 AI
+              请求会从浏览器直连你选择的 provider，不经过 Aviso 中间服务器。
             </p>
             {(
               [
@@ -1149,6 +1175,65 @@ const styles: Record<string, React.CSSProperties> = {
     color: aviso.darkText2,
     fontSize: 12,
     lineHeight: 1.5
+  },
+  plannedAiBox: {
+    padding: "12px 13px",
+    borderRadius: 12,
+    border: `1px solid ${aviso.darkLine}`,
+    background: aviso.darkBg,
+    marginBottom: 14
+  },
+  sectionHeaderRow: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    minWidth: 0
+  },
+  sectionTitle: {
+    minWidth: 0,
+    color: aviso.darkText,
+    fontSize: 13,
+    fontWeight: 750,
+    lineHeight: 1.35,
+    overflowWrap: "anywhere"
+  },
+  statusPill: {
+    flex: "0 0 auto",
+    border: `1px solid ${aviso.darkLine}`,
+    borderRadius: 999,
+    color: aviso.darkText3,
+    fontSize: 11,
+    lineHeight: 1,
+    padding: "5px 8px",
+    whiteSpace: "nowrap"
+  },
+  sectionBodyText: {
+    color: aviso.darkText3,
+    fontSize: 12,
+    lineHeight: 1.55,
+    margin: "8px 0 0",
+    overflowWrap: "anywhere"
+  },
+  advancedHeader: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 5,
+    marginBottom: 12,
+    minWidth: 0
+  },
+  routeLabel: {
+    color: aviso.sage300,
+    fontSize: 12,
+    fontWeight: 650,
+    lineHeight: 1.45,
+    overflowWrap: "anywhere"
+  },
+  routeDetail: {
+    color: aviso.darkText3,
+    fontSize: 11.5,
+    lineHeight: 1.45,
+    overflowWrap: "anywhere"
   },
   fieldGroup: { marginBottom: 14 },
   input: {

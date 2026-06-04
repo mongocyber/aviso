@@ -1,8 +1,10 @@
 # Issue 005: V1-008 BYOK Settings Cleanup Feasibility
 
-Status: docs-only feasibility report. Not approved for implementation.
+Status: feasibility report with a minimal 2026-06-04 implementation follow-up.
 
 Date: 2026-06-03
+
+Implementation follow-up: 2026-06-04
 
 ## Summary
 
@@ -17,6 +19,14 @@ Current implementation remains:
 - Non-secret settings in `chrome.storage.sync` under `contextai_settings`.
 
 Therefore, V1-008 should not introduce new storage keys, migrate API Keys, add permissions, call providers, or present default Aviso AI as available. It can safely reorganize settings, label the current BYOK route more clearly, and show planned/disabled Aviso account states only as mock or unavailable UI.
+
+2026-06-04 implementation note:
+
+- Implemented the smallest Popup IA version: the top-level user-visible tab label changed from `API Key` to `AI`.
+- Added a disabled/planned `Aviso AI` section that states default Aviso AI, anonymous quota, login, and subscription are not available in the current version.
+- Kept OpenAI, Anthropic, and 豆包 / 火山方舟 key fields plus manual single-provider connectivity tests under `高级：使用自己的 API Key`.
+- Added a route label derived from the current model/provider route only. No hosted Aviso provider was added.
+- Did not change storage keys, API Key encryption, sync settings, manifest permissions, host permissions, dependencies, background routing, provider connectivity payloads, website files, or release artifacts.
 
 ## Sources Read
 

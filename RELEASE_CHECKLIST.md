@@ -24,6 +24,7 @@
 - [x] V2-006 复制当前上下文：右键页面菜单手动触发，把标题、URL、可选选中文本和截断正文复制到剪贴板；不调用 AI。自动化覆盖已补齐，安装后人工 dogfood 用户反馈通过。
 - [x] V2-007 翻译 MVP：选区右键、划词工具栏和命令面板输入继续使用现有 `operation=translate` 浮窗流；翻译 prompt、标题、用户气泡、等待状态和失败提示已明确为翻译；右键 page 上下文不再提供空选区翻译入口。
 - [x] V2-008 theme / Aviso panel polish：Popup、结果面板、命令面板、划词工具栏、Toast 和截图 overlay 的视觉 token、按钮状态、错误态、等待态和面板命名已收敛；不新增功能、权限、provider、依赖或 storage key。
+- [x] V1-008 BYOK settings cleanup：Popup 设置页将原 `API Key` 标签调整为 `AI`，把 Aviso AI 标为规划中 / 当前版本未上线，并把现有 provider Key 字段和手动连接测试保留在“高级：使用自己的 API Key”区域。该项不代表 hosted Aviso AI、匿名额度、登录、订阅、支付或 backend 已实现。
 
 ## 2. 手动 QA 记录
 
@@ -84,6 +85,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] V2-006 复制当前上下文使用既有 `clipboardWrite` 能力，未新增 manifest permission 或 host permission；复制内容只写入用户剪贴板，不进入 provider、AI 请求、history、`chrome.storage`、文件、文档、console 或 telemetry。
 - [x] V2-007 翻译 MVP 未新增 manifest permission、host permission、provider、依赖、远端服务或第三方翻译 fallback；translate payload 只使用选区或用户输入，不把页面 URL、链接 URL 或页面正文当作翻译内容。
 - [x] V2-008 theme / panel polish 未新增 manifest permission、host permission、provider、依赖、远端服务、telemetry、cache、theme storage 设置或 `contextai_*` storage key 迁移；不改变 AI 请求 payload、provider routing、默认模型或 token 上限。
+- [x] V1-008 BYOK settings cleanup 未新增 storage key、manifest permission、host permission、provider、依赖、backend URL、telemetry 或 analytics；API Key 继续只保存在 encrypted `chrome.storage.local/contextai_api_keys`，`chrome.storage.sync/contextai_settings` 继续只保存非 secret 设置；provider 连接测试仍为用户手动触发、一次只测单 provider、只展示脱敏摘要。
 - [ ] 真实 OpenAI 调用已通过用户手动触发的单 provider 最小样例验证。公开发布门禁未关闭。
 - [ ] 真实 Anthropic 调用已通过用户手动触发的单 provider 最小样例验证。公开发布门禁未关闭。
 - [x] 真实豆包/火山方舟调用已通过 V2-004 手动单 provider 连接测试。脱敏记录：`provider=doubao`，`model_or_endpoint=doubao-seed-2-0-lite-260428`，`host_permission_present=true`，`result=success`，`latency_note=约 2505 ms`，`error_category=none`，`secret_leak_check=pass`，`raw_prompt_logged=no`，`raw_response_logged=no`，`private_page_data_logged=no`。记录来源：2026-06-02 用户在已加载扩展的 Popup 手动触发。

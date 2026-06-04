@@ -199,7 +199,7 @@ export async function handleAIRequest(
     } else if (route.provider.id === "doubao") {
       if (route.missingConfig === "doubaoModel") {
         logPreProviderPerf(payload, route.provider.id, route.requestModel)
-        throw new Error("豆包接入点 ID 未配置，请在设置的 API Key 页填写")
+        throw new Error("豆包接入点 ID 未配置，请在设置的 AI 页填写")
       }
       await callOpenAI(route.requestModel, payload, apiKeys.doubao, onChunk, {
         baseURL: route.provider.baseURL,

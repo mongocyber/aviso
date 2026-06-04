@@ -10,6 +10,8 @@ Aviso 是一个 Chrome MV3 浏览器扩展，技术栈为 Plasmo、React 18、Ty
 
 v1.0 当前正式需求源为 `docs/specs/aviso-v1-public-launch.md`。该文件只定义 v1.0 public launch 的产品需求方向；不代表默认 AI、后端、匿名额度、登录、订阅、支付、官网新路由、隐私政策重写或 Chrome Web Store 发布已经实现。
 
+2026-06-04：V1-008 BYOK settings cleanup 已做最小 Popup 信息架构调整。Popup 顶部标签从 `API Key` 改为 `AI`，新增 `Aviso AI` 规划中 / 当前版本未上线说明，并把 OpenAI、Anthropic、豆包 / 火山方舟 Key 字段和手动连接测试保留在 `高级：使用自己的 API Key` 区域。该调整不新增 hosted AI、登录、匿名额度、订阅、支付、backend、provider proxy、manifest 权限、host permission、依赖、storage key 或真实 provider 调用；API Key 仍只保存在 encrypted `chrome.storage.local/contextai_api_keys`，非 secret 设置仍保存在 `chrome.storage.sync/contextai_settings`。
+
 ## Phase 1 内部文档体系
 
 状态：已创建，待用户验收。本文档体系不创建官网、不安装依赖、不配置自动化，作为后续上架、迭代、自动 changelog、release-please 和 Docusaurus 用户文档整理的内部事实源。

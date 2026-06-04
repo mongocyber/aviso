@@ -94,6 +94,7 @@ Aviso does not currently request broad host permissions for arbitrary remote pag
 - V2-006 copy current context is user-triggered from the right-click menu. It writes structured title, URL, optional selected text, and truncated page text to the user's clipboard only; it does not call AI providers, save to history, write to `chrome.storage`, log copied content, or send telemetry.
 - V2-007 translation is limited to selected text or command-palette user input. It reuses the existing configured provider/model and does not include page URL, link URL, remote link body, page body, screenshots, clipboard content, or full-page DOM content as translation input.
 - V2-008 theme / panel polish changes only visible UI styling and naming. It does not add stored theme settings, storage migrations, permissions, providers, dependencies, telemetry, cache, provider validation calls, or new data sent to providers.
+- V1-008 BYOK settings cleanup changes only the Popup settings information architecture. The `AI` tab marks Aviso AI as planned / unavailable in the current version and keeps OpenAI, Anthropic, and 豆包 / 火山方舟 Key fields plus manual provider connectivity tests under an advanced BYOK section. It does not add hosted AI, login, quota, subscription, payment, backend, provider proxy, storage keys, permissions, providers, dependencies, telemetry, analytics, or real provider validation calls.
 - Build artifacts, `node_modules`, environment files, caches, and key-like files are ignored by Git.
 - Chrome Web Store listing copy must disclose both the provider `host_permissions` and the broad content-script site access used for in-page UI surfaces.
 
@@ -125,6 +126,7 @@ v0.2-alpha planning keeps the v0.1 privacy model: no project-owned backend, no t
 | Copy current context | Page title, URL, optional selection, truncated page text | Implemented in V2-006. Copies to the user's clipboard only. No provider call unless the user separately sends it to AI. No history/storage/log/telemetry persistence. |
 | Translation MVP | Selected text or command-palette user input, provider/model choice | Implemented in V2-007 through the existing provider flow. Third-party translation fallback, full-page DOM translation, link-body translation, and YouTube subtitles are not in MVP. Page URL, link URL, page body, screenshots, clipboard content, and raw provider responses are not added to translation input or logs. |
 | Theme / panel polish | Existing visible UI state only | Implemented in V2-008. No new user data, provider payload, storage key, permission, host permission, remote call, telemetry, cache, or API Key behavior is introduced. |
+| BYOK settings cleanup | Existing settings UI labels, current selected model/provider route, existing API Key fields and manual connectivity summaries | Implemented in V1-008 as Popup IA/copy only. Aviso AI is shown as planned/unavailable; BYOK remains the current direct-provider path. API Keys remain encrypted in `chrome.storage.local/contextai_api_keys`; non-secret settings remain in `chrome.storage.sync/contextai_settings`. |
 | Local result cache | Operation, input hash/content depending on implementation, output, provider/model metadata, expiry time | Requires TTL, clear-cache control, and privacy copy before shipping. |
 
 ### v0.2-alpha Permission Principles
@@ -157,6 +159,7 @@ v0.2-alpha planning keeps the v0.1 privacy model: no project-owned backend, no t
 
 ## Changelog
 
+- 2026-06-04: Added V1-008 BYOK settings cleanup privacy note confirming Popup IA/copy-only changes, planned/unavailable Aviso AI wording, unchanged local encrypted API Key storage, unchanged non-secret sync settings, unchanged manual redacted connectivity tests, and no hosted/backend/auth/quota/payment implementation.
 - 2026-06-03: Aligned Popup privacy copy and public privacy policy with the current provider host permissions, direct-provider data flow, v0.2-alpha feature privacy boundaries, and current leakage-scan state.
 - 2026-06-03: Added Chrome Web Store submission draft and explicit disclosure note for `<all_urls>` content-script site access.
 - 2026-06-03: Added Chrome Web Store Limited Use wording to the public privacy policy draft.
