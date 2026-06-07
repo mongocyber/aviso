@@ -1,10 +1,33 @@
 import type { PlasmoCSConfig, PlasmoGetShadowHostId } from "plasmo"
 import { useEffect, useRef, useState } from "react"
 
-import { aviso, AvisoIcon, AvisoMark, visuallyStable } from "~styles/aviso"
-import type { MessageResponse } from "~types/messages"
+import {
+  aviso,
+  AvisoIcon,
+  AvisoMark,
+  useSyncedAvisoTheme,
+  visuallyStable
+} from "~styles/aviso"
+import type { MessageRequest, MessageResponse } from "~types/messages"
+import {
+  isUnsafeDoubleClickTarget,
+  type DoubleClickTargetDescriptor
+} from "~utils/double-click-menu"
+import {
+  shouldShowSlowResponseHint,
+  SLOW_FIRST_CHUNK_MS,
+  SLOW_MODEL_RESPONSE_TEXT
+} from "~utils/response-guard"
 import { getSettings } from "~utils/storage"
-import { logTiming, startTiming } from "~utils/timing"
+import { logTiming, markTiming, startTiming } from "~utils/timing"
+import {
+  formatTranslationError,
+  formatTranslationUserBubble,
+  getInlineTranslationRoute,
+  getTranslationTargetLabel,
+  normalizeTranslationTargetLanguage,
+  type TranslationTargetLanguage
+} from "~utils/translation"
 
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"],
@@ -19,6 +42,21 @@ type ToolbarPosition = {
   top: number
   left: number
   placement: ToolbarPlacement
+}
+type InlineTranslationMode = "loading" | "success" | "error" | "fallback"
+type InlineTranslationCardState = {
+  visible: boolean
+  mode: InlineTranslationMode
+  top: number
+  left: number
+  placement: ToolbarPlacement
+  requestId: string
+  sourceText: string
+  output: string
+  statusText: string
+  error: string
+  targetLabel: string
+  copied: boolean
 }
 type Operation = "explain" | "translate" | "polish" | "summarize" | "send"
 
@@ -53,22 +91,128 @@ const OPERATION_ICON: Record<
 const VIEWPORT_MARGIN = 12
 const TOOLBAR_GAP = 20
 const TOOLBAR_ESTIMATED_HEIGHT = 52
+const INLINE_CARD_WIDTH = 324
+const INLINE_CARD_ESTIMATED_HEIGHT = 218
+const INLINE_CARD_GAP = 12
+const INLINE_TRANSLATION_DEBOUNCE_MS = 180
+const SUPPRESS_SELECTION_TOOLBAR_EVENT = "aviso:suppress-selection-toolbar"
+const SELECTION_TOOLBAR_SUPPRESSION_MS = 700
+
+const INITIAL_INLINE_CARD: InlineTranslationCardState = {
+  visible: false,
+  mode: "loading",
+  top: 0,
+  left: 0,
+  placement: "below",
+  requestId: "",
+  sourceText: "",
+  output: "",
+  statusText: "",
+  error: "",
+  targetLabel: "自动",
+  copied: false
+}
+
+const HOST_IDS = [
+  "contextai-toolbar-host",
+  "contextai-floating-host",
+  "contextai-command-host",
+  "contextai-clipboard-host",
+  "contextai-double-click-menu-host"
+]
+
+const CODE_EDITOR_SELECTOR = [
+  ".ace_editor",
+  ".cm-editor",
+  ".CodeMirror",
+  ".monaco-editor",
+  ".ProseMirror",
+  ".ql-editor",
+  ".tox-edit-area",
+  "[data-slate-editor='true']"
+].join(",")
+
+const UNSAFE_SELECTOR = [
+  "input",
+  "textarea",
+  "select",
+  "option",
+  "[contenteditable='true']",
+  "[contenteditable='']",
+  "[role='textbox']",
+  "[role='combobox']",
+  CODE_EDITOR_SELECTOR
+].join(",")
 
 function SelectionToolbar() {
+  const { tokens: ui } = useSyncedAvisoTheme()
   const [visible, setVisible] = useState(false)
   const [position, setPosition] = useState<ToolbarPosition>({
     top: 0,
     left: 0,
     placement: "above"
   })
+  const [inlineCard, setInlineCard] =
+    useState<InlineTranslationCardState>(INITIAL_INLINE_CARD)
   const [selection, setSelection] = useState("")
   const enabledRef = useRef(true)
+  const inlineEnabledRef = useRef(false)
+  const inlineTargetLanguageRef = useRef<TranslationTargetLanguage>("auto")
+  const inlineRequestRef = useRef("")
   const hideTimer = useRef<ReturnType<typeof setTimeout>>(null)
+  const inlineTimer = useRef<ReturnType<typeof setTimeout>>(null)
+  const inlineCopyTimer = useRef<ReturnType<typeof setTimeout>>(null)
+  const inlineSlowTimer = useRef<ReturnType<typeof setTimeout>>(null)
+  const suppressUntilRef = useRef(0)
+
+  const cancelInlineRequest = (requestId: string) => {
+    if (!requestId) return
+    chrome.runtime.sendMessage({
+      action: "CANCEL_AI_REQUEST",
+      payload: { requestId }
+    })
+  }
+
+  const closeInlineCard = (cancel = true) => {
+    clearTimeout(inlineTimer.current)
+    clearTimeout(inlineCopyTimer.current)
+    clearTimeout(inlineSlowTimer.current)
+    if (cancel && inlineRequestRef.current) {
+      cancelInlineRequest(inlineRequestRef.current)
+    }
+    inlineRequestRef.current = ""
+    setInlineCard(INITIAL_INLINE_CARD)
+  }
+
+  const startInlineSlowHintTimer = (requestId: string) => {
+    clearTimeout(inlineSlowTimer.current)
+    inlineSlowTimer.current = setTimeout(() => {
+      setInlineCard((prev) => {
+        if (
+          prev.requestId !== requestId ||
+          inlineRequestRef.current !== requestId ||
+          !shouldShowSlowResponseHint({
+            loading: prev.mode === "loading",
+            hasFirstChunk: prev.output.trim().length > 0,
+            elapsedMs: SLOW_FIRST_CHUNK_MS
+          })
+        ) {
+          return prev
+        }
+
+        return { ...prev, statusText: SLOW_MODEL_RESPONSE_TEXT }
+      })
+    }, SLOW_FIRST_CHUNK_MS)
+  }
 
   // 读取并持续跟踪「划词工具栏」开关
   useEffect(() => {
     getSettings().then((s) => {
       enabledRef.current = s.enableToolbar
+      inlineEnabledRef.current = s.enableInlineTranslation
+      inlineTargetLanguageRef.current = normalizeTranslationTargetLanguage(
+        s.inlineTranslationTargetLanguage
+      )
     })
     const onChange = (
       changes: Record<string, chrome.storage.StorageChange>,
@@ -76,11 +220,24 @@ function SelectionToolbar() {
     ) => {
       if (area === "sync" && changes.contextai_settings) {
         const next = changes.contextai_settings.newValue as
-          | { enableToolbar?: boolean }
+          | {
+              enableToolbar?: boolean
+              enableInlineTranslation?: boolean
+              inlineTranslationTargetLanguage?: unknown
+            }
           | undefined
         if (next && typeof next.enableToolbar === "boolean") {
           enabledRef.current = next.enableToolbar
           if (!next.enableToolbar) setVisible(false)
+        }
+        if (next && typeof next.enableInlineTranslation === "boolean") {
+          inlineEnabledRef.current = next.enableInlineTranslation
+          if (!next.enableInlineTranslation) closeInlineCard()
+        }
+        if (next && "inlineTranslationTargetLanguage" in next) {
+          inlineTargetLanguageRef.current = normalizeTranslationTargetLanguage(
+            next.inlineTranslationTargetLanguage
+          )
         }
       }
     }
@@ -89,31 +246,326 @@ function SelectionToolbar() {
   }, [])
 
   useEffect(() => {
+    const listener = (message: MessageRequest) => {
+      if (message.action === "AI_STREAM_CHUNK") {
+        const { chunk, requestId } = message.payload
+        if (requestId !== inlineRequestRef.current) return
+
+        setInlineCard((prev) => {
+          if (prev.requestId !== requestId) return prev
+          return {
+            ...prev,
+            mode: chunk.done ? "success" : prev.mode,
+            output: prev.output + chunk.text,
+            statusText: chunk.text ? "" : prev.statusText
+          }
+        })
+
+        if (chunk.done) {
+          inlineRequestRef.current = ""
+          clearTimeout(inlineSlowTimer.current)
+          setInlineCard((prev) =>
+            prev.requestId === requestId
+              ? { ...prev, mode: "success", statusText: "" }
+              : prev
+          )
+        }
+      }
+
+      if (message.action === "AI_STREAM_ERROR") {
+        const { error, requestId } = message.payload
+        if (requestId !== inlineRequestRef.current) return
+        inlineRequestRef.current = ""
+        clearTimeout(inlineSlowTimer.current)
+        setInlineCard((prev) =>
+          prev.requestId === requestId
+            ? {
+                ...prev,
+                mode: "error",
+                statusText: "",
+                error: formatTranslationError(error)
+              }
+            : prev
+        )
+      }
+    }
+
+    chrome.runtime.onMessage.addListener(listener)
+    return () => chrome.runtime.onMessage.removeListener(listener)
+  }, [])
+
+  const sendInlineTranslationRequest = (
+    requestId: string,
+    sourceText: string,
+    timing: ReturnType<typeof startTiming>
+  ) => {
+    if (inlineRequestRef.current !== requestId) return
+    const requestTiming = markTiming(timing, "aiRequestSentAt")
+    logTiming("ai_request_sent", requestId, requestTiming, {
+      trigger: "inline-translation",
+      operation: "translate",
+      selectionChars: sourceText.length
+    })
+    startInlineSlowHintTimer(requestId)
+
+    chrome.runtime.sendMessage(
+      {
+        action: "AI_REQUEST",
+        requestId,
+        payload: {
+          trigger: "inline-translation",
+          operation: "translate",
+          selectionText: sourceText,
+          timing: requestTiming
+        }
+      },
+      (response?: MessageResponse) => {
+        const runtimeError = chrome.runtime.lastError
+        if (runtimeError) {
+          clearTimeout(inlineSlowTimer.current)
+          setInlineCard((prev) =>
+            prev.requestId === requestId &&
+            inlineRequestRef.current === requestId
+              ? {
+                  ...prev,
+                  mode: "error",
+                  statusText: "",
+                  error: formatTranslationError(runtimeError.message)
+                }
+              : prev
+          )
+          inlineRequestRef.current = ""
+          return
+        }
+
+        if (response && !response.success && response.error) {
+          clearTimeout(inlineSlowTimer.current)
+          setInlineCard((prev) =>
+            prev.requestId === requestId &&
+            inlineRequestRef.current === requestId
+              ? {
+                  ...prev,
+                  mode: "error",
+                  statusText: "",
+                  error: formatTranslationError(response.error as string)
+                }
+              : prev
+          )
+          inlineRequestRef.current = ""
+        }
+      }
+    )
+  }
+
+  const showInlineTranslationForSelection = (
+    sourceText: string,
+    rect: DOMRect
+  ) => {
+    const route = getInlineTranslationRoute(sourceText)
+    const position = getInlineCardPosition(rect)
+    const requestId = `inline-${Date.now()}`
+    const timing = startTiming()
+    const targetLabel = getTranslationTargetLabel(
+      inlineTargetLanguageRef.current
+    )
+
+    clearTimeout(inlineTimer.current)
+    clearTimeout(inlineCopyTimer.current)
+    if (inlineRequestRef.current) {
+      cancelInlineRequest(inlineRequestRef.current)
+      inlineRequestRef.current = ""
+    }
+
+    logTiming("trigger", requestId, timing, {
+      trigger: "inline-translation",
+      operation: "translate",
+      inlineRoute: route.route,
+      routeReason: route.reason,
+      selectionChars: sourceText.length
+    })
+
+    if (route.route === "result-panel") {
+      if (route.reason === "empty") return
+      setInlineCard({
+        visible: true,
+        mode: "fallback",
+        requestId,
+        sourceText,
+        output: "",
+        statusText: "",
+        error:
+          route.reason === "too_many_lines"
+            ? "选区行数较多，建议在结果面板中翻译。"
+            : "选区较长，建议在结果面板中翻译。",
+        targetLabel,
+        copied: false,
+        ...position
+      })
+      return
+    }
+
+    inlineRequestRef.current = requestId
+    setInlineCard({
+      visible: true,
+      mode: "loading",
+      requestId,
+      sourceText,
+      output: "",
+      statusText: "",
+      error: "",
+      targetLabel,
+      copied: false,
+      ...position
+    })
+    inlineTimer.current = setTimeout(
+      () => sendInlineTranslationRequest(requestId, sourceText, timing),
+      INLINE_TRANSLATION_DEBOUNCE_MS
+    )
+  }
+
+  const retryInlineTranslation = () => {
+    if (!inlineCard.sourceText.trim()) return
+    const requestId = `inline-${Date.now()}`
+    const timing = startTiming()
+    clearTimeout(inlineTimer.current)
+    clearTimeout(inlineSlowTimer.current)
+    if (inlineRequestRef.current) cancelInlineRequest(inlineRequestRef.current)
+    inlineRequestRef.current = requestId
+    setInlineCard((prev) => ({
+      ...prev,
+      mode: "loading",
+      requestId,
+      output: "",
+      statusText: "",
+      error: "",
+      copied: false
+    }))
+    logTiming("trigger", requestId, timing, {
+      trigger: "inline-translation",
+      operation: "translate",
+      inlineRoute: "retry",
+      selectionChars: inlineCard.sourceText.length
+    })
+    inlineTimer.current = setTimeout(
+      () =>
+        sendInlineTranslationRequest(requestId, inlineCard.sourceText, timing),
+      INLINE_TRANSLATION_DEBOUNCE_MS
+    )
+  }
+
+  const copyInlineTranslation = async () => {
+    const text = inlineCard.output.trim()
+    if (!text) return
+    try {
+      await navigator.clipboard.writeText(text)
+      clearTimeout(inlineCopyTimer.current)
+      setInlineCard((prev) => ({ ...prev, copied: true }))
+      inlineCopyTimer.current = setTimeout(
+        () => setInlineCard((prev) => ({ ...prev, copied: false })),
+        1200
+      )
+    } catch {
+      setInlineCard((prev) => ({
+        ...prev,
+        mode: "error",
+        error: "复制失败，请手动选中译文复制。"
+      }))
+    }
+  }
+
+  const openInlineTranslationInResultPanel = () => {
+    const current = inlineCard
+    if (!current.sourceText.trim()) return
+    const requestId = `req-${Date.now()}`
+    const timing = startTiming()
+    const translatedText = current.output.trim()
+    closeInlineCard(current.mode === "loading")
+
+    chrome.runtime.sendMessage(
+      {
+        action: "SHOW_FLOATING_WINDOW",
+        payload: translatedText
+          ? {
+              requestId,
+              trigger: "inline-translation",
+              operation: "translate",
+              restore: {
+                input: formatTranslationUserBubble(current.sourceText),
+                output: translatedText,
+                messages: [
+                  {
+                    role: "user",
+                    content: formatTranslationUserBubble(current.sourceText),
+                    operation: "translate",
+                    trigger: "inline-translation"
+                  },
+                  {
+                    role: "assistant",
+                    content: translatedText,
+                    reqId: requestId,
+                    operation: "translate",
+                    trigger: "inline-translation"
+                  }
+                ],
+                createdAt: Date.now()
+              }
+            }
+          : {
+              requestId,
+              trigger: "inline-translation",
+              operation: "translate",
+              selectionText: current.sourceText,
+              timing
+            }
+      },
+      (response?: MessageResponse) => {
+        const runtimeError = chrome.runtime.lastError
+        if (runtimeError) {
+          console.warn("[Aviso] Inline translation result panel failed", {
+            requestId,
+            error: runtimeError.message
+          })
+          return
+        }
+
+        if (response && !response.success) {
+          console.warn("[Aviso] Inline translation result panel rejected", {
+            requestId,
+            error: response.error
+          })
+        }
+      }
+    )
+  }
+
+  useEffect(() => {
     const isInsideAvisoUI = (e: MouseEvent): boolean => {
-      const hostIds = [
-        "contextai-toolbar-host",
-        "contextai-floating-host",
-        "contextai-command-host",
-        "contextai-clipboard-host"
-      ]
       const path = e.composedPath()
       // composedPath() 穿透 Shadow DOM 边界，host.contains() 无法做到
-      return hostIds.some((id) => {
+      return HOST_IDS.some((id) => {
         const host = document.getElementById(id)
         return !!host && path.includes(host)
       })
     }
 
     const handleMouseUp = (e: MouseEvent) => {
-      if (!enabledRef.current) return
+      const toolbarEnabled = enabledRef.current
+      const inlineEnabled = inlineEnabledRef.current
+      if (!toolbarEnabled && !inlineEnabled) return
+      if (Date.now() < suppressUntilRef.current) {
+        setVisible(false)
+        closeInlineCard()
+        return
+      }
       // 点击工具栏自身时不重新定位
       if (isInsideAvisoUI(e)) return
 
       const sel = window.getSelection()
       const text = sel?.toString().trim() ?? ""
 
-      if (!text || text.length < 2) {
+      if (!text) {
         hideTimer.current = setTimeout(() => setVisible(false), 200)
+        closeInlineCard()
         return
       }
 
@@ -124,8 +576,20 @@ function SelectionToolbar() {
       const rect = range.getBoundingClientRect()
       if (!rect.width && !rect.height) {
         setVisible(false)
+        closeInlineCard()
         return
       }
+
+      if (inlineEnabled && isSafeInlineTranslationTarget(e.target)) {
+        showInlineTranslationForSelection(text, rect)
+      }
+
+      if (text.length < 2) {
+        setVisible(false)
+        return
+      }
+
+      if (!toolbarEnabled) return
       // fixed 定位：直接用视口坐标，无需叠加 scrollY / scrollX
       const hasRoomAbove =
         rect.top >= VIEWPORT_MARGIN + TOOLBAR_GAP + TOOLBAR_ESTIMATED_HEIGHT
@@ -153,11 +617,42 @@ function SelectionToolbar() {
       hideTimer.current = setTimeout(() => setVisible(false), 200)
     }
 
+    const handleSuppressSelectionToolbar = () => {
+      suppressUntilRef.current = Date.now() + SELECTION_TOOLBAR_SUPPRESSION_MS
+      clearTimeout(hideTimer.current)
+      setVisible(false)
+      closeInlineCard()
+    }
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setVisible(false)
+        closeInlineCard()
+      }
+    }
+
+    const handleScroll = () => {
+      setVisible(false)
+      closeInlineCard()
+    }
+
     document.addEventListener("mouseup", handleMouseUp)
     document.addEventListener("mousedown", handleMouseDown)
+    document.addEventListener("keydown", handleKeyDown)
+    window.addEventListener("scroll", handleScroll, true)
+    window.addEventListener(
+      SUPPRESS_SELECTION_TOOLBAR_EVENT,
+      handleSuppressSelectionToolbar
+    )
     return () => {
       document.removeEventListener("mouseup", handleMouseUp)
       document.removeEventListener("mousedown", handleMouseDown)
+      document.removeEventListener("keydown", handleKeyDown)
+      window.removeEventListener("scroll", handleScroll, true)
+      window.removeEventListener(
+        SUPPRESS_SELECTION_TOOLBAR_EVENT,
+        handleSuppressSelectionToolbar
+      )
     }
   }, [])
 
@@ -205,7 +700,7 @@ function SelectionToolbar() {
     )
   }
 
-  if (!visible) return null
+  if (!visible && !inlineCard.visible) return null
 
   const viewportWidth =
     typeof window === "undefined" ? 0 : Math.max(window.innerWidth, 0)
@@ -234,7 +729,9 @@ function SelectionToolbar() {
   const beakLeft = alignStart ? 24 : alignEnd ? "calc(100% - 24px)" : "50%"
 
   return (
-    <div
+    <>
+      {visible && (
+        <div
       style={{
         position: "fixed",
         top: safeTop,
@@ -252,13 +749,13 @@ function SelectionToolbar() {
           display: "flex",
           alignItems: "center",
           gap: "2px",
-          background: aviso.darkSurface,
-          border: `1px solid ${aviso.darkLine}`,
+          background: ui.surface,
+          border: `1px solid ${ui.line}`,
           borderRadius: aviso.radius,
           padding: "6px",
-          boxShadow: aviso.toolbarShadow,
+          boxShadow: ui.toolbarShadow,
           fontFamily: aviso.font,
-          color: aviso.darkText
+          color: ui.text
         }}>
         <span
           style={{
@@ -267,7 +764,7 @@ function SelectionToolbar() {
             justifyContent: "center",
             width: 30,
             height: 30,
-            color: aviso.sage300,
+            color: ui.accent,
             flex: "0 0 auto"
           }}>
           <AvisoMark size={18} />
@@ -276,7 +773,7 @@ function SelectionToolbar() {
           style={{
             width: 1,
             height: 20,
-            background: aviso.darkLine,
+            background: ui.line,
             margin: "0 2px",
             flex: "0 0 auto"
           }}
@@ -292,9 +789,9 @@ function SelectionToolbar() {
               alignItems: "center",
               gap: 7,
               background:
-                op === "send" ? aviso.accentSurface : "transparent",
+                op === "send" ? ui.accentSoft : "transparent",
               border: "none",
-              color: op === "send" ? aviso.sage300 : aviso.darkText,
+              color: op === "send" ? ui.accent : ui.text,
               fontFamily: aviso.font,
               fontSize: "13.5px",
               fontWeight: 500,
@@ -308,12 +805,12 @@ function SelectionToolbar() {
             onMouseEnter={(e) =>
               ((e.currentTarget as HTMLButtonElement).style.background =
                 op === "send"
-                  ? aviso.accentSurfaceStrong
-                  : aviso.darkSurface2)
+                  ? ui.buttonHover
+                  : ui.surface2)
             }
             onMouseLeave={(e) =>
               ((e.currentTarget as HTMLButtonElement).style.background =
-                op === "send" ? aviso.accentSurface : "transparent")
+                op === "send" ? ui.accentSoft : "transparent")
             }>
             <AvisoIcon
               name={OPERATION_ICON[op]}
@@ -333,37 +830,319 @@ function SelectionToolbar() {
           width: 12,
           height: 12,
           transform: "translateX(-50%) rotate(45deg)",
-          background: aviso.darkSurface,
+          background: ui.surface,
           borderRight:
             position.placement === "above"
-              ? `1px solid ${aviso.darkLine}`
+              ? `1px solid ${ui.line}`
               : undefined,
           borderBottom:
             position.placement === "above"
-              ? `1px solid ${aviso.darkLine}`
+              ? `1px solid ${ui.line}`
               : undefined,
           borderLeft:
             position.placement === "below"
-              ? `1px solid ${aviso.darkLine}`
+              ? `1px solid ${ui.line}`
               : undefined,
           borderTop:
             position.placement === "below"
-              ? `1px solid ${aviso.darkLine}`
+              ? `1px solid ${ui.line}`
               : undefined
         }}
       />
       <style>{`
         .aviso-toolbar-button:focus-visible {
-          outline: 2px solid ${aviso.sage400};
+          outline: 2px solid ${ui.accent};
           outline-offset: 2px;
-          box-shadow: ${aviso.focusRing};
+          box-shadow: ${ui.focusRing};
         }
         .aviso-toolbar-button:active {
           transform: translateY(1px);
         }
       `}</style>
+        </div>
+      )}
+      {inlineCard.visible && (
+        <InlineTranslationCard
+          card={inlineCard}
+          onClose={() => closeInlineCard()}
+          onCopy={copyInlineTranslation}
+          onRetry={retryInlineTranslation}
+          onOpenResultPanel={openInlineTranslationInResultPanel}
+        />
+      )}
+    </>
+  )
+}
+
+function InlineTranslationCard({
+  card,
+  onClose,
+  onCopy,
+  onRetry,
+  onOpenResultPanel
+}: {
+  card: InlineTranslationCardState
+  onClose: () => void
+  onCopy: () => void
+  onRetry: () => void
+  onOpenResultPanel: () => void
+}) {
+  const { tokens: ui } = useSyncedAvisoTheme()
+  const title =
+    card.targetLabel === "自动"
+      ? "自动翻译"
+      : `翻译为${card.targetLabel}`
+  const canCopy = card.output.trim().length > 0
+  const showRetry = card.mode === "error" || card.mode === "success"
+
+  return (
+    <div
+      role="dialog"
+      aria-label="Aviso 内联翻译"
+      style={{
+        position: "fixed",
+        top: card.top,
+        left: card.left,
+        width: INLINE_CARD_WIDTH,
+        maxWidth: "calc(100vw - 24px)",
+        maxHeight: "min(320px, calc(100vh - 24px))",
+        display: "flex",
+        flexDirection: "column",
+        background: ui.surface,
+        border: `1px solid ${ui.line}`,
+        borderRadius: aviso.radius,
+        boxShadow: ui.popShadow,
+        color: ui.text,
+        fontFamily: aviso.font,
+        zIndex: 2147483647,
+        overflow: "hidden",
+        ...visuallyStable
+      }}>
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 10,
+          padding: "11px 12px",
+          borderBottom: `1px solid ${ui.line}`,
+          minWidth: 0
+        }}>
+        <span
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            gap: 8,
+            minWidth: 0,
+            color: ui.text,
+            fontSize: 13,
+            fontWeight: 750
+          }}>
+          <AvisoMark size={16} style={{ color: ui.accent }} />
+          <span
+            style={{
+              minWidth: 0,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap"
+            }}>
+            {title}
+          </span>
+        </span>
+        <button
+          type="button"
+          aria-label="关闭内联翻译"
+          className="aviso-inline-translation-icon-button"
+          onClick={onClose}
+          style={{
+            display: "inline-flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: 28,
+            height: 28,
+            border: "none",
+            borderRadius: aviso.radiusSm,
+            background: "transparent",
+            color: ui.text3,
+            cursor: "pointer"
+          }}>
+          <AvisoIcon name="close" size={15} />
+        </button>
+      </div>
+
+      <div
+        style={{
+          padding: "12px 13px",
+          minHeight: 68,
+          overflowY: "auto",
+          color: card.mode === "error" ? ui.danger : ui.text2,
+          fontSize: 13.5,
+          lineHeight: 1.55,
+          whiteSpace: "pre-wrap",
+          overflowWrap: "anywhere"
+        }}>
+        {card.mode === "fallback" && card.error}
+        {card.mode === "error" && card.error}
+        {card.mode !== "fallback" && card.mode !== "error" && (
+          <>
+            {card.output || card.statusText || "正在翻译..."}
+            {card.mode === "loading" && (
+              <span
+                style={{
+                  display: "inline-block",
+                  width: 7,
+                  height: "1em",
+                  marginLeft: 3,
+                  borderRadius: 1,
+                  background: ui.accent,
+                  verticalAlign: "-2px"
+                }}
+              />
+            )}
+          </>
+        )}
+      </div>
+
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 6,
+          padding: "9px 10px",
+          borderTop: `1px solid ${ui.line}`
+        }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          {canCopy && (
+            <InlineCardButton
+              icon="copy"
+              label={card.copied ? "已复制" : "复制"}
+              onClick={onCopy}
+            />
+          )}
+          {showRetry && (
+            <InlineCardButton icon="refine" label="重试" onClick={onRetry} />
+          )}
+        </div>
+        <InlineCardButton
+          icon="send"
+          label="发给 AI"
+          onClick={onOpenResultPanel}
+        />
+      </div>
+      <style>{`
+        .aviso-inline-translation-button:hover,
+        .aviso-inline-translation-icon-button:hover {
+          background: ${ui.accentSoft} !important;
+          color: ${ui.text} !important;
+        }
+        .aviso-inline-translation-button:focus-visible,
+        .aviso-inline-translation-icon-button:focus-visible {
+          outline: 2px solid ${ui.accent};
+          outline-offset: 2px;
+          box-shadow: ${ui.focusRing};
+        }
+        .aviso-inline-translation-button:active,
+        .aviso-inline-translation-icon-button:active {
+          transform: translateY(1px);
+        }
+      `}</style>
     </div>
   )
+}
+
+function InlineCardButton({
+  icon,
+  label,
+  onClick
+}: {
+  icon: Parameters<typeof AvisoIcon>[0]["name"]
+  label: string
+  onClick: () => void
+}) {
+  const { tokens: ui } = useSyncedAvisoTheme()
+
+  return (
+    <button
+      type="button"
+      className="aviso-inline-translation-button"
+      onClick={onClick}
+      style={{
+        display: "inline-flex",
+        alignItems: "center",
+        justifyContent: "center",
+        gap: 6,
+        minHeight: 30,
+        border: `1px solid ${ui.line}`,
+        borderRadius: aviso.radiusSm,
+        background: "transparent",
+        color: ui.text2,
+        fontFamily: aviso.font,
+        fontSize: 12,
+        fontWeight: 600,
+        padding: "6px 9px",
+        cursor: "pointer",
+        whiteSpace: "nowrap",
+        transition: `.15s ${aviso.ease}`
+      }}>
+      <AvisoIcon name={icon} size={14} style={{ color: ui.accent }} />
+      {label}
+    </button>
+  )
+}
+
+function getInlineCardPosition(rect: DOMRect): {
+  top: number
+  left: number
+  placement: ToolbarPlacement
+} {
+  const hasRoomBelow =
+    window.innerHeight - rect.bottom >=
+    VIEWPORT_MARGIN + INLINE_CARD_GAP + INLINE_CARD_ESTIMATED_HEIGHT
+  const placement: ToolbarPlacement = hasRoomBelow ? "below" : "above"
+  const preferredTop =
+    placement === "below"
+      ? rect.bottom + INLINE_CARD_GAP
+      : rect.top - INLINE_CARD_GAP - INLINE_CARD_ESTIMATED_HEIGHT
+  const maxLeft = Math.max(
+    VIEWPORT_MARGIN,
+    window.innerWidth - INLINE_CARD_WIDTH - VIEWPORT_MARGIN
+  )
+  const maxTop = Math.max(
+    VIEWPORT_MARGIN,
+    window.innerHeight - INLINE_CARD_ESTIMATED_HEIGHT - VIEWPORT_MARGIN
+  )
+
+  return {
+    placement,
+    left: Math.min(
+      Math.max(rect.left + rect.width / 2 - INLINE_CARD_WIDTH / 2, VIEWPORT_MARGIN),
+      maxLeft
+    ),
+    top: Math.min(Math.max(preferredTop, VIEWPORT_MARGIN), maxTop)
+  }
+}
+
+function isSafeInlineTranslationTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof Element)) return false
+  if (target.closest(UNSAFE_SELECTOR)) return false
+
+  const descriptor = describeInlineTarget(target)
+  return !isUnsafeDoubleClickTarget(descriptor)
+}
+
+function describeInlineTarget(target: Element): DoubleClickTargetDescriptor {
+  const input = target instanceof HTMLInputElement ? target : null
+  const editor = target.closest(CODE_EDITOR_SELECTOR)
+  return {
+    tagName: target.tagName,
+    inputType: input?.type,
+    role: target.getAttribute("role") ?? undefined,
+    isContentEditable: (target as HTMLElement).isContentEditable,
+    id: target.id || editor?.id,
+    className: [target.className, editor?.className].join(" "),
+    ariaLabel: target.getAttribute("aria-label") ?? undefined
+  }
 }
 
 export default SelectionToolbar
