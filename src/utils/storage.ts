@@ -1,5 +1,5 @@
 import CryptoJS from "crypto-js"
-import type { Settings, PromptTemplate } from "~types/history"
+import type { PromptTemplate, ProviderConfig, Settings } from "~types/history"
 
 // AES 加密的固定盐（结合扩展 ID 增强隔离性）
 const getEncryptionKey = (): string => {
@@ -24,10 +24,16 @@ export function decryptApiKey(ciphertext: string): string {
 
 const DEFAULT_SETTINGS: Settings = {
   defaultModel: "gpt-4o-mini",
+  defaultProviderConfigId: "",
+  providerConfigs: [],
+  appearanceTheme: "system",
   doubaoModel: "",
   enableClipboardSense: true,
   enableToolbar: true,
   enableCommandPalette: true,
+  enableDoubleClickMenu: false,
+  enableInlineTranslation: false,
+  inlineTranslationTargetLanguage: "auto",
   templates: []
 }
 
@@ -46,15 +52,27 @@ export async function saveSettings(settings: Partial<Settings>): Promise<void> {
 
 // ── API Keys（加密存 local）────────────────────────────────────────────────
 
-type ApiKeys = { openai: string; anthropic: string; doubao: string }
+export type ApiKeys = {
+  openai: string
+  anthropic: string
+  doubao: string
+  providerConfigKeys: Record<string, string>
+}
 
 export async function getApiKeys(): Promise<ApiKeys> {
   const result = await chrome.storage.local.get("contextai_api_keys")
   const raw = result.contextai_api_keys ?? {}
+  const providerConfigKeys = raw.providerConfigKeys ?? {}
   return {
     openai: raw.openai ? decryptApiKey(raw.openai) : "",
     anthropic: raw.anthropic ? decryptApiKey(raw.anthropic) : "",
-    doubao: raw.doubao ? decryptApiKey(raw.doubao) : ""
+    doubao: raw.doubao ? decryptApiKey(raw.doubao) : "",
+    providerConfigKeys: Object.fromEntries(
+      Object.entries(providerConfigKeys).map(([configId, encrypted]) => [
+        configId,
+        typeof encrypted === "string" ? decryptApiKey(encrypted) : ""
+      ])
+    )
   }
 }
 
@@ -64,11 +82,56 @@ export async function saveApiKey(
 ): Promise<void> {
   const result = await chrome.storage.local.get("contextai_api_keys")
   const current = result.contextai_api_keys ?? {}
+  if (!plainKey.trim()) {
+    const next = { ...current }
+    delete next[provider]
+    await chrome.storage.local.set({ contextai_api_keys: next })
+    return
+  }
+
   await chrome.storage.local.set({
     contextai_api_keys: {
       ...current,
       [provider]: encryptApiKey(plainKey)
     }
+  })
+}
+
+export async function saveProviderConfigApiKey(
+  configId: string,
+  plainKey: string
+): Promise<void> {
+  const result = await chrome.storage.local.get("contextai_api_keys")
+  const current = result.contextai_api_keys ?? {}
+  const providerConfigKeys = { ...(current.providerConfigKeys ?? {}) }
+
+  if (!plainKey.trim()) {
+    delete providerConfigKeys[configId]
+  } else {
+    providerConfigKeys[configId] = encryptApiKey(plainKey)
+  }
+
+  await chrome.storage.local.set({
+    contextai_api_keys: {
+      ...current,
+      providerConfigKeys
+    }
+  })
+}
+
+export async function deleteProviderConfigApiKey(
+  configId: string
+): Promise<void> {
+  await saveProviderConfigApiKey(configId, "")
+}
+
+export async function saveProviderConfigs(
+  providerConfigs: ProviderConfig[],
+  defaultProviderConfigId?: string
+): Promise<void> {
+  await saveSettings({
+    providerConfigs,
+    defaultProviderConfigId: defaultProviderConfigId ?? ""
   })
 }
 

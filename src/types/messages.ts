@@ -1,4 +1,6 @@
 import type { ClipboardType } from "~utils/clipboard-detect"
+import type { CommandQuickActionId } from "~utils/command-access"
+import type { ConversationMessage } from "~types/history"
 import type { ProviderId } from "~utils/model-registry"
 import type { RequestTiming } from "~utils/timing"
 
@@ -30,6 +32,7 @@ export type AIRequestPayload = {
 
 export type ProviderConnectivityPayload = {
   provider: ProviderId
+  providerConfigId?: string
 }
 
 export type ScreenshotRegion = {
@@ -99,7 +102,13 @@ export type MessageRequest =
         deferAiRequest?: boolean
         statusText?: string
         // 从历史恢复：直接回填已有对话，不再调用 AI
-        restore?: { input: string; output: string }
+        restore?: {
+          input: string
+          output: string
+          messages?: ConversationMessage[]
+          createdAt?: number
+          pinned?: boolean
+        }
       }
     }
   | {
@@ -122,8 +131,24 @@ export type MessageRequest =
     }
   | { action: "PARSE_INTENT"; payload: { input: string } }
   | { action: "SEARCH_BOOKMARKS"; payload: { query: string } }
+  | {
+      action: "RUN_COMMAND_QUICK_ACTION"
+      payload: { actionId: CommandQuickActionId }
+    }
   | { action: "OPEN_COMMAND_PALETTE" }
   | { action: "REQUEST_OPEN_COMMAND_PALETTE" }
+  | {
+      action: "REQUEST_START_SCREENSHOT_SELECTION"
+      payload: { pageUrl: string }
+    }
+  | {
+      action: "REQUEST_COPY_CURRENT_CONTEXT"
+      payload: { selectionText?: string; pageUrl: string; title?: string }
+    }
+  | {
+      action: "REQUEST_SUMMARIZE_PAGE"
+      payload: { pageUrl: string }
+    }
   | {
       action: "REQUEST_CLIPBOARD_TOAST"
       payload: { text: string; type: ClipboardType; pageUrl: string }

@@ -97,6 +97,31 @@ export function buildConnectivityValidationSummary(params: {
   }
 }
 
+export function buildConnectivityPreflightSummary(params: {
+  provider: ProviderId
+  modelOrEndpoint: string
+  errorCategory: Extract<
+    ConnectivityErrorCategory,
+    "api_key_missing" | "endpoint_or_model_missing"
+  >
+  notes: string
+}): ConnectivityValidationSummary {
+  const latencyNote =
+    params.errorCategory === "api_key_missing"
+      ? "未发起：API Key 未配置。"
+      : "未发起：模型或接入点未配置。"
+
+  return buildConnectivityValidationSummary({
+    provider: params.provider,
+    modelOrEndpoint: params.modelOrEndpoint,
+    hostPermissionPresent: true,
+    result: "failure",
+    latencyNote,
+    errorCategory: params.errorCategory,
+    notes: params.notes
+  })
+}
+
 export function categorizeConnectivityError(
   error: unknown
 ): ConnectivityErrorCategory {

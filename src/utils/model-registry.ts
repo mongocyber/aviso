@@ -1,4 +1,4 @@
-import type { Settings } from "~types/history"
+import type { ProviderConfig, Settings } from "~types/history"
 
 export type ProviderId = "openai" | "anthropic" | "doubao"
 
@@ -33,12 +33,26 @@ export type ModelRoute = {
   model: ModelMetadata
   requestModel: string
   isFallback: boolean
+  providerConfigId?: string
+  providerConfigName?: string
   missingConfig?: "doubaoModel"
 }
 
 export const DEFAULT_MODEL_ID = "gpt-4o-mini"
 
 export const DOUBAO_BASE_URL = "https://ark.cn-beijing.volces.com/api/v3"
+
+export const LEGACY_PROVIDER_CONFIG_IDS: Record<ProviderId, string> = {
+  openai: "legacy-openai",
+  anthropic: "legacy-anthropic",
+  doubao: "legacy-doubao"
+}
+
+export const PROVIDER_PRIMARY_MODEL: Record<ProviderId, string> = {
+  openai: "gpt-4o-mini",
+  anthropic: "claude-haiku-4-5-20251001",
+  doubao: "doubao"
+}
 
 export const APPROVED_PROVIDER_HOST_PERMISSIONS = [
   "https://api.openai.com/*",
@@ -124,8 +138,22 @@ export function getModelMetadata(modelId: string): ModelMetadata | undefined {
 
 export function resolveModelRoute(
   modelId: string | undefined,
-  settings: Partial<Pick<Settings, "defaultModel" | "doubaoModel">>
+  settings: Partial<
+    Pick<
+      Settings,
+      "defaultModel" | "doubaoModel" | "providerConfigs" | "defaultProviderConfigId"
+    >
+  >
 ): ModelRoute {
+  const defaultConfig =
+    !modelId && settings.defaultProviderConfigId
+      ? getProviderConfigById(settings.providerConfigs, settings.defaultProviderConfigId)
+      : undefined
+
+  if (defaultConfig) {
+    return buildProviderConfigRoute(defaultConfig, settings)
+  }
+
   const selectedModel = modelId ?? settings.defaultModel ?? DEFAULT_MODEL_ID
   const registeredModel = getModelMetadata(selectedModel)
 
@@ -138,6 +166,51 @@ export function resolveModelRoute(
   }
 
   return buildFallbackRoute(selectedModel, "openai")
+}
+
+export function getProviderConfigById(
+  providerConfigs: ProviderConfig[] | undefined,
+  configId: string | undefined
+): ProviderConfig | undefined {
+  if (!configId) return undefined
+  return providerConfigs?.find((config) => config.id === configId)
+}
+
+export function buildProviderConfigRoute(
+  config: ProviderConfig,
+  settings: Partial<Pick<Settings, "doubaoModel">> = {}
+): ModelRoute {
+  const provider = getProviderMetadata(config.provider)
+  const selectedModel =
+    config.provider === "doubao"
+      ? "doubao"
+      : config.model || PROVIDER_PRIMARY_MODEL[config.provider]
+  const model =
+    getModelMetadata(selectedModel) ?? {
+      id: selectedModel,
+      displayName: selectedModel,
+      providerId: config.provider,
+      supportsVision: provider.supportsVision
+    }
+  const requestModel =
+    config.provider === "doubao"
+      ? config.model.trim() || settings.doubaoModel?.trim() || ""
+      : selectedModel
+
+  return {
+    requestedModel: selectedModel,
+    selectedModel,
+    provider,
+    model,
+    requestModel: requestModel || selectedModel,
+    isFallback: !getModelMetadata(selectedModel),
+    providerConfigId: config.id,
+    providerConfigName: config.displayName,
+    missingConfig:
+      provider.requiresEndpointConfig && !requestModel
+        ? provider.endpointSettingKey
+        : undefined
+  }
 }
 
 function buildRegisteredModelRoute(
