@@ -1,13 +1,23 @@
+import type { Settings } from "~types/history"
 import type { MessageRequest, MessageResponse } from "~types/messages"
 import { parseIntentLocally } from "~utils/intent"
-import { bucketScreenshotDataUrl } from "~utils/screenshot"
+import {
+  bucketScreenshotDataUrl,
+  normalizeScreenshotCaptureError
+} from "~utils/screenshot"
+import {
+  hasDefaultModelChanged,
+  haveTemplatesChanged
+} from "~utils/settings-change"
 import { logTiming, markTiming } from "~utils/timing"
 
 import { handleAIRequest, handleProviderConnectivityTest } from "./ai-client"
+import { handleCommandQuickAction } from "./command-actions"
 import {
+  copyCurrentContextFromFrame,
   handleContextMenuClick,
   registerContextMenus,
-  registerSelectionMenuPreviewUpdater,
+  summarizePageFromFrame,
   syncModelMenuSelection
 } from "./context-menus"
 import { sendMessageToDisplayFrame, sendMessageToFrame } from "./frame-router"
@@ -22,11 +32,15 @@ import {
 
 const MAX_BOOKMARK_RESULTS = 12
 const activeAIRequests = new Map<string, AbortController>()
+const SCREENSHOT_AUTH_ENTRY_MESSAGE = "截图需要从浏览器扩展入口启动"
+const SCREENSHOT_AUTH_ENTRY_DETAIL =
+  "请通过右键菜单里的“截图提问”、扩展按钮或浏览器快捷命令重新触发；页面内快捷按钮不会授予截图所需权限。"
 
 type BookmarkSearchSource = "native" | "tree-fallback"
 
 type BookmarkSearchMeta = {
-  query: string
+  hasQuery: boolean
+  queryLength: number
   nativeRawCount: number
   nativeCount: number
   fallbackCount: number
@@ -38,21 +52,53 @@ type BookmarkSearchMeta = {
 
 // ── 初始化 ──────────────────────────────────────────────────────────────────
 
+let contextMenusInitialized = false
+
+function ensureContextMenusRegistered(reason: string) {
+  if (contextMenusInitialized) return
+  contextMenusInitialized = true
+  void registerContextMenus().catch((err) => {
+    contextMenusInitialized = false
+    const error = err instanceof Error ? err.message : String(err)
+    console.warn("[Aviso] Failed to register context menus", {
+      reason,
+      error
+    })
+  })
+}
+
 chrome.runtime.onInstalled.addListener(() => {
-  registerContextMenus()
+  contextMenusInitialized = false
+  ensureContextMenusRegistered("installed")
   console.log("[Aviso] Extension installed / updated")
 })
 
+chrome.runtime.onStartup.addListener(() => {
+  contextMenusInitialized = false
+  ensureContextMenusRegistered("startup")
+})
+
 chrome.contextMenus.onClicked.addListener(handleContextMenuClick)
-registerSelectionMenuPreviewUpdater()
+setTimeout(() => ensureContextMenusRegistered("service-worker-start"), 0)
 
 // 默认模型在别处（Popup / 右键 radio）变更时，同步右键菜单勾选
 chrome.storage.onChanged.addListener((changes, area) => {
   if (area === "sync" && changes.contextai_settings) {
-    const next = changes.contextai_settings.newValue as
-      | { defaultModel?: string }
+    const previous = changes.contextai_settings.oldValue as
+      | Partial<Settings>
       | undefined
-    if (next?.defaultModel) syncModelMenuSelection(next.defaultModel)
+    const next = changes.contextai_settings.newValue as
+      | Partial<Settings>
+      | undefined
+
+    if (haveTemplatesChanged(previous, next)) {
+      void registerContextMenus()
+      return
+    }
+
+    if (hasDefaultModelChanged(previous, next) && next?.defaultModel) {
+      syncModelMenuSelection(next.defaultModel)
+    }
   }
 })
 
@@ -227,23 +273,30 @@ async function handleMessage(
           break
         }
 
-        const dataUrl = await chrome.tabs.captureVisibleTab(
-          sender.tab.windowId,
-          { format: "png" }
-        )
-        const timing = markTiming(
-          request.payload.timing,
-          "screenshotCaptureReadyAt"
-        )
-        logTiming(
-          "screenshot_capture_ready",
-          request.payload.requestId,
-          timing,
-          {
-            imageSizeBucket: bucketScreenshotDataUrl(dataUrl)
-          }
-        )
-        sendResponse({ success: true, data: { dataUrl, timing } })
+        try {
+          const dataUrl = await chrome.tabs.captureVisibleTab(
+            sender.tab.windowId,
+            { format: "png" }
+          )
+          const timing = markTiming(
+            request.payload.timing,
+            "screenshotCaptureReadyAt"
+          )
+          logTiming(
+            "screenshot_capture_ready",
+            request.payload.requestId,
+            timing,
+            {
+              imageSizeBucket: bucketScreenshotDataUrl(dataUrl)
+            }
+          )
+          sendResponse({ success: true, data: { dataUrl, timing } })
+        } catch (err) {
+          sendResponse({
+            success: false,
+            error: normalizeScreenshotCaptureError(err, sender.url)
+          })
+        }
         break
       }
 
@@ -252,6 +305,15 @@ async function handleMessage(
         const { results, meta } = await searchBookmarks(request.payload.query)
         console.info("[Aviso] Bookmark search:", meta)
         sendResponse({ success: true, data: results, meta })
+        break
+      }
+
+      case "RUN_COMMAND_QUICK_ACTION": {
+        const response = await handleCommandQuickAction(
+          request.payload.actionId,
+          sender
+        )
+        sendResponse(response)
         break
       }
 
@@ -279,6 +341,94 @@ async function handleMessage(
             ? { success: true }
             : { success: false, error: result.error }
         )
+        break
+      }
+
+      case "REQUEST_START_SCREENSHOT_SELECTION": {
+        if (!senderTabId) {
+          sendResponse({
+            success: false,
+            error: "Cannot start screenshot without sender tab"
+          })
+          break
+        }
+
+        const result = await sendMessageToDisplayFrame(
+          senderTabId,
+          {
+            action: "SHOW_COPY_CONTEXT_TOAST",
+            payload: {
+              status: "failure",
+              message: SCREENSHOT_AUTH_ENTRY_MESSAGE,
+              detail: SCREENSHOT_AUTH_ENTRY_DETAIL
+            }
+          },
+          {
+            fallbackFrameId: sender.frameId,
+            fallbackFrameUrl: sender.url,
+            label: "page-screenshot-auth-toast"
+          }
+        )
+
+        sendResponse(
+          result.ok === true
+            ? { success: true }
+            : { success: false, error: result.error }
+        )
+        break
+      }
+
+      case "REQUEST_COPY_CURRENT_CONTEXT": {
+        const activeTab =
+          senderTabId === undefined
+            ? (
+                await chrome.tabs.query({
+                  active: true,
+                  currentWindow: true
+                })
+              )[0]
+            : undefined
+        const targetTabId = senderTabId ?? activeTab?.id
+
+        if (!targetTabId) {
+          sendResponse({
+            success: false,
+            error: "Cannot copy context without sender tab"
+          })
+          break
+        }
+
+        await copyCurrentContextFromFrame({
+          tabId: targetTabId,
+          sourceFrameId: sender.frameId ?? 0,
+          sourceFrameUrl: sender.url ?? activeTab?.url,
+          sourcePageUrl:
+            request.payload.pageUrl || sender.url || activeTab?.url || "",
+          tabTitle: request.payload.title ?? activeTab?.title,
+          selectionText: request.payload.selectionText,
+          label: senderTabId === undefined ? "popup-local-card" : "double-click-menu"
+        })
+        sendResponse({ success: true })
+        break
+      }
+
+      case "REQUEST_SUMMARIZE_PAGE": {
+        if (!senderTabId) {
+          sendResponse({
+            success: false,
+            error: "Cannot summarize page without sender tab"
+          })
+          break
+        }
+
+        await summarizePageFromFrame({
+          tabId: senderTabId,
+          sourceFrameId: sender.frameId ?? 0,
+          sourceFrameUrl: sender.url,
+          sourcePageUrl: request.payload.pageUrl || sender.url || "",
+          trigger: "double-click-menu"
+        })
+        sendResponse({ success: true })
         break
       }
 
@@ -414,7 +564,8 @@ async function searchBookmarks(query: string): Promise<{
     return {
       results: [],
       meta: {
-        query: "",
+        hasQuery: false,
+        queryLength: 0,
         nativeRawCount: 0,
         nativeCount: 0,
         fallbackCount: 0,
@@ -448,7 +599,8 @@ async function searchBookmarks(query: string): Promise<{
     source === "tree-fallback" ? fallbackBookmarks : nativeBookmarks
   const results = sourceResults.slice(0, MAX_BOOKMARK_RESULTS)
   const meta: BookmarkSearchMeta = {
-    query: trimmedQuery,
+    hasQuery: true,
+    queryLength: trimmedQuery.length,
     nativeRawCount: nativeResults.length,
     nativeCount: nativeBookmarks.length,
     fallbackCount: fallbackBookmarks.length,

@@ -1,5 +1,9 @@
 import type { ContextMenuContext, MessageResponse } from "~types/messages"
 import {
+  getTemplateParentMenuContexts,
+  normalizeTemplateMenuContexts
+} from "~utils/context-menu-templates"
+import {
   isSupportedImageSrc,
   UNSUPPORTED_IMAGE_SRC_MESSAGE
 } from "~utils/image-src"
@@ -29,7 +33,6 @@ const MENU_ID_COPY_CONTEXT = "contextai-copy-context"
 const MENU_ID_TEMPLATES = "contextai-templates"
 const MENU_ID_MODEL_SEPARATOR = "contextai-model-sep"
 const MENU_ID_MODEL_PREFIX = "contextai-model-"
-const SELECTION_PREVIEW_MAX_CHARS = 20
 
 const MODELS = [
   { id: "gpt-4o-mini", label: "GPT-4o mini" },
@@ -48,181 +51,151 @@ const ALL_CONTEXTS: chrome.contextMenus.ContextType[] = [
   "page"
 ]
 
-type ContextMenusWithShown = typeof chrome.contextMenus & {
-  onShown?: chrome.events.Event<
-    (info: chrome.contextMenus.OnClickData, tab?: chrome.tabs.Tab) => void
-  >
-  refresh?: (callback?: () => void) => void
+let contextMenuRegistration = Promise.resolve()
+
+export function registerContextMenus() {
+  contextMenuRegistration = contextMenuRegistration
+    .catch(() => undefined)
+    .then(registerContextMenusNow)
+  return contextMenuRegistration
 }
 
-const SELECTION_TITLE_UPDATES = [
-  [MENU_ID_EXPLAIN, "解释"],
-  [MENU_ID_TRANSLATE, "翻译"],
-  [MENU_ID_POLISH, "润色"],
-  [MENU_ID_SUMMARIZE, "总结"]
-] as const
-
-export async function registerContextMenus() {
+async function registerContextMenusNow() {
   const settings = await getSettings()
   const currentModel = settings.defaultModel ?? "gpt-4o-mini"
   const templates = settings.templates ?? []
-  chrome.contextMenus.removeAll(() => {
-    // 根菜单（所有上下文可见）
-    chrome.contextMenus.create({
-      id: MENU_ID_ROOT,
-      title: "Aviso",
-      contexts: ["selection", "link", "image", "video", "editable", "page"]
-    })
+  await removeAllContextMenus()
+  // 根菜单（所有上下文可见）
+  chrome.contextMenus.create({
+    id: MENU_ID_ROOT,
+    title: "Aviso",
+    contexts: ["selection", "link", "image", "video", "editable", "page"]
+  })
 
-    // 解释（选中文字时显示预览）
+  // 解释（选中文字）
+  chrome.contextMenus.create({
+    id: MENU_ID_EXPLAIN,
+    parentId: MENU_ID_ROOT,
+    title: "解释选中文本",
+    contexts: ["selection"]
+  })
+
+  // 解释图片（仅图片上下文）
+  chrome.contextMenus.create({
+    id: MENU_ID_IMAGE_EXPLAIN,
+    parentId: MENU_ID_ROOT,
+    title: "解释这张图片",
+    contexts: ["image"]
+  })
+
+  // 翻译（选中文字）
+  chrome.contextMenus.create({
+    id: MENU_ID_TRANSLATE,
+    parentId: MENU_ID_ROOT,
+    title: "翻译选中文本",
+    contexts: ["selection"]
+  })
+
+  // 润色（选中文字）
+  chrome.contextMenus.create({
+    id: MENU_ID_POLISH,
+    parentId: MENU_ID_ROOT,
+    title: "润色选中文本",
+    contexts: ["selection"]
+  })
+
+  // 润色（可编辑区域）
+  chrome.contextMenus.create({
+    id: MENU_ID_POLISH_EDITABLE,
+    parentId: MENU_ID_ROOT,
+    title: "润色文字",
+    contexts: ["editable"]
+  })
+
+  // 总结（选中文字）
+  chrome.contextMenus.create({
+    id: MENU_ID_SUMMARIZE,
+    parentId: MENU_ID_ROOT,
+    title: "总结选中文本",
+    contexts: ["selection"]
+  })
+
+  // 总结视频——保留非 selection 场景的静态标题
+  chrome.contextMenus.create({
+    id: MENU_ID_SUMMARIZE_VIDEO,
+    parentId: MENU_ID_ROOT,
+    title: "总结内容",
+    contexts: ["video"]
+  })
+
+  // 总结链接——Chrome 仅在 link 上下文显示，标题随上下文区分
+  chrome.contextMenus.create({
+    id: MENU_ID_SUMMARIZE_LINK,
+    parentId: MENU_ID_ROOT,
+    title: "总结这个链接",
+    contexts: ["link"]
+  })
+
+  // 总结页面——Chrome 仅在 page（空白处）上下文显示
+  chrome.contextMenus.create({
+    id: MENU_ID_SUMMARIZE_PAGE,
+    parentId: MENU_ID_ROOT,
+    title: "总结当前页面",
+    contexts: ["page"]
+  })
+
+  // 用户手动框选当前可见区域后再发送给支持视觉的模型
+  chrome.contextMenus.create({
+    id: MENU_ID_SCREENSHOT_ASK,
+    parentId: MENU_ID_ROOT,
+    title: "截图提问（内部试用）",
+    contexts: ["page"]
+  })
+
+  // 手动复制当前页面上下文到剪贴板，不调用 AI，不持久化。
+  chrome.contextMenus.create({
+    id: MENU_ID_COPY_CONTEXT,
+    parentId: MENU_ID_ROOT,
+    title: "复制当前上下文",
+    contexts: ["page", "selection"]
+  })
+
+  // 自定义模板子菜单（仅在有模板时创建，子项随设置动态生成）
+  if (templates.length > 0) {
+    const templateParentContexts = getTemplateParentMenuContexts(templates)
     chrome.contextMenus.create({
-      id: MENU_ID_EXPLAIN,
+      id: MENU_ID_TEMPLATES,
       parentId: MENU_ID_ROOT,
-      title: "解释“%s”",
-      contexts: ["selection"]
+      title: "自定义模板 ▸",
+      contexts: templateParentContexts
     })
-
-    // 解释图片（仅图片上下文）
-    chrome.contextMenus.create({
-      id: MENU_ID_IMAGE_EXPLAIN,
-      parentId: MENU_ID_ROOT,
-      title: "解释这张图片",
-      contexts: ["image"]
-    })
-
-    // 翻译（选中文字时使用 Chrome 原生 %s 预览）
-    chrome.contextMenus.create({
-      id: MENU_ID_TRANSLATE,
-      parentId: MENU_ID_ROOT,
-      title: "翻译“%s”",
-      contexts: ["selection"]
-    })
-
-    // 润色（选中文字时使用 Chrome 原生 %s 预览）
-    chrome.contextMenus.create({
-      id: MENU_ID_POLISH,
-      parentId: MENU_ID_ROOT,
-      title: "润色“%s”",
-      contexts: ["selection"]
-    })
-
-    // 润色（可编辑区域）
-    chrome.contextMenus.create({
-      id: MENU_ID_POLISH_EDITABLE,
-      parentId: MENU_ID_ROOT,
-      title: "润色文字",
-      contexts: ["editable"]
-    })
-
-    // 总结（选中文字时使用 Chrome 原生 %s 预览）
-    chrome.contextMenus.create({
-      id: MENU_ID_SUMMARIZE,
-      parentId: MENU_ID_ROOT,
-      title: "总结“%s”",
-      contexts: ["selection"]
-    })
-
-    // 总结视频——保留非 selection 场景的静态标题
-    chrome.contextMenus.create({
-      id: MENU_ID_SUMMARIZE_VIDEO,
-      parentId: MENU_ID_ROOT,
-      title: "总结内容",
-      contexts: ["video"]
-    })
-
-    // 总结链接——Chrome 仅在 link 上下文显示，标题随上下文区分
-    chrome.contextMenus.create({
-      id: MENU_ID_SUMMARIZE_LINK,
-      parentId: MENU_ID_ROOT,
-      title: "总结这个链接",
-      contexts: ["link"]
-    })
-
-    // 总结页面——Chrome 仅在 page（空白处）上下文显示
-    chrome.contextMenus.create({
-      id: MENU_ID_SUMMARIZE_PAGE,
-      parentId: MENU_ID_ROOT,
-      title: "总结当前页面",
-      contexts: ["page"]
-    })
-
-    // 用户手动框选当前可见区域后再发送给支持视觉的模型
-    chrome.contextMenus.create({
-      id: MENU_ID_SCREENSHOT_ASK,
-      parentId: MENU_ID_ROOT,
-      title: "截图提问",
-      contexts: ["page"]
-    })
-
-    // 手动复制当前页面上下文到剪贴板，不调用 AI，不持久化。
-    chrome.contextMenus.create({
-      id: MENU_ID_COPY_CONTEXT,
-      parentId: MENU_ID_ROOT,
-      title: "复制当前上下文",
-      contexts: ["page", "selection"]
-    })
-
-    // 自定义模板子菜单（仅在有模板时创建，子项随设置动态生成）
-    if (templates.length > 0) {
+    templates.forEach((tpl) => {
+      const contexts = normalizeTemplateMenuContexts(tpl.contexts)
       chrome.contextMenus.create({
-        id: MENU_ID_TEMPLATES,
-        parentId: MENU_ID_ROOT,
-        title: "自定义模板 ▸",
-        contexts: ALL_CONTEXTS
+        id: `contextai-template-${tpl.id}`,
+        parentId: MENU_ID_TEMPLATES,
+        title: tpl.name,
+        contexts
       })
-      templates.forEach((tpl) => {
-        const contexts = (
-          tpl.contexts?.length ? tpl.contexts : ["selection"]
-        ) as chrome.contextMenus.ContextType[]
-        chrome.contextMenus.create({
-          id: `contextai-template-${tpl.id}`,
-          parentId: MENU_ID_TEMPLATES,
-          title: tpl.name,
-          contexts
-        })
-      })
-    }
-
-    // 模型切换分隔线
-    chrome.contextMenus.create({
-      id: MENU_ID_MODEL_SEPARATOR,
-      parentId: MENU_ID_ROOT,
-      type: "separator",
-      contexts: ["selection", "link", "image", "video", "editable", "page"]
     })
+  }
 
-    // 模型选项（勾选项跟随已保存的默认模型）
-    registerModelMenuItems(currentModel)
+  // 模型切换分隔线
+  chrome.contextMenus.create({
+    id: MENU_ID_MODEL_SEPARATOR,
+    parentId: MENU_ID_ROOT,
+    type: "separator",
+    contexts: ["selection", "link", "image", "video", "editable", "page"]
   })
+
+  // 模型选项（勾选项跟随已保存的默认模型）
+  registerModelMenuItems(currentModel)
 }
 
-export function registerSelectionMenuPreviewUpdater() {
-  const contextMenus = chrome.contextMenus as ContextMenusWithShown
-  contextMenus.onShown?.addListener((info) => {
-    if (!info.selectionText) return
-
-    const preview = buildSelectionPreview(info.selectionText)
-    let pendingUpdates = SELECTION_TITLE_UPDATES.length
-    SELECTION_TITLE_UPDATES.forEach(([id, action]) => {
-      chrome.contextMenus.update(
-        id,
-        {
-          title: `${action}“${preview}”`
-        },
-        () => {
-          pendingUpdates -= 1
-          if (pendingUpdates === 0) contextMenus.refresh?.()
-        }
-      )
-    })
+function removeAllContextMenus() {
+  return new Promise<void>((resolve) => {
+    chrome.contextMenus.removeAll(() => resolve())
   })
-}
-
-function buildSelectionPreview(selectionText: string) {
-  const text = selectionText.trim()
-  return text.length > SELECTION_PREVIEW_MAX_CHARS
-    ? `${text.slice(0, SELECTION_PREVIEW_MAX_CHARS)}…`
-    : text
 }
 
 function registerModelMenuItems(currentModel: string) {
@@ -241,9 +214,22 @@ function registerModelMenuItems(currentModel: string) {
 /** 外部（如 Popup）切换默认模型后，同步右键菜单 radio 勾选 */
 export function syncModelMenuSelection(modelId: string) {
   MODELS.forEach(({ id }) => {
-    chrome.contextMenus.update(`${MENU_ID_MODEL_PREFIX}${id}`, {
-      checked: id === modelId
-    })
+    chrome.contextMenus.update(
+      `${MENU_ID_MODEL_PREFIX}${id}`,
+      {
+        checked: id === modelId
+      },
+      () => {
+        const error = chrome.runtime.lastError
+        if (!error) return
+
+        console.warn("[Aviso] Failed to sync context menu model selection", {
+          modelId,
+          menuId: `${MENU_ID_MODEL_PREFIX}${id}`,
+          error: error.message
+        })
+      }
+    )
   })
 }
 
@@ -269,78 +255,26 @@ export async function handleContextMenuClick(
   }
 
   if (menuItemId === MENU_ID_SCREENSHOT_ASK) {
-    const requestId = `req-${Date.now()}`
-    const timing = startTiming()
-    logTiming("trigger", requestId, timing, {
-      trigger: "screenshot",
-      operation: "image_explain",
-      context: "page",
-      frameId: sourceFrameId,
-      frameUrl: sourceFrameUrl
-    })
-
-    await sendMessageToDisplayFrame(
+    await startScreenshotSelectionFromFrame({
       tabId,
-      {
-        action: "START_SCREENSHOT_SELECTION",
-        payload: {
-          requestId,
-          pageUrl: sourcePageUrl,
-          timing
-        }
-      },
-      {
-        fallbackFrameId: sourceFrameId,
-        fallbackFrameUrl: sourceFrameUrl,
-        label: "context-menu-start-screenshot-selection"
-      }
-    )
+      sourceFrameId,
+      sourceFrameUrl,
+      sourcePageUrl,
+      trigger: "screenshot"
+    })
     return
   }
 
   if (menuItemId === MENU_ID_COPY_CONTEXT) {
-    const extracted = await requestPageContentForCopy(
+    await copyCurrentContextFromFrame({
       tabId,
       sourceFrameId,
-      sourceFrameUrl
-    )
-    const text = formatCurrentContext({
-      title: extracted.title || tab.title,
-      url: sourcePageUrl,
+      sourceFrameUrl,
+      sourcePageUrl,
+      tabTitle: tab.title,
       selectionText: info.selectionText,
-      pageContent: extracted.textContent
+      label: "context-menu"
     })
-    const writeResult = await sendMessageToFrame<MessageResponse>(
-      tabId,
-      {
-        action: "WRITE_CURRENT_CONTEXT_TO_CLIPBOARD",
-        payload: { text }
-      },
-      {
-        frameId: sourceFrameId,
-        frameUrl: sourceFrameUrl,
-        label: "context-menu-write-copy-context"
-      }
-    )
-
-    if (writeResult.ok === false) {
-      await sendMessageToDisplayFrame(
-        tabId,
-        {
-          action: "SHOW_COPY_CONTEXT_TOAST",
-          payload: {
-            status: "failure",
-            message: "复制失败",
-            detail: "当前页面无法接收剪贴板写入请求。"
-          }
-        },
-        {
-          fallbackFrameId: sourceFrameId,
-          fallbackFrameUrl: sourceFrameUrl,
-          label: "context-menu-copy-context-failure-toast"
-        }
-      )
-    }
     return
   }
 
@@ -359,6 +293,21 @@ export async function handleContextMenuClick(
 
   const builtinAction = actionMap[menuItemId]
   if (builtinAction) {
+    // 总结当前页面先显示浮窗，再抽取正文，避免用户误以为右键点击无响应。
+    if (menuItemId === MENU_ID_SUMMARIZE_PAGE) {
+      await summarizePageFromFrame({
+        tabId,
+        sourceFrameId,
+        sourceFrameUrl,
+        sourcePageUrl,
+        selectionText: info.selectionText ?? "",
+        linkUrl: info.linkUrl ?? "",
+        srcUrl: info.srcUrl ?? "",
+        trigger: "context-menu"
+      })
+      return
+    }
+
     const requestId = `req-${Date.now()}`
     const timing = startTiming()
     logTiming("trigger", requestId, timing, {
@@ -421,64 +370,6 @@ export async function handleContextMenuClick(
       return
     }
 
-    // 总结当前页面先显示浮窗，再抽取正文，避免用户误以为右键点击无响应。
-    if (menuItemId === MENU_ID_SUMMARIZE_PAGE) {
-      const displayResult = await sendMessageToDisplayFrame(
-        tabId,
-        {
-          action: "SHOW_FLOATING_WINDOW",
-          payload: {
-            ...basePayload,
-            deferAiRequest: true,
-            statusText: "正在读取页面内容…"
-          }
-        },
-        {
-          fallbackFrameId: sourceFrameId,
-          fallbackFrameUrl: sourceFrameUrl,
-          label: "context-menu-show-floating-window"
-        }
-      )
-
-      const { pageContent, timing: contentTiming } = await requestPageContent(
-        tabId,
-        requestId,
-        timing,
-        sourceFrameId,
-        sourceFrameUrl
-      )
-
-      if (displayResult.ok) {
-        await sendMessageToFrame(
-          tabId,
-          {
-            action: "START_FLOATING_AI_REQUEST",
-            payload: {
-              requestId,
-              timing: contentTiming,
-              statusText: WAITING_MODEL_RESPONSE_TEXT,
-              aiPayload: {
-                trigger: "context-menu",
-                operation: builtinAction,
-                context: ctx,
-                selectionText: info.selectionText ?? "",
-                linkUrl: info.linkUrl ?? "",
-                srcUrl: info.srcUrl ?? "",
-                pageUrl: sourcePageUrl,
-                pageContent,
-                timing: contentTiming
-              }
-            }
-          },
-          {
-            frameId: displayResult.frameId,
-            label: "context-menu-start-floating-ai-request"
-          }
-        )
-      }
-      return
-    }
-
     await sendMessageToDisplayFrame(
       tabId,
       {
@@ -528,6 +419,200 @@ export async function handleContextMenuClick(
         fallbackFrameId: sourceFrameId,
         fallbackFrameUrl: sourceFrameUrl,
         label: "context-menu-show-floating-window"
+      }
+    )
+  }
+}
+
+export async function startScreenshotSelectionFromFrame({
+  tabId,
+  sourceFrameId,
+  sourceFrameUrl,
+  sourcePageUrl,
+  trigger
+}: {
+  tabId: number
+  sourceFrameId: number
+  sourceFrameUrl?: string
+  sourcePageUrl: string
+  trigger: string
+}) {
+  const requestId = `req-${Date.now()}`
+  const timing = startTiming()
+  logTiming("trigger", requestId, timing, {
+    trigger,
+    operation: "image_explain",
+    context: "page",
+    frameId: sourceFrameId,
+    frameUrl: sourceFrameUrl
+  })
+
+  await sendMessageToDisplayFrame(
+    tabId,
+    {
+      action: "START_SCREENSHOT_SELECTION",
+      payload: {
+        requestId,
+        pageUrl: sourcePageUrl,
+        timing
+      }
+    },
+    {
+      fallbackFrameId: sourceFrameId,
+      fallbackFrameUrl: sourceFrameUrl,
+      label: `${trigger}-start-screenshot-selection`
+    }
+  )
+}
+
+export async function copyCurrentContextFromFrame({
+  tabId,
+  sourceFrameId,
+  sourceFrameUrl,
+  sourcePageUrl,
+  tabTitle,
+  selectionText,
+  label
+}: {
+  tabId: number
+  sourceFrameId: number
+  sourceFrameUrl?: string
+  sourcePageUrl: string
+  tabTitle?: string
+  selectionText?: string
+  label: string
+}) {
+  const extracted = await requestPageContentForCopy(
+    tabId,
+    sourceFrameId,
+    sourceFrameUrl
+  )
+  const text = formatCurrentContext({
+    title: extracted.title || tabTitle,
+    url: sourcePageUrl,
+    selectionText,
+    pageContent: extracted.textContent
+  })
+  const writeResult = await sendMessageToFrame<MessageResponse>(
+    tabId,
+    {
+      action: "WRITE_CURRENT_CONTEXT_TO_CLIPBOARD",
+      payload: { text }
+    },
+    {
+      frameId: sourceFrameId,
+      frameUrl: sourceFrameUrl,
+      label: `${label}-write-copy-context`
+    }
+  )
+
+  if (writeResult.ok === false) {
+    await sendMessageToDisplayFrame(
+      tabId,
+      {
+        action: "SHOW_COPY_CONTEXT_TOAST",
+        payload: {
+          status: "failure",
+          message: "复制失败",
+          detail: "当前页面无法接收剪贴板写入请求。"
+        }
+      },
+      {
+        fallbackFrameId: sourceFrameId,
+        fallbackFrameUrl: sourceFrameUrl,
+        label: `${label}-copy-context-failure-toast`
+      }
+    )
+  }
+}
+
+export async function summarizePageFromFrame({
+  tabId,
+  sourceFrameId,
+  sourceFrameUrl,
+  sourcePageUrl,
+  selectionText = "",
+  linkUrl = "",
+  srcUrl = "",
+  trigger
+}: {
+  tabId: number
+  sourceFrameId: number
+  sourceFrameUrl?: string
+  sourcePageUrl: string
+  selectionText?: string
+  linkUrl?: string
+  srcUrl?: string
+  trigger: string
+}) {
+  const requestId = `req-${Date.now()}`
+  const timing = startTiming()
+  logTiming("trigger", requestId, timing, {
+    trigger,
+    operation: "summarize",
+    context: "page",
+    frameId: sourceFrameId,
+    frameUrl: sourceFrameUrl
+  })
+
+  const displayResult = await sendMessageToDisplayFrame(
+    tabId,
+    {
+      action: "SHOW_FLOATING_WINDOW",
+      payload: {
+        requestId,
+        trigger,
+        operation: "summarize",
+        context: "page",
+        selectionText,
+        linkUrl,
+        srcUrl,
+        pageUrl: sourcePageUrl,
+        timing,
+        deferAiRequest: true,
+        statusText: "正在读取页面内容…"
+      }
+    },
+    {
+      fallbackFrameId: sourceFrameId,
+      fallbackFrameUrl: sourceFrameUrl,
+      label: `${trigger}-show-floating-window`
+    }
+  )
+
+  const { pageContent, timing: contentTiming } = await requestPageContent(
+    tabId,
+    requestId,
+    timing,
+    sourceFrameId,
+    sourceFrameUrl
+  )
+
+  if (displayResult.ok) {
+    await sendMessageToFrame(
+      tabId,
+      {
+        action: "START_FLOATING_AI_REQUEST",
+        payload: {
+          requestId,
+          timing: contentTiming,
+          statusText: WAITING_MODEL_RESPONSE_TEXT,
+          aiPayload: {
+            trigger,
+            operation: "summarize",
+            context: "page",
+            selectionText,
+            linkUrl,
+            srcUrl,
+            pageUrl: sourcePageUrl,
+            pageContent,
+            timing: contentTiming
+          }
+        }
+      },
+      {
+        frameId: displayResult.frameId,
+        label: `${trigger}-start-floating-ai-request`
       }
     )
   }

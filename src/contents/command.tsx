@@ -1,9 +1,18 @@
 import type { PlasmoCSConfig, PlasmoGetShadowHostId } from "plasmo"
 import { useEffect, useRef, useState } from "react"
 
-import { aviso, AvisoIcon, AvisoMark, visuallyStable } from "~styles/aviso"
+import {
+  aviso,
+  AvisoIcon,
+  AvisoMark,
+  useSyncedAvisoTheme,
+  visuallyStable
+} from "~styles/aviso"
+import type { Settings } from "~types/history"
 import type { MessageRequest, MessageResponse } from "~types/messages"
 import { parseUserIntent } from "~utils/intent"
+import { resolveModelRoute, type ModelRoute } from "~utils/model-registry"
+import { getLegacyProviderFromConfigId } from "~utils/provider-configs"
 import { getSettings } from "~utils/storage"
 import { logTiming, startTiming } from "~utils/timing"
 
@@ -34,18 +43,88 @@ type BookmarkSearchResult = {
   failed: boolean
 }
 
+type AiNotice = {
+  title: string
+  detail: string
+  type: "info" | "error"
+}
+
+type AiConnection = {
+  connected: boolean
+  providerLabel: string
+}
+
 const COMMAND_PANEL_TOP = "clamp(120px, 26vh, 280px)"
 const SEARCH_RESPONSE_TIMEOUT_MS = 4000
-const EMPTY_SEARCH_TEXT = "没有找到已保存历史或书签，按 Enter 发给 AI"
+const EMPTY_SEARCH_TEXT = "没有找到记录或书签"
 const BOOKMARK_SEARCH_ERROR_TEXT = "书签搜索失败，请检查扩展权限或重新加载扩展"
 
+function readSelectionSuggestion(): string {
+  const text = window.getSelection()?.toString().replace(/\s+/g, " ").trim()
+  if (!text) return ""
+  return text.length > 120 ? `${text.slice(0, 120)}…` : text
+}
+
+async function getStoredApiKeyPresence(): Promise<
+  Partial<Record<"openai" | "anthropic" | "doubao", boolean>> & {
+    providerConfigKeys: Record<string, boolean>
+  }
+> {
+  const result = await chrome.storage.local.get("contextai_api_keys")
+  const raw = result.contextai_api_keys ?? {}
+  const providerConfigKeys = raw.providerConfigKeys ?? {}
+  return {
+    openai: Boolean(raw.openai),
+    anthropic: Boolean(raw.anthropic),
+    doubao: Boolean(raw.doubao),
+    providerConfigKeys: Object.fromEntries(
+      Object.keys(providerConfigKeys).map((configId) => [configId, true])
+    )
+  }
+}
+
+function getAiConnectionFromSettings(
+  settings: Settings,
+  keyPresence: Partial<Record<"openai" | "anthropic" | "doubao", boolean>> & {
+    providerConfigKeys: Record<string, boolean>
+  }
+): AiConnection {
+  const route = resolveModelRoute(undefined, settings)
+  const providerId = route.provider.id
+  const legacyProvider = route.providerConfigId
+    ? getLegacyProviderFromConfigId(route.providerConfigId)
+    : undefined
+  const hasKey = route.providerConfigId
+    ? legacyProvider
+      ? Boolean(keyPresence[legacyProvider])
+      : Boolean(keyPresence.providerConfigKeys[route.providerConfigId])
+    : Boolean(keyPresence[providerId])
+  const hasEndpoint =
+    providerId !== "doubao" || route.missingConfig !== "doubaoModel"
+
+  return {
+    connected: hasKey && hasEndpoint,
+    providerLabel: route.provider.displayName
+  }
+}
+
 function CommandPalette() {
+  const { tokens: ui } = useSyncedAvisoTheme()
   const [visible, setVisible] = useState(false)
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<ResultItem[]>([])
   const [loading, setLoading] = useState(false)
   const [searchNotice, setSearchNotice] = useState<SearchNotice | null>(null)
   const [selectedIndex, setSelectedIndex] = useState(0)
+  const [settingsSnapshot, setSettingsSnapshot] = useState<Settings | null>(
+    null
+  )
+  const [aiConnection, setAiConnection] = useState<AiConnection>({
+    connected: false,
+    providerLabel: ""
+  })
+  const [aiNotice, setAiNotice] = useState<AiNotice | null>(null)
+  const [selectionSuggestion, setSelectionSuggestion] = useState("")
   const inputRef = useRef<HTMLInputElement>(null)
   const resultsListRef = useRef<HTMLDivElement>(null)
   const resultItemRefs = useRef<Array<HTMLDivElement | null>>([])
@@ -54,10 +133,24 @@ function CommandPalette() {
   const enabledRef = useRef(true)
   const isComposingRef = useRef(false)
 
+  const openPanel = () => {
+    setSelectionSuggestion(readSelectionSuggestion())
+    setAiNotice(null)
+    setVisible(true)
+    setTimeout(() => inputRef.current?.focus(), 50)
+  }
+
   // 读取并持续跟踪「命令面板」开关
   useEffect(() => {
+    const refreshAiConnection = async (settings: Settings) => {
+      const keyPresence = await getStoredApiKeyPresence()
+      setAiConnection(getAiConnectionFromSettings(settings, keyPresence))
+    }
+
     getSettings().then((s) => {
       enabledRef.current = s.enableCommandPalette
+      setSettingsSnapshot(s)
+      refreshAiConnection(s)
     })
     const onChange = (
       changes: Record<string, chrome.storage.StorageChange>,
@@ -65,12 +158,25 @@ function CommandPalette() {
     ) => {
       if (area === "sync" && changes.contextai_settings) {
         const next = changes.contextai_settings.newValue as
-          | { enableCommandPalette?: boolean }
+          | Partial<Settings>
           | undefined
+        if (next) {
+          setSettingsSnapshot((prev) => {
+            const merged = prev ? { ...prev, ...next } : (next as Settings)
+            refreshAiConnection(merged)
+            return merged
+          })
+        }
         if (next && typeof next.enableCommandPalette === "boolean") {
           enabledRef.current = next.enableCommandPalette
           if (!next.enableCommandPalette) setVisible(false)
         }
+      }
+      if (area === "local" && changes.contextai_api_keys) {
+        getSettings().then((settings) => {
+          setSettingsSnapshot(settings)
+          refreshAiConnection(settings)
+        })
       }
     }
     chrome.storage.onChanged.addListener(onChange)
@@ -89,8 +195,7 @@ function CommandPalette() {
           sendResponse({ success: false, error: "Command palette is disabled" })
           return
         }
-        setVisible(true)
-        setTimeout(() => inputRef.current?.focus(), 50)
+        openPanel()
         sendResponse({ success: true })
       }
     }
@@ -113,7 +218,11 @@ function CommandPalette() {
         if (!enabledRef.current) return
         e.preventDefault()
         setVisible((v) => {
-          if (!v) setTimeout(() => inputRef.current?.focus(), 50)
+          if (!v) {
+            setSelectionSuggestion(readSelectionSuggestion())
+            setAiNotice(null)
+            setTimeout(() => inputRef.current?.focus(), 50)
+          }
           return !v
         })
       }
@@ -137,6 +246,7 @@ function CommandPalette() {
       return
     }
 
+    setAiNotice(null)
     setSearchNotice(null)
     setResults([])
     searchTimer.current = setTimeout(() => doSearch(trimmedQuery, runId), 300)
@@ -260,6 +370,15 @@ function CommandPalette() {
 
   const handleSendToAI = async () => {
     if (!query.trim()) return
+    if (!aiConnection.connected) {
+      setAiNotice({
+        title: "AI 未连接",
+        detail: "请先在 Popup 的 AI 服务页连接自己的 AI 服务。",
+        type: "error"
+      })
+      return
+    }
+
     const requestId = `req-${Date.now()}`
     const timing = startTiming()
     setVisible(false)
@@ -284,6 +403,9 @@ function CommandPalette() {
     })
     setQuery("")
   }
+
+  const getActiveRoute = (): ModelRoute | null =>
+    settingsSnapshot ? resolveModelRoute(undefined, settingsSnapshot) : null
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const nativeEvent = e.nativeEvent as KeyboardEvent & {
@@ -312,6 +434,10 @@ function CommandPalette() {
       } else {
         handleSendToAI()
       }
+    } else if (e.key === "Tab" && !query.trim() && selectionSuggestion) {
+      e.preventDefault()
+      setQuery(selectionSuggestion)
+      setSelectionSuggestion("")
     }
   }
 
@@ -363,13 +489,19 @@ function CommandPalette() {
   if (!visible) return null
 
   const visibleNotice = query.trim() && !loading ? searchNotice : null
+  const activeRoute = getActiveRoute()
+  const statusLabel =
+    aiConnection.connected && activeRoute
+      ? `AI 可用 · ${aiConnection.providerLabel}`
+      : "AI 未连接"
+  const canFillSelection = !query.trim() && selectionSuggestion
 
   return (
     <div
       style={{
         position: "fixed",
         inset: 0,
-        background: "oklch(0 0 0 / .28)",
+        background: ui.overlay,
         backdropFilter: "blur(2px)",
         display: "flex",
         alignItems: "flex-start",
@@ -391,12 +523,12 @@ function CommandPalette() {
         style={{
           width: "560px",
           maxWidth: "100%",
-          background: aviso.darkSurface,
-          border: `1px solid ${aviso.darkLine}`,
+          background: ui.surface,
+          border: `1px solid ${ui.line}`,
           borderRadius: aviso.radiusLg,
-          boxShadow: aviso.popShadow,
+          boxShadow: ui.popShadow,
           overflow: "hidden",
-          color: aviso.darkText,
+          color: ui.text,
           display: "flex",
           flexDirection: "column",
           maxHeight: `calc(100vh - ${COMMAND_PANEL_TOP} - 16px)`,
@@ -411,10 +543,10 @@ function CommandPalette() {
             gap: "12px",
             borderBottom:
               results.length > 0 || visibleNotice
-                ? `1px solid ${aviso.darkLine}`
+                ? `1px solid ${ui.line}`
                 : "none"
           }}>
-          <AvisoMark size={18} style={{ color: aviso.sage400 }} />
+          <AvisoMark size={18} style={{ color: ui.accent }} />
           <input
             className="aviso-command-input"
             ref={inputRef}
@@ -427,30 +559,134 @@ function CommandPalette() {
               isComposingRef.current = false
             }}
             onKeyDown={handleKeyDown}
-            placeholder="搜索历史、书签，或直接发给 AI…"
+            placeholder="搜索历史、书签、AI 对话..."
             style={{
               flex: 1,
               minWidth: 0,
               background: "transparent",
               border: "none",
-              color: aviso.darkText,
+              color: ui.text,
               fontFamily: aviso.font,
               fontSize: "16px",
               outline: "none",
-              caretColor: aviso.sage400
+              caretColor: ui.accent
             }}
           />
           {loading && (
             <span
               style={{
-                color: aviso.darkText3,
+                color: ui.text3,
                 fontSize: "12px",
                 whiteSpace: "nowrap"
               }}>
               搜索中…
             </span>
           )}
+          <span
+            aria-label="AI 状态"
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 6,
+              flex: "0 1 auto",
+              maxWidth: "38%",
+              minWidth: 0,
+              color: ui.text3,
+              fontSize: 12,
+              whiteSpace: "nowrap",
+              overflow: "hidden"
+            }}>
+            <AvisoIcon
+              name="shield"
+              size={14}
+              style={{ flex: "0 0 auto" }}
+            />
+            <span
+              style={{
+                minWidth: 0,
+                overflow: "hidden",
+                textOverflow: "ellipsis"
+              }}>
+              {statusLabel}
+            </span>
+          </span>
         </div>
+
+        {(canFillSelection || aiNotice) && (
+          <div
+            style={{
+              borderTop: `1px solid ${ui.line}`,
+              padding: "10px 14px",
+              display: "grid",
+              gap: 8
+            }}>
+            {canFillSelection && (
+              <div
+                style={{
+                  display: "flex",
+                  gap: 8,
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  border: `1px solid ${ui.line}`,
+                  background: "transparent",
+                  borderRadius: aviso.radiusMd,
+                  padding: "8px 10px",
+                  color: ui.text2,
+                  fontSize: 12
+                }}>
+                <span
+                  style={{
+                    minWidth: 0,
+                    overflow: "hidden",
+                    textOverflow: "ellipsis",
+                    whiteSpace: "nowrap",
+                    color: ui.text3
+                  }}>
+                  选中文字：{selectionSuggestion}
+                </span>
+                <span style={{ flex: "0 0 auto", color: ui.accent }}>
+                  Tab 填入
+                </span>
+              </div>
+            )}
+
+            {aiNotice && (
+              <div
+                style={{
+                  display: "flex",
+                  gap: 9,
+                  alignItems: "flex-start",
+                  border: `1px solid ${
+                    aiNotice.type === "error" ? ui.danger : ui.line
+                  }`,
+                  background:
+                    aiNotice.type === "error"
+                      ? ui.dangerBg
+                      : ui.accentSoft,
+                  borderRadius: aviso.radiusMd,
+                  padding: "9px 10px",
+                  color: ui.text2,
+                  fontSize: 12
+                }}>
+                <AvisoIcon
+                  name={aiNotice.type === "error" ? "warning" : "explain"}
+                  size={15}
+                  style={{
+                    color:
+                      aiNotice.type === "error" ? ui.danger : ui.accent,
+                    marginTop: 1
+                  }}
+                />
+                <div style={{ minWidth: 0 }}>
+                  <div style={{ color: ui.text, fontSize: 12.5 }}>
+                    {aiNotice.title}
+                  </div>
+                  <div style={{ marginTop: 2 }}>{aiNotice.detail}</div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* 结果列表 */}
         {results.length > 0 && (
@@ -476,7 +712,7 @@ function CommandPalette() {
                   cursor: "pointer",
                   background:
                     idx === selectedIndex
-                      ? aviso.accentSurface
+                      ? ui.accentSoft
                       : "transparent",
                   display: "flex",
                   gap: "13px",
@@ -489,14 +725,14 @@ function CommandPalette() {
                   size={18}
                   style={{
                     color:
-                      idx === selectedIndex ? aviso.sage300 : aviso.darkText3
+                      idx === selectedIndex ? ui.accent : ui.text3
                   }}
                 />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
                       fontSize: "14px",
-                      color: aviso.darkText,
+                      color: ui.text,
                       overflow: "hidden",
                       textOverflow: "ellipsis",
                       whiteSpace: "nowrap"
@@ -508,7 +744,7 @@ function CommandPalette() {
                       style={{
                         fontFamily: aviso.mono,
                         fontSize: "11px",
-                        color: aviso.darkText3,
+                        color: ui.text3,
                         marginTop: "2px",
                         overflow: "hidden",
                         textOverflow: "ellipsis",
@@ -525,10 +761,10 @@ function CommandPalette() {
                     fontSize: "10.5px",
                     padding: "2px 7px",
                     borderRadius: aviso.radiusSm,
-                    border: `1px solid ${aviso.darkLine}`,
-                    color: aviso.darkText3
+                    border: `1px solid ${ui.line}`,
+                    color: ui.text3
                   }}>
-                  {item.type === "bookmark" ? "书签" : "已保存历史"}
+                  {item.type === "bookmark" ? "书签" : "AI 对话"}
                 </span>
               </div>
             ))}
@@ -539,13 +775,13 @@ function CommandPalette() {
           <div
             style={{
               borderTop:
-                results.length > 0 ? `1px solid ${aviso.darkLine}` : "none",
+                results.length > 0 ? `1px solid ${ui.line}` : "none",
               padding: "13px 16px",
               display: "flex",
               alignItems: "center",
               gap: 10,
               color:
-                visibleNotice.type === "error" ? aviso.danger : aviso.darkText2,
+                visibleNotice.type === "error" ? ui.danger : ui.text2,
               fontSize: "13px"
             }}>
             <AvisoIcon
@@ -559,35 +795,40 @@ function CommandPalette() {
         {/* 底部提示 */}
         <div
           style={{
-            borderTop: `1px solid ${aviso.darkLine}`,
+            borderTop: `1px solid ${ui.line}`,
             padding: "10px 16px",
             display: "flex",
             gap: 12,
             justifyContent: "space-between",
             fontSize: "12px",
-            color: aviso.darkText3
+            color: ui.text3
           }}>
           <span style={{ minWidth: 0 }}>
-            <kbd style={styles.kbd}>↑↓</kbd> 导航 ·{" "}
-            <kbd style={styles.kbd}>Enter</kbd>{" "}
-            {results.length > 0 ? "选择" : "发给 AI"}
+            <kbd style={{ ...styles.kbd, borderColor: ui.line, color: ui.text2 }}>
+              ↑↓
+            </kbd>{" "}
+            导航 ·{" "}
+            <kbd style={{ ...styles.kbd, borderColor: ui.line, color: ui.text2 }}>
+              Enter
+            </kbd>{" "}
+            {results.length > 0 ? "选择" : "继续"}
           </span>
           <span
-            onClick={handleSendToAI}
             style={{
               display: "inline-flex",
               alignItems: "center",
               gap: 6,
-              cursor: "pointer",
-              color: aviso.sage300,
+              color: aiConnection.connected ? ui.accent : ui.text3,
               whiteSpace: "nowrap"
             }}>
-            无结果时 <kbd style={styles.kbd}>Enter</kbd> 发给 AI
+            {aiConnection.connected
+              ? "无结果时可发给 AI"
+              : "AI 未连接时仅搜索"}
           </span>
         </div>
         <style>{`
           .aviso-command-input::placeholder {
-            color: ${aviso.darkText3};
+            color: ${ui.text3};
           }
           .aviso-command-input:focus-visible {
             outline: none;
@@ -643,8 +884,8 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     padding: "1px 5px",
     borderRadius: 5,
-    border: `1px solid ${aviso.darkLine}`,
-    color: aviso.darkText2,
+    border: "1px solid transparent",
+    color: "inherit",
     background: "transparent"
   }
 }
