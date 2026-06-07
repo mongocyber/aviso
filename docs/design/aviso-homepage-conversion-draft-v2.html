@@ -1,0 +1,1253 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aviso Homepage Conversion Draft V2</title>
+    <style>
+      :root {
+        --paper: oklch(0.985 0.006 120);
+        --paper-2: oklch(0.955 0.014 122);
+        --ink: oklch(0.18 0.012 155);
+        --ink-2: oklch(0.36 0.014 155);
+        --ink-3: oklch(0.58 0.012 155);
+        --sage-900: oklch(0.28 0.035 152);
+        --sage-700: oklch(0.42 0.045 150);
+        --sage-500: oklch(0.60 0.055 150);
+        --sage-300: oklch(0.80 0.04 150);
+        --sage-100: oklch(0.92 0.022 150);
+        --acid: oklch(0.90 0.12 112);
+        --amber: oklch(0.82 0.13 78);
+        --blue: oklch(0.64 0.12 226);
+        --rose: oklch(0.64 0.14 25);
+        --line: oklch(0.86 0.012 145);
+        --dark: oklch(0.16 0.014 158);
+        --dark-2: oklch(0.22 0.016 158);
+        --dark-3: oklch(0.31 0.018 158);
+        --dark-text: oklch(0.96 0.006 150);
+        --dark-muted: oklch(0.72 0.012 152);
+        --radius: 14px;
+        --radius-sm: 8px;
+        --radius-lg: 22px;
+        --shadow-hard: 0 28px 80px -34px oklch(0.16 0.018 155 / 0.78);
+        --shadow-soft: 0 18px 50px -32px oklch(0.28 0.018 155 / 0.45);
+        --font: "Avenir Next", "Hanken Grotesk", ui-sans-serif, -apple-system,
+          BlinkMacSystemFont, "Segoe UI", sans-serif;
+        --mono: "SFMono-Regular", "Space Mono", Consolas, monospace;
+      }
+
+      * {
+        box-sizing: border-box;
+        letter-spacing: 0;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        background:
+          radial-gradient(circle at 18% 12%, color-mix(in oklab, var(--acid) 22%, transparent), transparent 24rem),
+          linear-gradient(180deg, var(--paper), white 44%, var(--paper-2));
+        color: var(--ink);
+        font-family: var(--font);
+        margin: 0;
+        -webkit-font-smoothing: antialiased;
+        text-rendering: optimizeLegibility;
+      }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      button {
+        border: 0;
+        cursor: pointer;
+        font-family: inherit;
+      }
+
+      .grain {
+        inset: 0;
+        opacity: 0.34;
+        pointer-events: none;
+        position: fixed;
+        z-index: -2;
+      }
+
+      .grain::before {
+        background-image:
+          linear-gradient(90deg, color-mix(in oklab, var(--line) 40%, transparent) 1px, transparent 1px),
+          linear-gradient(color-mix(in oklab, var(--line) 36%, transparent) 1px, transparent 1px);
+        background-size: 28px 28px;
+        content: "";
+        inset: 0;
+        position: absolute;
+      }
+
+      .wrap {
+        margin: 0 auto;
+        max-width: 1220px;
+        padding: 0 30px;
+        width: 100%;
+      }
+
+      .nav {
+        align-items: center;
+        display: flex;
+        justify-content: space-between;
+        padding: 18px 0;
+        position: relative;
+        z-index: 5;
+      }
+
+      .brand {
+        align-items: center;
+        display: inline-flex;
+        font-size: 18px;
+        font-weight: 880;
+        gap: 10px;
+      }
+
+      .brand img {
+        height: 28px;
+        width: 28px;
+      }
+
+      .nav-actions {
+        align-items: center;
+        display: flex;
+        gap: 8px;
+      }
+
+      .nav-link {
+        border: 1px solid transparent;
+        border-radius: 11px;
+        color: var(--ink-2);
+        font-size: 13px;
+        font-weight: 730;
+        padding: 9px 12px;
+      }
+
+      .nav-cta {
+        background: var(--ink);
+        border-radius: 11px;
+        color: white;
+        font-size: 13px;
+        font-weight: 800;
+        padding: 11px 15px;
+      }
+
+      .hero {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: minmax(0, 0.78fr) minmax(560px, 1.22fr);
+        min-height: calc(100vh - 66px);
+        padding: 34px 0 72px;
+      }
+
+      .hero-copy {
+        align-self: center;
+        padding-bottom: 24px;
+      }
+
+      .proof-pill {
+        align-items: center;
+        background: color-mix(in oklab, white 68%, var(--paper));
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        display: inline-flex;
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 760;
+        gap: 8px;
+        margin-bottom: 22px;
+        padding: 8px 11px;
+        text-transform: uppercase;
+      }
+
+      .proof-pill i {
+        background: var(--acid);
+        border-radius: 999px;
+        box-shadow: 0 0 0 5px color-mix(in oklab, var(--acid) 25%, transparent);
+        height: 7px;
+        width: 7px;
+      }
+
+      h1 {
+        font-size: clamp(54px, 7vw, 96px);
+        font-weight: 930;
+        letter-spacing: 0;
+        line-height: 0.9;
+        margin: 0 0 20px;
+        max-width: 620px;
+      }
+
+      h1 span {
+        color: var(--sage-700);
+      }
+
+      .hero-sub {
+        color: var(--ink-2);
+        font-size: 20px;
+        line-height: 1.45;
+        margin: 0;
+        max-width: 500px;
+      }
+
+      .cta-row {
+        align-items: center;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 30px;
+      }
+
+      .btn {
+        align-items: center;
+        border-radius: 13px;
+        display: inline-flex;
+        font-size: 15px;
+        font-weight: 820;
+        gap: 10px;
+        min-height: 52px;
+        padding: 0 18px;
+      }
+
+      .btn-primary {
+        background: var(--ink);
+        box-shadow: 0 18px 38px -22px var(--ink);
+        color: white;
+      }
+
+      .btn-ghost {
+        background: white;
+        border: 1px solid var(--line);
+        color: var(--ink);
+      }
+
+      .hero-meta {
+        color: var(--ink-3);
+        display: grid;
+        font-family: var(--mono);
+        font-size: 11px;
+        gap: 8px;
+        margin-top: 22px;
+      }
+
+      .hero-meta span {
+        align-items: center;
+        display: inline-flex;
+        gap: 8px;
+      }
+
+      .hero-meta b {
+        background: var(--sage-500);
+        border-radius: 50%;
+        height: 6px;
+        width: 6px;
+      }
+
+      .product-field {
+        align-self: center;
+        min-height: 690px;
+        position: relative;
+      }
+
+      .browser-shell {
+        background: color-mix(in oklab, white 82%, var(--paper));
+        border: 1px solid color-mix(in oklab, var(--line) 80%, white);
+        border-radius: 26px;
+        box-shadow: var(--shadow-hard);
+        min-height: 575px;
+        overflow: hidden;
+        position: absolute;
+        right: 0;
+        top: 16px;
+        width: min(690px, 100%);
+      }
+
+      .browser-bar {
+        align-items: center;
+        background: color-mix(in oklab, white 88%, var(--paper));
+        border-bottom: 1px solid var(--line);
+        display: flex;
+        gap: 9px;
+        height: 46px;
+        padding: 0 16px;
+      }
+
+      .dot {
+        border-radius: 50%;
+        height: 10px;
+        width: 10px;
+      }
+
+      .dot:nth-child(1) {
+        background: var(--rose);
+      }
+
+      .dot:nth-child(2) {
+        background: var(--amber);
+      }
+
+      .dot:nth-child(3) {
+        background: var(--sage-500);
+      }
+
+      .address {
+        background: var(--paper);
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-3);
+        flex: 1;
+        font-family: var(--mono);
+        font-size: 11px;
+        margin-left: 10px;
+        padding: 7px 12px;
+      }
+
+      .article {
+        padding: 34px 40px 280px;
+      }
+
+      .article .label {
+        color: var(--sage-700);
+        font-family: var(--mono);
+        font-size: 11px;
+        font-weight: 850;
+        text-transform: uppercase;
+      }
+
+      .article h2 {
+        font-size: 36px;
+        line-height: 1.03;
+        margin: 12px 0 18px;
+        max-width: 440px;
+      }
+
+      .article p {
+        color: var(--ink-2);
+        font-size: 16px;
+        line-height: 1.85;
+        max-width: 505px;
+      }
+
+      .selected-text {
+        background:
+          linear-gradient(180deg, transparent 12%, color-mix(in oklab, var(--acid) 60%, transparent) 12%, color-mix(in oklab, var(--acid) 60%, transparent) 82%, transparent 82%);
+        border-radius: 7px;
+        box-decoration-break: clone;
+        color: var(--ink);
+        padding: 2px 5px;
+      }
+
+      .article-lines {
+        display: grid;
+        gap: 12px;
+        margin-top: 24px;
+        max-width: 470px;
+      }
+
+      .article-line {
+        background: color-mix(in oklab, var(--ink-3) 18%, transparent);
+        border-radius: 999px;
+        height: 10px;
+      }
+
+      .l1 {
+        width: 86%;
+      }
+
+      .l2 {
+        width: 72%;
+      }
+
+      .l3 {
+        width: 94%;
+      }
+
+      .l4 {
+        width: 58%;
+      }
+
+      .selection-toolbar,
+      .inline-card,
+      .result-panel,
+      .command-dock,
+      .context-menu {
+        position: absolute;
+        z-index: 3;
+      }
+
+      .selection-toolbar {
+        align-items: center;
+        background: var(--dark);
+        border: 1px solid var(--dark-3);
+        border-radius: 14px;
+        box-shadow: var(--shadow-soft);
+        color: var(--dark-text);
+        display: flex;
+        gap: 5px;
+        left: 132px;
+        padding: 7px;
+        top: 278px;
+      }
+
+      .tool {
+        border-radius: 10px;
+        color: var(--dark-muted);
+        font-size: 12px;
+        font-weight: 800;
+        padding: 8px 10px;
+        white-space: nowrap;
+      }
+
+      .tool.is-active {
+        background: color-mix(in oklab, var(--sage-500) 22%, transparent);
+        color: var(--acid);
+      }
+
+      .inline-card {
+        background: var(--dark);
+        border: 1px solid var(--dark-3);
+        border-radius: 16px;
+        box-shadow: var(--shadow-hard);
+        color: var(--dark-text);
+        left: 330px;
+        overflow: hidden;
+        top: 338px;
+        width: 318px;
+      }
+
+      .surface-head {
+        align-items: center;
+        border-bottom: 1px solid var(--dark-3);
+        display: flex;
+        justify-content: space-between;
+        min-height: 44px;
+        padding: 0 12px;
+      }
+
+      .surface-title {
+        align-items: center;
+        display: inline-flex;
+        font-size: 13px;
+        font-weight: 850;
+        gap: 8px;
+      }
+
+      .surface-title img {
+        height: 16px;
+        width: 16px;
+      }
+
+      .inline-body {
+        color: var(--dark-muted);
+        font-size: 14px;
+        line-height: 1.6;
+        min-height: 100px;
+        padding: 14px;
+      }
+
+      .inline-actions,
+      .panel-actions {
+        align-items: center;
+        border-top: 1px solid var(--dark-3);
+        display: flex;
+        gap: 8px;
+        padding: 9px 10px;
+      }
+
+      .action {
+        border-radius: 9px;
+        color: var(--dark-text);
+        font-size: 12px;
+        font-weight: 760;
+        padding: 7px 8px;
+      }
+
+      .result-panel {
+        background: var(--dark);
+        border: 1px solid var(--dark-3);
+        border-radius: 20px;
+        bottom: 0;
+        box-shadow: var(--shadow-hard);
+        color: var(--dark-text);
+        right: 28px;
+        width: 392px;
+      }
+
+      .panel-tag {
+        background: color-mix(in oklab, var(--sage-500) 18%, transparent);
+        border: 1px solid color-mix(in oklab, var(--sage-500) 35%, transparent);
+        border-radius: 999px;
+        color: var(--acid);
+        font-family: var(--mono);
+        font-size: 10px;
+        padding: 4px 7px;
+      }
+
+      .message {
+        border-radius: 14px;
+        font-size: 13.5px;
+        line-height: 1.52;
+        margin: 12px 13px;
+        padding: 12px;
+      }
+
+      .message.user {
+        background: var(--dark-2);
+        color: var(--dark-muted);
+      }
+
+      .message.ai {
+        background: color-mix(in oklab, var(--sage-500) 12%, transparent);
+      }
+
+      .command-dock {
+        background: var(--dark);
+        border: 1px solid var(--dark-3);
+        border-radius: 18px;
+        box-shadow: var(--shadow-soft);
+        color: var(--dark-text);
+        left: 0;
+        padding: 12px;
+        top: 455px;
+        width: 302px;
+      }
+
+      .command-input {
+        border-bottom: 1px solid var(--dark-3);
+        color: var(--dark-muted);
+        font-size: 13px;
+        padding: 3px 2px 12px;
+      }
+
+      .quick-grid {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        padding-top: 10px;
+      }
+
+      .quick {
+        background: var(--dark-2);
+        border: 1px solid var(--dark-3);
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 780;
+        min-height: 56px;
+        padding: 10px;
+      }
+
+      .context-menu {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        box-shadow: var(--shadow-soft);
+        color: var(--ink);
+        left: 54px;
+        padding: 7px;
+        top: 368px;
+        width: 202px;
+      }
+
+      .context-row {
+        align-items: center;
+        border-radius: 9px;
+        display: flex;
+        font-size: 12.5px;
+        font-weight: 760;
+        gap: 10px;
+        min-height: 34px;
+        padding: 0 9px;
+      }
+
+      .context-row.is-active {
+        background: var(--sage-100);
+        color: var(--sage-900);
+      }
+
+      .state-switch {
+        align-items: center;
+        background: color-mix(in oklab, white 72%, var(--paper));
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        bottom: 26px;
+        box-shadow: var(--shadow-soft);
+        display: flex;
+        gap: 6px;
+        left: 26px;
+        padding: 7px;
+        position: absolute;
+        z-index: 6;
+      }
+
+      .state-switch button {
+        background: transparent;
+        border-radius: 10px;
+        color: var(--ink-2);
+        font-size: 12.5px;
+        font-weight: 780;
+        padding: 9px 10px;
+      }
+
+      .state-switch button.active {
+        background: var(--ink);
+        color: white;
+      }
+
+      .section {
+        padding: 84px 0;
+      }
+
+      .section-head {
+        align-items: end;
+        display: flex;
+        gap: 28px;
+        justify-content: space-between;
+        margin-bottom: 26px;
+      }
+
+      .kicker {
+        color: var(--sage-700);
+        font-family: var(--mono);
+        font-size: 12px;
+        font-weight: 850;
+        margin-bottom: 10px;
+        text-transform: uppercase;
+      }
+
+      h2 {
+        font-size: clamp(34px, 4.8vw, 62px);
+        font-weight: 920;
+        line-height: 0.98;
+        margin: 0;
+        max-width: 760px;
+      }
+
+      .section-head p {
+        color: var(--ink-3);
+        font-size: 15px;
+        line-height: 1.56;
+        margin: 0;
+        max-width: 320px;
+      }
+
+      .moment-grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: 1fr 1fr 1fr;
+      }
+
+      .moment {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 22px;
+        box-shadow: var(--shadow-soft);
+        min-height: 340px;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .moment.dark {
+        background: var(--dark);
+        color: white;
+      }
+
+      .moment-caption {
+        bottom: 18px;
+        left: 18px;
+        position: absolute;
+        right: 18px;
+      }
+
+      .moment-caption strong {
+        display: block;
+        font-size: 20px;
+        line-height: 1.08;
+        margin-bottom: 7px;
+      }
+
+      .moment-caption span {
+        color: var(--ink-3);
+        display: block;
+        font-size: 13px;
+        line-height: 1.45;
+      }
+
+      .moment.dark .moment-caption span {
+        color: var(--dark-muted);
+      }
+
+      .mini-article {
+        padding: 24px;
+      }
+
+      .mini-article .bar {
+        background: color-mix(in oklab, var(--ink-3) 18%, transparent);
+        border-radius: 999px;
+        height: 10px;
+        margin: 12px 0;
+      }
+
+      .mini-translation {
+        background: var(--dark);
+        border-radius: 15px;
+        box-shadow: var(--shadow-hard);
+        color: var(--dark-muted);
+        font-size: 13px;
+        left: 38px;
+        line-height: 1.48;
+        padding: 14px;
+        position: absolute;
+        right: 22px;
+        top: 104px;
+      }
+
+      .timeline {
+        display: grid;
+        gap: 10px;
+        padding: 26px 24px;
+      }
+
+      .timeline-line {
+        background: var(--dark-2);
+        border: 1px solid var(--dark-3);
+        border-radius: 14px;
+        min-height: 58px;
+        padding: 12px;
+      }
+
+      .timeline-line:nth-child(2) {
+        background: color-mix(in oklab, var(--sage-500) 14%, var(--dark));
+      }
+
+      .palette-mini {
+        background: var(--dark);
+        border-radius: 18px;
+        color: white;
+        margin: 26px;
+        overflow: hidden;
+      }
+
+      .palette-row {
+        border-bottom: 1px solid var(--dark-3);
+        color: var(--dark-muted);
+        font-size: 12px;
+        min-height: 46px;
+        padding: 14px;
+      }
+
+      .palette-buttons {
+        display: grid;
+        gap: 8px;
+        grid-template-columns: 1fr 1fr;
+        padding: 12px;
+      }
+
+      .palette-buttons span {
+        background: var(--dark-2);
+        border-radius: 11px;
+        font-size: 12px;
+        font-weight: 760;
+        min-height: 52px;
+        padding: 10px;
+      }
+
+      .conversion-band {
+        background: var(--ink);
+        border-radius: 26px;
+        box-shadow: var(--shadow-hard);
+        color: white;
+        margin: 36px 0 0;
+        overflow: hidden;
+        padding: 32px;
+        position: relative;
+      }
+
+      .conversion-band::after {
+        border: 1px solid color-mix(in oklab, white 20%, transparent);
+        border-radius: 999px;
+        content: "";
+        height: 420px;
+        position: absolute;
+        right: -110px;
+        top: -150px;
+        width: 420px;
+      }
+
+      .conversion-layout {
+        display: grid;
+        gap: 24px;
+        grid-template-columns: 0.9fr 1.1fr;
+        position: relative;
+        z-index: 1;
+      }
+
+      .conversion-band h2 {
+        color: white;
+      }
+
+      .receipt {
+        background: color-mix(in oklab, var(--dark-2) 86%, black);
+        border: 1px solid var(--dark-3);
+        border-radius: 18px;
+        padding: 14px;
+      }
+
+      .receipt-row {
+        align-items: center;
+        border-bottom: 1px solid var(--dark-3);
+        display: flex;
+        justify-content: space-between;
+        min-height: 50px;
+      }
+
+      .receipt-row:last-child {
+        border-bottom: 0;
+      }
+
+      .receipt-row b {
+        font-size: 13px;
+      }
+
+      .receipt-row span {
+        color: var(--acid);
+        font-family: var(--mono);
+        font-size: 11px;
+      }
+
+      .install {
+        padding: 82px 0 96px;
+      }
+
+      .install-box {
+        align-items: center;
+        background:
+          linear-gradient(120deg, white, color-mix(in oklab, var(--acid) 16%, var(--sage-100)));
+        border: 1px solid var(--line);
+        border-radius: 26px;
+        box-shadow: var(--shadow-soft);
+        display: flex;
+        gap: 28px;
+        justify-content: space-between;
+        padding: 32px;
+      }
+
+      .install-box h2 {
+        max-width: 680px;
+      }
+
+      .install-steps {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 9px;
+        margin-top: 18px;
+      }
+
+      .install-steps span {
+        background: white;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        color: var(--ink-2);
+        font-size: 12px;
+        font-weight: 760;
+        padding: 8px 11px;
+      }
+
+      .status-note {
+        border-top: 1px solid var(--line);
+        color: var(--ink-3);
+        font-size: 12px;
+        line-height: 1.65;
+        padding: 18px 0 34px;
+      }
+
+      @media (max-width: 1040px) {
+        .hero,
+        .conversion-layout {
+          grid-template-columns: 1fr;
+        }
+
+        .product-field {
+          min-height: 710px;
+        }
+
+        .browser-shell {
+          width: 100%;
+        }
+
+        .moment-grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 720px) {
+        .wrap {
+          padding: 0 18px;
+        }
+
+        .nav-link {
+          display: none;
+        }
+
+        .hero {
+          padding-top: 20px;
+        }
+
+        .hero-sub {
+          font-size: 17px;
+        }
+
+        .product-field {
+          min-height: 810px;
+        }
+
+        .article {
+          padding: 26px 22px 360px;
+        }
+
+        .article h2 {
+          font-size: 28px;
+        }
+
+        .selection-toolbar {
+          left: 18px;
+          max-width: calc(100vw - 36px);
+          overflow-x: auto;
+          top: 270px;
+        }
+
+        .inline-card {
+          left: 18px;
+          right: 18px;
+          top: 334px;
+          width: auto;
+        }
+
+        .context-menu,
+        .command-dock {
+          display: none;
+        }
+
+        .result-panel {
+          bottom: 4px;
+          left: 18px;
+          right: 18px;
+          width: auto;
+        }
+
+        .state-switch {
+          bottom: 18px;
+          left: 18px;
+          max-width: calc(100vw - 36px);
+          overflow-x: auto;
+        }
+
+        .section {
+          padding: 56px 0;
+        }
+
+        .section-head,
+        .install-box {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="grain"></div>
+    <header class="wrap nav">
+      <a class="brand" href="#">
+        <img src="../brand/assets/aviso-mark-sage.svg" alt="Aviso" />
+        Aviso
+      </a>
+      <nav class="nav-actions" aria-label="页面导航">
+        <a class="nav-link" href="#moments">场景</a>
+        <a class="nav-link" href="#trust">隐私</a>
+        <a class="nav-cta" href="#install">安装当前版</a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="wrap hero">
+        <div class="hero-copy">
+          <div class="proof-pill"><i></i> Browser AI, in the page</div>
+          <h1>选中一句，<span>AI 就在旁边。</span></h1>
+          <p class="hero-sub">
+            Aviso 把翻译、解释、总结和追问放回网页现场。少一次复制，少一次切页。
+          </p>
+          <div class="cta-row">
+            <a class="btn btn-primary" href="#install">安装当前版本</a>
+            <a class="btn btn-ghost" href="#moments">看 3 个场景</a>
+          </div>
+          <div class="hero-meta">
+            <span><b></b> 划词工具栏 · 命令面板 · 右键菜单</span>
+            <span><b></b> 需要用户自己的 API Key</span>
+          </div>
+        </div>
+
+        <div class="product-field" aria-label="Aviso visual product demo">
+          <div class="browser-shell">
+            <div class="browser-bar">
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <span class="dot"></span>
+              <div class="address">browser://current-page</div>
+            </div>
+            <div class="article">
+              <div class="label">Reading source</div>
+              <h2>Keep your notes close to the source.</h2>
+              <p>
+                The fastest research loop happens when
+                <span class="selected-text">the assistant appears exactly where the question starts</span>,
+                not in another tab.
+              </p>
+              <div class="article-lines">
+                <div class="article-line l1"></div>
+                <div class="article-line l2"></div>
+                <div class="article-line l3"></div>
+                <div class="article-line l4"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="selection-toolbar">
+            <span class="tool is-active">翻译</span>
+            <span class="tool">解释</span>
+            <span class="tool">润色</span>
+            <span class="tool">总结</span>
+          </div>
+
+          <div class="context-menu">
+            <div class="context-row">复制当前上下文</div>
+            <div class="context-row is-active">翻译选中文本</div>
+            <div class="context-row">自定义模板</div>
+            <div class="context-row">总结当前页面</div>
+          </div>
+
+          <div class="inline-card" id="inlineCard">
+            <div class="surface-head">
+              <span class="surface-title">
+                <img src="../brand/assets/aviso-mark-sage.svg" alt="" />
+                <span id="inlineTitle">自动翻译</span>
+              </span>
+              <span>×</span>
+            </div>
+            <div class="inline-body" id="inlineBody">
+              最快的研究循环，是让助手出现在问题开始的地方，而不是另开一个标签页。
+            </div>
+            <div class="inline-actions">
+              <span class="action">复制</span>
+              <span class="action">结果面板</span>
+            </div>
+          </div>
+
+          <div class="result-panel">
+            <div class="surface-head">
+              <span class="surface-title">
+                <img src="../brand/assets/aviso-mark-sage.svg" alt="" />
+                Aviso
+              </span>
+              <span class="panel-tag" id="panelTag">追问</span>
+            </div>
+            <div class="message user" id="panelQuestion">
+              这段话对我有什么用？
+            </div>
+            <div class="message ai" id="panelAnswer">
+              它把核心动作压缩到一句话：不要把内容搬去 AI 工具，让 AI 出现在内容旁边。
+            </div>
+            <div class="panel-actions">
+              <span class="action">复制</span>
+              <span class="action">保存</span>
+              <span class="action">继续追问</span>
+            </div>
+          </div>
+
+          <div class="command-dock">
+            <div class="command-input">⌘ 搜索历史、书签，或直接问 AI</div>
+            <div class="quick-grid">
+              <div class="quick">复制上下文</div>
+              <div class="quick">页面总结</div>
+              <div class="quick">模板：读论文</div>
+              <div class="quick">模板：改写</div>
+            </div>
+          </div>
+
+          <div class="state-switch" aria-label="切换演示状态">
+            <button class="active" data-state="translate">翻译</button>
+            <button data-state="explain">解释</button>
+            <button data-state="summary">总结</button>
+            <button data-state="template">模板</button>
+          </div>
+        </div>
+      </section>
+
+      <section id="moments" class="wrap section">
+        <div class="section-head">
+          <div>
+            <div class="kicker">Why install</div>
+            <h2>三个高频时刻，马上省掉切换成本。</h2>
+          </div>
+          <p>首页只讲用户能立刻感知的价值：读懂、翻译、整理上下文。</p>
+        </div>
+
+        <div class="moment-grid">
+          <div class="moment">
+            <div class="mini-article">
+              <div class="bar" style="width: 80%"></div>
+              <div class="bar" style="width: 66%"></div>
+              <div class="bar" style="width: 92%; background: color-mix(in oklab, var(--acid) 50%, transparent)"></div>
+              <div class="bar" style="width: 58%"></div>
+            </div>
+            <div class="mini-translation">短句就地翻译，不打断阅读。</div>
+            <div class="moment-caption">
+              <strong>看英文资料</strong>
+              <span>选中一句，翻译直接贴在旁边。</span>
+            </div>
+          </div>
+
+          <div class="moment dark">
+            <div class="timeline">
+              <div class="timeline-line">问题：这页讲什么？</div>
+              <div class="timeline-line">回答：核心观点、证据、下一步。</div>
+              <div class="timeline-line">追问：帮我提炼成行动清单。</div>
+            </div>
+            <div class="moment-caption">
+              <strong>读长文章</strong>
+              <span>结果面板保存多轮上下文。</span>
+            </div>
+          </div>
+
+          <div class="moment">
+            <div class="palette-mini">
+              <div class="palette-row">⌘ 输入：帮我总结这页</div>
+              <div class="palette-buttons">
+                <span>复制上下文</span>
+                <span>页面总结</span>
+                <span>模板：研究</span>
+                <span>历史记录</span>
+              </div>
+            </div>
+            <div class="moment-caption">
+              <strong>整理网页上下文</strong>
+              <span>命令面板把历史、书签和 AI 动作合在一个入口。</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="trust" class="wrap">
+        <div class="conversion-band">
+          <div class="conversion-layout">
+            <div>
+              <div class="kicker">Trust model</div>
+              <h2>吸引用户，不靠夸大能力。</h2>
+            </div>
+            <div class="receipt">
+              <div class="receipt-row">
+                <b>AI 请求</b>
+                <span>直连用户选择的 provider</span>
+              </div>
+              <div class="receipt-row">
+                <b>API Key</b>
+                <span>本地加密保存</span>
+              </div>
+              <div class="receipt-row">
+                <b>Aviso 后端</b>
+                <span>当前版本无</span>
+              </div>
+              <div class="receipt-row">
+                <b>Telemetry</b>
+                <span>不添加</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="install" class="wrap install">
+        <div class="install-box">
+          <div>
+            <h2>装上 Aviso，把 AI 放进浏览器阅读流。</h2>
+            <div class="install-steps">
+              <span>1. 安装扩展</span>
+              <span>2. 配置自己的 API Key</span>
+              <span>3. 选中文字开始使用</span>
+            </div>
+          </div>
+          <a class="btn btn-primary" href="#">安装当前版本</a>
+        </div>
+      </section>
+    </main>
+
+    <footer class="wrap status-note">
+      Design draft / under review. 这是独立首页 V2 草稿，不代表当前官网已更新。
+      未把登录、订阅、支付、匿名额度、Hosted Aviso AI 或截图普通用户入口写成当前能力。
+    </footer>
+
+    <script>
+      const states = {
+        translate: {
+          inlineTitle: "自动翻译",
+          inlineBody:
+            "最快的研究循环，是让助手出现在问题开始的地方，而不是另开一个标签页。",
+          panelTag: "追问",
+          question: "这段话对我有什么用？",
+          answer:
+            "它把核心动作压缩到一句话：不要把内容搬去 AI 工具，让 AI 出现在内容旁边。"
+        },
+        explain: {
+          inlineTitle: "解释选中文本",
+          inlineBody:
+            "这句话强调的是上下文保持。用户的问题来自当前原文，答案也应该贴着原文出现。",
+          panelTag: "解释",
+          question: "用普通话解释一下这句。",
+          answer:
+            "意思是：AI 不应该把你从网页带走，而应该像网页旁边的助手一样，直接帮你理解当前内容。"
+        },
+        summary: {
+          inlineTitle: "总结当前页面",
+          inlineBody:
+            "页面重点：把 AI 融入浏览器阅读现场，减少复制、切页和上下文丢失。",
+          panelTag: "页面总结",
+          question: "总结这页。",
+          answer:
+            "这页适合正在阅读、研究、写作的人。核心价值是就地处理网页内容，并保留追问与本地历史。"
+        },
+        template: {
+          inlineTitle: "模板：读论文",
+          inlineBody:
+            "按模板输出：核心论点、关键证据、我应该追问的问题。",
+          panelTag: "自定义模板",
+          question: "套用我的读论文模板。",
+          answer:
+            "已按模板整理：1. 核心论点；2. 支撑依据；3. 可继续追问的三个方向。"
+        }
+      };
+
+      const buttons = document.querySelectorAll(".state-switch button");
+      const inlineTitle = document.getElementById("inlineTitle");
+      const inlineBody = document.getElementById("inlineBody");
+      const panelTag = document.getElementById("panelTag");
+      const panelQuestion = document.getElementById("panelQuestion");
+      const panelAnswer = document.getElementById("panelAnswer");
+
+      buttons.forEach((button) => {
+        button.addEventListener("click", () => {
+          const next = states[button.dataset.state];
+          buttons.forEach((item) => item.classList.remove("active"));
+          button.classList.add("active");
+          inlineTitle.textContent = next.inlineTitle;
+          inlineBody.textContent = next.inlineBody;
+          panelTag.textContent = next.panelTag;
+          panelQuestion.textContent = next.question;
+          panelAnswer.textContent = next.answer;
+        });
+      });
+    </script>
+  </body>
+</html>
