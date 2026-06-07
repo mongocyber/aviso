@@ -1,6 +1,6 @@
 # Issue 003: V1-004 Public Launch Issue Map
 
-Status: docs-only planning. Not approved for implementation.
+Status: superseded planning reference. Not approved for implementation.
 
 Date: 2026-06-03
 
@@ -21,12 +21,18 @@ Sources:
 
 ## Summary
 
-This issue map turns the v1.0 public launch requirements into follow-up development threads. It does not implement v1.0.
+This issue map originally turned the hosted-AI v1.0 public launch requirements into follow-up development threads. It does not implement v1.0.
+
+2026-06-05 scope override: v1.0 is now re-scoped to a simplified BYOK basic launch. Hosted Aviso AI, anonymous quota, login, subscription, payment, provider proxy, backend, remote link-body fetching, and web search are future-state only. Screenshot ordinary-user promotion is paused until the owner decides whether to hide, remove, or keep it internal-only.
 
 Current product truth:
 
 - Aviso is still `v0.1 internal dogfood / 内部试用版` with v0.2-alpha BYOK direct-provider improvements.
-- Default hosted Aviso AI, anonymous quota, login, subscription, payment, provider proxy, inline translation card, double-click menu, and screenshot copy/save are not implemented.
+- Hosted Aviso AI, anonymous quota, login, subscription, payment, provider proxy, backend, remote link-body fetching, and web search are not part of v1.0 basic launch implementation.
+- Current scope override: Popup v1 settings panel work must be judged against the BYOK direct-provider basic version, not older hosted-AI/account drafts. `appearanceTheme` is allowed only as a non-secret field inside existing `chrome.storage.sync/contextai_settings`; no new storage key or API Key migration is authorized.
+- V1-006 inline translation has a P0 implementation and passed user QA; V1-008 default model configuration state passed user QA.
+- V1-005 screenshot local action toolbar exists in code, but screenshot entry strategy is paused for ordinary users and must not be treated as store-ready.
+- V1-007 double-click dropdown shortcut now has a low-risk local MVP implementation: default-off setting, compact menu, existing action reuse, and unsafe target exclusions. This does not imply hosted AI, quota/login, subscription/payment, provider proxy, public release readiness, or loaded-extension manual QA are complete.
 - V1-002 and V1-003 are decision drafts only. They are not approvals to implement backend, auth, payment, quota, hosted AI, privacy policy rewrite, manifest changes, or public release.
 - Provider host permission approval, code implementation, live validation, public claim readiness, and public release readiness must remain separate.
 
@@ -34,7 +40,7 @@ Planning conclusion:
 
 - The next useful step is a controlled issue sequence, not a homepage redesign or public launch copy refresh.
 - UI/state work may start with mocked data after product/design review.
-- Backend, auth, quota, subscription, payment, and provider proxy must wait for owner-confirmed vendors, domains, pricing, retention, and privacy policy decisions.
+- Backend, auth, quota, subscription, payment, and provider proxy are removed from the v1.0 basic launch path and must wait for a future owner decision to reopen.
 - Website and public copy should stay conservative until implementation facts and validation evidence are stable.
 
 ## Non-Scope For This Issue
@@ -60,11 +66,67 @@ Planning conclusion:
 
 ## Issue Map
 
+### Current Recommended Basic Launch Sequence
+
+1. Scope cleanup: update docs, QA, and release copy to BYOK basic launch.
+2. Screenshot entry decision: hide, remove, or keep internal-only before ordinary-user QA.
+3. Basic UI QA: Popup, command palette, result panel/history, double-click menu, template context menu sync, inline translation, BYOK provider state.
+4. Store assets redo: rebuild screenshots and promo assets for the BYOK basic launch; current assets remain placeholders.
+5. Release gate: OpenAI / Anthropic native validation, final package/scan, Chrome Web Store privacy declaration, tag, and rollback point.
+
+The issue map below is retained as historical planning detail. Treat hosted AI, quota, login, subscription, payment, provider proxy, and hosted-route copy as future-state only.
+
+### V1 Popup High-Fidelity Settings Panel
+
+Goal:
+
+Bring the actual Popup closer to `docs/design/v1-popup-settings-panel-draft.html` for the BYOK basic launch while preserving the current direct-provider, local-history, and template behavior.
+
+In scope:
+
+- Four Popup tabs: `设置`, `AI 服务`, `记录`, `指令`.
+- `设置` tab header with Aviso brand, Popup-only theme switcher, and version number.
+- Non-secret `appearanceTheme: "light" | "dark" | "system"` saved in existing `chrome.storage.sync/contextai_settings`, default `system`.
+- Current model card with status badge, manual test control, model dropdown, configured-service options, and `添加 AI 服务` entry.
+- Compact common feature rows for toolbar, command palette, clipboard prompt, double-click entry, and inline translation with same-row language selector.
+- Local-available cards for copy context, search records, and restore conversation.
+- `AI 服务` tab with intro card, service configuration title, add-provider dropdown, provider configuration cards, masked key handling, config/test status, and privacy boundary card.
+- `记录` tab with autosave intro card, clear-all button, row title, summary, time, restore-on-click, and delete.
+- `指令` tab with intro card, instruction cards, edit/delete, and add button.
+
+Out of scope:
+
+- No command panel redesign in this issue.
+- No screenshot entry restoration.
+- No hosted Aviso AI, login, quota, subscription, payment, backend, provider proxy, remote link-body fetch, web search, telemetry, new dependency, new permission, new storage key, or API Key migration.
+- No real provider API validation and no reading or outputting full API Keys.
+
+Acceptance criteria:
+
+- Popup visually matches the draft structure closely enough that all four tabs are recognizable by layout, not only by copy.
+- Theme switch changes the Popup settings panel only and persists as a non-secret setting.
+- Unconfigured providers do not look selectable in the Settings model dropdown.
+- Provider cards never expose full real keys after load; masked values are acceptable.
+- Records and instructions preserve existing local history and template behavior.
+- Docs, QA checklist, STATUS, and release checklist record remaining loaded-extension QA.
+
+Validation:
+
+- `npm test`
+- `npx tsc --noEmit`
+- `git diff --check`
+- `npm run build`
+- Confirm manifest `permissions` and `host_permissions` are unchanged.
+
+Stop conditions:
+
+- Stop before adding permissions, dependencies, backend/auth/payment/quota/hosted AI/provider proxy, new storage keys, API Key migration, real network validation, full-key output, workspace reset, commit, push, or release.
+
 ### V1-004 Command Palette Main Entry
 
 Goal:
 
-Make the command palette the primary entry for v1.0 by surfacing quick actions, direct instructions, mocked quota/provider states, and local actions without forcing users into settings first.
+Make the command palette useful for v1.0 basic launch by surfacing quick actions, direct instructions, local search, BYOK route state, and local actions without presenting quota/login/subscription as live.
 
 In scope:
 
@@ -219,6 +281,10 @@ Stop conditions:
 Goal:
 
 Add a compact double-click contextual menu using dropdown/right-click menu styling, not the horizontal selection toolbar.
+
+Implementation note:
+
+2026-06-04 local MVP is implemented with a default-off setting and existing action reuse. Remaining v1.0 work is loaded-extension manual QA, final design review, and any later decision about changing the default state.
 
 In scope:
 

@@ -2,7 +2,9 @@
 
 Date: 2026-06-03
 
-Status: Decision draft for V1-002. Not approved for implementation.
+Status: paused future-state decision draft. Not approved for implementation.
+
+2026-06-05 owner scope override: v1.0 basic launch will not include hosted Aviso AI, project-owned backend, anonymous quota, login, subscription, payment, provider proxy, or related privacy-policy rewrite. This document remains a historical/future reference only and must not be used as current v1.0 basic launch authorization.
 
 Baseline: v0.1 internal dogfood / v0.2-alpha implementation state as documented in `STATUS.md`, `RELEASE_CHECKLIST.md`, and `docs/specs/aviso-v1-public-launch.md`.
 

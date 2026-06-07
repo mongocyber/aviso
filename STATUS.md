@@ -1,6 +1,6 @@
 # Aviso STATUS
 
-Updated: 2026-06-03
+Updated: 2026-06-07
 
 ## 本轮接管结论
 
@@ -8,9 +8,55 @@ Aviso 是一个 Chrome MV3 浏览器扩展，技术栈为 Plasmo、React 18、Ty
 
 当前状态：v0.1.0 收口为 `v0.1 internal dogfood / 内部试用版`。A-G 手动验收用户已验证基本通过，豆包/火山方舟 API 用户确认可用；OpenAI / Anthropic 真实调用尚未验证。本版本用于内部试用，不进入公开发布，不提交商店。
 
-v1.0 当前正式需求源为 `docs/specs/aviso-v1-public-launch.md`。该文件只定义 v1.0 public launch 的产品需求方向；不代表默认 AI、后端、匿名额度、登录、订阅、支付、官网新路由、隐私政策重写或 Chrome Web Store 发布已经实现。
+2026-06-05 CTO 接管后的最新 scope 决策：v1.0 先做简化 BYOK 基础上线版。登录、订阅、支付、匿名额度、hosted Aviso AI、provider proxy、远端链接正文抓取和联网搜索不进入当前基础版实现、QA 或发布验收；这些不是遗漏项，而是未来状态。`docs/specs/aviso-v1-public-launch.md` 已从旧 default-hosted public launch 草案收敛为基础版 scope 文档。
 
-2026-06-04：V1-008 BYOK settings cleanup 已做最小 Popup 信息架构调整。Popup 顶部标签从 `API Key` 改为 `AI`，新增 `Aviso AI` 规划中 / 当前版本未上线说明，并把 OpenAI、Anthropic、豆包 / 火山方舟 Key 字段和手动连接测试保留在 `高级：使用自己的 API Key` 区域。该调整不新增 hosted AI、登录、匿名额度、订阅、支付、backend、provider proxy、manifest 权限、host permission、依赖、storage key 或真实 provider 调用；API Key 仍只保存在 encrypted `chrome.storage.local/contextai_api_keys`，非 secret 设置仍保存在 `chrome.storage.sync/contextai_settings`。
+v1.0 当前执行边界：继续保持 BYOK direct-provider、无项目方后端、无 telemetry、无 storage key 迁移；API Key 仍只保存在 encrypted `chrome.storage.local/contextai_api_keys`，非 secret 设置仍保存在 `chrome.storage.sync/contextai_settings`。截图功能当前暂停对普通用户强化展示，后续需单独决定隐藏、移除或 internal-only；当前商店截图 / promo 图片质量不达最终标准，只能作为占位草案。
+
+2026-06-05：V1 basic hide screenshot entry 已做最小入口收敛。命令面板 quick actions 不再展示截图动作；双击快捷菜单不再展示截图入口；Chrome 右键菜单保留 `截图提问（内部试用）` 仅用于 internal dogfood / 授权截图路径，不再作为 v1.0 BYOK 基础版普通用户主路径或商店卖点。底层截图 overlay、本地复制/下载和现有 `image_explain` 安全边界保留不变；未新增 manifest permission、host permission、依赖、backend、hosted AI、登录、额度、订阅、支付、telemetry 或 storage key 迁移。
+
+2026-06-05：V1 core UI 两个 P1 修复已完成代码同步，自动检查已通过，但 loaded-extension focused manual QA 仍待补录。V1-011 结果面板在打开后不再把新对话误显示为“已保存”；只有历史里原本 pinned/saved 的 conversation 才显示已保存。V1-007 双击快捷菜单会更早抑制划词工具栏，并复用缓存的设置与模板，降低双入口闪出或并存风险。相关自动检查结果：`npm test` 82 项通过，`npx tsc --noEmit` 通过，`git diff --check` 通过；`npm run build` 在默认沙箱内仍是已知 `Operation not permitted`，沙箱外同命令已通过。当前剩余门禁是加载扩展后的 focused manual QA，重点见 `docs/issues/007-v1-core-ui-manual-qa.md`。
+
+2026-06-05：V1 Popup / Command draft update 已按 BYOK 基础版边界落地。Popup 顶部标签收敛为 `设置`、`AI 服务`、`记录`、`指令`：设置页首屏展示 AI 连接状态、默认模型、常用入口开关和紧凑翻译目标下拉；AI 服务页只保留 OpenAI / Anthropic / 豆包 API Key、模型/接入点和手动连接测试；记录页强调对话默认自动保存；模板中文统一为常用指令。命令面板已从 quick action cards / mock access states 降级为搜索式控制面板：默认只搜索历史、书签和已保存 AI 对话，选中文字只作为 Tab 可填入建议，短状态只显示 `AI 可用 · {provider}` 或 `AI 未连接`。本轮未新增 provider route、manifest permission、host permission、依赖、backend、hosted AI、登录、额度、订阅、支付、telemetry 或 storage key 迁移；截图普通用户入口仍隐藏。自动检查结果：`npm test` 84 项通过，`npx tsc --noEmit` 通过，`git diff --check` 通过；`npm run build` 在默认沙箱内仍是已知 `Operation not permitted`，沙箱外同命令已通过。加载扩展后的 Popup / 命令面板 focused manual QA 待补录。
+
+2026-06-05：V1 Popup high-fidelity settings panel 已补做第二轮高还原实现。Popup `设置` 页补齐 Aviso header、Popup-only `浅色 / 深色 / 跟随系统` 主题切换、当前模型卡、模型下拉、常用功能紧凑列表、内联翻译行内语言下拉、本地可用三卡和自动保存页脚；`AI 服务` 页补齐配置说明卡、服务配置标题、添加 provider 下拉、provider 配置卡、状态 pill、测试/保存/取消/删除按钮、配置/测试状态和隐私边界卡；`记录` / `指令` 页补齐草稿式说明卡和列表/卡片结构。新增 `appearanceTheme: "light" | "dark" | "system"` 仅作为非 secret 设置写入现有 `chrome.storage.sync/contextai_settings`，默认 `system`；未新增 storage key，未迁移或读取完整 API Key，未恢复截图普通用户入口，未改命令面板。本轮 loaded-extension Popup 高还原 QA 仍待用户重新加载扩展后补录。
+
+2026-06-05：V1 Popup polish interactions / light theme 补救已完成代码同步。`AI 服务` 页的添加下拉现在会进入对应 provider 编辑状态并定位到卡片；模型下拉里的 `添加 AI 服务` 会进入 AI 服务页并打开明确添加状态；`测试连接` 在缺 Key 或豆包接入点时会先显示未发起的脱敏摘要，不做真实 provider 调用；`保存配置`、`取消编辑`、`删除配置` 均有卡片内反馈，且掩码 Key 不会覆盖真实 Key；豆包接入点改为保存后生效，取消可恢复已保存状态。`本地可用` 三卡改为真实动作或明确反馈：复制当前页上下文、打开命令面板搜索、进入记录恢复。浅色主题补齐 hover、dropdown、input、footer、privacy、scrollbar、warning、danger、disabled 等 token，并在设计草稿中补充 light theme reference。Popup 高度上调一档以减少滚动压力；小屏仍通过内容区滚动。未新增权限、依赖、backend、hosted AI、登录、额度、订阅、支付、telemetry 或 storage key 迁移；loaded-extension focused manual QA 仍待用户重新加载扩展后复看。
+
+2026-06-06：V1 Popup `设置 > 常用功能` 已做追加修正。常用功能行的标题和辅助说明改为上下两行，避免与右侧 toggle / 语言下拉挤在同一行；顺序调整为 `划词工具栏`、`划词翻译`、`命令面板`、`剪贴板提示`、`双击入口`；原 `内联翻译` 用户可见文案改为 `划词翻译`。`划词工具栏` 与 `划词翻译` 在 Popup 设置层互斥：开启其中一个会自动关闭另一个；历史设置若两者都为 true，Popup 加载时会归一化为只开启 `划词翻译` 并写回现有 `contextai_settings`。本轮未新增权限、依赖、provider、storage key、API Key 处理、命令面板或商店素材改动；loaded-extension Popup 常用功能行仍待用户重新加载扩展后复看。
+
+2026-06-06：V1 Popup AI service states / scroll fix 已完成代码同步。Popup 根容器、`html` / `body` / Plasmo root 均固定宽高并隐藏外层滚动，header 与 tabs 保持固定，只有 `#aviso-popup-content` 作为 tab 内容区滚动；浅色/深色滚动条沿用 Popup theme token。`AI 服务` provider 卡片改为明确 `view` / `edit` / `add` 三态：默认 view 收起输入框；配置入口进入 edit/add；保存后收起回 view；取消恢复保存前状态；删除清除对应 `contextai_api_keys` provider 条目并把豆包接入点从现有 `contextai_settings.doubaoModel` 清空。掩码 Key 不会作为新 Key 写回；未保存草稿不会让 provider 提前出现在模型下拉。`划词翻译` 语言下拉用户可见 label 改为目标语言写法：`自动`、`中文`、`English`、`日本語`、`한국어`、`Español`、`Français`、`Deutsch`，不改底层枚举值、翻译 routing 或 prompt。本轮未新增权限、依赖、provider route、backend、hosted AI、登录、额度、订阅、支付、telemetry 或 storage key 迁移；loaded-extension Popup focused QA 仍待用户重新加载扩展后复看。
+
+2026-06-06：V1 Popup scroll follow-up 已做二次代码修复。用户重新预览后确认外层滚动条仍出现在整个 Popup 面板最右侧；本轮将 `html` / `body` / `#__plasmo` / immediate root wrapper / `#aviso-popup-shell` 从固定 660px 文档高度改为 `min(target height, 100vh)` 视口约束，外层全部 `overflow: hidden !important`，并把 `#aviso-popup-content` 强制设为唯一 `overflow-y: auto` 的 flex 内容区。未改 AI 服务状态机、provider、storage、权限、命令面板或商店素材；加载扩展后的滚动 focused QA 仍待用户重新加载构建后复看。
+
+2026-06-06：V1 Popup scroll third pass 已改为 runtime adaptive height。用户再次 reload 后确认二次修复未通过；本轮判断真实根因更可能是固定 popup 请求高度超过 Chrome action popup 实际可用高度，导致 Chrome 给整个 popup document 加外层滚动条。因此移除固定 expanded height，保留 580 safe max，Popup mount 后读取 `window.innerHeight` 并监听 resize，shell 使用 `Math.min(window.innerHeight || safeMax, safeMax)` 的实际高度；`#aviso-popup-content` 仍是唯一业务滚动容器。未改 AI 服务状态机、provider、storage、权限、命令面板、截图、商店素材或发布动作；加载扩展后的滚动 focused QA 仍待用户重新加载构建后复看。
+
+2026-06-06：V1 global appearance theme sync 已完成代码同步。`appearanceTheme: "light" | "dark" | "system"` 仍作为非 secret 设置保存在现有 `chrome.storage.sync/contextai_settings`，但主题解析和 light/dark token 已抽到 `src/styles/aviso.tsx` 共享；Popup、命令面板、结果/回答面板、划词工具栏、内联翻译卡、双击快捷菜单和截图 overlay / toolbar 会读取同一设置并监听 storage 与系统 `prefers-color-scheme` 变化。浅色模式补齐 background、surface、surface2、text、line、accent、hover、focus、warning、danger、disabled、scrollbar、input、card、button、pill 与 shadow token；只作用于 Aviso 自己的容器，不污染宿主网页 `body/html`。本轮未新增权限、依赖、provider、storage key、backend、hosted AI、登录、额度、订阅、支付、telemetry 或 AI 请求 payload 改动；loaded-extension global theme focused QA 仍待用户重新加载构建后复看。
+
+2026-06-06：V1 Popup AI 服务多配置方案 B 已完成代码同步，待加载扩展复看。保持 `contextai_api_keys` / `contextai_settings` storage key 名不变，只扩展 value shape：非 secret `providerConfigs` / `defaultProviderConfigId` 写入 sync settings；每个配置的 API Key 按 `providerConfigId` 加密保存在 local `contextai_api_keys.providerConfigKeys`；旧 `{ openai, anthropic, doubao }` key 继续兼容读取并映射为 legacy 配置。Popup `AI 服务` 页从固定三张 provider 卡改为可添加多个服务配置实例；删除草稿只移除草稿，删除已配置实例会清对应 encrypted key 和 metadata，删除最后一个配置后进入未连接状态。默认服务切换后，设置页当前模型、命令面板连接状态、background AI 请求和手动连通测试会按默认配置解析。未新增权限、依赖、backend、hosted AI、登录、额度、订阅、支付、telemetry 或真实 provider 调用；loaded-extension 多配置/删除 focused QA 仍待用户 reload 后复看。
+
+2026-06-07：T1 v1-pre-qa-hardening 已完成进入 loaded-extension QA 前的 4 个代码收口点。书签搜索日志和返回 meta 不再包含原始 query，仅保留 `hasQuery`、`queryLength`、数量和 source 等脱敏字段；conversation history 的最近 20 条上限只裁剪未保存记录，`pinned` / 保存的 conversation 不会被普通新记录静默淘汰；Popup `划词翻译` 关闭时目标语言下拉会禁用并显示 disabled 视觉状态；双击快捷菜单中不可达的 screenshot action 类型、分支和 operation 映射已删除。自动检查已通过：`npm test` 95 项通过，`npx tsc --noEmit` 通过，`npm run build` 在默认沙箱仍为已知 `Operation not permitted`，沙箱外同命令通过；构建产物 manifest 权限/host_permissions 未扩大。loaded-extension focused manual QA 仍待补录。
+
+2026-06-07：T1D context-menu-selection-title-cap 已完成代码修复。Chrome 右键 selection 子菜单不再使用 `%s` 展示长选区原文，内置选区菜单改为 `解释选中文本`、`翻译选中文本`、`润色选中文本`、`总结选中文本` 静态短标题；点击后仍继续使用 `info.selectionText` 作为 AI 输入。未新增权限、依赖、provider、storage key 或真实 API 调用；仍待 reload 后复测右键菜单标题。
+
+2026-06-07：V1 Popup / AI 服务 focused polish 已完成并通过主线程 loaded-extension 验收。Popup `设置` 页的语言 mini dropdown 已改为按可用空间向下/向上展开，并在打开时解除 `settingList` 裁切，避免菜单被设置卡片边界截断；`AI 服务` 配置卡标题行只保留图标、配置名和操作按钮，`默认`、`新增中`、`编辑中`、`未保存`、`可用`、`建议测试`、`连接失败`、`未配置`、`未测试` 等状态统一进入第二行 pill 区。翻译卡 / 结果面板按钮文案统一为 `发给 AI`；命令面板底部辅助文案已调整到输入区域右侧辅助文字；右键 selection 菜单标题已改为静态短标题，但仍需真实 Chrome 右键 reload 后确认。
+
+2026-06-07：V1 Popup AI 服务卡片 latest polish 已完成并通过隔离临时 Chrome 加载 `build/chrome-mv3-prod` 验收。AI 服务卡的配置名称、API Key、模型/接入点三个输入字段现在由外层带图标的圆角容器显示焦点状态，内部 `input/password` 不再显示独立浏览器焦点框；卡片标题图标/文字与右侧按钮组垂直居中；已保存配置删除改为二次确认，第一次点击只显示 `确定删除` / `取消`，取消可恢复，确认后才删除；新增草稿仍可直接删除。本次验收没有点击最终删除，没有触发真实 provider 测试，没有读取或暴露 API Key。自动检查现状：`npm test` 104/104 通过且仍有既有 Node `MODULE_TYPELESS_PACKAGE_JSON` warning，`npx tsc --noEmit` 通过，`git diff --check` 通过；`npm run build` 默认沙箱内仍为已知 `Operation not permitted`，沙箱外重跑通过；`package.json` / lock 文件无 diff，构建 manifest 权限仍为 `contextMenus`、`activeTab`、`storage`、`bookmarks`、`clipboardWrite`，`host_permissions` 仍只包含 OpenAI、Anthropic、Ark 三个 provider 域名。未新增权限、依赖、provider route、backend、hosted AI、登录、额度、订阅、支付、provider proxy、web search、telemetry 或 storage key 迁移；这不是公开发布批准，Command Palette、double-click、context menu、history 等更大范围回归仍按清单保留 pending/retest。
+
+2026-06-07：AI 可感知响应专项优化已完成代码同步，待 loaded-extension focused QA。结果面板和内联翻译在请求已发出但约 2 秒仍无首段真实内容时，会显示“请求已发出，模型还在响应。可继续等待、停止，或稍后重试。”；真实 provider chunk 到达后仍立即流式显示真实内容，不伪造 AI 输出。内联翻译 debounce 从 260ms 收敛为 180ms，慢提示只写入等待状态，不混入译文；关闭、重试、错误或完成会清理旧请求计时。翻译 payload 继续只保留选区或用户输入，并排除 pageContent、priorContext、pageUrl、linkUrl、srcUrl；有选区时会丢弃命令文本兜底，避免扩大输入。翻译输出预算降为 512 tokens，润色降为 768 tokens，其余保持 1024。未新增权限、依赖、provider、backend、hosted AI、登录、额度、订阅、支付、provider proxy、telemetry 或 storage key 迁移；未运行真实 provider API。本轮只实现 2 秒左右的可见反馈，不代表真实 provider 首 token 稳定在 2 秒内。
+
+2026-06-04：V1-006 inline selection translation 已做 P0 实现并通过加载扩展后的人工 UI QA。Popup 常规设置新增默认关闭的 `内联即时翻译` 开关和翻译目标语言选项（自动、中文、英文、日文、韩文、西班牙文、法文、德文）。开启后，普通网页短选区会在选区附近显示内联翻译卡片，支持加载、成功、错误、复制、重试和打开结果面板；长选区 / 多行选区显示结果面板提示，不自动做页面全文翻译。现有右键 / 划词工具栏 / 命令面板翻译继续复用 `operation=translate`，并使用同一目标语言设置。该调整不做替换、不缓存译文、不新增权限、host permission、依赖、provider、third-party translation fallback、hosted AI、backend、登录、额度、订阅、支付、telemetry 或真实 provider 验证；翻译 payload 仍由 `sanitizeTranslationPayload` 兜底，排除 page URL、link URL、page body、remote link body、screenshot、clipboard、full DOM 和 prior context。记录来源：2026-06-04 用户反馈。
+
+2026-06-04：V1-011 result panel conversation autosave 已按最新产品规则调整。结果面板标题从 `Aviso 结果面板` 改为 `Aviso`，保留当前动作标签。结果面板产生的 AI 结果默认自动保存为 `contextai_history` conversation，最多保留最近 20 条，超过后删除最旧 conversation。一个结果面板生命周期对应一条 conversation；只要结果面板仍打开，划词工具栏、双击菜单、命令面板等复用同一 result panel 的新 AI 动作都会追加新的 user / assistant turn 到当前 messages，不再覆盖旧内容；关闭面板后下次调用 AI 才会创建新 conversation。点击“保存”会标记并保存整段 conversation，不再只保存最后一轮问答。底部追问输入框已改为自增高多行输入，Enter 发送、Shift+Enter 换行，超过上限后输入框内部滚动。该调整仍为 local-only，只写 `chrome.storage.local`；不写 sync，不保存 API Key、截图/base64 或 raw provider response；未新增权限、依赖、backend、hosted AI、登录、额度、订阅、支付、telemetry 或真实 provider 调用。
+
+2026-06-04：V1-012 custom template context-menu sync 已做最小修复。Popup 自定义模板新增、编辑、删除后，`chrome.storage.sync/contextai_settings.templates` 的实际变化会触发右键菜单串行重建；仅默认模型变化时仍只同步右键模型 radio 勾选。该调整不改菜单结构、不新增权限、依赖、provider、backend、hosted AI、登录、额度、订阅、支付、telemetry 或 storage secret；API Key 仍只保存在 encrypted `chrome.storage.local/contextai_api_keys`。自动检查已通过，加载扩展后的模板右键菜单即时同步仍需用户人工验收。
+
+2026-06-04：V1-008 BYOK settings cleanup 已做最小 Popup 信息架构调整。Popup 顶部标签从 `API Key` 改为 `AI`，新增 `Aviso AI` 规划中 / 当前版本未上线说明，并把 OpenAI、Anthropic、豆包 / 火山方舟 Key 字段和手动连接测试保留在 `高级：使用自己的 API Key` 区域。默认 AI 模型下拉已接入当前 BYOK 配置状态：未配置 API Key、豆包未配置接入点、或本次手动连接测试明确失败的 provider/model 会显示状态并禁用；已配置但本次 Popup 尚未测试的模型显示 `未测试`，仍允许选择，避免引入自动网络测试或新的持久连通状态。该调整不新增 hosted AI、登录、匿名额度、订阅、支付、backend、provider proxy、manifest 权限、host permission、依赖、storage key 或真实 provider 调用；API Key 仍只保存在 encrypted `chrome.storage.local/contextai_api_keys`，非 secret 设置仍保存在 `chrome.storage.sync/contextai_settings`。已完成重新加载后的人工 UI QA：默认模型下拉显示配置状态，未配置项置灰不可点击。记录来源：2026-06-04 用户反馈。
+
+2026-06-04：V1-005 screenshot local action toolbar 已做最小实现。现有可见区域截图 overlay 在用户选区后显示 compact toolbar：复制图片、下载图片、重选、发送给 AI、取消。复制和下载都是用户点击后的本地动作，不消耗 quota，不要求登录，不调用 provider；下载使用页面内临时 object URL 和浏览器原生下载行为，未新增 `downloads` permission。发送给 AI 继续复用现有 BYOK `image_explain` 安全边界和 unsupported-model 拦截，不接 hosted Aviso AI、不运行真实 provider API。截图/base64 仍不写入 history、`chrome.storage`、docs、console、telemetry 或 release artifacts。
+
+2026-06-04：V1-007 double-click dropdown shortcut 已实现低风险本地 MVP。Popup 常规设置新增 `双击快捷菜单` 开关，默认关闭；开启后在安全网页区域双击会显示 compact dropdown/right-click style menu。菜单复用现有复制当前上下文、页面总结、自定义模板和选区解释 / 翻译 / 润色 / 总结 / 发送给 Aviso 路径；截图入口已在 2026-06-05 基础版入口收敛中从普通双击菜单移除。会避开 input、password、textarea、select、contenteditable、常见代码编辑器和 Aviso 自身 UI；Esc、外部点击、滚动、动作触发和 tab hidden 会关闭。该调整不替换划词工具栏，不新增 hosted AI、backend、auth、quota、payment、manifest 权限、host permission、provider、依赖、storage secret 或真实 provider 调用。
+
+2026-06-04：V1-004 Command Palette mocked states 曾作为 UI-only 预览实现。2026-06-05 基础版草稿落地后，该用户可见 mock / quick action 入口已被搜索式控制面板替代，不再进入基础版普通用户体验。
 
 ## Phase 1 内部文档体系
 
@@ -82,7 +128,7 @@ Vercel 项目配置：
 当前限制与风险：
 
 - Vercel GitHub 集成已连上，GitHub `main` 自动部署已启用并已成功触发。
-- 新版官网首页已部署到生产 URL，但 `aviso-social-card.png` 仍待补齐。
+- 新版官网首页已部署到生产 URL；`website/static/img/aviso-social-card.png` 已补齐，线上仍需等待 GitHub `main` 自动部署后复核。
 - 隐私政策页面已在本地按当前 Popup 隐私说明、provider host permissions、v0.2-alpha 数据流和当前构建产物边界更新；正式公开发布前仍需与 Chrome Web Store 隐私声明、商店截图 / 素材和最终 release artifacts 再次核对。线上页面需等待 GitHub `main` 自动部署。
 - Aviso 仍保持 `v0.1 internal dogfood / 内部试用版` 口径；OpenAI / Anthropic 真实调用、Chrome Web Store 提交、最终 package zip、release tag 和回滚点仍未关闭。
 
@@ -96,7 +142,7 @@ Vercel 项目配置：
 - V2-003：minimal model registry and routing 已实现并提交，默认 `gpt-4o-mini`、`claude*` 路由和豆包 / 火山方舟北京网关行为保持兼容。
 - V2-004：Popup API Key 页已新增用户手动触发的单 provider 连接测试入口，background 通过独立 `VALIDATE_PROVIDER_CONNECTIVITY` 消息返回脱敏 validation 摘要。
 - V2-004B：真实浮窗 AI 请求已新增请求级 `[Aviso perf]` 脱敏性能摘要，覆盖 trigger、provider、model/endpoint、输入长度分桶、context type、UI/background/provider start/first chunk/done 阶段耗时和错误分类。该日志只输出到本地 console，不写入 storage，不发送远端 telemetry。
-- V2-004C：Follow-up speed guard 已实现。追问只携带最近对话节选并按字符预算裁剪；普通请求和追问等待文案改为“等待模型响应…”；超过 9 秒未收到首段内容时浮窗提示“模型响应较慢，可继续等待或停止”；用户可停止当前等待，浮窗会忽略该 requestId 后续 chunk，并向 background 发送取消信号。
+- V2-004C：Follow-up speed guard 已实现。追问只携带最近对话节选并按字符预算裁剪；普通请求和追问等待文案改为“等待模型响应…”；2026-06-07 起，请求已发出后约 2 秒仍未收到首段内容时，结果面板和内联翻译会显示慢响应提示；用户可停止当前等待，浮窗会忽略该 requestId 后续 chunk，并向 background 发送取消信号。
 - V2-005：Screenshot to AI internal dogfood MVP 已实现为右键页面菜单“截图提问”：用户手动框选可见区域并确认后才截图，裁剪后的图片复用现有 `image_explain` 浮窗流。未新增 manifest 权限、host permission、provider 或依赖；未运行真实 provider API。
 - V2-006：Copy current context internal dogfood MVP 已实现为右键页面菜单“复制当前上下文”：用户手动触发后把页面标题、URL、可选选中文本和可选截断正文整理为 Markdown 文本写入剪贴板。该流程不调用 AI、不调用 provider、不写入 history / `chrome.storage` / 文件 / 文档 / console，未新增权限、host permission、provider 或依赖。
 - V2-007：Translation MVP 已实现为现有翻译流体验改进。选区右键、划词工具栏和命令面板本地 intent 继续复用 `operation=translate`、当前 configured provider/model、浮窗 streaming、history、provider routing 和脱敏 `[Aviso perf]` 摘要；翻译 prompt 改为只输出译文，浮窗标题、用户气泡、等待状态和失败提示更明确；右键 page 上下文不再提供空选区“翻译”入口，避免把页面 URL 当作翻译内容。
@@ -168,6 +214,15 @@ V2-008 边界：
 - 已完成重新加载后的人工 UI QA：Popup、结果面板、命令面板、划词工具栏、Toast、截图取消 / 确认、复制当前上下文、追问 / 停止等待主路径用户反馈通过。记录来源：2026-06-03 用户反馈。
 - 该 polish 不代表公开发布门禁关闭；OpenAI / Anthropic 原生验证、真实 vision provider 验证、商店素材、隐私政策最终一致性、release tag 和回滚点仍未关闭。
 
+V1-005 screenshot local action toolbar 边界：
+
+- 本轮复用现有 V2-005 可见区域 overlay，不新增单独截图 popup、不做 full-page scrolling capture、不新增 prompt field。
+- Copy image / Download image / Retry / Cancel 都是本地 UI 动作；Copy image 写入用户剪贴板，Download image 使用临时 object URL 触发浏览器下载，均不调用 provider、不消耗 quota、不要求 login。
+- Download image 未使用 `chrome.downloads` API，未新增 `downloads` permission、manifest permission、host permission、依赖、storage key、telemetry、cache、package、tag、release action 或真实 provider API 调用。
+- Send to AI 只保留现有 `image_explain` 路径：当前 configured BYOK provider/model、现有 vision support gate、浮窗错误态和脱敏 `[Aviso perf]` 摘要；未接 hosted Aviso AI、backend、quota、login、subscription 或 provider proxy。
+- 截图/base64 只在用户点击动作后的当前内存流程中临时存在；不写入 history、`chrome.storage`、文件、docs、console、telemetry 或 release artifacts。用户主动下载图片会由浏览器把图片保存到用户选择/默认下载位置，这是该本地动作的预期结果。
+- 该实现不代表真实 vision provider 验证完成，也不关闭 Chrome Web Store 公开发布门禁。
+
 已补录的 V2-004 脱敏验证结果：
 
 - 豆包 / 火山方舟：通过。`provider=doubao`，`model_or_endpoint=doubao-seed-2-0-lite-260428`，`host_permission_present=true`，`result=success`，`latency_note=约 2505 ms`，`error_category=none`，`secret_leak_check=pass`，`raw_prompt_logged=no`，`raw_response_logged=no`，`private_page_data_logged=no`。记录来源为用户在已加载扩展的 Popup 手动点击单 provider 测试。
@@ -175,8 +230,8 @@ V2-008 边界：
 仍未关闭：
 
 - OpenAI / Anthropic 真实最小调用记录仍未完成；用户当前没有原生 OpenAI / Anthropic API Key，OpenRouter Key 不作为这两条原生 provider 的验证依据。
-- 商店截图 / promo tile / social card、Chrome Web Store 后台最终隐私声明、最终 release artifact 一致性、release tag 和回滚点仍未完成。
-- 2026-06-03 已完成当前源码、Git 历史和 `build/chrome-mv3-prod.zip` 的常见真实 API Key 形态扫描，未命中；隐私一致性更新后已重新扫描当前源码和 zip，后续商店截图、商店素材和最终 release artifacts 生成后仍需再次检查。
+- 三张 1280x800 商店截图草案、440x280 small promo tile、可选 1400x560 marquee promo tile 和 social card 本地素材已补齐，但 2026-06-05 已判定为占位草案，不可作为最终商店素材。后续需要按 BYOK 基础版、弱化/隐藏截图入口、无登录订阅/hosted AI 口径重做；Chrome Web Store 后台最终隐私声明、最终素材采用确认、最终 release artifact 一致性、release tag 和回滚点仍未完成。
+- 2026-06-04 V1-006 / 最新 package 后已完成当前源码和 `build/chrome-mv3-prod.zip` 的常见真实 API Key 形态扫描，未命中；Git 历史扫描此前 2026-06-03 通过。后续商店截图、商店素材和最终 release artifacts 生成后仍需再次检查。
 
 ## 本轮读取的来源
 
@@ -337,16 +392,20 @@ v0.1 结论：前端触发链路已能立即响应，默认模型保持较快的
 ## 仍需人工确认
 
 1. OpenAI / Anthropic 真实最小调用尚未验证。用户已批准后续 V2-004 只做手动触发、一次一个 provider 的安全测试 Key 验证；当前尚未执行。
-2. `npm run package` 尚未执行，尚未生成可提交商店的 zip。
-3. 商店截图、描述、发布说明、外部隐私政策页面、发布账号和发布密钥仍未确认。
+2. 当前 `npm run package` 已通过并生成 `build/chrome-mv3-prod.zip`；公开提交前仍需在最终变更后重跑 package，并确认版本、manifest 和 release artifact。
+3. 商店截图草案、small promo tile、可选 marquee tile、描述和发布说明草案已本地准备，但图片素材当前只算占位草案，不可作为最终商店素材；需要按 BYOK 基础版重新设计并由用户确认后，才能进入 Chrome Web Store 后台填报。
 4. 当前只有本地 Git 基线提交。公开发布前仍需确认 GitHub 远端、release tag、发布记录和回滚方案。
-5. 远端链接正文总结仍未实现。当前只透传 URL；如果要抓远端正文，通常需要扩大 `host_permissions`，需产品决策。
+5. 远端链接正文总结仍未实现。2026-06-04 用户确认该需求先不做；当前继续只透传 URL，不抓远端正文，不扩大 `host_permissions`，不接后端抓取。
+
+2026-06-04 用户决策更新：V1-006 内联即时翻译卡片后续实现时必须提供明确开关和翻译目标语言选项；在这两个控制项落地前，不把“选中文字后自动原地翻译”视为完成。远端链接正文总结先不做，继续保持当前只透传 URL / 不抓远端正文 / 不扩大权限的边界。
+
+2026-06-05 用户决策更新：v1.0 基础版移出登录、订阅、支付、匿名额度和 hosted Aviso AI；截图功能先暂停普通用户展示，不继续强化为商店卖点；当前商店截图 / promo 图片判定为占位草案，需要重做；远端链接正文总结和联网搜索继续不做。
 
 ## 建议下一步
 
 进入 v0.1 internal dogfood / 内部试用：使用 `build/chrome-mv3-prod` 作为当前内部试用包，小范围安装、记录真实页面问题和 provider 反馈；不公开发布、不提交商店、不扩大权限、不新增功能。
 
-公开发布前仍需关闭这些门禁：OpenAI / Anthropic 真实最小调用、`npm run package`、商店素材、外部隐私政策页面、git/tag/回滚点。
+公开发布前仍需关闭这些门禁：OpenAI / Anthropic 真实最小调用、最终 package 复跑与 artifact 核对、商店素材最终确认、外部隐私政策页面最终一致性、git/tag/回滚点。
 
 ## v0.2-alpha 规划状态
 

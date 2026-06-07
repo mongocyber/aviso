@@ -4,7 +4,7 @@ Date: 2026-06-03
 
 Status: Draft for review. Not submitted to Chrome Web Store.
 
-Scope: Aviso `0.1.0` internal dogfood / public-release preparation.
+Scope: Aviso `0.1.0` internal dogfood / BYOK basic-launch preparation.
 
 ## Source References
 
@@ -18,14 +18,18 @@ Scope: Aviso `0.1.0` internal dogfood / public-release preparation.
 
 Do not submit this draft until the remaining release gates are closed or explicitly accepted by the owner.
 
+2026-06-05 scope update: v1.0 basic launch is BYOK direct-provider only. Login, subscription, payment, anonymous quota, hosted Aviso AI, provider proxy, remote link-body fetching, and web search are future-state only. Screenshot ordinary-user promotion is paused. Current screenshot and promo images are placeholder drafts and must not be used as final Chrome Web Store assets.
+
 Public copy must not claim:
 
 - OpenAI has been live-validated.
 - Anthropic has been live-validated.
 - Screenshot understanding has been live-validated with a real vision provider.
+- Screenshot is a final ordinary-user store selling point.
 - Aviso fetches arbitrary remote link bodies.
 - Aviso performs full-page DOM translation.
 - Aviso is a free AI provider or includes free model credits.
+- Aviso includes login, subscription, payment, anonymous free quota, hosted Aviso AI, provider proxy, or web search.
 - No data ever leaves the browser. User-triggered AI requests go directly from the browser extension to the selected model provider.
 
 Public copy may claim:
@@ -192,7 +196,7 @@ Aviso has no project-owned backend and does not add telemetry or analytics. API 
 ### `contextMenus`
 
 ```text
-Used to show Aviso actions in the right-click menu for selected text, links, pages, images, custom templates, model switching, screenshot questions, and copying current context.
+Used to show Aviso actions in the right-click menu for selected text, links, pages, images, custom templates, model switching, internal-only screenshot questions, and copying current context.
 ```
 
 ### `activeTab`
@@ -222,7 +226,7 @@ Used for user-triggered copy actions, including copying AI results and copying t
 ### Content Script Site Access: `<all_urls>`
 
 ```text
-Aviso injects content scripts on webpages so the user can access the selection toolbar, command palette, in-page result panel, clipboard prompt, iframe bridge, and screenshot selection UI on the pages they are using. The extension does not use this site access to fetch arbitrary remote link bodies, run telemetry, inject ads, or send page content to Aviso servers. Page content is sent to a model provider only when the user manually triggers an AI action that needs that content.
+Aviso injects content scripts on webpages so the user can access the selection toolbar, command palette, in-page result panel, clipboard prompt, iframe bridge, and internal-only screenshot selection UI on the pages they are using. The extension does not use this site access to fetch arbitrary remote link bodies, run telemetry, inject ads, or send page content to Aviso servers. Page content is sent to a model provider only when the user manually triggers an AI action that needs that content.
 ```
 
 ### Host Permission: `https://api.openai.com/*`
@@ -270,11 +274,11 @@ Current local asset state:
 | Asset | Status | Notes |
 | --- | --- | --- |
 | 128x128 icon | Available in extension package | Must confirm final PNG is the intended brand icon. |
-| 1280x800 screenshots | Missing | Need 1-5 sanitized screenshots. |
-| 440x280 small promo tile | Missing | Needs generated or designed asset. |
-| 1400x560 marquee promo tile | Optional / missing | Useful for polish, not required if dashboard still marks optional. |
+| 1280x800 screenshots | Placeholder drafts only | `docs/store/assets/store-screenshot-01-context-actions.png`, `docs/store/assets/store-screenshot-02-result-panel-history.png`, and `docs/store/assets/store-screenshot-03-ai-settings-boundary.png` are not final-quality assets. Redo for BYOK basic launch before submission. |
+| 440x280 small promo tile | Placeholder draft only | `docs/store/assets/aviso-small-promo-tile.png` is not final-quality. Redo before submission. |
+| 1400x560 marquee promo tile | Optional placeholder draft only | `docs/store/assets/aviso-marquee-promo-tile.png` is not final-quality. Redo only if the dashboard/use case requires it. |
 | YouTube promo video | Missing | Do not add unless required by dashboard or product owner chooses to create one. |
-| `aviso-social-card.png` | Missing | Website metadata points to it; should be created before public promotion. |
+| `aviso-social-card.png` | Placeholder draft only | `website/static/img/aviso-social-card.png`, 1200x630 PNG. Uses conservative current-capability copy and avoids secrets, private pages, real accounts, login, quota, subscription, payment, or hosted-AI claims. Recheck after BYOK basic-launch store direction is finalized. |
 
 ### Screenshot Plan
 
@@ -286,7 +290,7 @@ Recommended screenshots:
 2. Selection toolbar on a local/public test page.
 3. In-page result panel showing a sanitized AI response from a public demo page.
 4. Command palette searching history/bookmarks or asking a short public question.
-5. Copy current context or screenshot selection confirmation UI, without claiming real vision provider validation.
+5. Copy current context confirmation UI. Do not use screenshot UI in public store assets unless the owner later reopens it beyond internal-only review.
 
 ## Release Notes Draft
 
@@ -299,13 +303,14 @@ Included:
 - Command palette for local history, bookmarks, and direct questions.
 - In-page result panel with streaming output, copy, save, and follow-up.
 - Manual single-provider connectivity test with redacted summary.
-- Screenshot question, copy current context, translation MVP, and UI polish for internal dogfood.
+- Copy current context, translation MVP, and UI polish for internal dogfood.
 
 Known limitations:
 - Users need their own provider API Key.
 - Provider first-token latency can vary.
 - Remote link body fetching is not implemented.
-- OpenAI / Anthropic native live validation and real vision-provider validation remain public-release gates.
+- OpenAI / Anthropic native live validation remain public-release gates.
+- Screenshot understanding remains internal-only unless the owner later reopens it for public positioning and validation.
 ```
 
 ## Final Pre-Submission Checklist
@@ -314,10 +319,12 @@ Known limitations:
 - [ ] Owner confirms whether public release can proceed with provider-limited claims.
 - [ ] Chrome Web Store privacy declaration is filled from the latest dashboard wording.
 - [ ] Privacy policy URL is live and matches the final dashboard declaration.
-- [ ] Store screenshots are created, sanitized, and scanned.
-- [ ] Small promo tile is created and scanned.
-- [ ] Optional marquee tile decision is made.
-- [ ] `aviso-social-card.png` is created or website metadata is adjusted.
+- [x] Store screenshot drafts are created locally in `docs/store/assets/` using synthetic or masked content.
+- [ ] Final store screenshots are selected by the owner, sanitized against final copy / manifest / privacy declarations, and scanned before submission.
+- [x] Small promo tile is created locally at `docs/store/assets/aviso-small-promo-tile.png`; scan again with final screenshot/promo package before submission.
+- [x] Optional marquee tile draft is created locally at `docs/store/assets/aviso-marquee-promo-tile.png`.
+- [ ] Optional marquee tile final-use decision is made by the owner.
+- [x] `aviso-social-card.png` is created locally at `website/static/img/aviso-social-card.png`; verify after website deployment.
 - [ ] OpenAI native validation is either completed or explicitly excluded from public claims.
 - [ ] Anthropic native validation is either completed or explicitly excluded from public claims.
 - [ ] Real vision-provider validation is either completed or screenshot understanding is kept as internal dogfood / limited claim.

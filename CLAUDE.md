@@ -19,16 +19,18 @@
 - 涉及 v1.0 需求时，读 `docs/specs/aviso-v1-public-launch.md`
 - 涉及品牌/视觉时，读 `docs/brand/README.md` 和 `docs/brand/components/aviso-components.css`
 
-## 2. v1.0 正式需求源
+## 2. v1.0 基础版需求源
 
-- 当前 v1.0 正式需求源是 **`docs/specs/aviso-v1-public-launch.md`**，这是唯一权威的 v1.0 方向文档。
+- 当前 v1.0 执行方向已经从旧的 default-hosted public launch 草案收敛为 **BYOK 基础上线版**。`docs/specs/aviso-v1-public-launch.md` 仍是 v1.0 范围文档，但其中的 hosted AI / 匿名额度 / 登录 / 订阅 / 支付方向已被 2026-06-05 的 owner 决策暂停，必须先按基础版 scope cleanup 后再作为执行依据。
+- 登录、订阅、支付、匿名额度、hosted Aviso AI、provider proxy 和后端抓取不是遗漏功能，而是当前明确移出 v1.0 基础版的未来状态。
 - 不要把 `/Users/jonyliu/Desktop/Aviso_PRD_v0.3_merged.md`（或其他桌面草稿）当成 v1.0 需求源，**除非用户在当轮明确指定**。桌面草稿只是历史输入，不是规格。
 
-## 3. v1.0 是方向，不是现状
+## 3. v1.0 基础版是当前执行边界
 
-- v1.0 需求只代表正式的产品方向，**不代表已经实现**。
-- v1.0 的默认托管 Aviso AI、匿名免费额度、登录、订阅、命令面板主入口、就地翻译卡片、双击下拉菜单、截图复制/保存、额度 UI 等，目前**均未实现**，需要后端与架构/隐私决策（spec 中的 V1-002）后才能落地。
-- 描述这些能力时一律使用 planned / roadmap / coming soon 口径。
+- 当前基础版保持 BYOK direct-provider：用户自己的 API Key，本地加密保存，浏览器扩展直连 OpenAI / Anthropic / 豆包火山方舟等已批准 provider host。
+- V1-006 内联即时翻译、V1-008 默认模型配置状态已通过用户加载扩展后的人工 QA；V1-005 截图本地动作工具栏、V1-007 双击快捷菜单、V1-011 conversation autosave、V1-012 模板右键同步已有实现但仍有不同程度人工 QA 或产品取舍未关闭，具体以 `STATUS.md` / `RELEASE_CHECKLIST.md` / `docs/issues/007-v1-core-ui-manual-qa.md` 为准。
+- 截图功能当前暂停对普通用户强化展示。不要把截图作为 Chrome Web Store 卖点继续推进；如需改入口，应先按 owner 决策隐藏、移除或保留 internal-only。
+- 远端链接正文总结和联网搜索当前不做。继续只透传 URL，不扩大 `host_permissions`，不接后端抓取。
 
 ## 4. 官网与公开文案的三分法
 
@@ -47,6 +49,8 @@
 - hosted AI / 默认托管 Aviso AI 已上线。
 - 匿名免费额度已上线。
 - 登录 / 订阅 / 支付已上线。
+- 截图功能已作为普通用户公开卖点完成验收。
+- 当前商店截图 / promo 图片是最终素材。
 - 本地模型（Ollama / LM Studio）已支持（registry 仅 OpenAI / Anthropic / 豆包·火山方舟）。
 - 复用 ChatGPT / Claude / Gemini 订阅额度、零 API 费用、免 Key（属 v1.0 非范围或未实现）。
 - Browser Session、Agent、多 Tab 聚合、语音、全页 DOM 翻译、第三方翻译兜底（均为非范围或未实现）。
@@ -55,7 +59,7 @@
 
 ## 6. 路由与新增页面
 
-- 不要新增 `/login/` 或 `/pricing/` 路由，**除非用户明确批准进入实现阶段**。
+- 不要新增 `/login/`、`/pricing/`、checkout、account、quota、hosted AI 或匿名额度入口，**除非用户明确批准重新进入这些未来状态的实现阶段**。
 - 不要为未实现的托管 AI / 额度 / 登录 / 订阅流程预埋会让用户以为已上线的入口。
 
 ## 7. 高风险动作先停下确认
@@ -67,6 +71,7 @@
 - API Key 读取、存储或处理逻辑
 - 真实 provider API 调用（含 OpenAI / Anthropic / 豆包的 live 调用与验证）
 - 登录、支付、订阅、后端、托管 AI 相关实现
+- 普通用户截图入口展示策略或把截图放入商店卖点
 - 发布动作：`npm run package` 之外的发布、tag、Chrome Web Store 提交、release workflow 触发
 - 任何 Git 提交、push 或远端操作
 
@@ -109,6 +114,6 @@ npm run package
 
 - OpenAI / Anthropic 真实最小调用验证。
 - Chrome Web Store 截图 / 描述 / 隐私声明最终一致性。
-- `aviso-social-card.png` 等商店素材。
+- 当前商店截图 / promo 图片质量未达最终标准，只能作为占位草案；需要按 BYOK 基础版重做并由 owner 最终确认。
 - release tag 与回滚点。
 - 最终 API Key 泄漏扫描（商店素材与最终 artifacts 生成后）。

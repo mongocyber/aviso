@@ -2,7 +2,9 @@
 
 Date: 2026-06-03
 
-Status: Contract draft only. Not approved for implementation, deployment, vendor signup, secrets, real provider traffic, payment wiring, manifest changes, public policy finalization, or public release.
+Status: paused future-state contract draft only. Not approved for implementation, deployment, vendor signup, secrets, real provider traffic, payment wiring, manifest changes, public policy finalization, or public release.
+
+2026-06-05 owner scope override: hosted Aviso AI, backend API, anonymous quota, login, subscription, payment, provider proxy, and account lifecycle are removed from v1.0 basic launch. Keep this contract only as future reference until the owner explicitly reopens hosted-AI work.
 
 ## Sources
 
