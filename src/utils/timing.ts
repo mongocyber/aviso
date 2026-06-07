@@ -92,8 +92,62 @@ export function logTiming(
     requestId,
     elapsedMs,
     marks: timing ?? {},
-    ...details
+    ...sanitizeTimingDetails(details)
   })
+}
+
+const URL_DETAIL_KEYS = new Set([
+  "url",
+  "href",
+  "frameUrl",
+  "pageUrl",
+  "linkUrl",
+  "srcUrl"
+])
+
+const TEXT_DETAIL_KEYS = new Set([
+  "selectionText",
+  "pageContent",
+  "textContent",
+  "rawPrompt",
+  "rawResponse",
+  "prompt",
+  "response",
+  "clipboardText"
+])
+
+const BINARY_DETAIL_KEYS = new Set(["dataUrl", "base64", "screenshot"])
+const URL_PATTERN = /\b(?:https?|file|chrome|chrome-extension):\/\/\S+/gi
+const IMAGE_DATA_PATTERN = /data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/=]+/gi
+
+export function sanitizeTimingDetails(
+  details: Record<string, unknown>
+): Record<string, unknown> {
+  const sanitized: Record<string, unknown> = {}
+
+  for (const [key, value] of Object.entries(details)) {
+    if (URL_DETAIL_KEYS.has(key)) {
+      sanitized[`${key}Present`] = typeof value === "string" && value.length > 0
+      continue
+    }
+
+    if (TEXT_DETAIL_KEYS.has(key) || BINARY_DETAIL_KEYS.has(key)) {
+      sanitized[`${key}Chars`] =
+        typeof value === "string" ? value.length : value == null ? 0 : undefined
+      continue
+    }
+
+    if (typeof value === "string") {
+      sanitized[key] = value
+        .replace(IMAGE_DATA_PATTERN, "[image data omitted]")
+        .replace(URL_PATTERN, "[url omitted]")
+      continue
+    }
+
+    sanitized[key] = value
+  }
+
+  return sanitized
 }
 
 export function bucketInputSize(
@@ -186,6 +240,7 @@ function sanitizeTrigger(trigger: string | undefined): string {
     "command-palette-history",
     "clipboard",
     "follow-up",
+    "inline-translation",
     "history",
     "screenshot"
   ])

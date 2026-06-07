@@ -9,7 +9,14 @@ import type {
 import { normalizeError } from "~utils/errors"
 import { assertSupportedImageSrc } from "~utils/image-src"
 import { parseIntentLocally } from "~utils/intent"
-import { resolveModelRoute, type ProviderId } from "~utils/model-registry"
+import {
+  buildProviderConfigRoute,
+  getProviderConfigById,
+  resolveModelRoute,
+  type ModelRoute,
+  type ProviderId
+} from "~utils/model-registry"
+import { getLegacyProviderFromConfigId } from "~utils/provider-configs"
 import {
   buildConnectivityTestPayload,
   buildConnectivityValidationSummary,
@@ -33,6 +40,7 @@ import {
 } from "~utils/timing"
 import {
   buildTranslationUserContent,
+  buildTranslationSystemPrompt,
   getTranslationSourceText,
   sanitizeTranslationPayload,
   TRANSLATION_EMPTY_INPUT_ERROR,
@@ -48,10 +56,13 @@ export async function handleProviderConnectivityTest(
   payload: ProviderConnectivityPayload
 ): Promise<ConnectivityValidationSummary> {
   const [settings, apiKeys] = await Promise.all([getSettings(), getApiKeys()])
-  const route = resolveModelRoute(
-    getConnectivityModelId(payload.provider),
-    settings
+  const providerConfig = getProviderConfigById(
+    settings.providerConfigs,
+    payload.providerConfigId
   )
+  const route = providerConfig
+    ? buildProviderConfigRoute(providerConfig, settings)
+    : resolveModelRoute(getConnectivityModelId(payload.provider), settings)
   const hostPermissionPresent = isProviderHostPermissionPresent(
     route.provider,
     chrome.runtime.getManifest().host_permissions
@@ -73,7 +84,7 @@ export async function handleProviderConnectivityTest(
     })
   }
 
-  const apiKey = apiKeys[route.provider.apiKeyStorageKey]
+  const apiKey = getRouteApiKey(route, apiKeys)
   if (!apiKey) {
     return buildConnectivityValidationSummary({
       ...base,
@@ -162,6 +173,14 @@ export async function handleAIRequest(
     }
   }
   payload = sanitizeTranslationPayload(payload)
+  if (payload.operation === "translate" && !payload.systemPrompt) {
+    payload = {
+      ...payload,
+      systemPrompt: buildTranslationSystemPrompt(
+        settings.inlineTranslationTargetLanguage
+      )
+    }
+  }
 
   const route = resolveModelRoute(payload.model, settings)
   const imageInputBlockReason = getImageInputBlockReason(payload, route)
@@ -188,7 +207,7 @@ export async function handleAIRequest(
       await callAnthropic(
         route.requestModel,
         payload,
-        apiKeys.anthropic,
+        getRouteApiKey(route, apiKeys),
         onChunk,
         {
           requestId: options.requestId,
@@ -201,7 +220,7 @@ export async function handleAIRequest(
         logPreProviderPerf(payload, route.provider.id, route.requestModel)
         throw new Error("豆包接入点 ID 未配置，请在设置的 AI 页填写")
       }
-      await callOpenAI(route.requestModel, payload, apiKeys.doubao, onChunk, {
+      await callOpenAI(route.requestModel, payload, getRouteApiKey(route, apiKeys), onChunk, {
         baseURL: route.provider.baseURL,
         keyLabel: "豆包",
         requestId: options.requestId,
@@ -210,7 +229,7 @@ export async function handleAIRequest(
         logPerf: true
       })
     } else {
-      await callOpenAI(route.requestModel, payload, apiKeys.openai, onChunk, {
+      await callOpenAI(route.requestModel, payload, getRouteApiKey(route, apiKeys), onChunk, {
         keyLabel: route.provider.displayName,
         requestId: options.requestId,
         signal: options.signal,
@@ -221,6 +240,19 @@ export async function handleAIRequest(
   } catch (err) {
     throw new Error(normalizeError(err))
   }
+}
+
+function getRouteApiKey(
+  route: Pick<ModelRoute, "provider" | "providerConfigId">,
+  apiKeys: Awaited<ReturnType<typeof getApiKeys>>
+): string {
+  if (route.providerConfigId) {
+    const legacyProvider = getLegacyProviderFromConfigId(route.providerConfigId)
+    if (legacyProvider) return apiKeys[legacyProvider]
+    return apiKeys.providerConfigKeys[route.providerConfigId] ?? ""
+  }
+
+  return apiKeys[route.provider.apiKeyStorageKey]
 }
 
 async function callOpenAI(
@@ -461,7 +493,8 @@ function resolveTemplatePromptFromTemplates(
 }
 
 export function getMaxOutputTokens(operation?: string): number {
-  if (operation === "translate" || operation === "polish") return 1536
+  if (operation === "translate") return 512
+  if (operation === "polish") return 768
   return 1024
 }
 

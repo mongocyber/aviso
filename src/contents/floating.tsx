@@ -1,7 +1,14 @@
 import type { PlasmoCSConfig, PlasmoGetShadowHostId } from "plasmo"
 import { useEffect, useRef, useState } from "react"
 
-import { aviso, AvisoIcon, AvisoMark, visuallyStable } from "~styles/aviso"
+import {
+  aviso,
+  AvisoIcon,
+  AvisoMark,
+  useSyncedAvisoTheme,
+  visuallyStable
+} from "~styles/aviso"
+import type { ConversationMessage } from "~types/history"
 import type {
   AIRequestPayload,
   MessageRequest,
@@ -21,6 +28,10 @@ import {
   formatTranslationUserBubble,
   TRANSLATION_WAITING_TEXT
 } from "~utils/translation"
+import {
+  appendConversationTurn,
+  historyEntryFromConversation
+} from "~utils/conversation-history"
 
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"],
@@ -30,12 +41,14 @@ export const config: PlasmoCSConfig = {
 export const getShadowHostId: PlasmoGetShadowHostId = () =>
   "contextai-floating-host"
 
-type ChatMsg = { role: "user" | "assistant"; content: string; reqId?: string }
+type ChatMsg = ConversationMessage
 
 type FloatingState = {
   visible: boolean
   loading: boolean
   error: string
+  sessionId: string
+  createdAt: number
   requestId: string
   trigger: string
   operation: string
@@ -47,6 +60,8 @@ const INITIAL_STATE: FloatingState = {
   visible: false,
   loading: false,
   error: "",
+  sessionId: "",
+  createdAt: 0,
   requestId: "",
   trigger: "",
   operation: "",
@@ -112,12 +127,33 @@ function hasAssistantContentForRequest(
   )
 }
 
+function persistConversation(
+  state: FloatingState,
+  options: { pinned?: boolean } = {}
+): void {
+  chrome.runtime.sendMessage({
+    action: "SAVE_HISTORY",
+    payload: historyEntryFromConversation({
+      id: state.sessionId,
+      trigger: state.trigger as any,
+      operation: state.operation,
+      url: window.location.href,
+      messages: state.messages,
+      createdAt: state.createdAt || Date.now(),
+      updatedAt: Date.now(),
+      pinned: options.pinned
+    })
+  })
+}
+
 function LoadingMessage({ text }: { text: string }) {
+  const { tokens: ui } = useSyncedAvisoTheme()
+
   return (
     <div className="aviso-loading-message" role="status" aria-live="polite">
       <div className="aviso-loading-row">
         <span className="aviso-loading-mark">
-          <AvisoMark size={24} style={{ color: aviso.sage400 }} />
+          <AvisoMark size={24} style={{ color: ui.accent }} />
         </span>
         <span className="aviso-loading-text">{text}</span>
       </div>
@@ -126,14 +162,18 @@ function LoadingMessage({ text }: { text: string }) {
 }
 
 function FloatingWindow() {
+  const { tokens: ui } = useSyncedAvisoTheme()
   const [state, setState] = useState<FloatingState>(INITIAL_STATE)
   const [followUp, setFollowUp] = useState("")
   const [savedId, setSavedId] = useState("")
   const [copiedId, setCopiedId] = useState("")
   const contentRef = useRef<HTMLDivElement>(null)
+  const followUpRef = useRef<HTMLTextAreaElement>(null)
+  const stateRef = useRef<FloatingState>(INITIAL_STATE)
   const activeRequestRef = useRef("")
   const copyTimer = useRef<ReturnType<typeof setTimeout>>()
   const slowTimer = useRef<ReturnType<typeof setTimeout>>()
+  const conversationTimer = useRef<ReturnType<typeof setTimeout>>()
 
   const sendAIRequest = (
     requestId: string,
@@ -201,6 +241,10 @@ function FloatingWindow() {
   }
 
   useEffect(() => {
+    stateRef.current = state
+  }, [state])
+
+  useEffect(() => {
     const listener = (
       message: MessageRequest,
       _sender: chrome.runtime.MessageSender,
@@ -228,27 +272,36 @@ function FloatingWindow() {
           statusText,
           restore
         } = message.payload
+        const currentState = stateRef.current
         const requestId = providedRequestId ?? `req-${Date.now()}`
         const timing = markTiming(incomingTiming, "floatingShownAt")
+        const shouldAppendToCurrentConversation =
+          currentState.visible && Boolean(currentState.sessionId)
         activeRequestRef.current = requestId
 
         // 从历史恢复：直接回填已存对话，不发起 AI 请求
         if (restore) {
-          const restored: ChatMsg[] = []
-          if (restore.input)
-            restored.push({ role: "user", content: restore.input })
-          restored.push({ role: "assistant", content: restore.output })
+          const restored: ChatMsg[] = restore.messages?.length
+            ? restore.messages
+            : []
+          if (restored.length === 0) {
+            if (restore.input)
+              restored.push({ role: "user", content: restore.input })
+            restored.push({ role: "assistant", content: restore.output })
+          }
           setState({
             visible: true,
             loading: false,
             error: "",
+            sessionId: requestId,
+            createdAt: restore.createdAt ?? Date.now(),
             requestId,
             trigger,
             operation,
             statusText: "",
             messages: restored
           })
-          setSavedId(requestId)
+          setSavedId(restore.pinned ? requestId : "")
           sendResponse({ success: true })
           return
         }
@@ -258,12 +311,12 @@ function FloatingWindow() {
           selectionText || userMessage || linkUrl || srcUrl || pageUrl || ""
 
         const bubble = userBubbleText(operation, inputText, imageSource)
-        const messages: ChatMsg[] = bubble
-          ? [
-              { role: "user", content: bubble },
-              { role: "assistant", content: "", reqId: requestId }
-            ]
-          : [{ role: "assistant", content: "", reqId: requestId }]
+        const messages: ChatMsg[] = appendConversationTurn([], {
+          userContent: bubble,
+          requestId,
+          operation,
+          trigger
+        })
 
         logTiming("floating_shown", requestId, timing, {
           trigger,
@@ -273,15 +326,36 @@ function FloatingWindow() {
           inputChars: inputText.length
         })
 
-        setState({
-          visible: true,
-          loading: true,
-          error: "",
-          requestId,
-          trigger,
-          operation,
-          statusText: statusText ?? defaultStatusText(operation),
-          messages
+        if (
+          shouldAppendToCurrentConversation &&
+          currentState.loading &&
+          currentState.requestId &&
+          currentState.requestId !== requestId
+        ) {
+          cancelBackgroundRequest(currentState.requestId)
+        }
+
+        setState((prev) => {
+          const appending = prev.visible && Boolean(prev.sessionId)
+          return {
+            visible: true,
+            loading: true,
+            error: "",
+            sessionId: appending ? prev.sessionId : requestId,
+            createdAt: appending ? prev.createdAt : Date.now(),
+            requestId,
+            trigger,
+            operation,
+            statusText: statusText ?? defaultStatusText(operation),
+            messages: appending
+              ? appendConversationTurn(prev.messages, {
+                  userContent: bubble,
+                  requestId,
+                  operation,
+                  trigger
+                })
+              : messages
+          }
         })
         setSavedId("")
 
@@ -366,6 +440,24 @@ function FloatingWindow() {
     return () => chrome.runtime.onMessage.removeListener(listener)
   }, [])
 
+  useEffect(() => {
+    clearTimeout(conversationTimer.current)
+
+    if (
+      !state.visible ||
+      !state.sessionId ||
+      !state.messages.some((message) => message.content.trim())
+    ) {
+      return
+    }
+
+    conversationTimer.current = setTimeout(() => {
+      persistConversation(state)
+    }, 250)
+
+    return () => clearTimeout(conversationTimer.current)
+  }, [state])
+
   // 内容增长 / 新消息时自动滚动到底部
   useEffect(() => {
     if (contentRef.current) {
@@ -376,6 +468,17 @@ function FloatingWindow() {
   useEffect(() => {
     return () => clearTimeout(copyTimer.current)
   }, [])
+
+  useEffect(() => {
+    return () => clearTimeout(conversationTimer.current)
+  }, [])
+
+  useEffect(() => {
+    const textarea = followUpRef.current
+    if (!textarea) return
+    textarea.style.height = "0px"
+    textarea.style.height = `${Math.min(textarea.scrollHeight, 96)}px`
+  }, [followUp])
 
   useEffect(() => {
     clearTimeout(slowTimer.current)
@@ -419,22 +522,9 @@ function FloatingWindow() {
 
   const handleSave = () => {
     const output = lastByRole(state.messages, "assistant")
-    // 同一结果只入库一次，避免重复点击产生多条记录
-    if (savedId === state.requestId || !output) return
-    chrome.runtime.sendMessage({
-      action: "SAVE_HISTORY",
-      payload: {
-        id: state.requestId,
-        trigger: state.trigger as any,
-        operation: state.operation,
-        input: lastByRole(state.messages, "user"),
-        output,
-        url: window.location.href,
-        timestamp: Date.now(),
-        pinned: true
-      }
-    })
-    setSavedId(state.requestId)
+    if (savedId === state.sessionId || !output) return
+    persistConversation(state, { pinned: true })
+    setSavedId(state.sessionId)
   }
 
   const handleFollowUp = () => {
@@ -454,12 +544,15 @@ function FloatingWindow() {
       loading: true,
       error: "",
       requestId,
+      trigger: "follow-up",
+      operation: "custom",
       statusText: WAITING_MODEL_RESPONSE_TEXT,
-      messages: [
-        ...prev.messages,
-        { role: "user", content: q },
-        { role: "assistant", content: "", reqId: requestId }
-      ]
+      messages: appendConversationTurn(prev.messages, {
+        userContent: q,
+        requestId,
+        operation: "custom",
+        trigger: "follow-up"
+      })
     }))
     setFollowUp("")
 
@@ -509,6 +602,13 @@ function FloatingWindow() {
     if (state.loading && state.requestId) {
       cancelBackgroundRequest(state.requestId)
     }
+    if (
+      state.visible &&
+      state.sessionId &&
+      state.messages.some((message) => message.content.trim())
+    ) {
+      persistConversation(state)
+    }
     activeRequestRef.current = ""
     setState(INITIAL_STATE)
   }
@@ -524,14 +624,14 @@ function FloatingWindow() {
         width: "380px",
         maxWidth: "calc(100vw - 32px)",
         maxHeight: "min(520px, calc(100vh - 48px))",
-        background: aviso.darkSurface,
-        border: `1px solid ${aviso.darkLine}`,
+        background: ui.surface,
+        border: `1px solid ${ui.line}`,
         borderRadius: aviso.radiusLg,
-        boxShadow: aviso.panelShadow,
+        boxShadow: ui.panelShadow,
         display: "flex",
         flexDirection: "column",
         fontFamily: aviso.font,
-        color: aviso.darkText,
+        color: ui.text,
         zIndex: 2147483647,
         overflow: "hidden",
         ...visuallyStable
@@ -544,7 +644,7 @@ function FloatingWindow() {
           justifyContent: "space-between",
           gap: "10px",
           padding: "13px 14px",
-          borderBottom: `1px solid ${aviso.darkLine}`
+          borderBottom: `1px solid ${ui.line}`
         }}>
         <span
           style={{
@@ -552,16 +652,16 @@ function FloatingWindow() {
             alignItems: "center",
             gap: 10,
             minWidth: 0,
-            color: aviso.darkText
+            color: ui.text
           }}>
-          <AvisoMark size={18} style={{ color: aviso.sage400 }} />
+          <AvisoMark size={18} style={{ color: ui.accent }} />
           <span
             style={{
               fontSize: "14px",
               fontWeight: 700,
               letterSpacing: "-0.01em"
             }}>
-            Aviso 结果面板
+            Aviso
           </span>
           <span
             style={{
@@ -574,8 +674,8 @@ function FloatingWindow() {
               letterSpacing: "0.02em",
               padding: "2px 7px",
               borderRadius: aviso.radiusSm,
-              background: aviso.accentSurface,
-              color: aviso.sage300
+              background: ui.accentSoft,
+              color: ui.accent
             }}>
             {operationLabel(state.operation)}
           </span>
@@ -593,7 +693,7 @@ function FloatingWindow() {
             background: "transparent",
             border: "none",
             borderRadius: aviso.radiusSm,
-            color: aviso.darkText3,
+            color: ui.text3,
             cursor: "pointer",
             padding: 0,
             transition: `.15s ${aviso.ease}`
@@ -629,10 +729,10 @@ function FloatingWindow() {
               style={{
                 alignSelf: isUser ? "flex-end" : "flex-start",
                 maxWidth: "85%",
-                background: isUser ? aviso.darkSurface2 : "transparent",
+                background: isUser ? ui.surface2 : "transparent",
                 borderRadius: isUser ? aviso.radiusMd : 0,
                 padding: isUser ? "8px 12px" : 0,
-                color: isUser ? aviso.darkText2 : aviso.darkText,
+                color: isUser ? ui.text2 : ui.text,
                 whiteSpace: "pre-wrap",
                 wordBreak: "break-word",
                 overflowWrap: "anywhere"
@@ -648,7 +748,7 @@ function FloatingWindow() {
                     display: "inline-block",
                     width: "8px",
                     height: "14px",
-                    background: aviso.sage400,
+                    background: ui.accent,
                     borderRadius: "1px",
                     marginLeft: "2px",
                     verticalAlign: "text-bottom",
@@ -665,8 +765,8 @@ function FloatingWindow() {
               display: "flex",
               alignItems: "flex-start",
               gap: 8,
-              color: aviso.darkText2,
-              background: aviso.dangerSurface,
+              color: ui.text2,
+              background: ui.dangerBg,
               borderRadius: aviso.radiusMd,
               padding: "10px 12px",
               fontSize: "13px",
@@ -675,7 +775,7 @@ function FloatingWindow() {
             <AvisoIcon
               name="warning"
               size={16}
-              style={{ color: aviso.danger, marginTop: 1 }}
+              style={{ color: ui.danger, marginTop: 1 }}
             />
             <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>
               {state.error}
@@ -690,8 +790,8 @@ function FloatingWindow() {
           display: "flex",
           gap: "8px",
           padding: "10px 12px",
-          borderTop: `1px solid ${aviso.darkLine}`,
-          background: `color-mix(in oklab, ${aviso.darkBg} 40%, transparent)`
+          borderTop: `1px solid ${ui.line}`,
+          background: `color-mix(in oklab, ${ui.bg} 40%, transparent)`
         }}>
         {[
           {
@@ -705,12 +805,12 @@ function FloatingWindow() {
           },
           {
             label:
-              savedId === state.requestId && state.requestId
+              savedId === state.sessionId && state.sessionId
                 ? "已保存"
                 : "保存",
             icon: "save" as const,
             onClick: handleSave,
-            active: savedId === state.requestId && !!state.requestId
+            active: savedId === state.sessionId && !!state.sessionId
           },
           ...(state.loading
             ? [
@@ -734,7 +834,7 @@ function FloatingWindow() {
               gap: 6,
               background: "transparent",
               border: "none",
-              color: aviso.darkText,
+              color: ui.text,
               borderRadius: aviso.radiusSm,
               padding: "7px 11px",
               fontFamily: aviso.font,
@@ -753,30 +853,45 @@ function FloatingWindow() {
       <div
         style={{
           display: "flex",
-          alignItems: "center",
+          alignItems: "flex-end",
           gap: "8px",
           padding: "11px 12px",
-          borderTop: `1px solid ${aviso.darkLine}`
+          borderTop: `1px solid ${ui.line}`
         }}>
-        <input
+        <textarea
+          ref={followUpRef}
           className="aviso-follow-up-input"
+          rows={1}
           value={followUp}
           onChange={(e) => setFollowUp(e.target.value)}
-          onKeyDown={(e) =>
-            e.key === "Enter" && !e.shiftKey && handleFollowUp()
-          }
+          onKeyDown={(e) => {
+            if (
+              e.key === "Enter" &&
+              !e.shiftKey &&
+              !(e.nativeEvent as KeyboardEvent).isComposing
+            ) {
+              e.preventDefault()
+              handleFollowUp()
+            }
+          }}
           placeholder="继续追问…"
           style={{
             flex: 1,
             minWidth: 0,
+            height: 34,
+            maxHeight: 96,
             background: "transparent",
             border: "none",
             borderRadius: aviso.radiusSm,
-            color: aviso.darkText,
-            padding: "7px 4px",
+            color: ui.text,
+            padding: "8px 4px",
             fontFamily: aviso.font,
             fontSize: "13.5px",
-            outline: "none"
+            lineHeight: "18px",
+            outline: "none",
+            resize: "none",
+            overflowY: "auto",
+            overflowWrap: "anywhere"
           }}
         />
         <button
@@ -786,15 +901,17 @@ function FloatingWindow() {
             display: "inline-flex",
             alignItems: "center",
             gap: 6,
-            background: aviso.sage500,
+            background: ui.accent,
             border: "none",
             borderRadius: aviso.radiusMd,
-            color: aviso.paper,
+            color: ui.accentText,
             padding: "8px 14px",
             fontFamily: aviso.font,
             fontSize: "13px",
             fontWeight: 600,
-            cursor: "pointer"
+            cursor: "pointer",
+            flex: "0 0 auto",
+            whiteSpace: "nowrap"
           }}>
           <AvisoIcon name="send" size={15} />
           发送
@@ -806,7 +923,7 @@ function FloatingWindow() {
         @keyframes aviso-spin { to { transform: rotate(360deg); } }
         .aviso-loading-message {
           width: min(260px, 100%);
-          color: ${aviso.darkText2};
+          color: ${ui.text2};
         }
         .aviso-loading-row {
           display: flex;
@@ -834,7 +951,7 @@ function FloatingWindow() {
         }
         .aviso-result-action:hover,
         .aviso-result-action[data-active="true"] {
-          background: ${aviso.darkSurface2} !important;
+          background: ${ui.surface2} !important;
         }
         .aviso-result-action:active,
         .aviso-send-button:active,
@@ -845,9 +962,9 @@ function FloatingWindow() {
         .aviso-send-button:focus-visible,
         .aviso-icon-button:focus-visible,
         .aviso-follow-up-input:focus-visible {
-          outline: 2px solid ${aviso.sage400};
+          outline: 2px solid ${ui.accent};
           outline-offset: 2px;
-          box-shadow: ${aviso.focusRing};
+          box-shadow: ${ui.focusRing};
         }
         .aviso-send-button {
           transition:
@@ -855,7 +972,7 @@ function FloatingWindow() {
             transform .15s ${aviso.ease};
         }
         .aviso-send-button:hover {
-          background: ${aviso.sage600} !important;
+          background: ${ui.buttonHover} !important;
         }
         .aviso-icon-button {
           transition:
@@ -864,8 +981,8 @@ function FloatingWindow() {
             transform .15s ${aviso.ease};
         }
         .aviso-icon-button:hover {
-          background: ${aviso.darkSurface2} !important;
-          color: ${aviso.darkText2} !important;
+          background: ${ui.surface2} !important;
+          color: ${ui.text2} !important;
         }
       `}</style>
     </div>
