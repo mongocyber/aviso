@@ -1,6 +1,6 @@
 # Aviso STATUS
 
-Updated: 2026-06-07
+Updated: 2026-06-08
 
 ## 本轮接管结论
 
@@ -43,6 +43,8 @@ v1.0 当前执行边界：继续保持 BYOK direct-provider、无项目方后端
 2026-06-07：V1 Popup AI 服务卡片 latest polish 已完成并通过隔离临时 Chrome 加载 `build/chrome-mv3-prod` 验收。AI 服务卡的配置名称、API Key、模型/接入点三个输入字段现在由外层带图标的圆角容器显示焦点状态，内部 `input/password` 不再显示独立浏览器焦点框；卡片标题图标/文字与右侧按钮组垂直居中；已保存配置删除改为二次确认，第一次点击只显示 `确定删除` / `取消`，取消可恢复，确认后才删除；新增草稿仍可直接删除。本次验收没有点击最终删除，没有触发真实 provider 测试，没有读取或暴露 API Key。自动检查现状：`npm test` 104/104 通过且仍有既有 Node `MODULE_TYPELESS_PACKAGE_JSON` warning，`npx tsc --noEmit` 通过，`git diff --check` 通过；`npm run build` 默认沙箱内仍为已知 `Operation not permitted`，沙箱外重跑通过；`package.json` / lock 文件无 diff，构建 manifest 权限仍为 `contextMenus`、`activeTab`、`storage`、`bookmarks`、`clipboardWrite`，`host_permissions` 仍只包含 OpenAI、Anthropic、Ark 三个 provider 域名。未新增权限、依赖、provider route、backend、hosted AI、登录、额度、订阅、支付、provider proxy、web search、telemetry 或 storage key 迁移；这不是公开发布批准，Command Palette、double-click、context menu、history 等更大范围回归仍按清单保留 pending/retest。
 
 2026-06-07：AI 可感知响应专项优化已完成代码同步，待 loaded-extension focused QA。结果面板和内联翻译在请求已发出但约 2 秒仍无首段真实内容时，会显示“请求已发出，模型还在响应。可继续等待、停止，或稍后重试。”；真实 provider chunk 到达后仍立即流式显示真实内容，不伪造 AI 输出。内联翻译 debounce 从 260ms 收敛为 180ms，慢提示只写入等待状态，不混入译文；关闭、重试、错误或完成会清理旧请求计时。翻译 payload 继续只保留选区或用户输入，并排除 pageContent、priorContext、pageUrl、linkUrl、srcUrl；有选区时会丢弃命令文本兜底，避免扩大输入。翻译输出预算降为 512 tokens，润色降为 768 tokens，其余保持 1024。未新增权限、依赖、provider、backend、hosted AI、登录、额度、订阅、支付、provider proxy、telemetry 或 storage key 迁移；未运行真实 provider API。本轮只实现 2 秒左右的可见反馈，不代表真实 provider 首 token 稳定在 2 秒内。
+
+2026-06-08：AI 请求前置准备与连接状态体感优化已完成代码同步，待 loaded-extension focused QA。Background service worker 新增内存级 settings / API key / route 短缓存，`contextai_settings` 或 `contextai_api_keys` 变化时会清空缓存；OpenAI / Anthropic / 豆包 OpenAI-compatible SDK client 在 service worker 存活期间复用，但不承诺跨 service worker 休眠或 provider 网络连接永久复用。Provider 连接测试结果按当前 provider config + model 记录为 `上次通过 / 上次失败`，并保留 `testedAt`；Key、model 或 provider 变化会让旧结果失效。正式 AI 调用路径仍直接发起流式请求，不执行连接测试。该调整未新增权限、依赖、backend、hosted AI、登录、额度、订阅、支付、provider proxy、telemetry 或 storage key 迁移；明文 API Key 仍不持久化，只在内存缓存和 SDK client 生命周期内存在；未运行真实 provider API。
 
 2026-06-04：V1-006 inline selection translation 已做 P0 实现并通过加载扩展后的人工 UI QA。Popup 常规设置新增默认关闭的 `内联即时翻译` 开关和翻译目标语言选项（自动、中文、英文、日文、韩文、西班牙文、法文、德文）。开启后，普通网页短选区会在选区附近显示内联翻译卡片，支持加载、成功、错误、复制、重试和打开结果面板；长选区 / 多行选区显示结果面板提示，不自动做页面全文翻译。现有右键 / 划词工具栏 / 命令面板翻译继续复用 `operation=translate`，并使用同一目标语言设置。该调整不做替换、不缓存译文、不新增权限、host permission、依赖、provider、third-party translation fallback、hosted AI、backend、登录、额度、订阅、支付、telemetry 或真实 provider 验证；翻译 payload 仍由 `sanitizeTranslationPayload` 兜底，排除 page URL、link URL、page body、remote link body、screenshot、clipboard、full DOM 和 prior context。记录来源：2026-06-04 用户反馈。
 

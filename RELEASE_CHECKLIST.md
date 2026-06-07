@@ -104,6 +104,8 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] Provider 连接测试入口为用户手动触发、一次只测单 provider，并返回脱敏摘要；不会在设置页打开时自动测试全部 provider。
 - [x] V2-004B `[Aviso perf]` 性能摘要只输出到本地 console，不写入 `chrome.storage`，不发送远端 telemetry，不包含 raw prompt、raw response、页面正文、选中文本、完整 URL、图片/base64 或 API Key。
 - [x] V2-004C / 2026-06-07 可感知响应保护已实现：追问只携带预算后的近期对话节选；结果面板和内联翻译约 2 秒无首段真实内容时显示慢响应提示；慢响应提示和停止等待不记录 raw 内容；取消分类仅输出 `user_cancelled` 等脱敏类别。
+- [x] 2026-06-08 AI 请求前置准备与连接状态体感优化已实现：service worker 内存级 settings / API key / route 短缓存会在 `contextai_settings` 或 `contextai_api_keys` 变化时失效；provider SDK client 仅在 service worker 存活期间复用；连接测试结果按当前 provider config + model 记录为 `上次通过 / 上次失败` 并带 `testedAt`，Key / model / provider 变化后失效；正式 AI 调用路径仍直接发起流式请求，不执行连接测试。
+- [x] 2026-06-08 优化边界已核对：未新增 manifest permission、host permission、依赖、backend、hosted AI、provider proxy、telemetry、storage key 迁移或持久化明文 API Key；未运行真实 provider API。
 - [x] V2-006 复制当前上下文使用既有 `clipboardWrite` 能力，未新增 manifest permission 或 host permission；复制内容只写入用户剪贴板，不进入 provider、AI 请求、history、`chrome.storage`、文件、文档、console 或 telemetry。
 - [x] V2-007 翻译 MVP 未新增 manifest permission、host permission、provider、依赖、远端服务或第三方翻译 fallback；translate payload 只使用选区或用户输入，不把页面 URL、链接 URL 或页面正文当作翻译内容。
 - [x] V2-008 theme / panel polish 未新增 manifest permission、host permission、provider、依赖、远端服务、telemetry、cache、theme storage 设置或 `contextai_*` storage key 迁移；不改变 AI 请求 payload、provider routing、默认模型或 token 上限。
@@ -122,10 +124,15 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 ## 4. 构建产物
 
 - [x] `npm test` 通过。2026-06-07，V1 Popup AI 服务卡片 latest polish 后 104/104 项测试通过；存在 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
+- [x] `npm test` 通过。2026-06-08，AI 请求前置准备与连接状态体感优化后 110/110 项测试通过；仍存在既有 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
 - [x] `npx tsc --noEmit` 通过。2026-06-07，V1 Popup AI 服务卡片 latest polish 后无错误输出。
+- [x] `npx tsc --noEmit` 通过。2026-06-08，AI 请求前置准备与连接状态体感优化后无错误输出。
 - [x] `npm run build` 通过。2026-06-07，默认沙箱内仍为已知 `Operation not permitted`，沙箱外同命令重跑通过。
+- [x] `npm run build` 通过。2026-06-08，默认沙箱内仍为已知 `Operation not permitted`，沙箱外同命令重跑通过。
 - [x] `git diff --check` 通过。2026-06-07，V1 Popup AI 服务卡片 latest polish 后通过。
+- [x] `git diff --check` 通过。2026-06-08，AI 请求前置准备与连接状态体感优化后通过。
 - [x] `package.json` / lock 文件无 diff。2026-06-07，未新增依赖；构建 manifest 权限仍为 `contextMenus`、`activeTab`、`storage`、`bookmarks`、`clipboardWrite`，`host_permissions` 仍只包含 OpenAI、Anthropic、Ark 三个已批准 provider 域名。
+- [x] `package.json` / lock 文件无 diff。2026-06-08，未新增依赖；构建 manifest 权限仍为 `contextMenus`、`activeTab`、`storage`、`bookmarks`、`clipboardWrite`，`host_permissions` 仍只包含 OpenAI、Anthropic、Ark 三个已批准 provider 域名。
 - [x] `website` 的 `npm run build` 通过。2026-06-04，补齐 `aviso-social-card.png` 后 Docusaurus 生产构建通过。
 - [x] `npm run package` 通过，并生成当前 zip：`build/chrome-mv3-prod.zip`，约 1.37 MB。2026-06-04 V1-006 内联即时翻译 P0 和最新 QA 记录更新后沙箱外重跑通过；包内 manifest 权限边界未扩大。
 - [x] Chrome 加载 `build/chrome-mv3-prod` 无安装报错。2026-06-02 用户本地验收通过。
@@ -164,6 +171,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] 已保留响应速度优化：立即显示浮窗、等待模型响应、timing 日志、页面正文 5000 字符截断、默认 `max_tokens` 1024。
 - [x] 已新增 V2-004B 脱敏性能基线：普通浮窗 AI 请求输出一条 `[Aviso perf]` 摘要，可区分 UI 可见、background 接收、provider start、first chunk、done、缺失阶段和错误失败。
 - [x] 已新增 V2-004C / 2026-06-07 可感知响应保护：追问上下文预算、约 2 秒慢响应提示、停止等待并忽略后续 chunk、background abort signal、`user_cancelled` 脱敏分类；真实 provider 首 token 仍不承诺稳定 2 秒内。
+- [x] 已新增 2026-06-08 请求前置准备优化：settings / API key / route 短缓存和 SDK client 复用只降低本地准备成本与“每次重新连接”的体感；真实 provider 首 token 仍可能受模型、网络、API Key 状态、provider 负载、连接复用策略和输入长度影响。
 - [x] 默认模型为较快的 `gpt-4o-mini`。
 - [x] provider 首 token 仍可能受模型、网络、API Key 状态、provider 负载和输入长度影响。
 - [x] Aviso v0.1 不承诺模型秒回；本版本不做后端中转、不扩大权限、不新增依赖、不继续重构 AI 客户端。

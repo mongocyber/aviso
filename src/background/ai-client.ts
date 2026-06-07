@@ -1,6 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk"
-import OpenAI from "openai"
-
 import type { PromptTemplate } from "~types/history"
 import type {
   AIRequestPayload,
@@ -10,9 +7,7 @@ import { normalizeError } from "~utils/errors"
 import { assertSupportedImageSrc } from "~utils/image-src"
 import { parseIntentLocally } from "~utils/intent"
 import {
-  buildProviderConfigRoute,
   getProviderConfigById,
-  resolveModelRoute,
   type ModelRoute,
   type ProviderId
 } from "~utils/model-registry"
@@ -27,7 +22,7 @@ import {
   type ConnectivityValidationSummary
 } from "~utils/provider-connectivity"
 import { getScreenshotVisionBlockReason } from "~utils/screenshot"
-import { getApiKeys, getSettings, getTemplates } from "~utils/storage"
+import { getTemplates } from "~utils/storage"
 import { expandTemplate } from "~utils/template"
 import {
   categorizePerfError,
@@ -47,6 +42,15 @@ import {
   TRANSLATION_SYSTEM_PROMPT
 } from "~utils/translation"
 
+import {
+  getProviderClientCacheKey,
+  getRuntimeAnthropicClient,
+  getRuntimeConfigSnapshot,
+  getRuntimeOpenAIClient,
+  resolveRuntimeModelRoute,
+  resolveRuntimeProviderConfigRoute
+} from "./ai-runtime-cache"
+
 export type StreamChunk = {
   text: string
   done: boolean
@@ -55,14 +59,14 @@ export type StreamChunk = {
 export async function handleProviderConnectivityTest(
   payload: ProviderConnectivityPayload
 ): Promise<ConnectivityValidationSummary> {
-  const [settings, apiKeys] = await Promise.all([getSettings(), getApiKeys()])
+  const { settings, apiKeys } = await getRuntimeConfigSnapshot()
   const providerConfig = getProviderConfigById(
     settings.providerConfigs,
     payload.providerConfigId
   )
   const route = providerConfig
-    ? buildProviderConfigRoute(providerConfig, settings)
-    : resolveModelRoute(getConnectivityModelId(payload.provider), settings)
+    ? resolveRuntimeProviderConfigRoute(providerConfig, settings)
+    : resolveRuntimeModelRoute(getConnectivityModelId(payload.provider), settings)
   const hostPermissionPresent = isProviderHostPermissionPresent(
     route.provider,
     chrome.runtime.getManifest().host_permissions
@@ -120,13 +124,15 @@ export async function handleProviderConnectivityTest(
   try {
     if (route.provider.id === "anthropic") {
       await callAnthropic(route.requestModel, testPayload, apiKey, () => {}, {
-        requestId: `connectivity-${route.provider.id}`
+        requestId: `connectivity-${route.provider.id}`,
+        clientCacheKey: getProviderClientCacheKey(route)
       })
     } else {
       await callOpenAI(route.requestModel, testPayload, apiKey, () => {}, {
         baseURL: route.provider.baseURL,
         keyLabel: route.provider.displayName,
-        requestId: `connectivity-${route.provider.id}`
+        requestId: `connectivity-${route.provider.id}`,
+        clientCacheKey: getProviderClientCacheKey(route)
       })
     }
 
@@ -154,7 +160,7 @@ export async function handleAIRequest(
   onChunk: (chunk: StreamChunk) => void,
   options: { requestId?: string; signal?: AbortSignal } = {}
 ): Promise<void> {
-  const [settings, apiKeys] = await Promise.all([getSettings(), getApiKeys()])
+  const { settings, apiKeys } = await getRuntimeConfigSnapshot()
 
   // 自定义模板：展开占位符后作为 systemPrompt，避免选中文本被重复拼接
   if (payload.operation === "template" && payload.templateId) {
@@ -182,7 +188,7 @@ export async function handleAIRequest(
     }
   }
 
-  const route = resolveModelRoute(payload.model, settings)
+  const route = resolveRuntimeModelRoute(payload.model, settings)
   const imageInputBlockReason = getImageInputBlockReason(payload, route)
 
   try {
@@ -212,6 +218,7 @@ export async function handleAIRequest(
         {
           requestId: options.requestId,
           signal: options.signal,
+          clientCacheKey: getProviderClientCacheKey(route),
           logPerf: true
         }
       )
@@ -220,22 +227,36 @@ export async function handleAIRequest(
         logPreProviderPerf(payload, route.provider.id, route.requestModel)
         throw new Error("豆包接入点 ID 未配置，请在设置的 AI 页填写")
       }
-      await callOpenAI(route.requestModel, payload, getRouteApiKey(route, apiKeys), onChunk, {
-        baseURL: route.provider.baseURL,
-        keyLabel: "豆包",
-        requestId: options.requestId,
-        signal: options.signal,
-        providerId: route.provider.id,
-        logPerf: true
-      })
+      await callOpenAI(
+        route.requestModel,
+        payload,
+        getRouteApiKey(route, apiKeys),
+        onChunk,
+        {
+          baseURL: route.provider.baseURL,
+          keyLabel: "豆包",
+          requestId: options.requestId,
+          signal: options.signal,
+          clientCacheKey: getProviderClientCacheKey(route),
+          providerId: route.provider.id,
+          logPerf: true
+        }
+      )
     } else {
-      await callOpenAI(route.requestModel, payload, getRouteApiKey(route, apiKeys), onChunk, {
-        keyLabel: route.provider.displayName,
-        requestId: options.requestId,
-        signal: options.signal,
-        providerId: route.provider.id,
-        logPerf: true
-      })
+      await callOpenAI(
+        route.requestModel,
+        payload,
+        getRouteApiKey(route, apiKeys),
+        onChunk,
+        {
+          keyLabel: route.provider.displayName,
+          requestId: options.requestId,
+          signal: options.signal,
+          clientCacheKey: getProviderClientCacheKey(route),
+          providerId: route.provider.id,
+          logPerf: true
+        }
+      )
     }
   } catch (err) {
     throw new Error(normalizeError(err))
@@ -244,7 +265,7 @@ export async function handleAIRequest(
 
 function getRouteApiKey(
   route: Pick<ModelRoute, "provider" | "providerConfigId">,
-  apiKeys: Awaited<ReturnType<typeof getApiKeys>>
+  apiKeys: Awaited<ReturnType<typeof getRuntimeConfigSnapshot>>["apiKeys"]
 ): string {
   if (route.providerConfigId) {
     const legacyProvider = getLegacyProviderFromConfigId(route.providerConfigId)
@@ -265,6 +286,7 @@ async function callOpenAI(
     keyLabel?: string
     requestId?: string
     signal?: AbortSignal
+    clientCacheKey?: string
     providerId?: ProviderId
     logPerf?: boolean
   }
@@ -279,10 +301,10 @@ async function callOpenAI(
     if (!apiKey) throw new Error(`${opts?.keyLabel ?? "OpenAI"} API Key 未配置`)
     throwIfAborted(opts?.signal)
 
-    const client = new OpenAI({
+    const client = getRuntimeOpenAIClient({
       apiKey,
       baseURL: opts?.baseURL,
-      dangerouslyAllowBrowser: true
+      cacheKey: opts?.clientCacheKey ?? `${opts?.providerId ?? "openai"}:default`
     })
 
     const messages =
@@ -371,7 +393,12 @@ async function callAnthropic(
   payload: AIRequestPayload,
   apiKey: string,
   onChunk: (chunk: StreamChunk) => void,
-  opts: { requestId?: string; signal?: AbortSignal; logPerf?: boolean } = {}
+  opts: {
+    requestId?: string
+    signal?: AbortSignal
+    clientCacheKey?: string
+    logPerf?: boolean
+  } = {}
 ): Promise<void> {
   const requestId = opts.requestId ?? "unknown"
   let timing: RequestTiming | undefined = payload.timing
@@ -383,7 +410,10 @@ async function callAnthropic(
     if (!apiKey) throw new Error("Anthropic API Key 未配置")
     throwIfAborted(opts.signal)
 
-    const client = new Anthropic({ apiKey, dangerouslyAllowBrowser: true })
+    const client = getRuntimeAnthropicClient({
+      apiKey,
+      cacheKey: opts.clientCacheKey ?? "anthropic:default"
+    })
 
     const messages =
       payload.operation === "image_explain" && payload.srcUrl
@@ -544,7 +574,7 @@ function logPreProviderPerf(
 
 function getImageInputBlockReason(
   payload: AIRequestPayload,
-  route: ReturnType<typeof resolveModelRoute>
+  route: ModelRoute
 ): string | null {
   if (
     payload.operation !== "image_explain" ||

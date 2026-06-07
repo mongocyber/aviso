@@ -1,4 +1,5 @@
 import type { AIRequestPayload } from "~types/messages"
+import type { ProviderConfig } from "~types/history"
 
 import type { ProviderId, ProviderMetadata } from "./model-registry"
 
@@ -33,6 +34,19 @@ export type ConnectivityValidationSummary = {
 }
 
 export const CONNECTIVITY_TEST_PROMPT = "请用一句中文回答：连接测试成功。"
+
+const CONNECTIVITY_ERROR_CATEGORIES: ConnectivityErrorCategory[] = [
+  "none",
+  "api_key_missing",
+  "endpoint_or_model_missing",
+  "host_permission_missing",
+  "unauthorized",
+  "rate_limited",
+  "network_error",
+  "timeout",
+  "provider_error",
+  "unknown_error"
+]
 
 const CONNECTIVITY_MODEL_BY_PROVIDER: Record<ProviderId, string> = {
   openai: "gpt-4o-mini",
@@ -95,6 +109,42 @@ export function buildConnectivityValidationSummary(params: {
     private_page_data_logged: "no",
     notes: params.notes
   }
+}
+
+export function buildLastConnectivityTestSummary(
+  config: ProviderConfig
+): ConnectivityValidationSummary | null {
+  if (!isProviderConfigTestCurrent(config)) return null
+  const ok = config.testStatus === "success"
+  const testedAt = new Date(config.testedAt ?? 0).toISOString()
+
+  return buildConnectivityValidationSummary({
+    provider: config.provider,
+    modelOrEndpoint: getProviderConfigTestModel(config),
+    hostPermissionPresent: true,
+    result: ok ? "success" : "failure",
+    latencyNote: ok
+      ? `上次通过：${testedAt}`
+      : `上次失败：${testedAt}`,
+    errorCategory: ok
+      ? "none"
+      : normalizeConnectivityErrorCategory(config.testErrorCategory),
+    notes: ok
+      ? "上次手动连接测试通过；Key、模型、provider 或网络变化后需重新测试。"
+      : "上次手动连接测试未通过；Key、模型、provider 或网络变化后需重新测试。"
+  })
+}
+
+export function buildLastConnectivityTestSummaryMap(
+  configs: ProviderConfig[]
+): Record<string, ConnectivityValidationSummary> {
+  return Object.fromEntries(
+    configs
+      .map((config) => [config.id, buildLastConnectivityTestSummary(config)] as const)
+      .filter((entry): entry is [string, ConnectivityValidationSummary] =>
+        Boolean(entry[1])
+      )
+  )
 }
 
 export function buildConnectivityPreflightSummary(params: {
@@ -167,4 +217,30 @@ function getErrorMessage(error: unknown): string {
   if (error instanceof Error) return error.message
   if (typeof error === "string") return error
   return ""
+}
+
+function normalizeConnectivityErrorCategory(
+  value: string | undefined
+): ConnectivityErrorCategory {
+  return CONNECTIVITY_ERROR_CATEGORIES.includes(
+    value as ConnectivityErrorCategory
+  )
+    ? (value as ConnectivityErrorCategory)
+    : "unknown_error"
+}
+
+function isProviderConfigTestCurrent(config: ProviderConfig): boolean {
+  if (!config.testedAt || config.testStatus === "untested") return false
+  return (
+    config.testProvider === config.provider &&
+    config.testModel === getProviderConfigTestModel(config)
+  )
+}
+
+function getProviderConfigTestModel(config: ProviderConfig): string {
+  if (config.provider === "doubao") return config.model.trim()
+  if (config.model) return config.model
+  return config.provider === "anthropic"
+    ? "claude-haiku-4-5-20251001"
+    : "gpt-4o-mini"
 }

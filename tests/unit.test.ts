@@ -1250,6 +1250,91 @@ test("legacy provider keys map to provider configs without changing storage keys
   assert.match(storageSource, /contextai_api_keys/)
 })
 
+test("provider config stores last connectivity result by provider and model", () => {
+  const typeSource = readFileSync(
+    new URL("../src/types/history.ts", import.meta.url),
+    "utf8"
+  )
+  const providerConfigSource = readFileSync(
+    new URL("../src/utils/provider-configs.ts", import.meta.url),
+    "utf8"
+  )
+  const connectivitySource = readFileSync(
+    new URL("../src/utils/provider-connectivity.ts", import.meta.url),
+    "utf8"
+  )
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(typeSource, /testProvider\?: ProviderConfigProvider/)
+  assert.match(typeSource, /testModel\?: string/)
+  assert.match(providerConfigSource, /markProviderConfigTestResult/)
+  assert.match(providerConfigSource, /testProvider: config\.provider/)
+  assert.match(providerConfigSource, /testModel: getProviderConfigTestModel\(config\)/)
+  assert.match(connectivitySource, /buildLastConnectivityTestSummaryMap/)
+  assert.match(connectivitySource, /上次通过/)
+  assert.match(connectivitySource, /上次失败/)
+  assert.match(popupSource, /buildLastConnectivityTestSummaryMap\(configs\)/)
+  assert.match(popupSource, /上次连接测试通过/)
+  assert.match(popupSource, /上次连接测试未通过/)
+})
+
+test("provider config connectivity result invalidates on key or model changes", () => {
+  const providerConfigSource = readFileSync(
+    new URL("../src/utils/provider-configs.ts", import.meta.url),
+    "utf8"
+  )
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(providerConfigSource, /shouldClearProviderConfigTestResult/)
+  assert.match(providerConfigSource, /options\.apiKeyChanged/)
+  assert.match(providerConfigSource, /previous\.provider !== next\.provider/)
+  assert.match(
+    providerConfigSource,
+    /getProviderConfigTestModel\(previous\) !== getProviderConfigTestModel\(nextConfig\)/
+  )
+  assert.match(popupSource, /\{ apiKeyChanged: true \}/)
+  assert.match(popupSource, /clearProviderConfigTestResult\(normalizedConfig\)/)
+  assert.match(popupSource, /markProviderConfigTestResult\(savedConfig/)
+})
+
+test("AI runtime cache keeps BYOK direct-provider boundaries", () => {
+  const aiClientSource = readFileSync(
+    new URL("../src/background/ai-client.ts", import.meta.url),
+    "utf8"
+  )
+  const runtimeCacheSource = readFileSync(
+    new URL("../src/background/ai-runtime-cache.ts", import.meta.url),
+    "utf8"
+  )
+  const backgroundSource = readFileSync(
+    new URL("../src/background/index.ts", import.meta.url),
+    "utf8"
+  )
+  const handleAIRequestBlock =
+    aiClientSource.match(
+      /export async function handleAIRequest[\s\S]*?\nfunction getRouteApiKey/
+    )?.[0] ?? ""
+
+  assert.match(runtimeCacheSource, /CONFIG_CACHE_TTL_MS = 30_000/)
+  assert.match(runtimeCacheSource, /getRuntimeConfigSnapshot/)
+  assert.match(runtimeCacheSource, /getRuntimeOpenAIClient/)
+  assert.match(runtimeCacheSource, /getRuntimeAnthropicClient/)
+  assert.match(runtimeCacheSource, /clearAIRuntimeCaches/)
+  assert.match(backgroundSource, /changes\.contextai_settings/)
+  assert.match(backgroundSource, /changes\.contextai_api_keys/)
+  assert.match(backgroundSource, /clearAIRuntimeCaches\(\)/)
+  assert.doesNotMatch(handleAIRequestBlock, /handleProviderConnectivityTest/)
+  assert.doesNotMatch(handleAIRequestBlock, /VALIDATE_PROVIDER_CONNECTIVITY/)
+  assert.doesNotMatch(runtimeCacheSource, /chrome\.storage\.(local|sync)\.set/)
+  assert.doesNotMatch(runtimeCacheSource, /provider proxy|proxy|backend/i)
+})
+
 test("model availability blocks unconfigured provider keys", () => {
   assert.equal(isProviderKeyConfigured(""), false)
   assert.equal(isProviderKeyConfigured("••••••••1234"), true)

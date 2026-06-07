@@ -12,6 +12,7 @@ import {
 import { logTiming, markTiming } from "~utils/timing"
 
 import { handleAIRequest, handleProviderConnectivityTest } from "./ai-client"
+import { clearAIRuntimeCaches } from "./ai-runtime-cache"
 import { handleCommandQuickAction } from "./command-actions"
 import {
   copyCurrentContextFromFrame,
@@ -83,6 +84,13 @@ setTimeout(() => ensureContextMenusRegistered("service-worker-start"), 0)
 
 // 默认模型在别处（Popup / 右键 radio）变更时，同步右键菜单勾选
 chrome.storage.onChanged.addListener((changes, area) => {
+  if (
+    (area === "sync" && changes.contextai_settings) ||
+    (area === "local" && changes.contextai_api_keys)
+  ) {
+    clearAIRuntimeCaches()
+  }
+
   if (area === "sync" && changes.contextai_settings) {
     const previous = changes.contextai_settings.oldValue as
       | Partial<Settings>

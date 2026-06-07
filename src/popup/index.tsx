@@ -25,6 +25,7 @@ import type { ProviderId } from "~utils/model-registry"
 import { buildProviderConfigRoute, resolveModelRoute } from "~utils/model-registry"
 import {
   buildProviderConfig,
+  clearProviderConfigTestResult,
   createProviderConfigId,
   defaultProviderConfigName,
   defaultProviderModel,
@@ -32,10 +33,14 @@ import {
   getModelForProviderConfig,
   getProviderConfigKey,
   getProviderConfigsWithLegacy,
+  isProviderConfigTestCurrent,
   isLegacyProviderConfigId,
-  resolveDefaultProviderConfigId
+  markProviderConfigTestResult,
+  resolveDefaultProviderConfigId,
+  shouldClearProviderConfigTestResult
 } from "~utils/provider-configs"
 import {
+  buildLastConnectivityTestSummaryMap,
   buildConnectivityPreflightSummary,
   type ConnectivityValidationSummary
 } from "~utils/provider-connectivity"
@@ -138,6 +143,22 @@ const settingsSignature = (value: Settings) =>
     inlineTranslationTargetLanguage: value.inlineTranslationTargetLanguage,
     templates: value.templates ?? []
   })
+
+function normalizeProviderConfigDraftUpdate(
+  config: ProviderConfig,
+  patch: Partial<ProviderConfig>,
+  options: { apiKeyChanged?: boolean } = {}
+): ProviderConfig {
+  const next = {
+    ...config,
+    ...patch,
+    updatedAt: Date.now()
+  }
+
+  return shouldClearProviderConfigTestResult(config, next, options)
+    ? clearProviderConfigTestResult(next)
+    : next
+}
 
 type PopupTab = "general" | "api" | "templates" | "history"
 
@@ -537,6 +558,9 @@ function Popup() {
         configs
       )
       setProviderConfigs(configs)
+      setProviderConfigConnectivityResults(
+        buildLastConnectivityTestSummaryMap(configs)
+      )
       setProviderConfigKeys(keys.providerConfigKeys)
       setProviderConfigKeyInputs(
         Object.fromEntries(
@@ -726,13 +750,14 @@ function Popup() {
 
   const updateProviderConfigDraft = (
     configId: string,
-    patch: Partial<ProviderConfig>
+    patch: Partial<ProviderConfig>,
+    options: { apiKeyChanged?: boolean } = {}
   ) => {
     setConfirmingDeleteProviderConfigId(null)
     setProviderConfigs((prev) =>
       prev.map((config) =>
         config.id === configId
-          ? { ...config, ...patch, updatedAt: Date.now() }
+          ? normalizeProviderConfigDraftUpdate(config, patch, options)
           : config
       )
     )
@@ -778,7 +803,8 @@ function Popup() {
     }
 
     const legacyProvider = getLegacyProviderFromConfigId(config.id)
-    if (!keyInput.startsWith("••")) {
+    const apiKeyChanged = !keyInput.startsWith("••")
+    if (apiKeyChanged) {
       if (legacyProvider) {
         await saveApiKey(legacyProvider, keyInput)
       } else {
@@ -791,14 +817,20 @@ function Popup() {
       }))
     }
 
-    const normalizedConfig = {
-      ...config,
-      displayName: config.displayName.trim() || PROVIDER_COPY[config.provider].title,
-      model: config.model.trim() || defaultProviderModel(config.provider),
-      updatedAt: Date.now()
-    }
+    const normalizedConfig = normalizeProviderConfigDraftUpdate(
+      config,
+      {
+        displayName:
+          config.displayName.trim() || PROVIDER_COPY[config.provider].title,
+        model: config.model.trim() || defaultProviderModel(config.provider)
+      },
+      { apiKeyChanged }
+    )
+    const savedConfig = isProviderConfigTestCurrent(normalizedConfig)
+      ? normalizedConfig
+      : clearProviderConfigTestResult(normalizedConfig)
     const nextConfigs = providerConfigs.map((item) =>
-      item.id === config.id ? normalizedConfig : item
+      item.id === config.id ? savedConfig : item
     )
     const defaultId = settings.defaultProviderConfigId || config.id
     setProviderConfigs(nextConfigs)
@@ -927,7 +959,8 @@ function Popup() {
     }
 
     const legacyProvider = getLegacyProviderFromConfigId(config.id)
-    if (!keyInput.startsWith("••")) {
+    const apiKeyChanged = !keyInput.startsWith("••")
+    if (apiKeyChanged) {
       if (legacyProvider) {
         await saveApiKey(legacyProvider, keyInput)
       } else {
@@ -939,7 +972,15 @@ function Popup() {
         [config.id]: `••••••••${keyInput.slice(-4)}`
       }))
     }
-    const savedConfig = { ...config, updatedAt: Date.now() }
+    const savedConfig = normalizeProviderConfigDraftUpdate(
+      config,
+      {
+        displayName:
+          config.displayName.trim() || PROVIDER_COPY[config.provider].title,
+        model: config.model.trim() || defaultProviderModel(config.provider)
+      },
+      { apiKeyChanged }
+    )
     const nextConfigs = providerConfigs.map((item) =>
       item.id === config.id ? savedConfig : item
     )
@@ -954,14 +995,30 @@ function Popup() {
       if (settled) return
       settled = true
       setTestingProviderConfigId(null)
+      const summary = buildPopupFallbackSummary(
+        savedConfig.provider,
+        savedConfig.provider === "doubao"
+          ? savedConfig.model
+          : getModelForProviderConfig(savedConfig),
+        "连接测试超时，请稍后重试。"
+      )
       setProviderConfigConnectivityResults((prev) => ({
         ...prev,
-        [config.id]: buildPopupFallbackSummary(
-          config.provider,
-          config.provider === "doubao" ? config.model : getModelForProviderConfig(config),
-          "连接测试超时，请稍后重试。"
-        )
+        [config.id]: summary
       }))
+      const failedConfig = markProviderConfigTestResult(savedConfig, {
+        status: "failure",
+        errorCategory: summary.error_category,
+        testedAt: Date.now()
+      })
+      const failedConfigs = nextConfigs.map((item) =>
+        item.id === config.id ? failedConfig : item
+      )
+      setProviderConfigs(failedConfigs)
+      void persistProviderConfigs(
+        failedConfigs,
+        settings.defaultProviderConfigId || config.id
+      )
     }, CONNECTIVITY_TEST_TIMEOUT_MS)
 
     chrome.runtime.sendMessage(
@@ -978,10 +1035,10 @@ function Popup() {
           resp?.success && resp.data
             ? (resp.data as ConnectivityValidationSummary)
             : buildPopupFallbackSummary(
-                config.provider,
-                config.provider === "doubao"
-                  ? config.model
-                  : getModelForProviderConfig(config),
+                savedConfig.provider,
+                savedConfig.provider === "doubao"
+                  ? savedConfig.model
+                  : getModelForProviderConfig(savedConfig),
                 resp?.error ?? chrome.runtime.lastError?.message
               )
         setProviderConfigConnectivityResults((prev) => ({
@@ -989,13 +1046,11 @@ function Popup() {
           [config.id]: summary
         }))
         const nextStatus = summary.result === "success" ? "success" : "failure"
-        const updatedConfig = {
-          ...savedConfig,
-          testStatus: nextStatus as ProviderConfig["testStatus"],
-          testErrorCategory: summary.error_category,
-          testedAt: Date.now(),
-          updatedAt: Date.now()
-        }
+        const updatedConfig = markProviderConfigTestResult(savedConfig, {
+          status: nextStatus,
+          errorCategory: summary.error_category,
+          testedAt: Date.now()
+        })
         const testedConfigs = nextConfigs.map((item) =>
           item.id === config.id ? updatedConfig : item
         )
@@ -1328,22 +1383,35 @@ function Popup() {
     ? providerConfigConnectivityResults[selectedProviderConfig.id]
     : undefined
   const selectedModelAvailability = selectedProviderConfig
-    ? !selectedProviderConfigKeyValue.trim()
-      ? ({ disabled: true, status: "未配置 Key", tone: "danger" } as const)
-      : selectedProviderConfig.provider === "doubao" &&
+    ? (() => {
+        if (!selectedProviderConfigKeyValue.trim()) {
+          return { disabled: true, status: "未配置 Key", tone: "danger" } as const
+        }
+        if (
+          selectedProviderConfig.provider === "doubao" &&
           !selectedProviderConfig.model.trim()
-        ? ({ disabled: true, status: "未配置接入点", tone: "danger" } as const)
-        : testingProviderConfigId === selectedProviderConfig.id
-          ? ({ disabled: true, status: "测试中", tone: "warning" } as const)
-          : selectedProviderConfigConnectivity?.result === "success"
-            ? ({ disabled: false, status: "已连接", tone: "ok" } as const)
-            : selectedProviderConfigConnectivity
-              ? ({
-                  disabled: true,
-                  status: "连接未通过",
-                  tone: "danger"
-                } as const)
-              : ({ disabled: false, status: "未测试", tone: "muted" } as const)
+        ) {
+          return {
+            disabled: true,
+            status: "未配置接入点",
+            tone: "danger"
+          } as const
+        }
+        if (testingProviderConfigId === selectedProviderConfig.id) {
+          return { disabled: true, status: "测试中", tone: "warning" } as const
+        }
+        if (selectedProviderConfigConnectivity?.result === "success") {
+          return { disabled: false, status: "上次通过", tone: "ok" } as const
+        }
+        if (selectedProviderConfigConnectivity) {
+          return {
+            disabled: true,
+            status: "上次失败",
+            tone: "danger"
+          } as const
+        }
+        return { disabled: false, status: "未测试", tone: "muted" } as const
+      })()
     : (modelAvailability[selectedModel.value] ??
       getModelAvailability({
         route: resolveModelRoute(selectedModel.value, settings),
@@ -1825,8 +1893,8 @@ function Popup() {
                                   : ("danger" as const),
                               status:
                                 result.result === "success"
-                                  ? "已连接"
-                                  : "连接未通过"
+                                  ? "上次通过"
+                                  : "上次失败"
                             }
                           : {
                               tone: disabled ? ("danger" as const) : ("muted" as const),
@@ -2315,11 +2383,11 @@ function Popup() {
                       : "danger"
               const connectionLabel =
                 testingProviderConfigId === config.id
-                  ? "未测试"
+                  ? "测试中"
                   : connectivity?.result === "success"
-                    ? "可用"
+                    ? "上次通过"
                     : connectivity
-                      ? "连接失败"
+                      ? "上次失败"
                       : keyConfigured && !missingEndpoint
                         ? isEditing
                           ? "未测试"
@@ -2361,9 +2429,9 @@ function Popup() {
                 testingProviderConfigId === config.id
                   ? "测试中..."
                   : connectivity?.result === "success"
-                    ? "可以使用"
+                    ? "上次通过"
                     : connectivity
-                      ? "测试未通过"
+                      ? "上次失败"
                       : "未测试"
 
               return (
@@ -2640,7 +2708,11 @@ function Popup() {
                               ...prev,
                               [config.id]: event.target.value
                             }))
-                            updateProviderConfigDraft(config.id, {})
+                            updateProviderConfigDraft(
+                              config.id,
+                              {},
+                              { apiKeyChanged: true }
+                            )
                           }}
                           placeholder={copy.keyPlaceholder}
                           aria-label={copy.keyLabel}
@@ -3044,6 +3116,7 @@ function ConnectivitySummaryView({
   if (!summary) return null
   const ui = getAvisoThemeTokens(theme)
   const ok = summary.result === "success"
+  const isLastResult = summary.latency_note.startsWith("上次")
   const rows = [
     ["provider", summary.provider],
     ["model_or_endpoint", summary.model_or_endpoint],
@@ -3074,7 +3147,13 @@ function ConnectivitySummaryView({
             background: ok ? ui.accent : ui.danger
           }}
         />
-        {ok ? "连接测试通过" : "连接测试未通过"}
+        {isLastResult
+          ? ok
+            ? "上次连接测试通过"
+            : "上次连接测试未通过"
+          : ok
+            ? "连接测试通过"
+            : "连接测试未通过"}
       </div>
       {rows.map(([key, value]) => (
         <div key={key} style={styles.summaryRow}>

@@ -1,4 +1,4 @@
-import type { ProviderConfig, Settings } from "~types/history"
+import type { ProviderConfig, ProviderConfigProvider, Settings } from "~types/history"
 
 import {
   LEGACY_PROVIDER_CONFIG_IDS,
@@ -73,15 +73,20 @@ export function normalizeProviderConfigs(
 ): ProviderConfig[] {
   return providerConfigs
     .filter((config) => isProviderId(config.provider) && config.id)
-    .map((config) => ({
-      ...config,
-      displayName:
-        config.displayName?.trim() ||
-        defaultProviderConfigName(config.provider, 1),
-      model: config.model ?? defaultProviderModel(config.provider),
-      createdAt: config.createdAt || Date.now(),
-      updatedAt: config.updatedAt || Date.now()
-    }))
+    .map((config) => {
+      const normalized = {
+        ...config,
+        displayName:
+          config.displayName?.trim() ||
+          defaultProviderConfigName(config.provider, 1),
+        model: config.model ?? defaultProviderModel(config.provider),
+        createdAt: config.createdAt || Date.now(),
+        updatedAt: config.updatedAt || Date.now()
+      }
+      return isProviderConfigTestCurrent(normalized)
+        ? normalized
+        : clearProviderConfigTestResult(normalized)
+    })
 }
 
 export function getLegacyProviderConfigs(
@@ -165,6 +170,72 @@ export function getModelForProviderConfig(config: ProviderConfig): string {
   return config.provider === "doubao"
     ? "doubao"
     : config.model || PROVIDER_PRIMARY_MODEL[config.provider]
+}
+
+export function getProviderConfigTestModel(config: ProviderConfig): string {
+  return config.provider === "doubao"
+    ? config.model.trim()
+    : getModelForProviderConfig(config)
+}
+
+export function isProviderConfigTestCurrent(config: ProviderConfig): boolean {
+  if (!config.testedAt || config.testStatus === "untested") return false
+  return (
+    config.testProvider === config.provider &&
+    config.testModel === getProviderConfigTestModel(config)
+  )
+}
+
+export function clearProviderConfigTestResult(
+  config: ProviderConfig
+): ProviderConfig {
+  const {
+    testErrorCategory: _testErrorCategory,
+    testedAt: _testedAt,
+    testProvider: _testProvider,
+    testModel: _testModel,
+    ...rest
+  } = config
+
+  return {
+    ...rest,
+    testStatus: "untested"
+  }
+}
+
+export function markProviderConfigTestResult(
+  config: ProviderConfig,
+  input: {
+    status: Exclude<ProviderConfig["testStatus"], "untested" | undefined>
+    errorCategory?: string
+    testedAt?: number
+  }
+): ProviderConfig {
+  return {
+    ...config,
+    testStatus: input.status,
+    testErrorCategory: input.errorCategory,
+    testProvider: config.provider,
+    testModel: getProviderConfigTestModel(config),
+    testedAt: input.testedAt ?? Date.now(),
+    updatedAt: input.testedAt ?? Date.now()
+  }
+}
+
+export function shouldClearProviderConfigTestResult(
+  previous: ProviderConfig,
+  next: Pick<ProviderConfig, "provider" | "model">,
+  options: { apiKeyChanged?: boolean } = {}
+): boolean {
+  if (options.apiKeyChanged) return true
+  if (previous.provider !== next.provider) return true
+
+  const nextConfig = {
+    ...previous,
+    provider: next.provider as ProviderConfigProvider,
+    model: next.model
+  }
+  return getProviderConfigTestModel(previous) !== getProviderConfigTestModel(nextConfig)
 }
 
 function isProviderId(value: string): value is ProviderId {

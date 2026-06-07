@@ -57,6 +57,8 @@ export type ProviderConfig = {
   isDefault?: boolean
   testStatus?: "untested" | "success" | "failure"
   testErrorCategory?: string
+  testProvider?: ProviderConfigProvider
+  testModel?: string
   testedAt?: number
   createdAt: number
   updatedAt: number
