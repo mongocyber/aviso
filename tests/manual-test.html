@@ -20,6 +20,17 @@
         border-radius: 8px;
         margin-bottom: 24px;
       }
+      .notice {
+        background: #f4f8f2;
+        border: 1px solid #ccd9c5;
+        border-radius: 10px;
+        padding: 16px 18px;
+        margin: 20px 0 28px;
+        line-height: 1.7;
+      }
+      .notice strong {
+        color: #2f5a37;
+      }
       .checklist li {
         margin: 8px 0;
       }
@@ -44,6 +55,18 @@
   </head>
   <body>
     <h1>Aviso 手动验收页</h1>
+
+    <div class="notice">
+      <strong>先看这里：</strong>
+      本页的 A-G 是旧的通用验收页，不等于当前 V1 focused QA 已完成。
+      本轮请优先按
+      <a href="../docs/issues/007-v1-core-ui-manual-qa.md"
+        >`docs/issues/007-v1-core-ui-manual-qa.md`</a
+      >
+      里的 focused checklist 验证
+      <code>V1-006</code>、<code>V1-007</code>、<code>V1-011</code>、
+      <code>V1-012</code>；A-G 只作为旧通用基线和页面 fixture 使用。
+    </div>
 
     <div class="checklist">
       <strong>验收清单 A · 右键菜单</strong>
@@ -122,9 +145,15 @@
           Popup → 模板页 → 添加模板：名称任意，内容含
           <code>{{selection}}</code>，勾选「选中文字」→ 完成 → 保存设置
         </li>
-        <li>选中下方文字右键 → 「自定义模板 ▸」子菜单应出现刚建的模板</li>
+        <li>
+          不重装扩展，选中下方文字右键 → 「自定义模板
+          ▸」子菜单应立即出现刚建的模板
+        </li>
         <li>点击该模板 → 浮窗输出应基于选中文字（占位符已展开）</li>
-        <li>编辑 / 删除模板后保存 → 右键菜单即时同步（无需重装扩展）</li>
+        <li>
+          编辑 / 删除模板后保存 →
+          右键菜单即时同步；没有模板时不应显示空的「自定义模板 ▸」
+        </li>
       </ol>
     </div>
 

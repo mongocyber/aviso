@@ -7,6 +7,11 @@ export type ScreenshotImageSizeBucket =
   | "1mb-3mb"
   | "3mb+"
 
+export type ScreenshotToolbarPosition = {
+  left: number
+  top: number
+}
+
 const MIN_REGION_SIZE = 12
 
 export function normalizeScreenshotRegion(
@@ -60,6 +65,52 @@ export function getScreenshotVisionBlockReason(
   }
 
   return null
+}
+
+export function normalizeScreenshotCaptureError(
+  error: unknown,
+  pageUrl?: string
+): string {
+  const message = error instanceof Error ? error.message : String(error)
+  const isPermissionError =
+    /activeTab|<all_urls>|all_urls|permission is required/i.test(message)
+  const isLocalFile = (pageUrl ?? "").startsWith("file://")
+
+  if (isPermissionError) {
+    return isLocalFile
+      ? "当前本地文件页面没有截图权限。请在 Chrome 扩展详情里开启“允许访问文件网址”，然后从扩展按钮或右键菜单重新触发截图。"
+      : "当前页面没有截图权限。请从扩展按钮或右键菜单重新触发截图后再复制；不要从页面内快捷入口直接开始截图。"
+  }
+
+  return message || "截图失败，请重新尝试。"
+}
+
+export function clampScreenshotToolbarPosition(
+  region: ScreenshotRegion,
+  viewport: { width: number; height: number },
+  toolbar: { width: number; height: number },
+  margin = 12,
+  gap = 10
+): ScreenshotToolbarPosition {
+  const preferredLeft = region.x + region.width / 2 - toolbar.width / 2
+  const belowTop = region.y + region.height + gap
+  const insideBottomTop = region.y + region.height - toolbar.height - gap
+  const aboveTop = region.y - toolbar.height - gap
+  const maxLeft = Math.max(margin, viewport.width - toolbar.width - margin)
+  const maxTop = Math.max(margin, viewport.height - toolbar.height - margin)
+  const hasRoomBelow =
+    region.y + region.height + gap + toolbar.height <= viewport.height - margin
+  const hasRoomInsideBottom = region.height >= toolbar.height + gap * 2
+  const top = hasRoomBelow
+    ? belowTop
+    : hasRoomInsideBottom
+      ? insideBottomTop
+      : aboveTop
+
+  return {
+    left: clamp(preferredLeft, margin, maxLeft),
+    top: clamp(top, margin, maxTop)
+  }
 }
 
 function estimateDataUrlBytes(dataUrl: string): number {
