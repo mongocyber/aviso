@@ -4,12 +4,22 @@ import {
   normalizeTemplateMenuContexts
 } from "~utils/context-menu-templates"
 import {
+  getModelMetadata,
+  PROVIDER_PRIMARY_MODEL
+} from "~utils/model-registry"
+import {
+  getModelForProviderConfig,
+  getProviderConfigsWithLegacy,
+  hasProviderConfigKey,
+  resolveDefaultProviderConfigId
+} from "~utils/provider-configs"
+import {
   isSupportedImageSrc,
   UNSUPPORTED_IMAGE_SRC_MESSAGE
 } from "~utils/image-src"
 import { formatCurrentContext, truncatePageContent } from "~utils/page-content"
 import { WAITING_MODEL_RESPONSE_TEXT } from "~utils/response-guard"
-import { getSettings, saveSettings } from "~utils/storage"
+import { getApiKeys, getSettings, saveSettings } from "~utils/storage"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
 
 import {
@@ -34,14 +44,6 @@ const MENU_ID_TEMPLATES = "contextai-templates"
 const MENU_ID_MODEL_SEPARATOR = "contextai-model-sep"
 const MENU_ID_MODEL_PREFIX = "contextai-model-"
 
-const MODELS = [
-  { id: "gpt-4o-mini", label: "GPT-4o mini" },
-  { id: "gpt-4o", label: "GPT-4o" },
-  { id: "claude-haiku-4-5-20251001", label: "Claude Haiku" },
-  { id: "claude-sonnet-4-6", label: "Claude Sonnet" },
-  { id: "doubao", label: "豆包（火山方舟）" }
-]
-
 const ALL_CONTEXTS: chrome.contextMenus.ContextType[] = [
   "selection",
   "link",
@@ -62,7 +64,12 @@ export function registerContextMenus() {
 
 async function registerContextMenusNow() {
   const settings = await getSettings()
-  const currentModel = settings.defaultModel ?? "gpt-4o-mini"
+  const apiKeys = await getApiKeys()
+  const providerConfigs = getProviderConfigsWithLegacy(settings, apiKeys)
+  const defaultProviderConfigId = resolveDefaultProviderConfigId(
+    settings,
+    providerConfigs
+  )
   const templates = settings.templates ?? []
   await removeAllContextMenus()
   // 根菜单（所有上下文可见）
@@ -148,7 +155,7 @@ async function registerContextMenusNow() {
   chrome.contextMenus.create({
     id: MENU_ID_SCREENSHOT_ASK,
     parentId: MENU_ID_ROOT,
-    title: "截图提问（内部试用）",
+    title: "截图提问",
     contexts: ["page"]
   })
 
@@ -180,16 +187,18 @@ async function registerContextMenusNow() {
     })
   }
 
-  // 模型切换分隔线
-  chrome.contextMenus.create({
-    id: MENU_ID_MODEL_SEPARATOR,
-    parentId: MENU_ID_ROOT,
-    type: "separator",
-    contexts: ["selection", "link", "image", "video", "editable", "page"]
-  })
+  if (providerConfigs.length > 0) {
+    // 模型切换分隔线
+    chrome.contextMenus.create({
+      id: MENU_ID_MODEL_SEPARATOR,
+      parentId: MENU_ID_ROOT,
+      type: "separator",
+      contexts: ["selection", "link", "image", "video", "editable", "page"]
+    })
 
-  // 模型选项（勾选项跟随已保存的默认模型）
-  registerModelMenuItems(currentModel)
+    // 模型选项（勾选项跟随 Popup 中已保存的 AI 服务配置）
+    registerModelMenuItems(providerConfigs, defaultProviderConfigId, apiKeys)
+  }
 }
 
 function removeAllContextMenus() {
@@ -198,33 +207,56 @@ function removeAllContextMenus() {
   })
 }
 
-function registerModelMenuItems(currentModel: string) {
-  MODELS.forEach(({ id, label }) => {
+function registerModelMenuItems(
+  providerConfigs: ReturnType<typeof getProviderConfigsWithLegacy>,
+  defaultProviderConfigId: string,
+  apiKeys: Awaited<ReturnType<typeof getApiKeys>>
+) {
+  providerConfigs.forEach((config) => {
+    const disabled =
+      !hasProviderConfigKey(config, apiKeys) ||
+      (config.provider === "doubao" && !config.model.trim())
     chrome.contextMenus.create({
-      id: `${MENU_ID_MODEL_PREFIX}${id}`,
+      id: `${MENU_ID_MODEL_PREFIX}${config.id}`,
       parentId: MENU_ID_ROOT,
       type: "radio",
-      title: label,
-      checked: id === currentModel,
+      title: getProviderConfigMenuTitle(config),
+      checked: config.id === defaultProviderConfigId,
+      enabled: !disabled,
       contexts: ["selection", "link", "image", "video", "editable", "page"]
     })
   })
 }
 
+function getProviderConfigMenuTitle(
+  config: ReturnType<typeof getProviderConfigsWithLegacy>[number]
+): string {
+  const modelId =
+    config.provider === "doubao"
+      ? config.model.trim() || "未配置接入点"
+      : config.model || PROVIDER_PRIMARY_MODEL[config.provider]
+  const modelLabel = getModelMetadata(modelId)?.displayName ?? modelId
+  return `${config.displayName} · ${modelLabel}`
+}
+
 /** 外部（如 Popup）切换默认模型后，同步右键菜单 radio 勾选 */
-export function syncModelMenuSelection(modelId: string) {
-  MODELS.forEach(({ id }) => {
+export async function syncModelMenuSelection(providerConfigId: string) {
+  const settings = await getSettings()
+  const apiKeys = await getApiKeys()
+  const providerConfigs = getProviderConfigsWithLegacy(settings, apiKeys)
+
+  providerConfigs.forEach(({ id }) => {
     chrome.contextMenus.update(
       `${MENU_ID_MODEL_PREFIX}${id}`,
       {
-        checked: id === modelId
+        checked: id === providerConfigId
       },
       () => {
         const error = chrome.runtime.lastError
         if (!error) return
 
         console.warn("[Aviso] Failed to sync context menu model selection", {
-          modelId,
+          providerConfigId,
           menuId: `${MENU_ID_MODEL_PREFIX}${id}`,
           error: error.message
         })
@@ -249,8 +281,8 @@ export async function handleContextMenuClick(
 
   // 模型切换
   if (menuItemId.startsWith(MENU_ID_MODEL_PREFIX)) {
-    const modelId = menuItemId.replace(MENU_ID_MODEL_PREFIX, "")
-    handleModelSwitch(modelId)
+    const providerConfigId = menuItemId.replace(MENU_ID_MODEL_PREFIX, "")
+    await handleModelSwitch(providerConfigId)
     return
   }
 
@@ -630,8 +662,18 @@ function resolveContext(
   return "page"
 }
 
-async function handleModelSwitch(modelId: string) {
-  await saveSettings({ defaultModel: modelId })
+async function handleModelSwitch(providerConfigId: string) {
+  const settings = await getSettings()
+  const apiKeys = await getApiKeys()
+  const providerConfigs = getProviderConfigsWithLegacy(settings, apiKeys)
+  const config = providerConfigs.find((item) => item.id === providerConfigId)
+  if (!config) return
+
+  await saveSettings({
+    defaultProviderConfigId: providerConfigId,
+    defaultModel: getModelForProviderConfig(config)
+  })
+  await syncModelMenuSelection(providerConfigId)
 }
 
 /** 向 content script 请求 Readability 抽取的当前页正文，失败时返回空串 */

@@ -196,7 +196,7 @@ Aviso has no project-owned backend and does not add telemetry or analytics. API 
 ### `contextMenus`
 
 ```text
-Used to show Aviso actions in the right-click menu for selected text, links, pages, images, custom templates, model switching, internal-only screenshot questions, and copying current context.
+Used to show Aviso actions in the right-click menu for selected text, links, pages, images, custom templates, model switching, user-triggered screenshot questions, and copying current context.
 ```
 
 ### `activeTab`
@@ -232,7 +232,7 @@ Used for user-triggered copy actions, including copying AI results and copying t
 ### Content Script Site Access: `<all_urls>`
 
 ```text
-Aviso injects content scripts on webpages so the user can access the selection toolbar, command palette, in-page result panel, clipboard prompt, iframe bridge, and internal-only screenshot selection UI on the pages they are using. The extension does not use this site access to fetch arbitrary remote link bodies, run telemetry, inject ads, or send page content to Aviso servers. Page content is sent to a model provider only when the user manually triggers an AI action that needs that content.
+Aviso injects content scripts on webpages so the user can access the selection toolbar, command palette, in-page result panel, clipboard prompt, iframe bridge, and user-triggered screenshot selection UI on the pages they are using. The extension does not use this site access to fetch arbitrary remote link bodies, run telemetry, inject ads, or send page content to Aviso servers. Page content is sent to a model provider only when the user manually triggers an AI action that needs that content.
 ```
 
 ### Host Permission: `https://api.openai.com/*`

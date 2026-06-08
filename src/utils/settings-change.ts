@@ -29,3 +29,23 @@ export function hasDefaultModelChanged(
     Boolean(next?.defaultModel) && previous?.defaultModel !== next.defaultModel
   )
 }
+
+function providerConfigMenuSignature(settings?: Partial<Settings>) {
+  return JSON.stringify({
+    defaultProviderConfigId: settings?.defaultProviderConfigId ?? "",
+    providerConfigs: (settings?.providerConfigs ?? []).map((config) => ({
+      id: config.id,
+      provider: config.provider,
+      displayName: config.displayName,
+      model: config.model,
+      isDefault: config.isDefault
+    }))
+  })
+}
+
+export function haveProviderConfigMenusChanged(
+  previous?: Partial<Settings>,
+  next?: Partial<Settings>
+) {
+  return providerConfigMenuSignature(previous) !== providerConfigMenuSignature(next)
+}

@@ -36,7 +36,7 @@ Non-scope:
 | Screenshot copy exit | After Copy image succeeds, screenshot mode should exit so the user can paste elsewhere. Current loaded-extension QA stayed in screenshot mode. | Fixed in this thread and pending reload/retest. |
 | Screenshot double-click gestures | Double-click inside the selected region should copy image; double-click outside the selected region should exit screenshot mode. | Fixed in this thread and pending reload/retest. |
 | Screenshot file-page permission | Copy image on the local `file://` QA page showed Chrome's raw `activeTab` / `<all_urls>` permission error. | Error copy normalized. If testing on `file://`, user may need to enable Chrome extension setting `Allow access to file URLs` and trigger screenshot from extension/right-click entry. No permission expansion. |
-| Screenshot activeTab entry model | Normal webpages still failed when screenshot was started from an in-page quick menu. This is Chrome MV3 `activeTab` behavior: content-script UI clicks do not grant screenshot permission. | v1.0 basic-launch ordinary-user UI now hides those page-internal screenshot quick entries. Authorized extension entries, especially the context-menu screenshot path, remain the internal-only screenshot route. |
+| Screenshot activeTab entry model | Normal webpages still failed when screenshot was started from an in-page quick menu. This is Chrome MV3 `activeTab` behavior: content-script UI clicks do not grant screenshot permission. | v1.0 basic-launch ordinary-user UI now hides those page-internal screenshot quick entries. Authorized extension entries, especially the context-menu screenshot path, remain the screenshot route. |
 | Screenshot overlay double-click propagation | Double-click outside the selected screenshot region exited screenshot mode but also opened the double-click shortcut menu. | Fixed in this thread and pending reload/retest. |
 | Screenshot toolbar placement | Toolbar should sit near the bottom center of the selected region and remain clamped inside the viewport. | Fixed in this thread and pending reload/retest. |
 | Screenshot toolbar visuals | Buttons should be icon-leading, visually low-border, equal weight, vertically centered in the dark toolbar container, and the dark container should not be too tall. Copy should not have primary emphasis. | Fixed in this thread and pending reload/retest. |
@@ -121,7 +121,7 @@ Expected:
 - Double-click outside the selected region exits screenshot mode without capturing, copying, calling a provider, writing storage/history, or opening the double-click shortcut menu.
 - On local `file://` QA pages, screenshot capture may require enabling `Allow access to file URLs` in Chrome extension details and starting screenshot from the extension/right-click entry. This must be handled as an environment permission note, not by adding `<all_urls>` or `downloads` permission.
 - Command palette quick actions and the double-click shortcut menu should not show screenshot as an ordinary-user action in the v1.0 basic launch path.
-- Authorized screenshot entry for this thread: right-click menu `截图提问（内部试用）` / context-menu screenshot path. Extension action or browser command entry may be used only when it grants the current tab `activeTab` permission.
+- Authorized screenshot entry for this thread: right-click menu `截图提问` / context-menu screenshot path. Extension action or browser command entry may be used only when it grants the current tab `activeTab` permission.
 
 Local-only boundaries:
 
@@ -217,7 +217,7 @@ Status: fixed in code; pending loaded-extension manual retest.
 | Screenshot double-click outside selection | Fixed, pending retest | Verify it exits screenshot mode without capture/copy/provider/storage/history writes and without opening the double-click shortcut menu. |
 | Screenshot file-page permission guidance | Fixed, pending retest | On `file://` QA pages, verify permission errors are Chinese actionable guidance about file URL access and extension/right-click trigger, not raw Chrome English. |
 | Screenshot page-internal quick entry | Fixed | Verify command palette quick actions and double-click shortcut menu no longer expose screenshot in the ordinary-user v1.0 basic path. |
-| Screenshot authorized entry | Pending retest | Verify right-click menu `截图提问（内部试用）` starts screenshot selection and can capture with activeTab grant. |
+| Screenshot authorized entry | Pending retest | Verify right-click menu `截图提问` starts screenshot selection and can capture with activeTab grant. |
 | Screenshot toolbar placement | Fixed, pending retest | Verify bottom-centered placement near the selected region bottom edge; when below space is tight, it should stay near the selection bottom, not drift to the middle. |
 | Screenshot toolbar visuals | Fixed, pending retest | Verify icon-leading, borderless / low-border buttons with equal visual weight; Copy image is not primary; the button row is vertically centered and the dark container is not too tall. Error state should be compact and should not span the screen. |
 | Selection toolbar translate click | Pending retest | Existing click `翻译` flow should still work. When V1-006 is enabled, short normal selections may also show the inline translation card. |
@@ -283,7 +283,7 @@ Status: fixed in code; pending loaded-extension manual retest.
 16. Close the double-click menu, then do a normal drag selection; verify the selection toolbar can appear again.
 17. Open command palette and verify the default view is a search input, compact AI status, optional selected-text Tab suggestion, and result list only; it should not show quick action cards, mock access states, quota, login, or subscription preview chips.
 18. Open the command palette and double-click shortcut menu, then verify neither surface exposes screenshot in the ordinary-user v1.0 basic path.
-19. From the right-click menu `截图提问（内部试用）`, verify screenshot overlay still starts as the authorized internal capture path.
+19. From the right-click menu `截图提问`, verify screenshot overlay still starts as the authorized capture path.
 20. Trigger a result-panel AI action and verify the title reads `Aviso` with the action pill still present.
 21. On that fresh result panel, verify it does not immediately appear as `已保存` unless it was restored from an already saved/pinned history entry.
 22. Without clicking Save, trigger a second result; open Popup History and verify the first conversation appears as a normal conversation entry.
@@ -341,7 +341,7 @@ Status: fixed in code; pending loaded-extension manual retest.
 - Popup theme preference is stored as non-secret `appearanceTheme` in existing `contextai_settings`, with no new storage key and no API Key migration.
 - Popup theme switching does not affect webpage UI, content scripts, result panel, command palette, or page styles.
 - AI Service cards mask stored API Keys and never expose full real keys.
-- The right-click/context-menu screenshot entry remains the recommended internal-only authorized screenshot path and is visibly marked `内部试用`.
+- The right-click/context-menu screenshot entry remains the recommended authorized screenshot path and is labeled `截图提问`.
 - Double-click inside the selected region copies the image; double-click outside the selected region exits screenshot mode without opening the double-click shortcut menu.
 - The screenshot toolbar placement is close to the selected region bottom edge and center-aligned; tight space keeps it near the bottom rather than the middle.
 - Screenshot toolbar buttons are icon-leading, visually low-border, equal weight, and vertically centered in a compact dark container; Copy image is not primary.

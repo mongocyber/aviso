@@ -32,7 +32,7 @@
 - [x] V1-006 内联即时翻译 P0：Popup 新增默认关闭的开关和翻译目标语言选项；开启后短选区显示内联翻译卡片，支持复制、重试和打开结果面板；长选区 / 多行选区提示进入结果面板。不做替换、全文翻译、第三方翻译 fallback、缓存或新权限。
 - [x] V1-007 双击快捷菜单 MVP：Popup 常规设置新增默认关闭的 `双击快捷菜单` 开关；开启后在安全网页区域双击显示 compact dropdown，复用现有复制当前上下文、页面总结、自定义模板和选区 AI 动作路径；避开输入框、可编辑区、常见代码编辑器和 Aviso 自身 UI；不替换划词工具栏。2026-06-05 起，截图入口已从普通双击菜单移除；本轮 P1 修复后会更早抑制划词工具栏，并优先复用缓存设置/模板，减少双入口闪出或并存。
 - [x] V1-008 BYOK settings cleanup：Popup 设置页将原 `API Key` 标签调整为 `AI`，把 Aviso AI 标为规划中 / 当前版本未上线，并把现有 provider Key 字段和手动连接测试保留在“高级：使用自己的 API Key”区域；默认模型下拉显示未配置 / 未测试 / 已连接 / 连接失败状态，并禁用未配置或已知连接失败的选项。该项不代表 hosted Aviso AI、匿名额度、登录、订阅、支付或 backend 已实现。
-- [x] V1-005 screenshot local action toolbar：截图选区后显示复制图片、下载图片、重选、发送给 AI、取消。复制/下载为 local-only，不调用 provider、不消耗 quota、不要求 login；下载未新增 `downloads` permission。发送给 AI 继续复用现有 BYOK `image_explain` 和 unsupported-model 边界，不接 hosted AI。2026-06-05 起，命令面板和双击快捷菜单已不再展示截图入口；右键菜单仅保留 `截图提问（内部试用）` 作为 internal dogfood 授权路径，不作为基础版商店卖点。
+- [x] V1-005 screenshot local action toolbar：截图选区后显示复制图片、下载图片、重选、发送给 AI、取消。复制/下载为 local-only，不调用 provider、不消耗 quota、不要求 login；下载未新增 `downloads` permission。发送给 AI 继续复用现有 BYOK `image_explain` 和 unsupported-model 边界，不接 hosted AI。2026-06-05 起，命令面板和双击快捷菜单已不再展示截图入口；右键菜单保留 `截图提问` 作为授权截图路径，不作为基础版商店卖点。
 - [x] V1-011 conversation autosave：结果面板标题只显示 `Aviso` 并保留动作标签；AI 结果默认自动保存为 `chrome.storage.local/contextai_history` conversation，最多保留最近 20 条；结果面板 visible 时新的划词工具栏 / 双击菜单 / 命令面板 AI 动作会追加到当前 conversation；点击“保存”保存整段 conversation；底部追问输入框支持多行自增高、Enter 发送、Shift+Enter 换行。本轮 P1 修复后，新结果打开面板时不再误显示为“已保存”；只有历史里本来 pinned/saved 的 conversation 才显示已保存。
 - [x] T1 v1-pre-qa-hardening：书签搜索日志和 meta 已脱敏为 query length / hasQuery / counts / source；保存或 pinned conversation 不再被普通最近 20 条上限静默淘汰，普通未保存记录仍只保留最近 20 条；`划词翻译` 关闭时目标语言下拉禁用；双击快捷菜单残留的 screenshot action 死代码已移除。
 - [x] V1-012 自定义模板右键菜单同步：Popup 模板新增、编辑、删除后，模板设置变化会触发 Chrome 原生右键菜单串行重建；仅默认模型变化时仍只同步模型 radio 勾选。未新增权限、依赖、provider、backend 或 storage secret。
@@ -110,6 +110,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] 2026-06-08 翻译缓存边界已核对：未新增 manifest permission、host permission、provider、第三方翻译 fallback、依赖、backend、hosted AI、provider proxy、telemetry、storage key 迁移或持久化 raw source text、raw prompt、raw response、完整 URL、页面正文、API Key。
 - [x] 2026-06-08 命令面板搜索范围修复已实现：新增 `history` 普通权限后，命令面板本地搜索 Chrome 浏览历史、Chrome 书签和 Aviso AI 对话历史；浏览历史只用于本地关键词匹配和打开 URL，不进入 AI 请求、provider、telemetry、`chrome.storage` 或远端服务。
 - [x] 2026-06-08 命令面板浏览历史搜索补充修复已实现：`chrome.history.search` 显式传入 `startTime: 0`，避免默认只搜索最近 24 小时导致较早浏览记录搜不到；结果来源标签区分为 `浏览历史`、`书签`、`AI 对话`。
+- [x] 2026-06-08 截图和右键模型菜单补救已实现：截图选区改为透明选区 + 外侧遮罩，不遮挡被框选内容；右键 `截图提问` 去掉内部试用后缀；右键模型 radio 改为读取已保存 AI 服务配置和默认配置，AI 服务配置 / 默认服务 / 本地 Key 变化时会重建菜单。
 - [x] V2-006 复制当前上下文使用既有 `clipboardWrite` 能力，未新增 manifest permission 或 host permission；复制内容只写入用户剪贴板，不进入 provider、AI 请求、history、`chrome.storage`、文件、文档、console 或 telemetry。
 - [x] V2-007 翻译 MVP 未新增 manifest permission、host permission、provider、依赖、远端服务或第三方翻译 fallback；translate payload 只使用选区或用户输入，不把页面 URL、链接 URL 或页面正文当作翻译内容。
 - [x] V2-008 theme / panel polish 未新增 manifest permission、host permission、provider、依赖、远端服务、telemetry、cache、theme storage 设置或 `contextai_*` storage key 迁移；不改变 AI 请求 payload、provider routing、默认模型或 token 上限。
@@ -132,21 +133,25 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] `npm test` 通过。2026-06-08，翻译速度二次优化后 112/112 项测试通过；仍存在既有 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
 - [x] `npm test` 通过。2026-06-08，命令面板浏览历史搜索修复后 113/113 项测试通过；仍存在既有 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
 - [x] `npm test` 通过。2026-06-08，命令面板浏览历史全量时间范围补丁后 113/113 项测试通过；仍存在既有 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
+- [x] `npm test` 通过。2026-06-08，截图选区透明、右键截图文案和右键模型菜单同步补救后 116/116 项测试通过；仍存在既有 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
 - [x] `npx tsc --noEmit` 通过。2026-06-07，V1 Popup AI 服务卡片 latest polish 后无错误输出。
 - [x] `npx tsc --noEmit` 通过。2026-06-08，AI 请求前置准备与连接状态体感优化后无错误输出。
 - [x] `npx tsc --noEmit` 通过。2026-06-08，翻译速度二次优化后无错误输出。
 - [x] `npx tsc --noEmit` 通过。2026-06-08，命令面板浏览历史搜索修复后无错误输出。
 - [x] `npx tsc --noEmit` 通过。2026-06-08，命令面板浏览历史全量时间范围补丁后无错误输出。
+- [x] `npx tsc --noEmit` 通过。2026-06-08，截图选区透明、右键截图文案和右键模型菜单同步补救后无错误输出。
 - [x] `npm run build` 通过。2026-06-07，默认沙箱内仍为已知 `Operation not permitted`，沙箱外同命令重跑通过。
 - [x] `npm run build` 通过。2026-06-08，默认沙箱内仍为已知 `Operation not permitted`，沙箱外同命令重跑通过。
 - [x] `npm run build` 通过。2026-06-08，翻译速度二次优化后默认沙箱内仍为已知 `Operation not permitted`，沙箱外同命令重跑通过。
 - [x] `npm run build` 通过。2026-06-08，命令面板浏览历史搜索修复后默认沙箱内仍为已知 `Operation not permitted`，沙箱外同命令重跑通过；构建 manifest 普通权限为 `contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`clipboardWrite`。
 - [x] `npm run build` 通过。2026-06-08，命令面板浏览历史全量时间范围补丁后默认沙箱内仍为已知 `Operation not permitted`，沙箱外同命令重跑通过。
+- [x] `npm run build` 通过。2026-06-08，截图选区透明、右键截图文案和右键模型菜单同步补救后默认沙箱内仍为已知 `Operation not permitted`，沙箱外同命令重跑通过。
 - [x] `git diff --check` 通过。2026-06-07，V1 Popup AI 服务卡片 latest polish 后通过。
 - [x] `git diff --check` 通过。2026-06-08，AI 请求前置准备与连接状态体感优化后通过。
 - [x] `git diff --check` 通过。2026-06-08，翻译速度二次优化后通过。
 - [x] `git diff --check` 通过。2026-06-08，命令面板浏览历史搜索修复后通过。
 - [x] `git diff --check` 通过。2026-06-08，命令面板浏览历史全量时间范围补丁后通过。
+- [x] `git diff --check` 通过。2026-06-08，截图选区透明、右键截图文案和右键模型菜单同步补救后通过。
 - [x] `package.json` / lock 文件无 diff。2026-06-07，未新增依赖；构建 manifest 权限仍为 `contextMenus`、`activeTab`、`storage`、`bookmarks`、`clipboardWrite`，`host_permissions` 仍只包含 OpenAI、Anthropic、Ark 三个已批准 provider 域名。
 - [x] `package.json` / lock 文件无 diff。2026-06-08，未新增依赖；构建 manifest 权限仍为 `contextMenus`、`activeTab`、`storage`、`bookmarks`、`clipboardWrite`，`host_permissions` 仍只包含 OpenAI、Anthropic、Ark 三个已批准 provider 域名。
 - [x] `package.json` / lock 文件无 diff。2026-06-08，翻译速度二次优化未新增依赖；构建 manifest 权限仍为 `contextMenus`、`activeTab`、`storage`、`bookmarks`、`clipboardWrite`，`host_permissions` 仍只包含 OpenAI、Anthropic、Ark 三个已批准 provider 域名。
@@ -241,7 +246,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] V1-007 / V1-011 两个 P1 代码修复已完成：双击快捷菜单提前抑制划词工具栏并复用缓存设置/模板；结果面板不再把新对话误标成已保存。自动检查已通过，但加载扩展后的 focused manual QA 仍待补录。
 - [x] V1-008 默认模型下拉配置状态已重新加载本地扩展并完成人工 UI QA：下拉框显示状态，未配置项置灰不可点击。记录来源：2026-06-04 用户反馈。
 - [x] V1-005 screenshot local action toolbar 已实现：复用现有可见区域截图 overlay，在选区后提供 Copy image、Download image、Retry、Cancel，并保留现有 Send to AI 安全边界；不新增 `downloads` permission、manifest permission、host permission、provider、依赖、storage、telemetry、backend、quota、login 或 hosted AI。
-- [x] V1 basic hide screenshot entry 已实现最小入口收敛：命令面板和双击快捷菜单不再展示截图动作；右键菜单保留 `截图提问（内部试用）` 作为 internal dogfood 授权入口；未新增权限、依赖、backend、hosted AI 或 storage key 迁移。
+- [x] V1 basic hide screenshot entry 已实现最小入口收敛：命令面板和双击快捷菜单不再展示截图动作；右键菜单保留 `截图提问` 作为授权入口；未新增权限、依赖、backend、hosted AI 或 storage key 迁移。
 - [ ] V1-005 加载扩展后的人工 UI QA 仍待补录：Copy image、Download image、Retry、Cancel、现有 Send to AI unsupported-model/error 主路径。
 - [x] V1-012 custom template context-menu sync 已实现：Popup 模板新增、编辑、删除后，模板设置变化会触发 Chrome 原生右键菜单串行重建；模板父菜单只在至少一个子模板适用于当前右键上下文时出现，避免空白页右键显示空子菜单；仅默认模型变化时仍只同步模型 radio 勾选。未新增权限、provider、依赖、backend 或 storage secret。
 - [ ] V1-012 加载扩展后的人工 UI QA 仍待补录：新增模板后无需重装扩展，选中文字右键应即时出现模板；编辑后菜单标题同步更新；删除后菜单项移除，没有模板时不显示空的自定义模板子菜单。

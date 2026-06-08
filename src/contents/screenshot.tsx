@@ -136,6 +136,9 @@ function startScreenshotSelection(payload: StartPayload) {
   const updateSelection = (region: ScreenshotRegion | null) => {
     selectedRegion = region
     const hasRegion = Boolean(region)
+    session.root.style.background = hasRegion
+      ? "transparent"
+      : getScreenshotThemeTokens().overlay
     session.copyButton.disabled = !hasRegion
     session.downloadButton.disabled = !hasRegion
     session.retryButton.disabled = !hasRegion
@@ -580,7 +583,7 @@ function createOverlay(): OverlaySession {
     display: "none",
     position: "fixed",
     border: `2px solid ${ui.accent}`,
-    background: ui.accentSoft,
+    background: "transparent",
     boxShadow: `0 0 0 9999px ${ui.overlay}`,
     pointerEvents: "none"
   })
@@ -709,7 +712,8 @@ function getScreenshotStyleText(ui: AvisoThemeTokens): string {
 
 function applyScreenshotTheme(session: OverlaySession, ui: AvisoThemeTokens) {
   Object.assign(session.root.style, {
-    background: ui.overlay,
+    background:
+      session.rect.style.display === "none" ? ui.overlay : "transparent",
     fontFamily: aviso.font
   })
   Object.assign(session.hint.style, {
@@ -720,7 +724,7 @@ function applyScreenshotTheme(session: OverlaySession, ui: AvisoThemeTokens) {
   })
   Object.assign(session.rect.style, {
     border: `2px solid ${ui.accent}`,
-    background: ui.accentSoft,
+    background: "transparent",
     boxShadow: `0 0 0 9999px ${ui.overlay}`
   })
   Object.assign(session.panel.style, {

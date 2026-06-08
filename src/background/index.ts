@@ -7,6 +7,7 @@ import {
 } from "~utils/screenshot"
 import {
   hasDefaultModelChanged,
+  haveProviderConfigMenusChanged,
   haveTemplatesChanged
 } from "~utils/settings-change"
 import { logTiming, markTiming } from "~utils/timing"
@@ -92,6 +93,10 @@ chrome.storage.onChanged.addListener((changes, area) => {
     clearAIRuntimeCaches()
   }
 
+  if (area === "local" && changes.contextai_api_keys) {
+    void registerContextMenus()
+  }
+
   if (area === "sync" && changes.contextai_settings) {
     const previous = changes.contextai_settings.oldValue as
       | Partial<Settings>
@@ -100,13 +105,20 @@ chrome.storage.onChanged.addListener((changes, area) => {
       | Partial<Settings>
       | undefined
 
-    if (haveTemplatesChanged(previous, next)) {
+    if (
+      haveTemplatesChanged(previous, next) ||
+      haveProviderConfigMenusChanged(previous, next)
+    ) {
       void registerContextMenus()
       return
     }
 
-    if (hasDefaultModelChanged(previous, next) && next?.defaultModel) {
-      syncModelMenuSelection(next.defaultModel)
+    if (hasDefaultModelChanged(previous, next)) {
+      if (next?.defaultProviderConfigId) {
+        void syncModelMenuSelection(next.defaultProviderConfigId)
+      } else {
+        void registerContextMenus()
+      }
     }
   }
 })

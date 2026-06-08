@@ -83,6 +83,7 @@ import {
 } from "../src/utils/screenshot.ts"
 import {
   hasDefaultModelChanged,
+  haveProviderConfigMenusChanged,
   haveTemplatesChanged
 } from "../src/utils/settings-change.ts"
 import { expandTemplate } from "../src/utils/template.ts"
@@ -681,16 +682,36 @@ test("double-click menu pre-suppresses selection toolbar before dblclick", () =>
   )
 })
 
-test("context-menu screenshot entry is explicitly internal-only", () => {
+test("context-menu screenshot entry uses plain user-facing copy", () => {
   const contextMenuSource = readFileSync(
     new URL("../src/background/context-menus.ts", import.meta.url),
     "utf8"
   )
 
-  assert.equal(
-    contextMenuSource.includes('title: "截图提问（内部试用）"'),
-    true
+  assert.match(contextMenuSource, /title: "截图提问"/)
+  assert.equal(contextMenuSource.includes("截图提问（内部试用）"), false)
+})
+
+test("context-menu model radio uses configured AI services", () => {
+  const contextMenuSource = readFileSync(
+    new URL("../src/background/context-menus.ts", import.meta.url),
+    "utf8"
   )
+  const backgroundSource = readFileSync(
+    new URL("../src/background/index.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(contextMenuSource, /getProviderConfigsWithLegacy/)
+  assert.match(contextMenuSource, /resolveDefaultProviderConfigId/)
+  assert.match(contextMenuSource, /hasProviderConfigKey/)
+  assert.match(contextMenuSource, /getProviderConfigMenuTitle/)
+  assert.match(contextMenuSource, /defaultProviderConfigId: providerConfigId/)
+  assert.match(contextMenuSource, /defaultModel: getModelForProviderConfig/)
+  assert.doesNotMatch(contextMenuSource, /const MODELS = \[/)
+  assert.doesNotMatch(contextMenuSource, /title: "GPT-4o mini"/)
+  assert.match(backgroundSource, /haveProviderConfigMenusChanged/)
+  assert.match(backgroundSource, /changes\.contextai_api_keys/)
 })
 
 test("context-menu selection titles are static and keep selection payload", () => {
@@ -849,6 +870,39 @@ test("settings change keeps model radio sync separate from template refresh", ()
     ),
     true
   )
+})
+
+test("settings change detects provider config menu updates", () => {
+  const previous = {
+    defaultProviderConfigId: "cfg-openai-a",
+    providerConfigs: [
+      {
+        id: "cfg-openai-a",
+        provider: "openai" as const,
+        displayName: "OpenAI Work",
+        model: "gpt-4o-mini",
+        createdAt: 1,
+        updatedAt: 1
+      }
+    ]
+  }
+  const renamed = {
+    ...previous,
+    providerConfigs: [
+      {
+        ...previous.providerConfigs[0],
+        displayName: "OpenAI Personal"
+      }
+    ]
+  }
+  const selected = {
+    ...previous,
+    defaultProviderConfigId: "cfg-openai-b"
+  }
+
+  assert.equal(haveProviderConfigMenusChanged(previous, renamed), true)
+  assert.equal(haveProviderConfigMenusChanged(previous, selected), true)
+  assert.equal(haveProviderConfigMenusChanged(previous, previous), false)
 })
 
 test("template context menu parent only appears where children can appear", () => {
@@ -2261,6 +2315,18 @@ test("screenshot toolbar 贴近选区底部居中并夹取到视口内", () => {
     ),
     { left: 310, top: 548 }
   )
+})
+
+test("screenshot selected region stays transparent", () => {
+  const screenshotSource = readFileSync(
+    new URL("../src/contents/screenshot.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(screenshotSource, /session\.root\.style\.background = hasRegion/)
+  assert.match(screenshotSource, /hasRegion\s+\?\s+"transparent"/)
+  assert.match(screenshotSource, /background: "transparent"/)
+  assert.doesNotMatch(screenshotSource, /background: ui\.accentSoft/)
 })
 
 test("screenshot capture permission error uses readable file-page guidance", () => {
