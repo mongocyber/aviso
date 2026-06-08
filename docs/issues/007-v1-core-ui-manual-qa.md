@@ -19,7 +19,7 @@ This file records the current manual QA state for the V1 core UI slices that wer
 - V1-007 Double-click dropdown shortcut
 - V1-011 Result panel title cleanup, conversation autosave, and follow-up input polish
 - V1-012 Custom template context-menu sync
-- V1-013 UI language localization, planned and not yet implemented
+- V1-013 UI language localization, runtime UI code implemented; user English smoke check did not find obvious issues; manifest-facing copy localized through Chrome `_locales`
 
 Non-scope:
 
@@ -209,7 +209,8 @@ Status: fixed in code; pending loaded-extension manual retest.
 
 Current product truth:
 
-- V1-013 is a planned public-launch requirement, not implemented in the current build.
+- V1-013 runtime UI localization is implemented in code; user English smoke check did not find obvious issues.
+- Manifest-facing copy has been localized through Chrome `_locales`: Chinese Chrome resolves the Chinese extension description / shortcut description, and English Chrome resolves the English extension description / shortcut description.
 - It is separate from the inline translation target-language selector.
 
 Expected:
@@ -220,14 +221,15 @@ Expected:
 - `中文` forces Chinese UI even in English Chrome.
 - `English` forces English UI even in Chinese Chrome.
 - `自动` returns to Chrome UI language resolution.
-- Popup, command palette, result panel, selection toolbar, inline translation card, double-click menu, native context menus, screenshot overlay/toolbars if kept, toasts/errors, and manifest copy if localized all use the resolved UI language.
+- Popup, command palette, result panel, selection toolbar, inline translation card, double-click menu, native context menus, screenshot overlay/toolbars if kept, and toasts/errors all use the resolved UI language.
+- Manifest-facing copy is localized in a separate manifest-localization slice; final store copy, screenshots, privacy declarations, and public release approval remain separate gates.
 - Translation target language remains a separate setting and continues to control translation output only.
 
 Boundaries:
 
 - No new permission, host permission, dependency, provider route, backend, hosted AI, provider proxy, telemetry, analytics, storage key migration, API Key behavior change, or translation target-language behavior change.
 
-Status: planned; implementation and loaded-extension QA pending.
+Status: runtime UI code updated; user English smoke check did not find obvious issues; manifest-facing copy localized through `_locales`; final public-release gates remain open.
 
 ## QA Matrix
 
@@ -264,7 +266,7 @@ Status: planned; implementation and loaded-extension QA pending.
 | Popup AI service delete confirmation | Passed | Focused QA passed: saved config delete first enters `确定删除` / `取消`; cancel restores normal actions. Final confirm-delete was intentionally not clicked in QA; unsaved draft deletion remains direct. |
 | Popup AI service delete semantics | Fixed, partial focused QA passed | Unsaved draft deletion and saved delete confirmation UI passed. Real final-delete effects, including clearing encrypted key/metadata and default fallback, still need a safe dedicated retest if the owner wants destructive QA. |
 | Popup inline translation language labels | Fixed, pending retest | Verify `划词翻译` language labels show target-language names: `自动`, `中文`, `English`, `日本語`, `한국어`, `Español`, `Français`, `Deutsch`. |
-| V1-013 UI language localization | Planned, not implemented | After implementation, verify `自动` / `中文` / `English` across Popup, command palette, result panel, page-level cards, native context menus, toasts/errors, and manifest-facing copy where applicable. |
+| V1-013 UI language localization | Runtime UI code complete; user English smoke check passed; manifest copy localized | Verify `自动` / `中文` / `English` across Popup, command palette, result panel, page-level cards, native context menus, toasts/errors, and screenshot overlay. Confirm the UI language setting is separate from the `划词翻译` target-language selector. Manifest-facing copy uses Chrome `_locales`; final store materials and public-release approval remain separate gates. |
 | Translation card / result panel `发给 AI` copy | Passed | Focused QA passed: relevant handoff button copy is unified as `发给 AI`. |
 | Command palette auxiliary copy placement | Fixed, pending broader retest | Helper copy moved to the input-area right-side auxiliary text. Broader command palette behavior and visual polish remain pending/backlog. |
 | Global theme setting boundary | Fixed, pending retest | Verify `浅色` / `深色` / `跟随系统` persists without creating a new storage key and changes only Aviso-owned surfaces: Popup, command palette, result panel, selection toolbar, inline translation card, double-click menu, and screenshot overlay / toolbar. Host webpage `body/html` should not be restyled. In light mode, hover, dropdown, pill, footer, privacy, input, scrollbar, disabled, warning, danger, panel, button, and border states should not retain dark-theme colors. |
@@ -323,6 +325,8 @@ Status: planned; implementation and loaded-extension QA pending.
 30. Delete the template in Popup, save it, then select text and right-click again; verify the template item is gone and no empty custom-template submenu remains.
 31. Open Popup and verify the tabs read `设置`、`AI 服务`、`记录`、`指令`.
 32. In the Popup header, switch `浅色`, `深色`, and `跟随系统`; verify Popup, command palette, result panel, selection toolbar, inline translation card, double-click menu, and screenshot overlay / toolbar all follow the selected theme while the host webpage itself does not change, and reopening Popup keeps the selected mode.
+32a. In Popup `设置`, switch `界面语言` between `自动`, `中文`, and `English`; verify the Popup shell language changes independently from the `划词翻译` target-language selector.
+32b. After changing `界面语言`, verify command palette, result panel, selection toolbar, `划词翻译` card, double-click menu, clipboard/copy-context toast, screenshot overlay, and native context menu titles follow the resolved UI language without reloading the extension.
 33. On `设置`, verify the `当前模型` card, status badge, test button, model dropdown, configured-service options, and `添加 AI 服务` entry.
 34. On `设置`, verify unconfigured providers do not look available in the model dropdown.
 35. On `设置`, verify `划词工具栏`, `划词翻译`, `命令面板`, `剪贴板提示`, and `双击入口` are compact rows with title above helper text and right-side controls.
@@ -348,6 +352,7 @@ Status: planned; implementation and loaded-extension QA pending.
 53. After V1-013 implementation, verify `自动` in English Chrome shows English UI by default.
 54. After V1-013 implementation, switch Settings to `中文` and `English`; verify the override applies to Popup, command palette, result panel, selection toolbar, inline translation card, double-click menu, native context menus, and toasts/errors.
 55. Verify the UI language setting does not change the inline translation target-language setting or provider output language.
+56. Confirm built manifest-facing copy uses Chrome `_locales`: Chinese locale keeps the Chinese extension description and shortcut description, English locale provides the English extension description and `Open command palette`; permissions and host permissions remain unchanged.
 
 ## Pass Criteria For This Checklist
 

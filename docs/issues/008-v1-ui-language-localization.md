@@ -1,8 +1,18 @@
 # Issue 008: V1-013 UI Language Localization
 
-Status: planned requirement. Not implemented.
+Status: runtime UI code implemented. User English smoke check did not find issues. Manifest-facing copy localized through Chrome `_locales`.
 
 Date: 2026-06-08
+
+## 2026-06-08 Implementation Update
+
+V1-013 runtime UI code has been implemented in the extension surfaces: shared UI-language resolution, settings override, Popup four-tab copy, command palette, result panel, selection toolbar, inline translation card, double-click menu, clipboard/copy-context toasts, screenshot overlay, native context menus, and user-visible waiting/error copy.
+
+The setting is `uiLanguage` inside existing `chrome.storage.sync/contextai_settings`; no new storage key is introduced. Translation target language remains separate as `inlineTranslationTargetLanguage`.
+
+Manifest-facing copy was closed as a separate small task in this slice: `package.json` manifest now uses `default_locale: "zh_CN"`, `__MSG_app_description__`, and `__MSG_open_command_palette_description__`, with `_locales/zh_CN/messages.json` and `_locales/en/messages.json` providing Chinese and English extension-management / shortcut copy.
+
+User manual English-version smoke check did not find obvious issues. This issue still does not approve public release, Chrome Web Store submission, final store screenshots, or final privacy declarations; those remain separate release gates.
 
 ## Goal
 
@@ -65,6 +75,7 @@ This is a UI language requirement, not a translation-output requirement.
 - Choosing `English` forces English UI even in Chinese Chrome.
 - Choosing `自动` returns to Chrome UI language based resolution.
 - Popup, command palette, result panel, toolbar, inline translation card, double-click menu, toasts/errors, and native context menus use the resolved UI language.
+- Manifest-facing copy is localized through `_locales`, with permissions / host permissions verified unchanged.
 - Translation target-language selector still controls translation output only and remains separate from UI language.
 - No API Key, raw prompt, raw response, private page body, screenshot/base64, clipboard content, full URL, or provider output is logged or persisted as part of localization.
 - No new permission, host permission, dependency, provider route, backend, hosted AI, provider proxy, telemetry, analytics, storage key migration, or public release claim is introduced.
