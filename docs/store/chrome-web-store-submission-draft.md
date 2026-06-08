@@ -79,7 +79,7 @@ Aviso 是一个面向网页阅读和写作场景的 AI 浏览器助手。
 
 - 选中文字后解释、翻译、润色或总结。
 - 通过右键菜单处理选区、链接、当前页面、图片和自定义模板。
-- 用命令面板搜索本地历史、搜索书签，或直接向 AI 提问。
+- 用命令面板搜索 Chrome 浏览历史、本地 AI 对话和书签，或直接向 AI 提问。
 - 在页面内结果面板中查看流式输出，复制、保存和继续追问。
 - 复制当前页面上下文到剪贴板，便于粘贴到其他工具。
 - 通过 Popup 管理模型、API Key、功能开关、自定义模板和历史记录。
@@ -209,6 +209,12 @@ Used after a user action to interact with the active tab, read the current page 
 
 ```text
 Used to store encrypted API Keys, non-secret settings, feature toggles, custom templates, and local history in Chrome extension storage.
+```
+
+### `history`
+
+```text
+Used only in the command palette so users can search their Chrome browsing history locally. Browsing history search results are not sent to Aviso servers or AI providers.
 ```
 
 ### `bookmarks`

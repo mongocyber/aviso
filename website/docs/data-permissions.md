@@ -40,6 +40,7 @@ Aviso 当前没有项目方后端，因此没有“发送到 Aviso 服务器”�
 | `contextMenus` | 在右键菜单中显示 Aviso 操作。 |
 | `activeTab` | 用户触发后读取或操作当前标签页。 |
 | `storage` | 保存设置、API Key、模板和历史。 |
+| `history` | 在命令面板中搜索用户 Chrome 浏览历史；搜索只在本地执行，不发送给 Aviso 服务器或 AI provider。 |
 | `bookmarks` | 在命令面板中搜索用户书签。 |
 | `clipboardWrite` | 允许从浮窗复制结果。 |
 

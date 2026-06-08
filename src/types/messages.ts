@@ -56,6 +56,7 @@ export type MessageRequest =
   | { action: "SAVE_HISTORY"; payload: import("~types/history").HistoryEntry }
   | { action: "GET_HISTORY" }
   | { action: "SEARCH_HISTORY"; payload: { query: string } }
+  | { action: "SEARCH_BROWSER_HISTORY"; payload: { query: string } }
   | { action: "DELETE_HISTORY"; payload: { id: string } }
   | { action: "PIN_HISTORY"; payload: { id: string } }
   | { action: "CLEAR_HISTORY" }

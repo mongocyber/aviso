@@ -32,6 +32,7 @@ import {
 } from "./history"
 
 const MAX_BOOKMARK_RESULTS = 12
+const MAX_BROWSER_HISTORY_RESULTS = 12
 const activeAIRequests = new Map<string, AbortController>()
 const SCREENSHOT_AUTH_ENTRY_MESSAGE = "截图需要从浏览器扩展入口启动"
 const SCREENSHOT_AUTH_ENTRY_DETAIL =
@@ -314,6 +315,12 @@ async function handleMessage(
         const { results, meta } = await searchBookmarks(request.payload.query)
         console.info("[Aviso] Bookmark search:", meta)
         sendResponse({ success: true, data: results, meta })
+        break
+      }
+
+      case "SEARCH_BROWSER_HISTORY": {
+        const results = await searchBrowserHistory(request.payload.query)
+        sendResponse({ success: true, data: results })
         break
       }
 
@@ -620,6 +627,36 @@ async function searchBookmarks(query: string): Promise<{
   }
 
   return { results, meta }
+}
+
+function searchBrowserHistory(
+  query: string
+): Promise<chrome.history.HistoryItem[]> {
+  const trimmedQuery = query.trim()
+  if (!trimmedQuery) return Promise.resolve([])
+
+  return new Promise((resolve, reject) => {
+    if (!chrome.history?.search) {
+      reject(new Error("chrome.history.search is unavailable"))
+      return
+    }
+
+    chrome.history.search(
+      {
+        text: trimmedQuery,
+        maxResults: MAX_BROWSER_HISTORY_RESULTS
+      },
+      (results) => {
+        const runtimeError = chrome.runtime.lastError
+        if (runtimeError) {
+          reject(new Error(runtimeError.message))
+          return
+        }
+
+        resolve((results ?? []).filter((item) => Boolean(item.url)))
+      }
+    )
+  })
 }
 
 function searchBookmarksNatively(

@@ -53,14 +53,14 @@
 - Popup 有历史标签页，支持查看、置顶、删除、清空。
 - 浮窗保存有反馈，并按 requestId 去重。
 - 命令面板快捷键为 Mac `Command+Shift+Space`、Windows/Linux `Ctrl+Shift+Space`。
-- 命令面板只保留有真实产出的结果类型：历史和书签。
+- 命令面板只保留有真实产出的结果类型：Chrome 浏览历史、书签和 Aviso AI 对话历史。
 - 历史项可按原始 operation 重新执行。
 
 ### M4 · 健壮性与隐私
 
 - AI 错误会归一成用户可读中文提示。
 - 剪贴板敏感域名和敏感内容已有单元测试覆盖。
-- Manifest 权限保持最小可用集合：`contextMenus`、`activeTab`、`storage`、`bookmarks`、`clipboardWrite`。
+- Manifest 权限保持最小可用集合：`contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`clipboardWrite`。
 - Popup 隐私说明改为内联展示，不再指向未确认外部页面。
 - 页面正文透传有长度上限，避免无控制地塞入模型上下文。
 

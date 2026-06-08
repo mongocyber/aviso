@@ -67,7 +67,7 @@ Non-scope:
 Expected:
 
 - Command palette opens as a search-first control panel, not a grid of action cards.
-- The input placeholder reads like `搜索历史、书签、AI 对话...`.
+- The input placeholder reads like `搜索浏览历史、书签、AI 对话...`.
 - Browser history, bookmarks, and saved AI conversation records remain searchable.
 - Selected page text is shown only as a grey suggestion; it is not automatically used as the real query. Pressing Tab may fill it into the input.
 - Compact AI status shows only `AI 可用 · {provider}` or `AI 未连接`; it should not show long model names, BYOK jargon, quota, login, or subscription states.

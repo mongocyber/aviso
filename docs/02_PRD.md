@@ -48,7 +48,7 @@ This version assumes users can provide their own API Keys and understand that mo
 |---------|----------------|-------|
 | Context menu | Implemented | Supports selection explain/translate/polish/summarize, page summary, link summary by URL, image explain, model switch, and custom templates. |
 | Selection toolbar | Implemented | Supports explain, translate, polish, summarize, and send to AI. Injected into all frames. |
-| Command palette | Implemented | Mac uses `Command+Shift+Space`; Windows/Linux use `Ctrl+Shift+Space`. Searches history/bookmarks and can send no-result input to AI. |
+| Command palette | Implemented | Mac uses `Command+Shift+Space`; Windows/Linux use `Ctrl+Shift+Space`. Searches Chrome browsing history, bookmarks, and Aviso AI conversations; can send no-result input to AI. |
 | Clipboard sensing | Implemented | Detects copied text, skips sensitive domains/content, and routes toast display to the top-level page. |
 | Floating window | Implemented | Shows streaming output, waiting states, copy, save, dedupe, and follow-up entry points. |
 | Popup settings | Implemented | Supports model selection, API Key entry, 豆包 endpoint, feature toggles, custom templates, history, and privacy copy. |

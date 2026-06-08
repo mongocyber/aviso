@@ -42,6 +42,7 @@
       "contextMenus",
       "activeTab",
       "storage",
+      "history",
       "bookmarks",
       "clipboardWrite"
     ],

@@ -30,7 +30,7 @@ type ResultItem = {
   subtitle?: string
   url?: string
   operation?: string
-  type: "history" | "bookmark"
+  type: "ai-history" | "browser-history" | "bookmark"
 }
 
 type SearchNotice = {
@@ -56,8 +56,8 @@ type AiConnection = {
 
 const COMMAND_PANEL_TOP = "clamp(120px, 26vh, 280px)"
 const SEARCH_RESPONSE_TIMEOUT_MS = 4000
-const EMPTY_SEARCH_TEXT = "没有找到记录或书签"
-const BOOKMARK_SEARCH_ERROR_TEXT = "书签搜索失败，请检查扩展权限或重新加载扩展"
+const EMPTY_SEARCH_TEXT = "没有找到浏览历史、书签或 AI 对话"
+const SEARCH_ERROR_TEXT = "浏览历史或书签搜索失败，请检查扩展权限或重新加载扩展"
 
 function readSelectionSuggestion(): string {
   const text = window.getSelection()?.toString().replace(/\s+/g, " ").trim()
@@ -267,21 +267,24 @@ function CommandPalette() {
     setSelectedIndex(0)
 
     try {
-      const [historyResults, bookmarkResults] = await Promise.all([
-        searchChromeHistory(q),
-        searchChromeBookmarks(q)
-      ])
+      const [browserHistoryResults, bookmarkResults, aiHistoryResults] =
+        await Promise.all([
+          searchBrowserHistory(q),
+          searchChromeBookmarks(q),
+          searchAvisoHistory(q)
+        ])
 
       if (runId !== searchRunId.current) return
 
-      const nextResults = [...historyResults, ...bookmarkResults.items].slice(
-        0,
-        12
-      )
+      const nextResults = [
+        ...browserHistoryResults.items,
+        ...bookmarkResults.items,
+        ...aiHistoryResults
+      ].slice(0, 12)
       setResults(nextResults)
 
-      if (bookmarkResults.failed) {
-        setSearchNotice({ type: "error", text: BOOKMARK_SEARCH_ERROR_TEXT })
+      if (browserHistoryResults.failed || bookmarkResults.failed) {
+        setSearchNotice({ type: "error", text: SEARCH_ERROR_TEXT })
       } else if (nextResults.length === 0) {
         setSearchNotice({ type: "empty", text: EMPTY_SEARCH_TEXT })
       } else {
@@ -290,13 +293,13 @@ function CommandPalette() {
     } catch {
       if (runId !== searchRunId.current) return
       setResults([])
-      setSearchNotice({ type: "error", text: BOOKMARK_SEARCH_ERROR_TEXT })
+      setSearchNotice({ type: "error", text: SEARCH_ERROR_TEXT })
     } finally {
       if (runId === searchRunId.current) setLoading(false)
     }
   }
 
-  async function searchChromeHistory(query: string): Promise<ResultItem[]> {
+  async function searchAvisoHistory(query: string): Promise<ResultItem[]> {
     const response = await sendRuntimeMessage({
       action: "SEARCH_HISTORY",
       payload: { query }
@@ -309,8 +312,32 @@ function CommandPalette() {
       title: e.input,
       subtitle: e.output?.slice(0, 60) + "…",
       operation: e.operation,
-      type: "history" as const
+      type: "ai-history" as const
     }))
+  }
+
+  async function searchBrowserHistory(
+    query: string
+  ): Promise<BookmarkSearchResult> {
+    const response = await sendRuntimeMessage({
+      action: "SEARCH_BROWSER_HISTORY",
+      payload: { query }
+    })
+
+    if (!response.success || !Array.isArray(response.data)) {
+      return { items: [], failed: true }
+    }
+
+    return {
+      items: (response.data as chrome.history.HistoryItem[]).map((item) => ({
+        id: item.id,
+        title: item.title || item.url || "浏览历史",
+        subtitle: item.url,
+        url: item.url,
+        type: "browser-history" as const
+      })),
+      failed: false
+    }
   }
 
   async function searchChromeBookmarks(
@@ -343,7 +370,7 @@ function CommandPalette() {
   const handleSelect = (item: ResultItem) => {
     if (item.url) {
       window.open(item.url, "_blank")
-    } else if (item.type === "history") {
+    } else if (item.type === "ai-history") {
       // 复用历史项原始操作重新执行；缺失时回退到解释
       const requestId = `req-${Date.now()}`
       const timing = startTiming()
@@ -568,7 +595,7 @@ function CommandPalette() {
               isComposingRef.current = false
             }}
             onKeyDown={handleKeyDown}
-            placeholder="搜索历史、书签、AI 对话..."
+            placeholder="搜索浏览历史、书签、AI 对话..."
             style={{
               flex: 1,
               minWidth: 0,

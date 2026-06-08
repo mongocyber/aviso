@@ -40,7 +40,7 @@ The current product principles are:
 
 - Context menu actions for selection, page, link, image, video, editable, and custom template contexts.
 - Selection toolbar actions for selected text.
-- Command palette with history search, bookmark search, and no-result AI fallback.
+- Command palette with Chrome browsing history search, bookmark search, Aviso AI conversation search, and no-result AI fallback.
 - Clipboard sensing with sensitive-domain and sensitive-content filtering.
 - Floating AI result window with streaming output, copy, save, and follow-up.
 - Popup settings for model selection, API Keys, feature toggles, templates, history, and inline privacy explanation.

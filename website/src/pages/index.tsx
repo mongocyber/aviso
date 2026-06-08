@@ -200,8 +200,8 @@ const features = [
     wide: true,
     zhTitle: "命令面板",
     enTitle: "Command palette",
-    zhText: "一个快捷键，随处唤起。搜索历史与书签，或直接把问题交给 AI 按意图处理。",
-    enText: "One shortcut, anywhere. Search history and bookmarks, or hand a question to AI with intent.",
+    zhText: "一个快捷键，随处唤起。搜索浏览历史、书签和 AI 对话，或直接把问题交给 AI 按意图处理。",
+    enText: "One shortcut, anywhere. Search browsing history, bookmarks, and AI conversations, or hand a question to AI with intent.",
     visual: "command"
   },
   {
@@ -489,7 +489,7 @@ function FeatureVisual({kind, lang}: {kind: string; lang: Lang}): JSX.Element {
   if (kind === "command") {
     return (
       <div className="miniCommand" aria-hidden="true">
-        <div className="miniCommandInput"><Mark />{lang === "zh" ? "搜索历史、书签，或发问 AI…" : "Search history, bookmarks, or ask AI…"}</div>
+        <div className="miniCommandInput"><Mark />{lang === "zh" ? "搜索浏览历史、书签，或发问 AI…" : "Search browsing history, bookmarks, or ask AI…"}</div>
         <div className="miniCommandRow selected"><Icon name="history" />{lang === "zh" ? "总结：产品试用反馈" : "Summary: product dogfood notes"}<span>{lang === "zh" ? "历史" : "History"}</span></div>
         <div className="miniCommandRow"><Icon name="bookmark" />{lang === "zh" ? "隐私政策" : "Privacy policy"}<span>{lang === "zh" ? "书签" : "Mark"}</span></div>
       </div>

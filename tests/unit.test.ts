@@ -214,7 +214,7 @@ test("command palette is a search panel without mock access cards", () => {
   assert.equal(commandSource.includes("buildQuickActions"), false)
   assert.equal(commandSource.includes("复制当前上下文"), false)
   assert.equal(commandSource.includes("总结当前页面"), false)
-  assert.match(commandSource, /搜索历史、书签、AI 对话/)
+  assert.match(commandSource, /搜索浏览历史、书签、AI 对话/)
   assert.match(commandSource, /AI 可用/)
   assert.match(commandSource, /AI 未连接/)
   assert.match(commandSource, /Tab 填入/)
@@ -228,6 +228,30 @@ test("command palette is a search panel without mock access cards", () => {
   assert.match(inputArea, /textOverflow: "ellipsis"/)
   assert.doesNotMatch(commandSource, /连接后可把无结果输入发给 AI/)
   assert.match(commandSource, /\{\(canFillSelection \|\| aiNotice\) && \(/)
+})
+
+test("command palette searches browser history, bookmarks, and AI conversations", () => {
+  const commandSource = readFileSync(
+    new URL("../src/contents/command.tsx", import.meta.url),
+    "utf8"
+  )
+  const messageSource = readFileSync(
+    new URL("../src/types/messages.ts", import.meta.url),
+    "utf8"
+  )
+  const backgroundSource = readFileSync(
+    new URL("../src/background/index.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(messageSource, /SEARCH_BROWSER_HISTORY/)
+  assert.match(backgroundSource, /chrome\.history\.search/)
+  assert.match(commandSource, /searchBrowserHistory\(q\)/)
+  assert.match(commandSource, /searchChromeBookmarks\(q\)/)
+  assert.match(commandSource, /searchAvisoHistory\(q\)/)
+  assert.match(commandSource, /type: "browser-history"/)
+  assert.match(commandSource, /type: "bookmark"/)
+  assert.match(commandSource, /type: "ai-history"/)
 })
 
 test("popup avoids BYOK and hosted account entry copy", () => {
@@ -1504,7 +1528,7 @@ test("package host_permissions 精确匹配批准 provider 边界", () => {
   )
 })
 
-test("package 普通权限保持最小边界且包含 clipboardWrite", () => {
+test("package 普通权限保持最小边界且包含 clipboardWrite 和 history", () => {
   const pkg = JSON.parse(
     readFileSync(new URL("../package.json", import.meta.url), "utf8")
   )
@@ -1514,6 +1538,7 @@ test("package 普通权限保持最小边界且包含 clipboardWrite", () => {
     "bookmarks",
     "clipboardWrite",
     "contextMenus",
+    "history",
     "storage"
   ])
 })
