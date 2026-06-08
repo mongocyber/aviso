@@ -327,9 +327,9 @@ const faqs = [
   {
     zhQ: "哪些 provider 已经完成验证？",
     enQ: "Which providers have completed validation?",
-    zhA: "豆包 / 火山方舟路径已有用户可用反馈；OpenAI / Anthropic 真实调用保持在待验收状态。",
+    zhA: "豆包 / 火山方舟路径已有用户可用反馈；OpenAI / Anthropic 因当前没有可用 API Key，真实最小调用暂缓验收。",
     enA:
-      "The Doubao / Volcengine Ark path has user feedback. OpenAI / Anthropic real calls remain pending validation."
+      "The Doubao / Volcengine Ark path has user feedback. OpenAI / Anthropic minimum live validation is deferred because no usable API key is currently available."
   },
   {
     zhQ: "网页内容如何处理？",

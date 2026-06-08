@@ -46,7 +46,7 @@ AI 请求由浏览器扩展直接发送到用户选择的 provider。
 
 ## 站点访问
 
-Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页面上显示划词工具栏、命令面板、页面内结果面板、剪贴板提示、iframe 桥接和截图框选界面。
+Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页面上显示划词工具栏、命令面板、页面内结果面板、剪贴板提示、iframe 桥接，以及右键内部路径需要的截图框选界面。
 
 这类站点访问不用于抓取任意远端链接正文，不用于广告、遥测、分析或项目方远端日志。只有当用户主动触发需要页面内容的 AI 操作时，相关内容才会由浏览器扩展直接发送到用户选择的模型 provider。
 
@@ -60,7 +60,7 @@ https://api.anthropic.com/*
 https://ark.cn-beijing.volces.com/*
 ```
 
-它们分别用于 OpenAI、Anthropic 和豆包 / 火山方舟 OpenAI 兼容接口。OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，真实最小调用保持待验收状态。
+它们分别用于 OpenAI、Anthropic 和豆包 / 火山方舟 OpenAI 兼容接口。OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现；当前没有可用 API Key，真实最小调用暂缓验收。
 
 当前 host permissions 保持在已批准的 provider 域名范围内。
 

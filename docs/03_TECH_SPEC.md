@@ -26,7 +26,7 @@ Updated: 2026-06-08
 | `src/contents/floating.tsx` | 页面内结果面板。 |
 | `src/contents/clipboard.tsx` | 剪贴板提示。 |
 | `src/contents/double-click-menu.tsx` | 双击快捷菜单。 |
-| `src/contents/screenshot.tsx` | 截图选区与右键截图路径。 |
+| `src/contents/screenshot.tsx` | 截图选区与右键内部截图路径。 |
 | `src/popup/index.tsx` | Popup 设置页。 |
 | `src/styles/aviso.tsx` | Aviso 共享主题 token。 |
 | `src/utils/i18n.ts` | 运行时 UI 文案和语言解析。 |
@@ -100,7 +100,7 @@ OpenAI / Anthropic 新配置会提供默认模型 ID，但输入框允许用户�
 - 翻译只处理用户选中或输入的文本。
 - 浏览历史和书签搜索只在本地执行，不进入 AI 请求。
 - 复制当前上下文只写用户剪贴板，不调用 provider。
-- 截图只在用户确认后用于当次图片说明请求；base64 不写入 storage、history、docs 或日志。
+- 截图只在用户通过右键内部路径主动确认后用于当次图片说明请求；base64 不写入 storage、history、docs 或日志。当前不把截图作为普通用户主入口或公开卖点。
 
 ## 本地化
 

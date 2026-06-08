@@ -47,7 +47,7 @@ Aviso 会在浏览器扩展存储中保存必要数据：
 
 ### 截图提问
 
-截图提问必须由用户手动框选并确认。Aviso 只截取用户选择的可见页面区域，并在本次请求中使用；截图数据不会写入历史记录、扩展存储、文件、文档或日志。截图提问的 provider 支持取决于用户选择的模型是否支持视觉输入。
+截图提问仅保留在用户主动触发的右键内部路径中，必须由用户手动框选并确认。Aviso 只截取用户选择的可见页面区域，并在本次请求中使用；截图数据不会写入历史记录、扩展存储、文件、文档或日志。截图提问的 provider 支持取决于用户选择的模型是否支持视觉输入，当前不作为普通用户主入口或公开卖点。
 
 ### 复制当前上下文
 
@@ -97,7 +97,7 @@ https://ark.cn-beijing.volces.com/*
 
 Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文。
 
-OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，但真实最小调用尚未完成验收。当前豆包 / 火山方舟已有用户可用反馈。
+OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，但由于当前没有可用 API Key，真实最小调用暂缓验收。当前豆包 / 火山方舟已有用户可用反馈。
 
 ## 用户控制
 
@@ -112,4 +112,4 @@ OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，但�
 
 ## Provider 验收状态
 
-OpenAI 和 Anthropic 的真实最小调用保持在待验收状态。当前豆包 / 火山方舟已有用户可用反馈。
+OpenAI 和 Anthropic 的真实最小调用因当前没有可用 API Key 暂缓验收，不作为当前内部试用收口阻塞项。当前豆包 / 火山方舟已有用户可用反馈。

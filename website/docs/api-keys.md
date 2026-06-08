@@ -15,10 +15,10 @@ Aviso 使用你自己的模型 provider API Key 发起请求。请求会从浏�
 | Provider | 当前状态 |
 | --- | --- |
 | 豆包 / 火山方舟 | 已有用户可用反馈。 |
-| OpenAI | 代码路径已实现，真实调用待验收。 |
-| Anthropic | 代码路径已实现，真实调用待验收。 |
+| OpenAI | 代码路径已实现；当前没有可用 API Key，真实最小调用暂缓验收。 |
+| Anthropic | 代码路径已实现；当前没有可用 API Key，真实最小调用暂缓验收。 |
 
-OpenAI 和 Anthropic 保持待验收状态。
+OpenAI 和 Anthropic 不作为当前内部试用收口阻塞项；恢复验收需要可用 API Key，并由用户在 Popup 手动触发连接测试。
 
 ## 设置步骤
 

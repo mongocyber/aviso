@@ -52,7 +52,7 @@ Host permissions：
 
 ### 截图
 
-截图只在用户主动通过右键路径触发并确认选区后使用。截图/base64 只用于当次图片说明请求，不写入 history、storage、docs、console、telemetry 或 release artifacts。
+截图只在用户主动通过右键内部路径触发并确认选区后使用。截图/base64 只用于当次图片说明请求，不写入 history、storage、docs、console、telemetry 或 release artifacts。当前不把截图作为普通用户主入口或公开卖点。
 
 ### Provider 连接测试
 
