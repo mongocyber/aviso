@@ -1,92 +1,61 @@
 # Aviso Project Charter
 
-Version: v0.1.0 internal dogfood / Phase 1 docs
+Updated: 2026-06-08
 
-Date: 2026-06-01
+## 定位
 
-Status: Internal source of truth; pending product-owner review
+Aviso 是一个 Chrome MV3 浏览器扩展。它把用户在网页上的当前操作对象转成可控的 AI 输入，并在页面内结果面板中展示输出。
 
-## Purpose
+当前项目状态是 `v0.1 internal dogfood / 内部试用版`。它用于内部试用、质量收口和边界验证，不是公开发布版本。
 
-Aviso is a Chrome MV3 browser extension that lets users invoke AI from the page they are already reading or editing. It combines context menu actions, a selection toolbar, a command palette, clipboard sensing, and an in-page floating result window.
+## 当前目标
 
-The project is currently frozen as a v0.1 internal dogfood baseline. It is suitable for small internal use and continued observation, but it is not yet ready for public Chrome Web Store release.
+- 让用户在当前网页里通过右键菜单、划词工具栏、命令面板、剪贴板提示和双击快捷菜单触发 AI 操作。
+- 让用户在 Popup 中管理界面语言、外观主题、功能开关、AI 服务配置、默认模型、历史和自定义指令。
+- 让所有 AI 请求保持 BYOK direct-provider：用户自己的 API Key，本地加密保存，浏览器直连所选 provider。
+- 让数据和权限边界保持清楚：无项目方后端、无遥测、无分析 SDK、无 provider proxy。
 
-## Product Boundary
+## 当前范围
 
-Aviso does not run a project-owned backend. AI requests are sent directly from the extension to the selected model provider using the user's own API Key.
+| 范围 | 当前状态 |
+| --- | --- |
+| Chrome 扩展 | 已实现，版本 `0.1.0`。 |
+| 右键菜单 | 已实现。 |
+| 划词工具栏 | 已实现。 |
+| 划词翻译卡 | 已实现，默认关闭。 |
+| 命令面板 | 已实现，支持历史、书签、本地 AI 对话和浏览历史关键词搜索。 |
+| 双击快捷菜单 | 已实现，默认关闭。 |
+| 剪贴板提示 | 已实现。 |
+| 结果面板和本地历史 | 已实现。 |
+| AI 服务配置 | 已实现多配置、默认服务切换、模型 ID 手动编辑和手动连接测试。 |
+| UI 语言本地化 | 已实现中文 / English。 |
+| Manifest 本地化 | 已实现 `zh_CN` / `en`。 |
 
-The current product principles are:
+截图能力只保留在用户主动触发的右键路径中，不作为普通用户主入口。
 
-- Keep browser permissions narrow.
-- Keep API Keys local to the browser.
-- Do not add telemetry, analytics, or a project-owned proxy service.
-- Do not run real provider calls without explicit approval.
-- Treat internal docs as the source of truth; public website docs will be derived later.
+## 非当前范围
 
-## Current State Matrix
+当前项目不包含：
 
-| Area | Status | Notes |
-|------|--------|-------|
-| v0.1 implementation | Implemented | Main extension flows exist in `src/`, with Popup, background, content scripts, utilities, tests, and manual fixtures. |
-| A-G manual QA | Verified by user feedback | User reported A-G manual checks basically passed for internal dogfood. Chrome version, OS, screenshots, and detailed per-step notes are still not fully recorded. |
-| 豆包 / 火山方舟 | Verified by user feedback | User confirmed the API path is usable. This run did not execute a real API call. |
-| OpenAI | Unverified | Code path exists, but no approved real minimal call has been recorded. |
-| Anthropic | Unverified | Code path exists, but no approved real minimal call has been recorded. |
-| Public release | Not released | Chrome Web Store submission, public privacy policy, store assets, package zip, tag, and rollback point are still pending. |
-| Git baseline | Established | Local baseline commit exists: `3dc7ea3 chore: establish v0.1 internal dogfood baseline`. No remote, push, or tag has been created in this phase. |
+- 项目方后端或 provider proxy。
+- 账号、登录、订阅、支付、匿名额度。
+- 项目方托管 AI。
+- 遥测、分析 SDK、远端日志。
+- 联网搜索、远端链接正文抓取、全页 DOM 翻译。
+- 自动读取 provider 账号模型列表。
+- Chrome Web Store 发布或提交。
 
-## In Scope For v0.1 Internal Dogfood
+## 质量状态
 
-- Context menu actions for selection, page, link, image, video, editable, and custom template contexts.
-- Selection toolbar actions for selected text.
-- Command palette with Chrome browsing history search, bookmark search, Aviso AI conversation search, and no-result AI fallback.
-- Clipboard sensing with sensitive-domain and sensitive-content filtering.
-- Floating AI result window with streaming output, copy, save, and follow-up.
-- Popup settings for model selection, API Keys, feature toggles, templates, history, and inline privacy explanation.
-- Iframe-aware routing for toolbar, context menu, command palette, clipboard toast, and single top-level UI.
-- Local unit tests and manual A-G validation fixture.
+- A-G 手动验收：用户反馈基本通过。
+- 豆包 / 火山方舟：用户确认可用。
+- OpenAI / Anthropic：配置能力和 host permission 已存在；真实最小调用尚未验收。
+- 英文界面：用户 smoke check 未发现明显问题。
+- 自动检查：以 `git diff --check`、`npm test`、`npx tsc --noEmit`、`npm run build` 为当前基础检查。
 
-## Out Of Scope For v0.1
+## 决策原则
 
-- Public Chrome Web Store release.
-- Docusaurus site, Vercel deployment, release-please, commitlint, husky, or other release automation.
-- A project-owned backend, proxy, account system, telemetry, analytics, or server-side storage.
-- Broad host permissions for arbitrary page or remote-link fetching.
-- Guaranteed fast first token from model providers.
-- Universal image understanding for every webpage image source.
-- Real OpenAI or Anthropic validation without explicit user approval.
-
-## v0.2 Candidates
-
-- Remote link body extraction with an explicit permission decision.
-- More reliable image explanation through browser-local capture or conversion.
-- Long-document summarization beyond the current 5000-character default truncation.
-- Provider validation matrix covering OpenAI, Anthropic, and 豆包 with error classification and latency notes.
-- Public release engineering: package zip, privacy policy, store assets, tag, rollback plan, and public changelog.
-- Optional internal storage key migration away from `contextai_*`, with a safe compatibility plan.
-
-## Documentation System
-
-This Phase 1 document set is internal. It should remain factual and conservative. Future Docusaurus or website pages should be adapted from these docs into user-facing language, not treated as the original source.
-
-Primary internal docs:
-
-- `docs/01_PROJECT_CHARTER.md`
-- `docs/02_PRD.md`
-- `docs/03_TECH_SPEC.md`
-- `docs/04_ROADMAP.md`
-- `docs/05_RELEASE_PLAN.md`
-- `docs/06_RISK_REGISTER.md`
-- `docs/07_PRIVACY_AND_SECURITY.md`
-
-## Open Questions
-
-- What level of provider latency is acceptable for public release messaging?
-- Should remote link summarization remain out of scope, or should v0.2 accept broader host permissions?
-- Should internal `contextai_*` storage keys be migrated before public release, or kept for compatibility?
-- What public privacy policy host will be used for Chrome Web Store submission?
-
-## Changelog
-
-- 2026-06-01: Created Phase 1 internal project charter from current v0.1 internal dogfood baseline.
+- 功能文档只描述当前实现和当前维护计划。
+- 未实现能力不进入当前需求文档。
+- 权限、API Key、真实 provider 调用、发布动作和远端服务相关改动必须单独确认。
+- 截图能力保持内部试用边界，不作为公开卖点。

@@ -16,7 +16,7 @@ Aviso 目前尚未公开上架 Chrome Web Store。当前安装说明主要面向
 build/chrome-mv3-prod
 ```
 
-这个目录来自项目本地构建，不等于已经生成 Chrome Web Store 可提交的最终 zip。公开发布前，最终 package zip 仍需要单独生成和验证。
+这个目录来自项目本地构建，当前用于内部试用加载。
 
 ## 在 Chrome 中加载扩展
 
@@ -40,11 +40,9 @@ build/chrome-mv3-prod
 
 ## 当前不提供的安装方式
 
-以下事项尚未完成，不能写成已发布状态：
+以下事项不是当前内部试用安装方式：
 
 - Chrome Web Store 公开安装入口。
-- 可提交商店的最终 package zip 验证记录。
-- 发布 tag 和回滚点。
-- 自动部署或 GitHub Actions 发布流程。
+- 自动部署或发布流程。
 
 如果你是审核人员，请以“内部试用构建 + 文档草案”的状态理解当前材料。

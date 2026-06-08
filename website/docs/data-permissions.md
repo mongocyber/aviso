@@ -60,7 +60,7 @@ https://api.anthropic.com/*
 https://ark.cn-beijing.volces.com/*
 ```
 
-它们分别用于 OpenAI、Anthropic 和豆包 / 火山方舟 OpenAI 兼容接口。OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，但真实最小调用仍待用户使用原生 API Key 手动验证；公开发布时只应宣称已经完成验证的 provider。
+它们分别用于 OpenAI、Anthropic 和豆包 / 火山方舟 OpenAI 兼容接口。OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，但真实最小调用尚未完成验收；当前不能写成已验证 provider。
 
 Aviso 当前没有为了抓取任意网页正文而申请 `http://*/*` 或 `https://*/*` 这类广域 host permission。
 

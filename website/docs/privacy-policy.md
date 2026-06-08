@@ -6,7 +6,7 @@ sidebar_position: 6
 
 # 隐私政策
 
-本文说明 Aviso 当前实现的数据流和权限边界。正式提交 Chrome Web Store 前，仍需要与商店后台隐私声明、商店截图和最终构建产物再次核对。
+本文说明 Aviso 当前内部试用版的数据流和权限边界。
 
 ## 概述
 
@@ -106,7 +106,7 @@ https://ark.cn-beijing.volces.com/*
 
 Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文。
 
-OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，但真实最小调用仍待用户使用原生 API Key 手动验证。公开发布时只应宣称已经完成验证的 provider。当前豆包 / 火山方舟已完成用户手动单 provider 连接测试。
+OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，但真实最小调用尚未完成验收。当前豆包 / 火山方舟已有用户可用反馈。
 
 ## 当前不包含
 
@@ -132,15 +132,6 @@ Aviso 当前不包含：
 
 如果卸载 Aviso，Chrome 会清理该扩展的本地存储。你也可以在 provider 后台轮换或撤销不再使用的 API Key。
 
-## 当前发布前缺口
+## 当前未验收项
 
-公开发布前仍需完成：
-
-- Chrome Web Store 隐私声明核对，并保持与本文、Popup 内隐私说明和最终 manifest 一致。
-- 最终商店截图脱敏检查。
-- 最终构建产物、商店素材和权限核对。
-- OpenAI 和 Anthropic 真实最小调用验证。
-- 真实 vision provider 验证。
-- 最终支持联系方式确认。
-
-本文不会把上述事项写成已经完成。
+本文不会把 OpenAI / Anthropic 真实调用、Chrome Web Store 提交或公开发布写成已经完成。

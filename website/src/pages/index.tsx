@@ -263,8 +263,8 @@ const privacyItems = [
     icon: "shield",
     zhTitle: "当前无自建后端、无遥测、无分析 SDK",
     enTitle: "No first-party backend, telemetry, or analytics SDK",
-    zhText: "官网文案只说明当前实现边界，公开发布前仍需再次核对最终构建和声明。",
-    enText: "The site states the current implementation boundary; final build and declarations still need release checks."
+    zhText: "官网文案只说明当前内部试用版的实现边界，不承诺项目方中转或远端记录。",
+    enText: "The site states the current internal dogfood boundary, with no project relay or remote logging promised."
   },
   {
     icon: "model",

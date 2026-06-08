@@ -1,162 +1,74 @@
-# Aviso Product Requirements Document
+# Aviso PRD
 
-Version: v0.1.0 internal dogfood / v0.2-alpha planning
+Updated: 2026-06-08
 
-Date: 2026-06-02
+## 产品目标
 
-Status: Internal PRD baseline plus approved v0.2-alpha planning scope
+Aviso 帮用户在当前网页内快速调用 AI。用户不需要离开页面，就可以对选中文字、当前页面、图片或自己输入的问题进行解释、翻译、润色、总结和继续追问。
 
-## Product Summary
+当前版本面向内部试用，核心价值是验证“网页上下文 + 用户主动触发 + 页面内结果面板”的工作流是否稳定可用。
 
-Aviso is an in-browser AI assistant for Chrome. It lets users use AI on selected text, page content, links, images, clipboard text, history, and bookmarks without leaving the current page.
+## 用户对象
 
-The current product is not a public release candidate. It is a v0.1 internal dogfood build with implemented core flows, user-reported A-G manual validation, and known release gates still open.
+- 需要频繁阅读网页资料、技术文档、英文内容或长页面的人。
+- 需要把网页内容快速转成解释、摘要、翻译或改写的人。
+- 愿意使用自己的 API Key 连接模型 provider 的内部试用用户。
 
-## Target User
+## 当前需求
 
-The initial target user is a knowledge worker who reads, researches, edits, and summarizes web content in the browser and wants AI help in the current page context.
+### 1. 触发入口
 
-This version assumes users can provide their own API Keys and understand that model responses depend on the selected provider, network, key validity, input length, and provider load.
+- 用户可以通过 Chrome 右键菜单触发解释、翻译、润色、总结、页面总结、图片说明、复制当前上下文、模型切换和自定义指令。
+- 用户选中文本后可以通过划词工具栏触发解释、翻译、润色、总结和发送给 AI。
+- 用户可以通过命令面板搜索本地浏览历史、书签、Aviso AI 对话，或直接输入问题。
+- 用户可以开启双击快捷菜单，在安全网页区域双击后使用紧凑入口。
+- 用户复制普通文本后可以看到剪贴板提示；敏感页面和敏感内容不提示。
 
-## User Problems
+### 2. 结果体验
 
-- Copying content into a separate AI chat breaks context and flow.
-- Browser research often mixes selection, page, link, image, bookmark, and clipboard contexts.
-- Existing AI tools often hide where data goes or require a remote account system.
-- Long waits feel broken if the UI does not immediately show that a model request has started.
-- English Chrome users will see a mismatched Chinese-only extension experience unless Aviso follows browser UI language or offers an explicit UI language override.
+- AI 结果在页面内结果面板中流式展示。
+- 用户可以复制结果、保存对话、继续追问。
+- 结果面板对话默认保存到本地历史，最多保留最近记录，并保留用户手动保存的会话。
+- 等待时显示明确状态文案；真实模型返回内容后立即替换为真实输出。
 
-## Product Goals
+### 3. 翻译体验
 
-- Let the user invoke AI from the object they are interacting with.
-- Keep the response in the current page through a floating window.
-- Keep data flow transparent: no Aviso backend, no telemetry, API Keys stored locally.
-- Keep permissions small enough for a credible public-release path.
-- Support Chinese and English UI before public release, defaulting to Chrome UI language with an explicit Settings override.
-- Provide enough internal docs and release gates to continue safely after v0.1.
+- 右键选区、划词工具栏、命令面板输入和划词翻译卡都复用同一翻译能力。
+- 翻译目标语言由独立设置控制。
+- 短选区可就地显示翻译卡；长选区进入结果面板。
+- 翻译只处理用户选中或输入的内容，不自动翻译整个页面。
 
-## Non-Goals
+### 4. 设置体验
 
-- Do not make a public website or Docusaurus docs in Phase 1.
-- Do not create a backend service, proxy, account system, analytics, or telemetry.
-- Do not promise model responses will be instant.
-- Do not fetch arbitrary remote link content in v0.1.
-- Do not support every image source in v0.1.
-- Do not run automatic or unapproved OpenAI / Anthropic validation. V2-004 validation is approved only as a user-triggered, single-provider test with safe test keys and summary-only records.
+- Popup 提供 `设置`、`AI 服务`、`记录`、`指令` 四个区域。
+- 用户可以切换界面语言：自动、中文、English。
+- 用户可以切换外观主题：浅色、深色、跟随系统。
+- 用户可以管理多个 AI 服务配置，设置默认服务，手动编辑模型 ID。
+- 用户可以手动测试单个 provider 连接，测试结果只显示脱敏摘要。
+- 用户可以管理本地历史和自定义指令。
 
-## v0.1 Functional Scope
+### 5. 语言本地化
 
-| Feature | Current status | Notes |
-|---------|----------------|-------|
-| Context menu | Implemented | Supports selection explain/translate/polish/summarize, page summary, link summary by URL, image explain, model switch, and custom templates. |
-| Selection toolbar | Implemented | Supports explain, translate, polish, summarize, and send to AI. Injected into all frames. |
-| Command palette | Implemented | Mac uses `Command+Shift+Space`; Windows/Linux use `Ctrl+Shift+Space`. Searches Chrome browsing history, bookmarks, and Aviso AI conversations; can send no-result input to AI. |
-| Clipboard sensing | Implemented | Detects copied text, skips sensitive domains/content, and routes toast display to the top-level page. |
-| Floating window | Implemented | Shows streaming output, waiting states, copy, save, dedupe, and follow-up entry points. |
-| Popup settings | Implemented | Supports model selection, API Key entry, 豆包 endpoint, feature toggles, custom templates, history, and privacy copy. |
-| UI language localization | Planned | Public launch requirement: default to Chrome UI language for Chinese / English and keep Settings override `自动` / `中文` / `English`. Not implemented in the current build. |
-| History | Implemented | Saves result entries locally, supports search, pin, delete, and clear. |
-| Templates | Implemented | Supports add/edit/delete, context assignment, and `{{selection}}`, `{{url}}`, `{{page}}` substitution. |
-| Iframe routing | Implemented | Supports iframe toolbar, iframe context menu, iframe command shortcut bridge, top-level floating UI, and local iframe fixture. |
-| Image explain boundary | Implemented | Supports `http/https` image URLs and PNG/JPEG/WebP base64 data URLs; rejects unsupported sources with a readable error. |
+- 运行时 UI 默认跟随 Chrome UI language：中文环境显示中文，其他环境显示 English。
+- 用户可以在 Popup 中覆盖界面语言。
+- Chrome 扩展描述和快捷键说明通过 `_locales/zh_CN` 和 `_locales/en` 本地化。
 
-## Verification Status
+## 数据与隐私需求
 
-| Item | Status | Evidence |
-|------|--------|----------|
-| Unit tests | Verified previously | Current test suite covers clipboard detection, sensitive filtering, templates, errors, image source parsing, local intent parsing, and page truncation. |
-| Type check | Verified previously | `npx tsc --noEmit` passed during baseline verification. |
-| Build | Verified previously | `npm run build` produced `build/chrome-mv3-prod` outside the default sandbox; sandbox build may fail with `Operation not permitted`. |
-| Manual A-G QA | Verified by user feedback | User reported A-G basic pass for internal dogfood. Detailed Chrome version, OS, screenshots, and step notes remain incomplete. |
-| 豆包 / 火山方舟 | Verified by V2-004 manual connectivity test | User triggered the single-provider test from the installed extension. Summary result: `doubao`, `doubao-seed-2-0-lite-260428`, success, about 2505 ms, no raw prompt/response/private data logged. |
-| OpenAI | Host permission implemented; live call unverified | Code and model registry route exist. V2-003 added `https://api.openai.com/*`, but no approved live-call record exists. |
-| Anthropic | Host permission implemented; live call unverified | Code and model registry route exist. V2-003 added `https://api.anthropic.com/*`, but no approved live-call record exists. |
+- API Key 必须加密保存在 `chrome.storage.local/contextai_api_keys`。
+- 非敏感设置必须保存在 `chrome.storage.sync/contextai_settings`。
+- 本地 AI 对话历史保存在 `chrome.storage.local/contextai_history`。
+- AI 请求只在用户主动触发时发送到用户选择的 provider。
+- 浏览历史和书签只用于命令面板本地搜索，不进入 provider 请求。
+- 不添加项目方后端、遥测、分析 SDK、provider proxy 或远端日志。
 
-## Public Release Gates
+## 当前不包含
 
-Before public release, Aviso still needs:
+- 项目方托管 AI、账号、登录、订阅、支付、匿名额度。
+- 联网搜索、远端链接正文抓取、全页 DOM 翻译。
+- 自动读取 provider 账号模型列表。
+- Chrome Web Store 发布流程。
 
-- OpenAI minimal real-call validation through the approved V2-004 manual single-provider flow with a safe test key.
-- Anthropic minimal real-call validation through the approved V2-004 manual single-provider flow with a safe test key.
-- V2-004 live validation records before claiming OpenAI or Anthropic support.
-- A fresh provider and error-behavior record for 豆包 / 火山方舟 is complete; OpenAI / Anthropic records remain open.
-- `npm run package` and the final extension zip.
-- Chrome Web Store screenshots, description, support copy, and privacy declarations.
-- UI language localization for Chinese / English Chrome users, including Settings override and loaded-extension QA.
-- Public privacy policy page consistent with Popup copy and actual implementation.
-- Git tag and rollback point.
-- Final permission and host-permission audit.
-- Final secret/API Key leakage check on docs, screenshots, build output, and release artifacts.
+## 验收标准
 
-## v0.1 Known Limitations
-
-- Provider first token can be slow.
-- Page content is truncated to 5000 characters by default before model submission.
-- Remote link summary passes the URL as context; it does not fetch the remote page body.
-- Some remote image URLs may be accepted by format validation but still fail if the model provider cannot download them.
-- OpenAI and Anthropic are implemented and their provider host permissions are present in the manifest, but live validation is not complete.
-- Current internal validation is user-reported; public release needs stricter environment and evidence capture.
-
-## v0.2-alpha Product Direction
-
-v0.2-alpha is an internal dogfood iteration, not a public Chrome Web Store release. It should turn the existing v0.1 pain points into a smaller, safer development sequence before any broad Agent, voice, or multi-tab expansion.
-
-The working source drafts reviewed for this scope were:
-
-- `/Users/jonyliu/Desktop/Aviso_PRD_v0.2.md`
-- `/Users/jonyliu/Desktop/TECH_SPEC_v0.2_delta.md`
-
-Those drafts are useful inputs, but they are not the canonical project spec. This PRD is the canonical internal scope until replaced by a later approved project document.
-
-### v0.2-alpha Goals
-
-- Improve provider confidence through explicit validation records and readable error states.
-- Improve image reliability through browser-local screenshot/capture paths, instead of relying only on model-side remote image URL downloads.
-- Improve everyday translation and context-copy workflows without changing the privacy model or adding broad permissions by default.
-- Keep v0.2-alpha suitable for internal dogfood while preserving a credible public-release path.
-
-### v0.2-alpha Scope
-
-| Priority | Capability | Scope |
-|----------|------------|-------|
-| P0 | Provider validation and permission audit | Host permission decision is approved for OpenAI, Anthropic, and 豆包 / 火山方舟. Record minimal live-call behavior only through user-triggered single-provider checks with safe test keys. |
-| P0 | Minimal model registry and routing | Implemented in V2-003 for existing providers only. Registry exposes provider/model metadata for V2-004 and preserves current defaults. |
-| P0 | Manual model connectivity test | Implemented in V2-004 as user-triggered single-provider checks with readable summary states and latency notes. It does not auto-test all keys on settings open. |
-| P1 | Screenshot to AI | Add a user-triggered capture flow for visible-page regions and send base64 image input to a configured vision-capable model. |
-| P1 | Copy current context | Let users copy a structured context bundle with title, URL, optional selection, and truncated page text. |
-| P1 | Translation MVP | Improve selection translation and floating-window translation actions first. Page-wide DOM translation and YouTube subtitles are discovery/backlog until risk is reviewed. |
-| P2 | Theme and Aviso panel naming | Implemented as visual polish and naming consistency across existing UI surfaces. No stored theme setting was added. Preserve the existing keyboard shortcut behavior. |
-
-### Explicit Non-Scope For v0.2-alpha MVP
-
-- No broad remote-link body fetching without a separate host-permission decision.
-- No default Google Translate / 百度 / 有道 fallback until privacy copy and host permissions are approved.
-- No multi-tab aggregation, tab grouping, or voice input in the MVP. These require separate permission and privacy review.
-- No `contextai_*` storage-key migration in the MVP; compatibility remains more important than internal brand cleanup.
-- No public Chrome Web Store submission, release tag, or provider claims until the release checklist gates are closed.
-
-### Acceptance Criteria
-
-- All P0 changes keep API Keys in encrypted `chrome.storage.local`; settings stay in `chrome.storage.sync`.
-- Connectivity tests are initiated by the user or by an immediately related key edit, not by passive settings-page opening.
-- Provider validation records do not include API Keys, raw prompts, raw responses, private webpages, or screenshots with private data.
-- Approved provider hosts are limited to `https://api.openai.com/*`, `https://api.anthropic.com/*`, and `https://ark.cn-beijing.volces.com/*` until a later decision changes this.
-- Screenshot and translation features show clear user feedback when the selected provider/model cannot support the requested operation.
-- Theme and panel polish does not change permissions, storage keys, provider routing, payload boundaries, or shortcut behavior.
-- Any new permission or host permission is documented in `docs/03_TECH_SPEC.md`, `docs/06_RISK_REGISTER.md`, `docs/07_PRIVACY_AND_SECURITY.md`, and `RELEASE_CHECKLIST.md` before implementation is accepted.
-
-## Open Questions
-
-- Which single additional OpenAI-compatible provider, if any, should be added first after the existing providers are stable?
-- Should AI/translation result caching be enabled by default, and should users get a visible clear-cache control?
-- What level of provider latency should be described as acceptable in public copy?
-- Should public release be provider-limited if OpenAI or Anthropic validation is delayed?
-
-## Changelog
-
-- 2026-06-02: Implemented V2-003 minimal model registry/routing and landed approved OpenAI / Anthropic host permissions while keeping live validation as a V2-004 gate.
-- 2026-06-02: Implemented V2-004 manual single-provider connectivity test UI and summary-only validation surface; real provider evidence still requires user-triggered live runs.
-- 2026-06-03: Implemented V2-008 theme and Aviso panel polish as visual consistency work without adding stored theme settings, permissions, providers, dependencies, storage migration, or new data flow.
-- 2026-06-02: In V2-002A, recorded the approved OpenAI / Anthropic provider host permission decision as docs-only, before V2-003 implementation.
-- 2026-06-02: Converted the desktop v0.2 drafts into a narrower v0.2-alpha internal dogfood scope, with high-permission Agent, tab, translation-fallback, and voice features moved out of the MVP.
-- 2026-06-01: Created Phase 1 internal PRD from current source, docs, release checklist, and test structure.
+当前 PRD 的验收标准见 [ACCEPTANCE_CRITERIA.md](./ACCEPTANCE_CRITERIA.md)，执行记录见 [../RELEASE_CHECKLIST.md](../RELEASE_CHECKLIST.md)。

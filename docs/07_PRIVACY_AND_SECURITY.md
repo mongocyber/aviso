@@ -1,193 +1,89 @@
-# Aviso Privacy And Security
+# Aviso Privacy and Security
 
-Version: v0.1.0 internal dogfood / v0.2-alpha planning
+Updated: 2026-06-08
 
-Date: 2026-06-04
+## 核心原则
 
-Status: Internal privacy and security baseline plus v0.2-alpha planning notes; not a public privacy policy
+Aviso 当前是 BYOK direct-provider 浏览器扩展。用户提供自己的 API Key，扩展在用户主动触发 AI 动作时直接请求所选 provider。项目方不运行后端，不中转模型请求，不收集遥测，不使用分析 SDK。
 
-2026-06-05 scope update: v1.0 basic launch keeps the current BYOK direct-provider privacy model. Hosted Aviso AI, project-owned backend, anonymous quota, login, subscription, payment, provider proxy, remote link-body fetching, and web search are future-state only. Screenshot ordinary-user entry is paused pending a hide/remove/internal-only decision.
+## 数据存储
 
-## Current Privacy Model
+| 数据 | 存储位置 | 说明 |
+| --- | --- | --- |
+| API Key | `chrome.storage.local/contextai_api_keys` | 加密保存，不同步。 |
+| 设置 | `chrome.storage.sync/contextai_settings` | 非敏感设置，包括功能开关、界面语言、主题、默认服务、自定义指令和 provider metadata。 |
+| 本地 AI 对话历史 | `chrome.storage.local/contextai_history` | 本地保存，不包含 API Key。 |
+| 运行时短缓存 | Service worker 内存 | 随运行时失效，不持久化。 |
 
-Aviso has no project-owned backend. The extension runs in the user's browser and sends AI requests directly to the selected provider.
+## 权限
 
-Current provider options in code:
+普通权限：
 
-- OpenAI
-- Anthropic
-- 豆包 / 火山方舟
+- `contextMenus`
+- `activeTab`
+- `storage`
+- `history`
+- `bookmarks`
+- `clipboardWrite`
 
-OpenAI and Anthropic code paths and host permissions are implemented but not live-validated. 豆包 / 火山方舟 has passed the V2-004 manual single-provider connectivity test with summary-only evidence.
+Host permissions：
 
-## Data Stored Locally
+- `https://api.openai.com/*`
+- `https://api.anthropic.com/*`
+- `https://ark.cn-beijing.volces.com/*`
 
-| Data     | Where stored                                      | Protection / notes                                                                |
-| -------- | ------------------------------------------------- | --------------------------------------------------------------------------------- |
-| API Keys | `chrome.storage.local` under `contextai_api_keys` | Encrypted with CryptoJS AES before storage.                                       |
-| Settings | `chrome.storage.sync` under `contextai_settings`  | Includes model choice, feature toggles, templates, and 豆包 endpoint/model value. |
-| History  | `chrome.storage.local` under `contextai_history`  | Stores the most recent 20 local result-panel conversations, including multi-turn messages. |
+## 数据流
 
-The internal `contextai_*` key names are retained for compatibility after the Aviso rename.
+### AI 请求
 
-## Data Sent To Providers
+1. 用户通过右键、划词工具栏、命令面板、双击菜单、划词翻译卡或结果面板追问主动发起动作。
+2. Aviso 只整理该动作需要的输入。
+3. Background 读取当前默认 provider config 和加密保存的 API Key。
+4. 浏览器扩展直接请求对应 provider host。
+5. 流式结果返回页面内结果面板。
 
-Depending on user action, provider requests may include:
+### 本地搜索
 
-- selected text
-- user-entered prompt
-- current page URL
-- selected link URL
-- supported image URL or supported base64 image data
-- extracted current page text for page summary
-- custom template prompt after placeholder expansion
+命令面板可搜索 Chrome 浏览历史、书签和 Aviso 本地 AI 对话。浏览历史和书签只用于本地关键词匹配和打开结果，不进入 AI 请求，不写入 Aviso 远端服务，也不发送给 provider。
 
-Aviso does not claim that model providers avoid retaining data. Provider behavior depends on the user's selected provider and account terms.
+### 复制当前上下文
 
-## Data Not Sent To Aviso
+复制当前上下文只写入用户剪贴板，不调用 provider，不写入 history、storage、docs、console 或远端服务。
 
-Aviso does not currently send data to a project-owned server because no project-owned server exists.
+### 截图
 
-The project currently does not add:
+截图只在用户主动通过右键路径触发并确认选区后使用。截图/base64 只用于当次图片说明请求，不写入 history、storage、docs、console、telemetry 或 release artifacts。
 
-- telemetry
-- analytics SDKs
-- tracking pixels
-- account identifiers
-- project-owned logging service
-- project-owned model proxy
+### Provider 连接测试
 
-## Permissions
+连接测试只能由用户在 Popup 手动触发，一次只测一个 provider。测试 payload 使用固定公开短句，不包含网页正文、选区、截图、剪贴板内容或私人数据。UI 只展示脱敏摘要。
 
-Current browser permissions:
+## 不收集和不保存
 
-- `contextMenus`: create Aviso right-click menu entries.
-- `activeTab`: interact with the current active tab after user action.
-- `storage`: store settings, API Keys, and history.
-- `bookmarks`: search bookmarks from the command palette.
-- `clipboardWrite`: support copy actions from the floating UI.
+Aviso 当前不收集、不远端保存：
 
-Current content script site access:
+- API Key 明文。
+- raw prompt。
+- raw provider response。
+- 私人网页正文。
+- 选中文字原文日志。
+- 完整 URL 日志。
+- 截图或图片 base64。
+- 剪贴板内容日志。
+- 远端 telemetry 或 analytics。
 
-- `content_scripts.matches` uses `<all_urls>` so Aviso can show the selection toolbar, command palette, in-page result panel, clipboard prompt, iframe bridge, and screenshot selection UI on webpages where the user invokes the extension.
-- This site access is not used for arbitrary remote link-body fetching, ads, telemetry, analytics, project-owned logging, or sending page content to an Aviso server.
-- Page content is sent to a model provider only when the user manually triggers an AI action that needs that content.
+## 当前不包含的数据能力
 
-Current host permissions:
+- 项目方后端。
+- Provider proxy。
+- 账号、登录、订阅、支付、匿名额度。
+- 项目方托管 AI。
+- 联网搜索。
+- 远端链接正文抓取。
+- 第三方翻译 fallback。
 
-- `https://api.openai.com/*`: required for direct OpenAI API calls.
-- `https://api.anthropic.com/*`: required for direct Anthropic API calls.
-- `https://ark.cn-beijing.volces.com/*`: required for 豆包 / 火山方舟 OpenAI-compatible API calls.
+## 安全维护要求
 
-Aviso does not currently request broad host permissions for arbitrary remote page fetching.
-
-## Security Controls
-
-- API Keys are encrypted before local storage.
-- Sensitive clipboard content and sensitive domains are filtered before clipboard toast behavior.
-- Unsupported image sources are rejected with readable errors before model calls when possible.
-- Page content is truncated to 5000 characters by default before submission.
-- Error messages are normalized to avoid leaking provider internals or sensitive remote image URLs.
-- Provider connectivity tests are manual, single-provider, and summary-only. They use a fixed public prompt and do not include page content, selected text, links, images, screenshots, clipboard content, raw provider responses, or API Keys in the displayed validation summary.
-- V2-004B performance summaries are local-console only. `[Aviso perf]` logs include fixed fields, input-size buckets, coarse context types, timing marks, and error categories; they do not include raw prompts, raw responses, selected text, page content, full URLs, image/base64 payloads, screenshots, or API Keys.
-- Performance summaries are not persisted to `chrome.storage` and are not sent to telemetry, analytics, a project-owned server, or any remote logging service.
-- V2-004C follow-up speed guard sends only a bounded recent `priorContext` instead of the full visible conversation history. Slow-response and stop-waiting UI states do not log raw prompts, raw responses, page content, selected text, full URLs, images/base64, screenshots, or API Keys. Stopped requests may be classified as `user_cancelled` in local `[Aviso perf]` summaries only.
-- V2-005 screenshot-to-AI is user-triggered and confirmation-gated. The extension captures only after the user selects a visible region and confirms, crops the image in memory, does not persist screenshot/base64 data, and does not attach the full page URL to the screenshot provider payload.
-- V2-006 copy current context is user-triggered from the right-click menu. It writes structured title, URL, optional selected text, and truncated page text to the user's clipboard only; it does not call AI providers, save to history, write to `chrome.storage`, log copied content, or send telemetry.
-- V2-007 / V1-006 translation is limited to selected text or command-palette user input. It reuses the existing configured provider/model and does not include page URL, link URL, remote link body, page body, screenshots, clipboard content, prior conversation context, or full-page DOM content as translation input. V1-006 inline instant translation is default-off, controlled by a non-secret setting plus target-language option, and does not add third-party translation fallback, translation cache, replace behavior, permissions, host permissions, backend, hosted AI, telemetry, or analytics.
-- V2-008 theme / panel polish changes only visible UI styling and naming. It does not add stored theme settings, storage migrations, permissions, providers, dependencies, telemetry, cache, provider validation calls, or new data sent to providers.
-- V1-004 Command Palette mocked states changes only the command palette UI and existing local message routing. The quota, login, subscription, loading, empty, and access-blocked states are local mock / display-only states and are not persisted. Local-only command actions, such as copy current context, do not show quota or login blockers and do not call AI. The BYOK-active badge is derived from the current non-secret model route; no hosted AI route, backend, auth, quota, payment, provider proxy, storage key, permission, dependency, telemetry, or real provider validation call is added.
-- V1-008 BYOK settings cleanup changes only the Popup settings information architecture. The `AI` tab marks Aviso AI as planned / unavailable in the current version and keeps OpenAI, Anthropic, and 豆包 / 火山方舟 Key fields plus manual provider connectivity tests under an advanced BYOK section. It does not add hosted AI, login, quota, subscription, payment, backend, provider proxy, storage keys, permissions, providers, dependencies, telemetry, analytics, or real provider validation calls.
-- V1-005 screenshot local action toolbar reuses the existing visible-region overlay. Copy image writes the selected image only to the user's clipboard. Download image uses a temporary in-page object URL and browser-native download behavior, not the `chrome.downloads` API or `downloads` permission. Retry and cancel do not call providers. Send to AI remains the existing BYOK `image_explain` path with current vision-support gates and redacted performance summaries; no hosted Aviso AI, backend, quota, login, subscription, provider proxy, new permission, new dependency, storage key, telemetry, or cache is added. Screenshot/base64 data is not written to history, `chrome.storage`, docs, console, telemetry, or release artifacts.
-- V1-007 double-click shortcut adds a default-off non-secret setting in `contextai_settings` and a local compact menu content script. It reuses existing screenshot, copy-current-context, page-summary, template, and selection AI request paths; avoids inputs, editable regions, common code editors, and Aviso UI; and does not add hosted AI, login, quota, payment, backend, provider proxy, permissions, host permissions, providers, dependencies, telemetry, analytics, API Key handling, or real provider validation calls.
-- V1-011 conversation autosave stores result-panel conversations in `chrome.storage.local/contextai_history`, limited to the most recent 20 conversations. One result-panel lifecycle is one conversation; follow-ups append to the same messages array, and closing the panel ends that conversation. It does not use `chrome.storage.sync`, does not store API Keys, screenshot/base64 data, or raw provider responses, and does not add backend, hosted AI, auth, quota, payment, subscription, telemetry, analytics, permissions, host permissions, dependencies, or provider validation calls.
-- Build artifacts, `node_modules`, environment files, caches, and key-like files are ignored by Git.
-- Chrome Web Store listing copy must disclose both the provider `host_permissions` and the broad content-script site access used for in-page UI surfaces.
-
-## Known Gaps Before Public Release
-
-- Public privacy policy page exists and has been aligned with the current Popup copy, implemented provider host permissions, and v0.2-alpha data-flow boundaries. Final Chrome Web Store declaration alignment is still not complete.
-- Chrome Web Store privacy declarations are drafted in `docs/store/chrome-web-store-submission-draft.md` but not yet entered in the dashboard or owner-approved.
-- Current Chrome Web Store screenshots and promo images are placeholder drafts only and must be redone before final submission.
-- Login, subscription, payment, anonymous quota, hosted Aviso AI, provider proxy, remote link-body fetching, and web search must not be described as current privacy flows.
-- OpenAI live validation is not complete.
-- Anthropic live validation is not complete.
-- OpenAI and Anthropic host permission manifest changes and manual validation UI are implemented, but validation records are still missing.
-- 豆包 / 火山方舟 validation is recorded only as a summary. Do not add screenshots, API Keys, raw prompts, raw responses, or private page content to public docs or store assets.
-- Provider validation evidence should be recorded without exposing keys, private pages, or raw sensitive content.
-- Store screenshots must be sanitized.
-- Current source, Git history, and `build/chrome-mv3-prod.zip` passed local common API Key pattern scans on 2026-06-03. Source and zip were rescanned after the privacy-consistency update; store screenshots, store assets, and final release artifacts still need a final leakage scan.
-
-## v0.2-alpha Privacy Notes
-
-v0.2-alpha planning keeps the v0.1 privacy model: no project-owned backend, no telemetry, no analytics, and no automatic provider calls without user action.
-
-### Planned Or Candidate Data Flows
-
-| Capability | Data involved | Privacy stance |
-|------------|---------------|----------------|
-| Provider connectivity test | Fixed public test prompt, selected provider endpoint, user API Key | Implemented as a user-triggered single-provider action. Do not run all tests automatically when settings opens. Do not log raw prompts, raw responses, keys, private webpages, or private screenshots. |
-| Model routing | Feature route IDs, provider/model IDs, non-secret settings | Store route configuration in `chrome.storage.sync`; keep API Keys encrypted in `chrome.storage.local`. |
-| Latency baseline | Redacted trigger/provider/model labels, input-size bucket, coarse context type, timing marks, error category | Implemented in V2-004B as local-console summaries only. Do not persist or transmit these logs, and do not add raw text, full URLs, images/base64, screenshots, responses, or keys. |
-| Follow-up speed guard | Recent bounded prior conversation excerpt, user follow-up question, requestId, cancellation state | Implemented in V2-004C with character budgets, slow-first-chunk hint, stop waiting, background abort signal, and fixed `user_cancelled` category. Do not log raw conversation text, page content, selected text, full URLs, images/base64, screenshots, responses, or keys. |
-| Screenshot to AI | User-selected visible-page image region and optional prompt | Implemented in V2-005 for internal dogfood with right-click trigger, region selection, explicit confirmation, in-memory crop, no screenshot/base64 persistence, no full page URL in the screenshot provider payload, and no new manifest permissions. Loaded-extension QA is still required before release claims. |
-| Screenshot local actions | User-selected visible-page image region | Implemented in V1-005 for Copy image, Download image, Retry, and Cancel inside the existing overlay. Copy writes only to the user's clipboard. Download uses a temporary object URL and browser-native download behavior without `downloads` permission. Retry/cancel stay local. Screenshot/base64 is not persisted to history, storage, docs, logs, telemetry, cache, or release artifacts. Loaded-extension QA for the new local actions is still required before release claims. |
-| Copy current context | Page title, URL, optional selection, truncated page text | Implemented in V2-006. Copies to the user's clipboard only. No provider call unless the user separately sends it to AI. No history/storage/log/telemetry persistence. |
-| Translation MVP | Selected text or command-palette user input, provider/model choice | Implemented in V2-007 through the existing provider flow. Third-party translation fallback, full-page DOM translation, link-body translation, and YouTube subtitles are not in MVP. Page URL, link URL, page body, screenshots, clipboard content, and raw provider responses are not added to translation input or logs. |
-| Theme / panel polish | Existing visible UI state only | Implemented in V2-008. No new user data, provider payload, storage key, permission, host permission, remote call, telemetry, cache, or API Key behavior is introduced. |
-| Command palette mocked states | Existing settings route metadata, command palette local UI state, existing quick-action message paths | Implemented in V1-004 as UI-only mocked states. Quota/login/subscription states are disabled/display-only and not stored. BYOK-active is derived from current provider/model route metadata. Local-only copy context bypasses quota/login blockers and writes only to the clipboard. No hosted AI, auth, quota backend, payment, provider proxy, telemetry, storage key, permission, dependency, or real provider API call is introduced. |
-| BYOK settings cleanup | Existing settings UI labels, current selected model/provider route, existing API Key fields and manual connectivity summaries | Implemented in V1-008 as Popup IA/copy only. Aviso AI is shown as planned/unavailable; BYOK remains the current direct-provider path. API Keys remain encrypted in `chrome.storage.local/contextai_api_keys`; non-secret settings remain in `chrome.storage.sync/contextai_settings`. |
-| Double-click shortcut menu | Gesture position, optional selected text, page title/URL for existing local actions, and existing template metadata | Implemented in V1-007 as a default-off local shortcut. It can route user-triggered actions into existing screenshot, copy context, page summary, template, and selection AI flows. It does not store raw page content, add telemetry, add permissions, change API Key storage, or run provider calls by itself. |
-| Result-panel conversation autosave | Visible result-panel conversation messages, operation, trigger, page URL, timestamps | Implemented in V1-011 as local-only conversation history. Stored in `chrome.storage.local/contextai_history`, limited to the most recent 20 conversations, with multi-turn messages preserved. Screenshot/base64 content is filtered. This is not sync storage and not a backend feature. |
-| Local result cache | Operation, input hash/content depending on implementation, output, provider/model metadata, expiry time | Broader reusable caching remains unimplemented and would still require a separate clear-cache control and privacy copy. |
-
-### v0.2-alpha Permission Principles
-
-- OpenAI and Anthropic provider host permissions are implemented in V2-003. Any other new `host_permissions` require a documented provider or translation decision before implementation.
-- `tabs`, `scripting`, `tabGroups`, `offscreen`, microphone access, and broad remote-link fetching are not part of the v0.2-alpha MVP.
-- Copy current context must continue using the existing `clipboardWrite` boundary and must not add `clipboardRead`, broader page host permissions, cache, telemetry, or provider calls.
-- Translation must continue using the existing provider host boundary and must not add Google/Baidu/Youdao fallback, broad page host permissions, full-page DOM translation, remote-link body fetching, cache, telemetry, or raw-content logging without a separate decision.
-- Theme / panel polish must remain visual-only. Do not use it to introduce persisted theme settings, storage namespace migration, telemetry, cache, new provider calls, or public release claims.
-- Double-click shortcut must remain a local, default-off shortcut entry unless a later decision changes the product default. It must not replace the selection toolbar, broaden page access, add permissions, introduce telemetry, or turn local actions into automatic provider calls.
-- If a future issue needs one of those permissions, create a decision note first and update this document, `docs/06_RISK_REGISTER.md`, and `RELEASE_CHECKLIST.md`.
-- Chrome Web Store and public privacy copy must match the final manifest, not the planning draft.
-
-## Not In v0.1
-
-- Server-side account system.
-- Project-owned provider proxy.
-- Telemetry or analytics.
-- Remote link body fetching through broad host permissions.
-- Full internal storage namespace migration.
-- v0.2-alpha MVP does not include default Google/Baidu/Youdao translation fallback, multi-tab aggregation, tab grouping, or voice input.
-
-## Open Questions
-
-- Should public release include all provider options if only 豆包 has been user-confirmed?
-- Is API Key local encryption sufficient for public messaging, or should the product explain browser-local risk more explicitly?
-- Should history be optional or default-on for public release?
-- Should local AI/translation cache be default-on, default-off, or unavailable until public release copy is finalized?
-- What screenshot confirmation UX is enough before sending a selected region to a provider?
-- What exact Chrome Web Store privacy declaration wording should be used for the final public submission?
-
-## Changelog
-
-- 2026-06-04: Updated V1-011 from 5-hour temporary drafts to local conversation autosave in `contextai_history`, limited to the most recent 20 conversations, preserving multi-turn messages and excluding sync storage, API Keys, screenshot/base64 data, raw provider responses, backend, hosted AI, auth, quota, payment, and telemetry.
-- 2026-06-04: Added V1-005 screenshot local action toolbar privacy note covering local-only copy/download/retry/cancel, no `downloads` permission, no hosted AI/backend/quota/login changes, existing BYOK send-to-AI boundary, and no screenshot/base64 persistence.
-- 2026-06-04: Added V1-004 Command Palette mocked states privacy note confirming local UI-only access states, non-persistent quota/login/subscription previews, current-route BYOK badge, local-only quota/login bypass, and no hosted/backend/auth/quota/payment/provider-proxy implementation.
-- 2026-06-04: Added V1-008 BYOK settings cleanup privacy note confirming Popup IA/copy-only changes, planned/unavailable Aviso AI wording, unchanged local encrypted API Key storage, unchanged non-secret sync settings, unchanged manual redacted connectivity tests, and no hosted/backend/auth/quota/payment implementation.
-- 2026-06-04: Added V1-007 double-click shortcut privacy note confirming default-off local shortcut behavior, existing action reuse, unsafe target exclusions, unchanged permissions, unchanged provider/API Key behavior, and no telemetry or hosted AI implementation.
-- 2026-06-03: Aligned Popup privacy copy and public privacy policy with the current provider host permissions, direct-provider data flow, v0.2-alpha feature privacy boundaries, and current leakage-scan state.
-- 2026-06-03: Added Chrome Web Store submission draft and explicit disclosure note for `<all_urls>` content-script site access.
-- 2026-06-03: Added Chrome Web Store Limited Use wording to the public privacy policy draft.
-- 2026-06-02: Updated V2-003 provider host implementation status and kept OpenAI / Anthropic live validation as a V2-004 gate.
-- 2026-06-02: Updated V2-004 privacy status after adding manual single-provider connectivity UI and summary-only validation fields.
-- 2026-06-02: Added V2-004B privacy controls for local-only redacted performance summaries.
-- 2026-06-02: Added V2-004C privacy controls for bounded follow-up context, slow-response hint, stop waiting, background abort signal, and local-only `user_cancelled` classification.
-- 2026-06-02: Added V2-005 screenshot-to-AI privacy controls for confirmation-gated visible-region capture, in-memory crop, no persistence, and no full page URL in screenshot provider payloads.
-- 2026-06-02: Added V2-006 copy-current-context privacy controls for manual clipboard-only writes, structured formatting, truncation, visible feedback, and no AI/provider/storage/logging path.
-- 2026-06-02: Added V2-007 translation privacy controls for selected/user-input-only translation, existing provider flow, no third-party fallback, no page-context translation, and no permission expansion.
-- 2026-06-03: Added V2-008 theme / panel polish privacy controls confirming no new data flow, storage, permission, provider call, telemetry, cache, or release claim.
-- 2026-06-02: Recorded approved OpenAI / Anthropic provider hosts as later implementation scope, with manual single-provider validation and no secret/raw-content logging.
-- 2026-06-02: Added v0.2-alpha privacy notes covering provider checks, model routing, screenshot-to-AI, copy context, translation MVP, local cache, and high-permission non-scope.
-- 2026-06-01: Created Phase 1 internal privacy and security baseline from current implementation and release checklist.
+- 修改权限、host permissions、API Key 存储、provider route 或真实 provider 调用前必须单独确认。
+- 新增用户数据流时必须同步更新 `docs/03_TECH_SPEC.md`、本文档和 `RELEASE_CHECKLIST.md`。
+- 不把当前内部试用记录写成公开发布批准。
