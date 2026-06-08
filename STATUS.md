@@ -52,6 +52,8 @@ v1.0 当前执行边界：继续保持 BYOK direct-provider、无项目方后端
 
 2026-06-08：AI `t_first_chunk` 本地侧优化已完成代码同步，待 loaded-extension focused QA。Provider 前的 payload 现在会按功能压缩上下文：翻译仍只带选区/用户输入；选区解释/润色/自由提问不再携带页面正文，且选区、用户输入、追问上下文都有字符预算；页面总结正文从 5000 字符收敛到 3000 字符，并清理无关 link/src/priorContext。默认 prompt 改为首句优先、短回答导向，减少模型首段前的组织负担。页面总结新增 service worker 内存级截断正文短缓存，并把浮窗显示、页面正文抽取、settings/API key 预热并行执行；普通 SHOW_FLOATING_WINDOW 路径也会提前预热 runtime config。该调整不新增权限、依赖、provider、backend、hosted AI、provider proxy、telemetry、storage key 或真实 provider 调用；页面正文缓存不写入 `chrome.storage`，随 service worker / runtime cache 失效。
 
+2026-06-08：结果面板和内联翻译等待态文案已改为动态轮播，待 loaded-extension focused QA。等待期间会按场景展示“已发送给模型”“模型正在读取选区/待翻译文本/截图内容”“正在读取网页内容”“等待首段返回”等短句，减少静态 loading 体感；真实 provider chunk 到达后仍立即切换为真实内容，动态文案不会写入输出、history、storage 或 provider payload。本轮不新增工具调用、联网搜索、provider、权限、依赖、backend、hosted AI、provider proxy、telemetry 或真实 provider 调用。
+
 2026-06-08：命令面板搜索范围修复已完成代码同步，待 loaded-extension focused QA。命令面板搜索现在同时覆盖 Chrome 浏览历史、Chrome 书签和 Aviso 本地 AI 对话历史；浏览历史和书签结果点击后打开 URL，AI 对话历史仍复用原始操作重新执行。为实现真实浏览历史搜索，manifest 普通权限新增 `history`；该权限只用于本地 `chrome.history.search` 关键词搜索，不接入模型，不发送浏览历史到 provider、Aviso 服务器、telemetry、docs、console 或 `chrome.storage`。命令面板输入框接入模型理解/语义检索暂不进入当前版本，本轮只解决关键词搜索范围不足。
 
 2026-06-08：命令面板浏览历史搜索补充修复已完成代码同步，待 loaded-extension focused QA。Chrome `history.search` 未显式传入 `startTime` 时默认只覆盖最近 24 小时，导致 6 月 6 日等较早浏览记录在 6 月 8 日测试时搜不到；当前实现已改为 `startTime: 0`，按关键词搜索 Chrome 当前 Profile 可访问的本地历史范围。结果标签同步区分为 `浏览历史`、`书签`、`AI 对话`，避免把来源看混。

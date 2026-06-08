@@ -18,6 +18,10 @@ import {
   SLOW_FIRST_CHUNK_MS,
   SLOW_MODEL_RESPONSE_TEXT
 } from "~utils/response-guard"
+import {
+  getDynamicLoadingStatusText,
+  LOADING_STATUS_TICK_MS
+} from "~utils/loading-status"
 import { getSettings } from "~utils/storage"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
 import {
@@ -154,6 +158,7 @@ function SelectionToolbar() {
   })
   const [inlineCard, setInlineCard] =
     useState<InlineTranslationCardState>(INITIAL_INLINE_CARD)
+  const [inlineLoadingTick, setInlineLoadingTick] = useState(0)
   const [selection, setSelection] = useState("")
   const enabledRef = useRef(true)
   const inlineEnabledRef = useRef(false)
@@ -204,6 +209,23 @@ function SelectionToolbar() {
       })
     }, SLOW_FIRST_CHUNK_MS)
   }
+
+  useEffect(() => {
+    if (
+      !inlineCard.visible ||
+      inlineCard.mode !== "loading" ||
+      inlineCard.output.trim()
+    ) {
+      setInlineLoadingTick(0)
+      return
+    }
+
+    const timer = window.setInterval(() => {
+      setInlineLoadingTick((tick) => tick + 1)
+    }, LOADING_STATUS_TICK_MS)
+
+    return () => window.clearInterval(timer)
+  }, [inlineCard.visible, inlineCard.mode, inlineCard.output])
 
   // 读取并持续跟踪「划词工具栏」开关
   useEffect(() => {
@@ -860,6 +882,7 @@ function SelectionToolbar() {
       {inlineCard.visible && (
         <InlineTranslationCard
           card={inlineCard}
+          loadingTick={inlineLoadingTick}
           onClose={() => closeInlineCard()}
           onCopy={copyInlineTranslation}
           onRetry={retryInlineTranslation}
@@ -872,12 +895,14 @@ function SelectionToolbar() {
 
 function InlineTranslationCard({
   card,
+  loadingTick,
   onClose,
   onCopy,
   onRetry,
   onOpenResultPanel
 }: {
   card: InlineTranslationCardState
+  loadingTick: number
   onClose: () => void
   onCopy: () => void
   onRetry: () => void
@@ -890,6 +915,15 @@ function InlineTranslationCard({
       : `翻译为${card.targetLabel}`
   const canCopy = card.output.trim().length > 0
   const showRetry = card.mode === "error" || card.mode === "success"
+  const displayText =
+    card.output ||
+    (card.mode === "loading"
+      ? getDynamicLoadingStatusText({
+          operation: "translate",
+          statusText: card.statusText,
+          tick: loadingTick
+        })
+      : card.statusText || "正在翻译...")
 
   return (
     <div
@@ -981,7 +1015,7 @@ function InlineTranslationCard({
         {card.mode === "error" && card.error}
         {card.mode !== "fallback" && card.mode !== "error" && (
           <>
-            {card.output || card.statusText || "正在翻译..."}
+            {displayText}
             {card.mode === "loading" && (
               <span
                 style={{

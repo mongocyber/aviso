@@ -16,6 +16,10 @@ import type {
 } from "~types/messages"
 import { buildFollowUpPriorContext } from "~utils/follow-up-context"
 import {
+  getDynamicLoadingStatusText,
+  LOADING_STATUS_TICK_MS
+} from "~utils/loading-status"
+import {
   shouldShowSlowResponseHint,
   SLOW_FIRST_CHUNK_MS,
   SLOW_MODEL_RESPONSE_TEXT,
@@ -52,6 +56,7 @@ type FloatingState = {
   requestId: string
   trigger: string
   operation: string
+  context?: AIRequestPayload["context"]
   statusText: string
   messages: ChatMsg[]
 }
@@ -65,6 +70,7 @@ const INITIAL_STATE: FloatingState = {
   requestId: "",
   trigger: "",
   operation: "",
+  context: undefined,
   statusText: "",
   messages: []
 }
@@ -167,6 +173,7 @@ function FloatingWindow() {
   const [followUp, setFollowUp] = useState("")
   const [savedId, setSavedId] = useState("")
   const [copiedId, setCopiedId] = useState("")
+  const [loadingTick, setLoadingTick] = useState(0)
   const contentRef = useRef<HTMLDivElement>(null)
   const followUpRef = useRef<HTMLTextAreaElement>(null)
   const stateRef = useRef<FloatingState>(INITIAL_STATE)
@@ -298,6 +305,7 @@ function FloatingWindow() {
             requestId,
             trigger,
             operation,
+            context,
             statusText: "",
             messages: restored
           })
@@ -346,6 +354,7 @@ function FloatingWindow() {
             requestId,
             trigger,
             operation,
+            context,
             statusText: statusText ?? defaultStatusText(operation),
             messages: appending
               ? appendConversationTurn(prev.messages, {
@@ -481,6 +490,19 @@ function FloatingWindow() {
   }, [followUp])
 
   useEffect(() => {
+    if (!state.loading || !state.requestId) {
+      setLoadingTick(0)
+      return
+    }
+
+    const timer = window.setInterval(() => {
+      setLoadingTick((tick) => tick + 1)
+    }, LOADING_STATUS_TICK_MS)
+
+    return () => window.clearInterval(timer)
+  }, [state.loading, state.requestId])
+
+  useEffect(() => {
     clearTimeout(slowTimer.current)
 
     if (!state.loading || !state.requestId) return
@@ -546,6 +568,7 @@ function FloatingWindow() {
       requestId,
       trigger: "follow-up",
       operation: "custom",
+      context: undefined,
       statusText: WAITING_MODEL_RESPONSE_TEXT,
       messages: appendConversationTurn(prev.messages, {
         userContent: q,
@@ -738,7 +761,14 @@ function FloatingWindow() {
                 overflowWrap: "anywhere"
               }}>
               {!isUser && !m.content && isStreaming ? (
-                <LoadingMessage text={state.statusText || "正在生成…"} />
+                <LoadingMessage
+                  text={getDynamicLoadingStatusText({
+                    operation: state.operation,
+                    context: state.context,
+                    statusText: state.statusText,
+                    tick: loadingTick
+                  })}
+                />
               ) : (
                 m.content
               )}

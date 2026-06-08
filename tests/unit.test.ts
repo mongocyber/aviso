@@ -1915,6 +1915,34 @@ test("慢响应提示只在等待且首段未返回超过阈值时出现", () =>
   )
 })
 
+test("dynamic loading status rotates by operation without claiming fake tools", () => {
+  const loadingStatusSource = readFileSync(
+    new URL("../src/utils/loading-status.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(loadingStatusSource, /LOADING_STATUS_TICK_MS = 1200/)
+  assert.match(loadingStatusSource, /已发送给模型，正在读取待翻译文本/)
+  assert.match(loadingStatusSource, /模型正在生成译文/)
+  assert.match(loadingStatusSource, /正在读取网页内容/)
+  assert.match(loadingStatusSource, /正在提取页面重点/)
+  assert.match(loadingStatusSource, /准备发送给模型/)
+  assert.match(loadingStatusSource, /可随时停止等待/)
+  assert.doesNotMatch(loadingStatusSource, /正在使用工具|正在查找网页/)
+})
+
+test("floating panel renders dynamic loading status while waiting", () => {
+  const floatingSource = readFileSync(
+    new URL("../src/contents/floating.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(floatingSource, /LOADING_STATUS_TICK_MS/)
+  assert.match(floatingSource, /getDynamicLoadingStatusText/)
+  assert.match(floatingSource, /context: state\.context/)
+  assert.match(floatingSource, /setLoadingTick\(\(tick\) => tick \+ 1\)/)
+})
+
 test("inline translation uses shared two-second slow hint without fake output", () => {
   const toolbarSource = readFileSync(
     new URL("../src/contents/toolbar.tsx", import.meta.url),
@@ -1925,7 +1953,8 @@ test("inline translation uses shared two-second slow hint without fake output", 
   assert.match(toolbarSource, /startInlineSlowHintTimer/)
   assert.match(toolbarSource, /shouldShowSlowResponseHint/)
   assert.match(toolbarSource, /statusText: SLOW_MODEL_RESPONSE_TEXT/)
-  assert.match(toolbarSource, /card\.output \|\| card\.statusText \|\| "正在翻译\.\.\."/)
+  assert.match(toolbarSource, /getDynamicLoadingStatusText/)
+  assert.match(toolbarSource, /operation: "translate"/)
   assert.doesNotMatch(toolbarSource, /output: SLOW_MODEL_RESPONSE_TEXT/)
 })
 
