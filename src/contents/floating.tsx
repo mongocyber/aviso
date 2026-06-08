@@ -19,19 +19,12 @@ import {
   getDynamicLoadingStatusText,
   LOADING_STATUS_TICK_MS
 } from "~utils/loading-status"
+import { useSyncedAvisoLanguage, type I18nKey } from "~utils/i18n"
 import {
   shouldShowSlowResponseHint,
-  SLOW_FIRST_CHUNK_MS,
-  SLOW_MODEL_RESPONSE_TEXT,
-  USER_CANCELLED_ASSISTANT_TEXT,
-  WAITING_MODEL_RESPONSE_TEXT
+  SLOW_FIRST_CHUNK_MS
 } from "~utils/response-guard"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
-import {
-  formatTranslationError,
-  formatTranslationUserBubble,
-  TRANSLATION_WAITING_TEXT
-} from "~utils/translation"
 import {
   appendConversationTurn,
   historyEntryFromConversation
@@ -75,43 +68,61 @@ const INITIAL_STATE: FloatingState = {
   messages: []
 }
 
-const OPERATION_LABELS: Record<string, string> = {
-  explain: "解释",
-  translate: "翻译文本",
-  polish: "润色",
-  summarize: "总结",
-  custom: "自由提问",
-  image_explain: "图片解释",
-  search: "搜索",
-  navigate: "导航"
+const OPERATION_LABEL_KEYS: Record<string, I18nKey> = {
+  explain: "operation.explain",
+  translate: "operation.translate",
+  polish: "operation.polish",
+  summarize: "operation.summarize",
+  custom: "operation.custom",
+  image_explain: "operation.imageExplain",
+  search: "operation.search",
+  navigate: "operation.navigate"
 }
 
-function operationLabel(operation: string): string {
-  return OPERATION_LABELS[operation] ?? operation
+function operationLabel(
+  operation: string,
+  t: (key: I18nKey) => string
+): string {
+  const key = OPERATION_LABEL_KEYS[operation]
+  return key ? t(key) : operation
 }
 
 // 用户气泡显示文案：图片不展示 URL / base64，其余展示原始输入
 function userBubbleText(
   operation: string,
   inputText: string,
-  imageSource?: AIRequestPayload["imageSource"]
+  imageSource: AIRequestPayload["imageSource"] | undefined,
+  t: (key: I18nKey) => string
 ): string {
   if (operation === "image_explain" && imageSource === "screenshot-region") {
-    return "🖼 [截图区域]"
+    return t("floating.screenshotRegion")
   }
-  if (operation === "image_explain") return "🖼 [图片]"
-  if (operation === "translate") return formatTranslationUserBubble(inputText)
+  if (operation === "image_explain") return t("floating.image")
+  if (operation === "translate") {
+    const text = inputText.trim()
+    return text ? `${t("translation.userBubblePrefix")}\n${text}` : ""
+  }
   return inputText
 }
 
-function defaultStatusText(operation: string): string {
+function defaultStatusText(
+  operation: string,
+  t: (key: I18nKey) => string
+): string {
   return operation === "translate"
-    ? TRANSLATION_WAITING_TEXT
-    : WAITING_MODEL_RESPONSE_TEXT
+    ? t("translation.waiting")
+    : t("model.waiting")
 }
 
-function visibleErrorText(operation: string, error: string): string {
-  return operation === "translate" ? formatTranslationError(error) : error
+function visibleErrorText(
+  operation: string,
+  error: string,
+  t: (key: I18nKey) => string
+): string {
+  if (operation !== "translate") return error
+  return /^翻译失败[：:]|^Translation failed:/i.test(error)
+    ? error
+    : `${t("translation.errorPrefix")}${error}`
 }
 
 function lastByRole(messages: ChatMsg[], role: "user" | "assistant"): string {
@@ -169,6 +180,7 @@ function LoadingMessage({ text }: { text: string }) {
 
 function FloatingWindow() {
   const { tokens: ui } = useSyncedAvisoTheme()
+  const { language, t } = useSyncedAvisoLanguage()
   const [state, setState] = useState<FloatingState>(INITIAL_STATE)
   const [followUp, setFollowUp] = useState("")
   const [savedId, setSavedId] = useState("")
@@ -185,7 +197,7 @@ function FloatingWindow() {
   const sendAIRequest = (
     requestId: string,
     payload: AIRequestPayload,
-    statusText = defaultStatusText(payload.operation ?? "")
+    statusText = defaultStatusText(payload.operation ?? "", t)
   ) => {
     if (activeRequestRef.current !== requestId) {
       logTiming("ai_request_skipped", requestId, payload.timing, {
@@ -229,7 +241,8 @@ function FloatingWindow() {
                   loading: false,
                   error: visibleErrorText(
                     prev.operation,
-                    response.error as string
+                    response.error as string,
+                    t
                   ),
                   statusText: ""
                 }
@@ -318,7 +331,7 @@ function FloatingWindow() {
         const inputText =
           selectionText || userMessage || linkUrl || srcUrl || pageUrl || ""
 
-        const bubble = userBubbleText(operation, inputText, imageSource)
+        const bubble = userBubbleText(operation, inputText, imageSource, t)
         const messages: ChatMsg[] = appendConversationTurn([], {
           userContent: bubble,
           requestId,
@@ -355,7 +368,7 @@ function FloatingWindow() {
             trigger,
             operation,
             context,
-            statusText: statusText ?? defaultStatusText(operation),
+            statusText: statusText ?? defaultStatusText(operation, t),
             messages: appending
               ? appendConversationTurn(prev.messages, {
                   userContent: bubble,
@@ -385,7 +398,7 @@ function FloatingWindow() {
               templateId,
               timing
             },
-            statusText ?? defaultStatusText(operation)
+            statusText ?? defaultStatusText(operation, t)
           )
         }
       }
@@ -399,7 +412,7 @@ function FloatingWindow() {
             ...aiPayload,
             timing: timing ?? aiPayload.timing
           },
-          statusText ?? defaultStatusText(aiPayload.operation ?? "")
+          statusText ?? defaultStatusText(aiPayload.operation ?? "", t)
         )
       }
 
@@ -435,7 +448,7 @@ function FloatingWindow() {
             ? {
                 ...prev,
                 loading: false,
-                error: visibleErrorText(prev.operation, error),
+                error: visibleErrorText(prev.operation, error, t),
                 statusText: ""
               }
             : prev
@@ -526,7 +539,7 @@ function FloatingWindow() {
           return prev
         }
 
-        return { ...prev, statusText: SLOW_MODEL_RESPONSE_TEXT }
+        return { ...prev, statusText: t("model.slow") }
       })
     }, SLOW_FIRST_CHUNK_MS)
 
@@ -569,7 +582,7 @@ function FloatingWindow() {
       trigger: "follow-up",
       operation: "custom",
       context: undefined,
-      statusText: WAITING_MODEL_RESPONSE_TEXT,
+      statusText: t("model.waiting"),
       messages: appendConversationTurn(prev.messages, {
         userContent: q,
         requestId,
@@ -588,7 +601,7 @@ function FloatingWindow() {
         priorContext,
         timing
       },
-      WAITING_MODEL_RESPONSE_TEXT
+      t("model.waiting")
     )
   }
 
@@ -611,8 +624,8 @@ function FloatingWindow() {
                 ? {
                     ...message,
                     content: message.content.trim()
-                      ? `${message.content}\n\n${USER_CANCELLED_ASSISTANT_TEXT}`
-                      : USER_CANCELLED_ASSISTANT_TEXT
+                      ? `${message.content}\n\n${t("model.cancelled")}`
+                      : t("model.cancelled")
                   }
                 : message
             )
@@ -700,13 +713,13 @@ function FloatingWindow() {
               background: ui.accentSoft,
               color: ui.accent
             }}>
-            {operationLabel(state.operation)}
+            {operationLabel(state.operation, t)}
           </span>
         </span>
         <button
           onClick={handleClose}
           className="aviso-icon-button"
-          aria-label="关闭"
+          aria-label={t("common.close")}
           style={{
             display: "inline-flex",
             alignItems: "center",
@@ -766,7 +779,8 @@ function FloatingWindow() {
                     operation: state.operation,
                     context: state.context,
                     statusText: state.statusText,
-                    tick: loadingTick
+                    tick: loadingTick,
+                    language
                   })}
                 />
               ) : (
@@ -827,8 +841,8 @@ function FloatingWindow() {
           {
             label:
               copiedId === state.requestId && state.requestId
-                ? "已复制"
-                : "复制",
+                ? t("common.copied")
+                : t("common.copy"),
             icon: "copy" as const,
             onClick: handleCopy,
             active: copiedId === state.requestId && !!state.requestId
@@ -836,8 +850,8 @@ function FloatingWindow() {
           {
             label:
               savedId === state.sessionId && state.sessionId
-                ? "已保存"
-                : "保存",
+                ? t("common.saved")
+                : t("common.save"),
             icon: "save" as const,
             onClick: handleSave,
             active: savedId === state.sessionId && !!state.sessionId
@@ -845,7 +859,7 @@ function FloatingWindow() {
           ...(state.loading
             ? [
                 {
-                  label: "停止",
+                  label: t("common.stop"),
                   icon: "stop" as const,
                   onClick: handleStopWaiting,
                   active: false
@@ -904,7 +918,7 @@ function FloatingWindow() {
               handleFollowUp()
             }
           }}
-          placeholder="继续追问…"
+          placeholder={t("floating.followUpPlaceholder")}
           style={{
             flex: 1,
             minWidth: 0,
@@ -944,7 +958,7 @@ function FloatingWindow() {
             whiteSpace: "nowrap"
           }}>
           <AvisoIcon name="send" size={15} />
-          发送
+          {t("common.send")}
         </button>
       </div>
 

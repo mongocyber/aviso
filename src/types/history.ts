@@ -1,4 +1,5 @@
 import type { TranslationTargetLanguage } from "~utils/translation"
+import type { UiLanguageSetting } from "~utils/i18n"
 
 export type ProviderConfigProvider = "openai" | "anthropic" | "doubao"
 
@@ -36,6 +37,7 @@ export type Settings = {
   defaultProviderConfigId?: string
   providerConfigs?: ProviderConfig[]
   appearanceTheme: "light" | "dark" | "system"
+  uiLanguage: UiLanguageSetting
   openaiApiKey?: string
   anthropicApiKey?: string
   // 豆包/火山方舟的接入点 ID 或模型名（账号专属，非密钥，故存 settings）

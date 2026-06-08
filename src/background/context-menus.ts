@@ -22,6 +22,7 @@ import { formatCurrentContext, truncatePageContent } from "~utils/page-content"
 import { WAITING_MODEL_RESPONSE_TEXT } from "~utils/response-guard"
 import { getApiKeys, getSettings, saveSettings } from "~utils/storage"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
+import { createI18n, resolveSettingsUiLanguage } from "~utils/i18n"
 
 import { getRuntimeConfigSnapshot } from "./ai-runtime-cache"
 import {
@@ -70,6 +71,7 @@ export function registerContextMenus() {
 
 async function registerContextMenusNow() {
   const settings = await getSettings()
+  const t = createI18n(resolveSettingsUiLanguage(settings))
   const apiKeys = await getApiKeys()
   const providerConfigs = getProviderConfigsWithLegacy(settings, apiKeys)
   const defaultProviderConfigId = resolveDefaultProviderConfigId(
@@ -89,7 +91,7 @@ async function registerContextMenusNow() {
   chrome.contextMenus.create({
     id: MENU_ID_EXPLAIN,
     parentId: MENU_ID_ROOT,
-    title: "解释选中文本",
+    title: t("action.explainSelection"),
     contexts: ["selection"]
   })
 
@@ -97,7 +99,7 @@ async function registerContextMenusNow() {
   chrome.contextMenus.create({
     id: MENU_ID_IMAGE_EXPLAIN,
     parentId: MENU_ID_ROOT,
-    title: "解释这张图片",
+    title: t("action.explainImage"),
     contexts: ["image"]
   })
 
@@ -105,7 +107,7 @@ async function registerContextMenusNow() {
   chrome.contextMenus.create({
     id: MENU_ID_TRANSLATE,
     parentId: MENU_ID_ROOT,
-    title: "翻译选中文本",
+    title: t("action.translateSelection"),
     contexts: ["selection"]
   })
 
@@ -113,7 +115,7 @@ async function registerContextMenusNow() {
   chrome.contextMenus.create({
     id: MENU_ID_POLISH,
     parentId: MENU_ID_ROOT,
-    title: "润色选中文本",
+    title: t("action.polishSelection"),
     contexts: ["selection"]
   })
 
@@ -121,7 +123,7 @@ async function registerContextMenusNow() {
   chrome.contextMenus.create({
     id: MENU_ID_POLISH_EDITABLE,
     parentId: MENU_ID_ROOT,
-    title: "润色文字",
+    title: t("action.polishText"),
     contexts: ["editable"]
   })
 
@@ -129,7 +131,7 @@ async function registerContextMenusNow() {
   chrome.contextMenus.create({
     id: MENU_ID_SUMMARIZE,
     parentId: MENU_ID_ROOT,
-    title: "总结选中文本",
+    title: t("action.summarizeSelection"),
     contexts: ["selection"]
   })
 
@@ -137,7 +139,7 @@ async function registerContextMenusNow() {
   chrome.contextMenus.create({
     id: MENU_ID_SUMMARIZE_VIDEO,
     parentId: MENU_ID_ROOT,
-    title: "总结内容",
+    title: t("action.summarizeContent"),
     contexts: ["video"]
   })
 
@@ -145,7 +147,7 @@ async function registerContextMenusNow() {
   chrome.contextMenus.create({
     id: MENU_ID_SUMMARIZE_LINK,
     parentId: MENU_ID_ROOT,
-    title: "总结这个链接",
+    title: t("action.summarizeLink"),
     contexts: ["link"]
   })
 
@@ -153,7 +155,7 @@ async function registerContextMenusNow() {
   chrome.contextMenus.create({
     id: MENU_ID_SUMMARIZE_PAGE,
     parentId: MENU_ID_ROOT,
-    title: "总结当前页面",
+    title: t("action.summarizePage"),
     contexts: ["page"]
   })
 
@@ -161,7 +163,7 @@ async function registerContextMenusNow() {
   chrome.contextMenus.create({
     id: MENU_ID_SCREENSHOT_ASK,
     parentId: MENU_ID_ROOT,
-    title: "截图提问",
+    title: t("action.askScreenshot"),
     contexts: ["page"]
   })
 
@@ -169,7 +171,7 @@ async function registerContextMenusNow() {
   chrome.contextMenus.create({
     id: MENU_ID_COPY_CONTEXT,
     parentId: MENU_ID_ROOT,
-    title: "复制当前上下文",
+    title: t("action.copyContext"),
     contexts: ["page", "selection"]
   })
 
@@ -179,7 +181,7 @@ async function registerContextMenusNow() {
     chrome.contextMenus.create({
       id: MENU_ID_TEMPLATES,
       parentId: MENU_ID_ROOT,
-      title: "自定义模板 ▸",
+      title: t("action.templates"),
       contexts: templateParentContexts
     })
     templates.forEach((tpl) => {
@@ -203,7 +205,7 @@ async function registerContextMenusNow() {
     })
 
     // 模型选项（勾选项跟随 Popup 中已保存的 AI 服务配置）
-    registerModelMenuItems(providerConfigs, defaultProviderConfigId, apiKeys)
+    registerModelMenuItems(providerConfigs, defaultProviderConfigId, apiKeys, t)
   }
 }
 
@@ -216,7 +218,8 @@ function removeAllContextMenus() {
 function registerModelMenuItems(
   providerConfigs: ReturnType<typeof getProviderConfigsWithLegacy>,
   defaultProviderConfigId: string,
-  apiKeys: Awaited<ReturnType<typeof getApiKeys>>
+  apiKeys: Awaited<ReturnType<typeof getApiKeys>>,
+  t: ReturnType<typeof createI18n>
 ) {
   providerConfigs.forEach((config) => {
     const disabled =
@@ -226,7 +229,7 @@ function registerModelMenuItems(
       id: `${MENU_ID_MODEL_PREFIX}${config.id}`,
       parentId: MENU_ID_ROOT,
       type: "radio",
-      title: getProviderConfigMenuTitle(config),
+      title: getProviderConfigMenuTitle(config, t),
       checked: config.id === defaultProviderConfigId,
       enabled: !disabled,
       contexts: ["selection", "link", "image", "video", "editable", "page"]
@@ -235,11 +238,12 @@ function registerModelMenuItems(
 }
 
 function getProviderConfigMenuTitle(
-  config: ReturnType<typeof getProviderConfigsWithLegacy>[number]
+  config: ReturnType<typeof getProviderConfigsWithLegacy>[number],
+  t: ReturnType<typeof createI18n>
 ): string {
   const modelId =
     config.provider === "doubao"
-      ? config.model.trim() || "未配置接入点"
+      ? config.model.trim() || t("model.unconfiguredEndpoint")
       : config.model || PROVIDER_PRIMARY_MODEL[config.provider]
   const modelLabel = getModelMetadata(modelId)?.displayName ?? modelId
   return `${config.displayName} · ${modelLabel}`
@@ -559,14 +563,15 @@ export async function copyCurrentContextFromFrame({
   )
 
   if (writeResult.ok === false) {
+    const t = createI18n(resolveSettingsUiLanguage(await getSettings()))
     await sendMessageToDisplayFrame(
       tabId,
       {
         action: "SHOW_COPY_CONTEXT_TOAST",
         payload: {
           status: "failure",
-          message: "复制失败",
-          detail: "当前页面无法接收剪贴板写入请求。"
+          message: t("toast.copyFailure"),
+          detail: t("background.copyFailureDetail")
         }
       },
       {
@@ -599,6 +604,7 @@ export async function summarizePageFromFrame({
 }) {
   const requestId = `req-${Date.now()}`
   const timing = startTiming()
+  const t = createI18n(resolveSettingsUiLanguage(await getSettings()))
   logTiming("trigger", requestId, timing, {
     trigger,
     operation: "summarize",
@@ -629,7 +635,7 @@ export async function summarizePageFromFrame({
         pageUrl: sourcePageUrl,
         timing,
         deferAiRequest: true,
-        statusText: "正在读取页面内容…"
+        statusText: t("background.readingPage")
       }
     },
     {

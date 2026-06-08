@@ -16,6 +16,7 @@ import {
   isUnsafeDoubleClickTarget,
   type DoubleClickTargetDescriptor
 } from "~utils/double-click-menu"
+import { useSyncedAvisoLanguage } from "~utils/i18n"
 import { getSettings } from "~utils/storage"
 import { logTiming, startTiming } from "~utils/timing"
 
@@ -91,6 +92,7 @@ const SUPPRESS_SELECTION_TOOLBAR_EVENT = "aviso:suppress-selection-toolbar"
 
 function DoubleClickMenu() {
   const { tokens: ui } = useSyncedAvisoTheme()
+  const { t } = useSyncedAvisoLanguage()
   const [menu, setMenu] = useState<MenuState>(INITIAL_MENU)
   const enabledRef = useRef(false)
   const templatesRef = useRef<PromptTemplate[]>([])
@@ -272,7 +274,7 @@ function DoubleClickMenu() {
     <div
       ref={menuRef}
       role="menu"
-      aria-label="Aviso 双击快捷菜单"
+      aria-label={t("doubleClick.aria")}
       style={{
         position: "fixed",
         left: menu.left,
@@ -303,17 +305,17 @@ function DoubleClickMenu() {
           marginBottom: 4
         }}>
         <AvisoMark size={16} style={{ color: ui.accent }} />
-        <span>Aviso 快捷操作</span>
+        <span>{t("doubleClick.title")}</span>
       </div>
 
       <MenuButton
         icon="copy"
-        label="复制当前上下文"
+        label={t("action.copyContext")}
         onClick={() => runAction("copy-context")}
       />
       <MenuButton
         icon="summarize"
-        label="总结当前页面"
+        label={t("action.summarizePage")}
         onClick={() => runAction("page-summary")}
       />
 
@@ -323,12 +325,12 @@ function DoubleClickMenu() {
           <MenuButton
             key={template.id}
             icon="model"
-            label={`模板：${template.name}`}
+            label={`${t("action.templatePrefix")}${template.name}`}
             onClick={() => runAction("template", template.id)}
           />
         ))
       ) : (
-        <MenuButton icon="model" label="自定义模板（暂无）" disabled />
+        <MenuButton icon="model" label={t("action.noTemplates")} disabled />
       )}
 
       {hasSelection && (
@@ -336,27 +338,27 @@ function DoubleClickMenu() {
           <MenuDivider />
           <MenuButton
             icon="translate"
-            label="翻译选中文本"
+            label={t("action.translateSelection")}
             onClick={() => runAction("translate")}
           />
           <MenuButton
             icon="explain"
-            label="解释选中文本"
+            label={t("action.explainSelection")}
             onClick={() => runAction("explain")}
           />
           <MenuButton
             icon="refine"
-            label="润色选中文本"
+            label={t("action.polishSelection")}
             onClick={() => runAction("polish")}
           />
           <MenuButton
             icon="summarize"
-            label="总结选中文本"
+            label={t("action.summarizeSelection")}
             onClick={() => runAction("summarize")}
           />
           <MenuButton
             icon="send"
-            label="发送给 Aviso"
+            label={t("action.sendToAviso")}
             onClick={() => runAction("send")}
           />
         </>

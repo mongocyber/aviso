@@ -11,6 +11,7 @@ import {
 import type { Settings } from "~types/history"
 import type { MessageRequest, MessageResponse } from "~types/messages"
 import { parseIntentLocally, type ParsedIntent } from "~utils/intent"
+import { useSyncedAvisoLanguage, type I18nKey } from "~utils/i18n"
 import { resolveModelRoute, type ModelRoute } from "~utils/model-registry"
 import { getLegacyProviderFromConfigId } from "~utils/provider-configs"
 import { getSettings } from "~utils/storage"
@@ -56,13 +57,13 @@ type AiConnection = {
 
 const COMMAND_PANEL_TOP = "clamp(120px, 26vh, 280px)"
 const SEARCH_RESPONSE_TIMEOUT_MS = 4000
-const EMPTY_SEARCH_TEXT = "没有找到浏览历史、书签或 AI 对话"
-const SEARCH_ERROR_TEXT = "浏览历史或书签搜索失败，请检查扩展权限或重新加载扩展"
-
-function getResultTypeLabel(type: ResultItem["type"]): string {
-  if (type === "browser-history") return "浏览历史"
-  if (type === "bookmark") return "书签"
-  return "AI 对话"
+function getResultTypeLabel(
+  type: ResultItem["type"],
+  t: (key: I18nKey) => string
+): string {
+  if (type === "browser-history") return t("command.history")
+  if (type === "bookmark") return t("command.bookmark")
+  return t("command.aiHistory")
 }
 
 function readSelectionSuggestion(): string {
@@ -116,6 +117,7 @@ function getAiConnectionFromSettings(
 
 function CommandPalette() {
   const { tokens: ui } = useSyncedAvisoTheme()
+  const { t } = useSyncedAvisoLanguage()
   const [visible, setVisible] = useState(false)
   const [query, setQuery] = useState("")
   const [results, setResults] = useState<ResultItem[]>([])
@@ -290,16 +292,16 @@ function CommandPalette() {
       setResults(nextResults)
 
       if (browserHistoryResults.failed || bookmarkResults.failed) {
-        setSearchNotice({ type: "error", text: SEARCH_ERROR_TEXT })
+        setSearchNotice({ type: "error", text: t("command.searchError") })
       } else if (nextResults.length === 0) {
-        setSearchNotice({ type: "empty", text: EMPTY_SEARCH_TEXT })
+        setSearchNotice({ type: "empty", text: t("command.empty") })
       } else {
         setSearchNotice(null)
       }
     } catch {
       if (runId !== searchRunId.current) return
       setResults([])
-      setSearchNotice({ type: "error", text: SEARCH_ERROR_TEXT })
+      setSearchNotice({ type: "error", text: t("command.searchError") })
     } finally {
       if (runId === searchRunId.current) setLoading(false)
     }
@@ -405,8 +407,8 @@ function CommandPalette() {
     if (!query.trim()) return
     if (!aiConnection.connected) {
       setAiNotice({
-        title: "AI 未连接",
-        detail: "请先在 Popup 的 AI 服务页连接自己的 AI 服务。",
+        title: t("command.aiDisconnected"),
+        detail: t("command.aiDisconnectedDetail"),
         type: "error"
       })
       return
@@ -534,8 +536,8 @@ function CommandPalette() {
   const activeRoute = getActiveRoute()
   const statusLabel =
     aiConnection.connected && activeRoute
-      ? `AI 可用 · ${aiConnection.providerLabel}`
-      : "AI 未连接"
+      ? `${t("command.aiConnected")} · ${aiConnection.providerLabel}`
+      : t("command.aiDisconnected")
   const canFillSelection = !query.trim() && selectionSuggestion
 
   return (
@@ -601,7 +603,7 @@ function CommandPalette() {
               isComposingRef.current = false
             }}
             onKeyDown={handleKeyDown}
-            placeholder="搜索浏览历史、书签、AI 对话..."
+            placeholder={t("command.placeholder")}
             style={{
               flex: 1,
               minWidth: 0,
@@ -621,7 +623,7 @@ function CommandPalette() {
                 fontSize: "12px",
                 whiteSpace: "nowrap"
               }}>
-              搜索中…
+              {t("command.searching")}
             </span>
           )}
           <span
@@ -684,10 +686,11 @@ function CommandPalette() {
                     whiteSpace: "nowrap",
                     color: ui.text3
                   }}>
-                  选中文字：{selectionSuggestion}
+                  {t("command.selectionPrefix")}
+                  {selectionSuggestion}
                 </span>
                 <span style={{ flex: "0 0 auto", color: ui.accent }}>
-                  Tab 填入
+                  {t("command.fillSelection")}
                 </span>
               </div>
             )}
@@ -806,7 +809,7 @@ function CommandPalette() {
                     border: `1px solid ${ui.line}`,
                     color: ui.text3
                   }}>
-                  {getResultTypeLabel(item.type)}
+                  {getResultTypeLabel(item.type, t)}
                 </span>
               </div>
             ))}
@@ -849,11 +852,11 @@ function CommandPalette() {
             <kbd style={{ ...styles.kbd, borderColor: ui.line, color: ui.text2 }}>
               ↑↓
             </kbd>{" "}
-            导航 ·{" "}
+            {t("command.navigate")} ·{" "}
             <kbd style={{ ...styles.kbd, borderColor: ui.line, color: ui.text2 }}>
               Enter
             </kbd>{" "}
-            {results.length > 0 ? "选择" : "继续"}
+            {results.length > 0 ? t("command.select") : t("command.continue")}
           </span>
           <span
             style={{
@@ -864,8 +867,8 @@ function CommandPalette() {
               whiteSpace: "nowrap"
             }}>
             {aiConnection.connected
-              ? "无结果时可发给 AI"
-              : "AI 未连接时仅搜索"}
+              ? t("command.sendWhenNoResults")
+              : t("command.searchOnly")}
           </span>
         </div>
         <style>{`

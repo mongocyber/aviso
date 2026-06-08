@@ -55,18 +55,25 @@ import {
 import {
   TRANSLATION_TARGET_OPTIONS
 } from "~utils/translation"
+import {
+  createI18n,
+  resolveUiLanguage,
+  type I18nKey,
+  type UiLanguageSetting
+} from "~utils/i18n"
 
-const TEMPLATE_CONTEXTS: { value: string; label: string }[] = [
-  { value: "selection", label: "选中文字" },
-  { value: "link", label: "链接" },
-  { value: "image", label: "图片" },
-  { value: "editable", label: "可编辑区" },
-  { value: "page", label: "页面" }
+const TEMPLATE_CONTEXTS: { value: string; labelKey: I18nKey }[] = [
+  { value: "selection", labelKey: "popup.templates.context.selection" },
+  { value: "link", labelKey: "popup.templates.context.link" },
+  { value: "image", labelKey: "popup.templates.context.image" },
+  { value: "editable", labelKey: "popup.templates.context.editable" },
+  { value: "page", labelKey: "popup.templates.context.page" }
 ]
 
 const DEFAULT_SETTINGS: Settings = {
   defaultModel: "gpt-4o-mini",
   appearanceTheme: "system",
+  uiLanguage: "auto",
   enableClipboardSense: true,
   enableToolbar: true,
   enableCommandPalette: true,
@@ -76,12 +83,12 @@ const DEFAULT_SETTINGS: Settings = {
   templates: []
 }
 
-const MODEL_OPTIONS: { value: string; label: string }[] = [
-  { value: "gpt-4o-mini", label: "GPT-4o mini（推荐，速度快）" },
-  { value: "gpt-4o", label: "GPT-4o（更强）" },
-  { value: "claude-haiku-4-5-20251001", label: "Claude Haiku（轻量）" },
-  { value: "claude-sonnet-4-6", label: "Claude Sonnet（更强）" },
-  { value: "doubao", label: "豆包（火山方舟）" }
+const MODEL_OPTIONS: { value: string; labelKey: I18nKey }[] = [
+  { value: "gpt-4o-mini", labelKey: "popup.model.gpt4oMini" },
+  { value: "gpt-4o", labelKey: "popup.model.gpt4o" },
+  { value: "claude-haiku-4-5-20251001", labelKey: "popup.model.claudeHaiku" },
+  { value: "claude-sonnet-4-6", labelKey: "popup.model.claudeSonnet" },
+  { value: "doubao", labelKey: "popup.model.doubao" }
 ]
 
 const POPUP_FRAME = {
@@ -135,6 +142,7 @@ const settingsSignature = (value: Settings) =>
     defaultModel: value.defaultModel,
     doubaoModel: value.doubaoModel ?? "",
     appearanceTheme: value.appearanceTheme,
+    uiLanguage: value.uiLanguage,
     enableClipboardSense: value.enableClipboardSense,
     enableToolbar: value.enableToolbar,
     enableCommandPalette: value.enableCommandPalette,
@@ -164,15 +172,24 @@ type PopupTab = "general" | "api" | "templates" | "history"
 
 const APPEARANCE_OPTIONS: {
   value: Settings["appearanceTheme"]
-  label: string
+  labelKey: I18nKey
   icon: ThemeModeIconName
 }[] = [
-  { value: "light", label: "浅色模式", icon: "sun" },
-  { value: "dark", label: "深色模式", icon: "moon" },
-  { value: "system", label: "跟随系统", icon: "system" }
+  { value: "light", labelKey: "popup.theme.light", icon: "sun" },
+  { value: "dark", labelKey: "popup.theme.dark", icon: "moon" },
+  { value: "system", labelKey: "popup.theme.system", icon: "system" }
 ]
 
 type ThemeModeIconName = "sun" | "moon" | "system"
+
+const UI_LANGUAGE_OPTIONS: {
+  value: UiLanguageSetting
+  labelKey: I18nKey
+}[] = [
+  { value: "auto", labelKey: "settings.language.auto" },
+  { value: "zh-CN", labelKey: "settings.language.zh" },
+  { value: "en", labelKey: "settings.language.en" }
+]
 
 const PROVIDER_PRIMARY_MODEL: Record<ProviderId, string> = {
   openai: "gpt-4o-mini",
@@ -183,37 +200,49 @@ const PROVIDER_PRIMARY_MODEL: Record<ProviderId, string> = {
 const PROVIDER_COPY: Record<
   ProviderId,
   {
-    title: string
-    keyLabel: string
-    keyPlaceholder: string
-    modelLabel: string
-    modelPlaceholder: string
-    addLabel: string
+    titleKey: I18nKey
+    keyLabelKey: I18nKey
+    keyPlaceholderKey: I18nKey
+    modelLabelKey: I18nKey
+    modelPlaceholderKey: I18nKey
+    addLabelKey: I18nKey
   }
 > = {
   openai: {
-    title: "OpenAI",
-    keyLabel: "OpenAI API Key",
-    keyPlaceholder: "sk-...",
-    modelLabel: "模型名称",
-    modelPlaceholder: "gpt-4o-mini",
-    addLabel: "OpenAI"
+    titleKey: "popup.provider.openai",
+    keyLabelKey: "popup.provider.openaiKey",
+    keyPlaceholderKey: "popup.provider.openaiKeyPlaceholder",
+    modelLabelKey: "popup.provider.modelLabel",
+    modelPlaceholderKey: "popup.provider.openaiModelPlaceholder",
+    addLabelKey: "popup.provider.openai"
   },
   anthropic: {
-    title: "Anthropic",
-    keyLabel: "Anthropic API Key",
-    keyPlaceholder: "sk-ant-...",
-    modelLabel: "模型名称",
-    modelPlaceholder: "claude-haiku-4-5-20251001",
-    addLabel: "Anthropic"
+    titleKey: "popup.provider.anthropic",
+    keyLabelKey: "popup.provider.anthropicKey",
+    keyPlaceholderKey: "popup.provider.anthropicKeyPlaceholder",
+    modelLabelKey: "popup.provider.modelLabel",
+    modelPlaceholderKey: "popup.provider.anthropicModelPlaceholder",
+    addLabelKey: "popup.provider.anthropic"
   },
   doubao: {
-    title: "豆包 / 火山引擎",
-    keyLabel: "豆包 / 火山引擎 API Key",
-    keyPlaceholder: "火山方舟控制台获取",
-    modelLabel: "方舟接入点 ID",
-    modelPlaceholder: "ep-... 或 doubao-seed-2-0-lite",
-    addLabel: "豆包 / 火山引擎"
+    titleKey: "popup.provider.doubao",
+    keyLabelKey: "popup.provider.doubaoKey",
+    keyPlaceholderKey: "popup.provider.doubaoKeyPlaceholder",
+    modelLabelKey: "popup.provider.doubaoEndpointLabel",
+    modelPlaceholderKey: "popup.provider.doubaoEndpointPlaceholder",
+    addLabelKey: "popup.provider.doubao"
+  }
+}
+
+function getProviderCopy(provider: ProviderId, t: (key: I18nKey) => string) {
+  const copy = PROVIDER_COPY[provider]
+  return {
+    title: t(copy.titleKey),
+    keyLabel: t(copy.keyLabelKey),
+    keyPlaceholder: t(copy.keyPlaceholderKey),
+    modelLabel: t(copy.modelLabelKey),
+    modelPlaceholder: t(copy.modelPlaceholderKey),
+    addLabel: t(copy.addLabelKey)
   }
 }
 
@@ -442,7 +471,7 @@ function Popup() {
       const url = tabs[0]?.url ?? ""
       // chrome:// 等受限页面无法注入内容脚本，提示用户切到普通网页
       if (!tabId || /^(chrome|edge|about|chrome-extension):/.test(url)) {
-        setOpenHint("请切换到普通网页后再打开历史")
+        setOpenHint(t("popup.hint.historyRestricted"))
         setTimeout(() => setOpenHint(""), 2500)
         return
       }
@@ -465,7 +494,7 @@ function Popup() {
         },
         () => {
           if (chrome.runtime.lastError) {
-            setOpenHint("当前页面无法打开，请刷新后再试")
+            setOpenHint(t("popup.hint.pageUnavailable"))
             setTimeout(() => setOpenHint(""), 2500)
           } else {
             window.close()
@@ -482,7 +511,7 @@ function Popup() {
         !activeTab?.id ||
         /^(chrome|edge|about|chrome-extension):/.test(pageUrl)
       ) {
-        setOpenHint("请切换到普通网页后再复制上下文")
+        setOpenHint(t("popup.hint.copyRestricted"))
         setTimeout(() => setOpenHint(""), 2500)
         return
       }
@@ -497,9 +526,9 @@ function Popup() {
         },
         (resp) => {
           if (resp?.success) {
-            setOpenHint("已复制当前网页上下文")
+            setOpenHint(t("popup.hint.copySuccess"))
           } else {
-            setOpenHint("当前页面无法复制，请刷新页面后再试")
+            setOpenHint(t("popup.hint.copyFailure"))
           }
           setTimeout(() => setOpenHint(""), 2500)
         }
@@ -514,7 +543,7 @@ function Popup() {
         !activeTab?.id ||
         /^(chrome|edge|about|chrome-extension):/.test(pageUrl)
       ) {
-        setOpenHint("请切换到普通网页后再打开命令面板")
+        setOpenHint(t("popup.hint.commandRestricted"))
         setTimeout(() => setOpenHint(""), 2500)
         return
       }
@@ -524,7 +553,7 @@ function Popup() {
         { action: "OPEN_COMMAND_PALETTE" },
         () => {
           if (chrome.runtime.lastError) {
-            setOpenHint("当前页面无法打开，请刷新后再试")
+            setOpenHint(t("popup.hint.pageUnavailable"))
             setTimeout(() => setOpenHint(""), 2500)
           } else {
             window.close()
@@ -635,10 +664,7 @@ function Popup() {
     clearConnectivityResult(provider)
     setProviderMessage(provider, {
       tone: "ok",
-      text:
-        provider === "doubao"
-          ? "配置已保存，可测试连接。"
-          : "配置已保存，可测试连接。"
+      text: t("popup.provider.saved")
     })
     setActiveProvider(provider)
     setProviderCardMode(provider, "view")
@@ -656,7 +682,9 @@ function Popup() {
     clearConnectivityResult(provider)
     setProviderMessage(provider, {
       tone: "muted",
-      text: masked ? "已恢复到保存状态。" : "已关闭新增草稿。"
+      text: masked
+        ? t("popup.provider.restored")
+        : t("popup.provider.draftClosed")
     })
     setProviderCardMode(provider, "view")
     setActiveProvider(provider)
@@ -673,7 +701,7 @@ function Popup() {
     clearConnectivityResult(provider)
     setProviderMessage(provider, {
       tone: "warning",
-      text: `${PROVIDER_COPY[provider].title} 配置已删除。`
+      text: `${getProviderCopy(provider, t).title}${t("popup.provider.deletedSuffix")}`
     })
     setProviderCardMode(provider, "view")
     setActiveProvider(provider)
@@ -739,7 +767,7 @@ function Popup() {
     setFocusedProviderConfigField(null)
     setConfirmingDeleteProviderConfigId(null)
     setProviderDropdownOpen(false)
-    setOpenHint(`正在新增 ${PROVIDER_COPY[provider].title}`)
+    setOpenHint(`${t("popup.hint.addingService")}${getProviderCopy(provider, t).title}`)
     window.setTimeout(() => {
       providerConfigCardRefs.current[draft.id]?.scrollIntoView({
         block: "nearest",
@@ -782,9 +810,11 @@ function Popup() {
         [config.id]: buildConnectivityPreflightSummary({
           provider: config.provider,
           modelOrEndpoint:
-            config.provider === "doubao" ? config.model || "未配置" : config.model,
+            config.provider === "doubao"
+              ? config.model || t("popup.provider.config.unconfigured")
+              : config.model,
           errorCategory: "api_key_missing",
-          notes: "请先填写并保存当前 AI 服务的 API Key。"
+          notes: t("popup.provider.apiKeyMissing")
         })
       }))
       return
@@ -794,9 +824,9 @@ function Popup() {
         ...prev,
         [config.id]: buildConnectivityPreflightSummary({
           provider: config.provider,
-          modelOrEndpoint: "未配置",
+          modelOrEndpoint: t("popup.provider.config.unconfigured"),
           errorCategory: "endpoint_or_model_missing",
-          notes: "请填写豆包 / 火山方舟接入点 ID 后再保存或测试。"
+          notes: t("popup.provider.endpointMissing")
         })
       }))
       return
@@ -821,7 +851,7 @@ function Popup() {
       config,
       {
         displayName:
-          config.displayName.trim() || PROVIDER_COPY[config.provider].title,
+          config.displayName.trim() || getProviderCopy(config.provider, t).title,
         model: config.model.trim() || defaultProviderModel(config.provider)
       },
       { apiKeyChanged }
@@ -930,9 +960,11 @@ function Popup() {
         [config.id]: buildConnectivityPreflightSummary({
           provider: config.provider,
           modelOrEndpoint:
-            config.provider === "doubao" ? config.model || "未配置" : config.model,
+            config.provider === "doubao"
+              ? config.model || t("popup.provider.config.unconfigured")
+              : config.model,
           errorCategory: "api_key_missing",
-          notes: "请先填写并保存当前 AI 服务的 API Key。"
+          notes: t("popup.provider.apiKeyMissing")
         })
       }))
       setProviderConfigModes((prev) => ({
@@ -946,9 +978,9 @@ function Popup() {
         ...prev,
         [config.id]: buildConnectivityPreflightSummary({
           provider: config.provider,
-          modelOrEndpoint: "未配置",
+          modelOrEndpoint: t("popup.provider.config.unconfigured"),
           errorCategory: "endpoint_or_model_missing",
-          notes: "请填写豆包 / 火山方舟接入点 ID 后再保存或测试。"
+          notes: t("popup.provider.endpointMissing")
         })
       }))
       setProviderConfigModes((prev) => ({
@@ -976,7 +1008,7 @@ function Popup() {
       config,
       {
         displayName:
-          config.displayName.trim() || PROVIDER_COPY[config.provider].title,
+          config.displayName.trim() || getProviderCopy(config.provider, t).title,
         model: config.model.trim() || defaultProviderModel(config.provider)
       },
       { apiKeyChanged }
@@ -1000,7 +1032,8 @@ function Popup() {
         savedConfig.provider === "doubao"
           ? savedConfig.model
           : getModelForProviderConfig(savedConfig),
-        "连接测试超时，请稍后重试。"
+        t("popup.provider.testTimeout"),
+        t
       )
       setProviderConfigConnectivityResults((prev) => ({
         ...prev,
@@ -1039,7 +1072,8 @@ function Popup() {
                 savedConfig.provider === "doubao"
                   ? savedConfig.model
                   : getModelForProviderConfig(savedConfig),
-                resp?.error ?? chrome.runtime.lastError?.message
+                resp?.error ?? chrome.runtime.lastError?.message,
+                t
               )
         setProviderConfigConnectivityResults((prev) => ({
           ...prev,
@@ -1085,7 +1119,7 @@ function Popup() {
     }
     setProviderMessage(provider, {
       tone: "muted",
-      text: "正在编辑，保存后生效。"
+      text: t("popup.provider.editing")
     })
   }
 
@@ -1104,7 +1138,7 @@ function Popup() {
     }
     setProviderMessage("doubao", {
       tone: "muted",
-      text: "正在编辑接入点，保存后生效。"
+      text: t("popup.provider.editingEndpoint")
     })
   }
 
@@ -1145,14 +1179,14 @@ function Popup() {
     setProviderDropdownOpen(false)
     setOpenHint(
       savedProviderKeys[provider]
-        ? `正在编辑 ${PROVIDER_COPY[provider].title}`
-        : `正在新增 ${PROVIDER_COPY[provider].title}`
+        ? `${t("popup.hint.editingService")}${getProviderCopy(provider, t).title}`
+        : `${t("popup.hint.addingService")}${getProviderCopy(provider, t).title}`
     )
     setProviderMessage(provider, {
       tone: "muted",
       text: savedProviderKeys[provider]
-        ? "已配置，正在编辑保存前的草稿。"
-        : "新增配置未保存，填写后点击保存配置。"
+        ? t("popup.provider.editingSavedDraft")
+        : t("popup.provider.newDraft")
     })
     window.setTimeout(() => {
       providerCardRefs.current[provider]?.scrollIntoView({
@@ -1171,19 +1205,20 @@ function Popup() {
         provider,
         modelOrEndpoint: getProviderModelInputValue(
           provider,
-          providerModelDrafts
+          providerModelDrafts,
+          t
         ),
         errorCategory: "api_key_missing",
-        notes: "请先填写并保存当前 AI 服务的 API Key。"
+        notes: t("popup.provider.apiKeyMissing")
       })
     }
 
     if (provider === "doubao" && !providerModelDrafts.doubao.trim()) {
       return buildConnectivityPreflightSummary({
         provider,
-        modelOrEndpoint: "未配置",
+        modelOrEndpoint: t("popup.provider.config.unconfigured"),
         errorCategory: "endpoint_or_model_missing",
-        notes: "请填写豆包 / 火山方舟接入点 ID 后再保存或测试。"
+        notes: t("popup.provider.endpointMissing")
       })
     }
 
@@ -1228,7 +1263,7 @@ function Popup() {
     setProviderCardMode(provider, "view")
     setProviderMessage(provider, {
       tone: "warning",
-      text: "正在测试连接..."
+      text: t("popup.provider.testing")
     })
     let settled = false
     const timeoutId = window.setTimeout(() => {
@@ -1239,13 +1274,14 @@ function Popup() {
         ...prev,
         [provider]: buildPopupFallbackSummary(
           provider,
-          getProviderModelInputValue(provider, providerModelDrafts),
-          "连接测试超时，请稍后重试。"
+          getProviderModelInputValue(provider, providerModelDrafts, t),
+          t("popup.provider.testTimeout"),
+          t
         )
       }))
       setProviderMessage(provider, {
         tone: "danger",
-        text: "连接测试超时，请稍后重试。"
+        text: t("popup.provider.testTimeout")
       })
     }, CONNECTIVITY_TEST_TIMEOUT_MS)
 
@@ -1269,14 +1305,15 @@ function Popup() {
             tone: summary.result === "success" ? "ok" : "danger",
             text:
               summary.result === "success"
-                ? "连接测试通过。"
-                : summary.notes || "连接测试未通过。"
+                ? t("popup.provider.testPassed")
+                : summary.notes || t("popup.provider.testFailed")
           })
         } else {
           const summary = buildPopupFallbackSummary(
             provider,
-            getProviderModelInputValue(provider, providerModelDrafts),
-            resp?.error ?? chrome.runtime.lastError?.message
+            getProviderModelInputValue(provider, providerModelDrafts, t),
+            resp?.error ?? chrome.runtime.lastError?.message,
+            t
           )
           setConnectivityResults((prev) => ({
             ...prev,
@@ -1363,6 +1400,8 @@ function Popup() {
         !providerConfigured[provider] ||
         (provider === "doubao" && !settings.doubaoModel?.trim())
     ) ?? "doubao"
+  const resolvedUiLanguage = resolveUiLanguage(settings.uiLanguage)
+  const t = createI18n(resolvedUiLanguage)
   const modelAvailability = MODEL_OPTIONS.reduce<
     Record<string, ModelAvailability>
   >((acc, model) => {
@@ -1370,7 +1409,8 @@ function Popup() {
       route: resolveModelRoute(model.value, settings),
       providerConfigured,
       connectivityResults,
-      testingProvider
+      testingProvider,
+      uiLanguage: resolvedUiLanguage
     })
     return acc
   }, {})
@@ -1385,7 +1425,11 @@ function Popup() {
   const selectedModelAvailability = selectedProviderConfig
     ? (() => {
         if (!selectedProviderConfigKeyValue.trim()) {
-          return { disabled: true, status: "未配置 Key", tone: "danger" } as const
+          return {
+            disabled: true,
+            status: t("popup.provider.status.keyMissing"),
+            tone: "danger"
+          } as const
         }
         if (
           selectedProviderConfig.provider === "doubao" &&
@@ -1393,31 +1437,44 @@ function Popup() {
         ) {
           return {
             disabled: true,
-            status: "未配置接入点",
+            status: t("popup.provider.status.endpointMissing"),
             tone: "danger"
           } as const
         }
         if (testingProviderConfigId === selectedProviderConfig.id) {
-          return { disabled: true, status: "测试中", tone: "warning" } as const
+          return {
+            disabled: true,
+            status: t("popup.provider.status.testing"),
+            tone: "warning"
+          } as const
         }
         if (selectedProviderConfigConnectivity?.result === "success") {
-          return { disabled: false, status: "上次通过", tone: "ok" } as const
+          return {
+            disabled: false,
+            status: t("popup.provider.status.lastPassed"),
+            tone: "ok"
+          } as const
         }
         if (selectedProviderConfigConnectivity) {
           return {
             disabled: true,
-            status: "上次失败",
+            status: t("popup.provider.status.lastFailed"),
             tone: "danger"
           } as const
         }
-        return { disabled: false, status: "未测试", tone: "muted" } as const
+        return {
+          disabled: false,
+          status: t("popup.provider.status.untested"),
+          tone: "muted"
+        } as const
       })()
     : (modelAvailability[selectedModel.value] ??
       getModelAvailability({
         route: resolveModelRoute(selectedModel.value, settings),
         providerConfigured,
         connectivityResults,
-        testingProvider
+        testingProvider,
+        uiLanguage: resolvedUiLanguage
       }))
   const configuredProviderConfigOptions = providerConfigs.filter(
     (config) => providerConfigModes[config.id] !== "add"
@@ -1428,19 +1485,19 @@ function Popup() {
   const serviceReady = !selectedModelAvailability.disabled
   const serviceFailed = selectedModelAvailability.tone === "danger"
   const serviceStatusTitle = serviceReady
-    ? "AI 服务可以使用"
+    ? t("popup.service.ready")
     : serviceFailed
-      ? "AI 服务连接失败"
-      : "未连接 AI 服务"
+      ? t("popup.service.failed")
+      : t("popup.service.disconnected")
   const serviceStatusDetail = serviceReady
-    ? `当前使用 ${selectedRoute.providerConfigName ?? selectedRoute.provider.displayName}`
+    ? `${t("popup.service.currentUsing")}${selectedRoute.providerConfigName ?? selectedRoute.provider.displayName}`
     : serviceFailed
-      ? "Key、接入点或网络需要检查。"
-      : "先连接一个自己的 AI 服务，再选择默认模型。"
-  const routeLabel = `当前 AI 请求会使用你的 ${selectedRoute.providerConfigName ?? selectedRoute.provider.displayName}`
+      ? t("popup.service.checkKeyNetwork")
+      : t("popup.service.connectFirst")
+  const routeLabel = `${t("popup.service.routePrefix")}${selectedRoute.providerConfigName ?? selectedRoute.provider.displayName}`
   const routeModelLabel =
     selectedRoute.provider.id === "doubao"
-      ? selectedRoute.requestModel || "未配置接入点"
+      ? selectedRoute.requestModel || t("popup.provider.status.endpointMissing")
       : selectedRoute.model.displayName
   const selectedProviderKeyValue = getProviderKeyValue(selectedRoute.provider.id, {
     openai: openaiKey,
@@ -1471,7 +1528,7 @@ function Popup() {
       <input
         value={formDraft.name}
         onChange={(e) => setDraft({ ...formDraft, name: e.target.value })}
-        placeholder="指令名称"
+        placeholder={t("popup.templates.namePlaceholder")}
         style={{
           ...styles.input,
           background: ui.surface,
@@ -1482,7 +1539,7 @@ function Popup() {
       <textarea
         value={formDraft.prompt}
         onChange={(e) => setDraft({ ...formDraft, prompt: e.target.value })}
-        placeholder="指令内容，用 {{selection}} 引用选中文字"
+        placeholder={t("popup.templates.promptPlaceholder")}
         rows={4}
         style={{
           ...styles.input,
@@ -1507,7 +1564,7 @@ function Popup() {
                 ? styles.chipActive
                 : {})
             }}>
-            {c.label}
+            {t(c.labelKey)}
           </button>
         ))}
       </div>
@@ -1516,7 +1573,7 @@ function Popup() {
           className="aviso-popup-button"
           onClick={commitDraft}
           style={styles.primaryBtn}>
-          完成
+          {t("popup.templates.done")}
         </button>
         <button
           className="aviso-popup-button"
@@ -1526,7 +1583,7 @@ function Popup() {
             borderColor: ui.line,
             color: ui.text2
           }}>
-          取消
+          {t("common.cancel")}
         </button>
       </div>
     </div>
@@ -1693,7 +1750,7 @@ function Popup() {
         <span style={styles.headerActions}>
           <span
             role="group"
-            aria-label="Popup 主题"
+            aria-label={t("popup.theme.aria")}
             style={{
               ...styles.themeToggle,
               borderColor: ui.line,
@@ -1703,8 +1760,8 @@ function Popup() {
               <button
                 key={option.value}
                 type="button"
-                title={option.label}
-                aria-label={option.label}
+                title={t(option.labelKey)}
+                aria-label={t(option.labelKey)}
                 className="aviso-popup-button"
                 onClick={() => updateSetting("appearanceTheme", option.value)}
                 style={{
@@ -1730,23 +1787,23 @@ function Popup() {
 
       {/* 标签页 */}
       <div style={styles.tabs}>
-        {(["general", "api", "history", "templates"] as const).map((t) => (
+        {(["general", "api", "history", "templates"] as const).map((tabId) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
+            key={tabId}
+            onClick={() => setTab(tabId)}
             className="aviso-tab-button"
             style={{
               ...styles.tabBtn,
-              color: tab === t ? ui.accent : ui.text3,
-              borderBottomColor: tab === t ? ui.accent : "transparent"
+              color: tab === tabId ? ui.accent : ui.text3,
+              borderBottomColor: tab === tabId ? ui.accent : "transparent"
             }}>
             {
               {
-                general: "设置",
-                api: "AI 服务",
-                history: "记录",
-                templates: "指令"
-              }[t]
+                general: t("popup.tabs.general"),
+                api: t("popup.tabs.api"),
+                history: t("popup.tabs.history"),
+                templates: t("popup.tabs.templates")
+              }[tabId]
             }
           </button>
         ))}
@@ -1769,7 +1826,7 @@ function Popup() {
                       size={16}
                       style={{ color: ui.accent }}
                     />
-                    当前模型
+                    {t("popup.currentModel")}
                   </span>
                   <span style={styles.controlHeadActions}>
                     <span
@@ -1785,16 +1842,16 @@ function Popup() {
                         )
                       }}>
                       {serviceReady
-                        ? "可用"
+                        ? t("popup.status.ready")
                         : serviceFailed
-                          ? "检查"
-                          : "未配置"}
+                          ? t("popup.status.check")
+                          : t("popup.status.unconfigured")}
                     </span>
                     <button
                       type="button"
                       className="aviso-popup-button"
-                      title="测试当前模型"
-                      aria-label="测试当前模型"
+                      title={t("popup.testCurrentModel")}
+                      aria-label={t("popup.testCurrentModel")}
                       onClick={() =>
                         selectedProviderConfig
                           ? testProviderConfigInstance(selectedProviderConfig)
@@ -1837,7 +1894,8 @@ function Popup() {
                     />
                     <span style={styles.modelDropdownCopy}>
                       <strong style={{ color: ui.text }}>
-                        {selectedProviderConfig?.displayName ?? selectedModel.label}
+                        {selectedProviderConfig?.displayName ??
+                          t(selectedModel.labelKey)}
                       </strong>
                       <small style={{ color: ui.text3 }}>
                         {serviceStatusDetail}
@@ -1863,7 +1921,7 @@ function Popup() {
                   {modelDropdownOpen && (
                     <div
                       role="listbox"
-                      aria-label="默认 AI 模型选择"
+                      aria-label={t("popup.defaultModelAria")}
                       style={{
                         ...styles.dropdownMenu,
                         background: ui.surface2,
@@ -1871,7 +1929,7 @@ function Popup() {
                       }}>
                       {configuredProviderConfigOptions.length === 0 && (
                         <div style={styles.dropdownEmpty}>
-                          尚未配置 AI 服务
+                          {t("popup.noAiService")}
                         </div>
                       )}
                       {configuredProviderConfigOptions.map((config) => {
@@ -1893,16 +1951,16 @@ function Popup() {
                                   : ("danger" as const),
                               status:
                                 result.result === "success"
-                                  ? "上次通过"
-                                  : "上次失败"
+                                  ? t("popup.provider.status.lastPassed")
+                                  : t("popup.provider.status.lastFailed")
                             }
                           : {
                               tone: disabled ? ("danger" as const) : ("muted" as const),
                               status: disabled
                                 ? config.provider === "doubao" && !config.model.trim()
-                                  ? "接入点缺失"
-                                  : "未配置 Key"
-                                : "未测试"
+                                  ? t("popup.provider.status.endpointRequired")
+                                  : t("popup.provider.status.keyMissing")
+                                : t("popup.provider.status.untested")
                             }
                         return (
                           <button
@@ -1941,7 +1999,8 @@ function Popup() {
                               <span style={styles.dropdownSubText}>
                                 {route.provider.displayName} ·{" "}
                                 {config.provider === "doubao"
-                                  ? config.model || "未配置接入点"
+                                  ? config.model ||
+                                    t("popup.provider.status.endpointMissing")
                                   : route.model.displayName}
                               </span>
                             </span>
@@ -1981,23 +2040,74 @@ function Popup() {
                         <AvisoIcon name="key" size={16} style={{ color: ui.accent }} />
                         <span style={styles.dropdownOptionBody}>
                           <span style={styles.dropdownOptionText}>
-                            添加 AI 服务
+                            {t("popup.addAiService")}
                           </span>
                           <span style={styles.dropdownSubText}>
-                            OpenAI、Anthropic、豆包
+                            {t("popup.providerList")}
                           </span>
                         </span>
                         <span
                           style={getDropdownStatusStyle("muted", ui)}>
-                          配置
+                          {t("popup.configure")}
                         </span>
                       </button>
                     </div>
                   )}
                 </div>
                 <p style={{ ...styles.controlHelp, color: ui.text3 }}>
-                  AI 动作用当前模型；复制上下文、搜索记录、恢复对话等本地动作不受影响。
+                  {t("popup.currentModelHelp")}
                 </p>
+              </div>
+
+              <div
+                style={{
+                  ...styles.controlSection,
+                  borderBottomColor: ui.line
+                }}>
+                <div style={{ ...styles.settingList, background: ui.bg, borderColor: ui.line }}>
+                  <div
+                    style={{
+                      ...styles.settingRow,
+                      borderTopColor: ui.line
+                    }}>
+                    <AvisoIcon
+                      name="features"
+                      size={16}
+                      style={{ color: ui.accent }}
+                    />
+                    <div style={styles.settingCopy}>
+                      <strong style={{ ...styles.settingTitle, color: ui.text }}>
+                        {t("popup.language.title")}
+                      </strong>
+                      <small style={{ ...styles.settingHelper, color: ui.text3 }}>
+                        {t("popup.language.helper")}
+                      </small>
+                    </div>
+                    <select
+                      aria-label={t("popup.language.title")}
+                      value={settings.uiLanguage}
+                      onChange={(event) =>
+                        updateSetting(
+                          "uiLanguage",
+                          event.target.value as UiLanguageSetting
+                        )
+                      }
+                      style={{
+                        ...styles.languageSelect,
+                        width: 96,
+                        padding: "7px 8px",
+                        background: ui.surface,
+                        borderColor: ui.line,
+                        color: ui.text2
+                      }}>
+                      {UI_LANGUAGE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {t(option.labelKey)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
 
               <div
@@ -2011,7 +2121,7 @@ function Popup() {
                     size={15}
                     style={{ color: ui.accent }}
                   />
-                  常用功能
+                  {t("popup.commonFeatures")}
                 </div>
                 <div
                   style={{
@@ -2025,14 +2135,14 @@ function Popup() {
                       [
                         "enableToolbar",
                         "selection",
-                        "划词工具栏",
-                        "选中后显示解释、翻译、润色"
+                        t("popup.features.selection"),
+                        t("popup.features.selectionHelper")
                       ],
                       [
                         "enableInlineTranslation",
                         "translate",
-                        "内联翻译",
-                        `选中文字译为 ${
+                        t("popup.features.translation"),
+                        `${t("popup.translationTargetPrefix")}${
                           POPUP_TRANSLATION_TARGET_LABELS[
                             settings.inlineTranslationTargetLanguage
                           ]
@@ -2041,20 +2151,20 @@ function Popup() {
                       [
                         "enableCommandPalette",
                         "commandPanel",
-                        "命令面板",
-                        "搜索记录、复制上下文、直接发问"
+                        t("popup.features.command"),
+                        t("popup.features.commandHelper")
                       ],
                       [
                         "enableClipboardSense",
                         "clipboard",
-                        "剪贴板提示",
-                        "复制内容后提醒可用操作"
+                        t("popup.features.clipboard"),
+                        t("popup.features.clipboardHelper")
                       ],
                       [
                         "enableDoubleClickMenu",
                         "doubleClick",
-                        "双击入口",
-                        "在安全网页区域打开控制面板"
+                        t("popup.features.doubleClick"),
+                        t("popup.features.doubleClickHelper")
                       ],
                     ] as [
                       | "enableToolbar"
@@ -2146,7 +2256,7 @@ function Popup() {
                             {languageDropdownOpen && settings.enableInlineTranslation && (
                               <div
                                 role="listbox"
-                                aria-label="选中文字翻译目标语言"
+                                aria-label={t("popup.translationTargetAria")}
                                 style={{
                                   ...styles.miniDropdownMenu,
                                   ...(languageDropdownDirection === "down"
@@ -2219,19 +2329,29 @@ function Popup() {
                     size={15}
                     style={{ color: ui.accent }}
                   />
-                  本地可用
+                  {t("popup.localAvailable")}
                 </div>
                 <div style={styles.compactLocalRow}>
                   {[
-                    ["copy", "复制上下文", "复制当前页", copyCurrentContextFromPopup],
-                    ["search", "搜索记录", "打开命令面板", openCommandPaletteFromPopup],
+                    [
+                      "copy",
+                      t("popup.local.copy"),
+                      t("popup.local.copyHelper"),
+                      copyCurrentContextFromPopup
+                    ],
+                    [
+                      "search",
+                      t("popup.local.search"),
+                      t("popup.local.searchHelper"),
+                      openCommandPaletteFromPopup
+                    ],
                     [
                       "history",
-                      "恢复对话",
-                      "打开记录",
+                      t("popup.local.restore"),
+                      t("popup.local.restoreHelper"),
                       () => {
                         setTab("history")
-                        setOpenHint("点击任一记录可恢复到当前网页。")
+                        setOpenHint(t("popup.restoreHint"))
                         setTimeout(() => setOpenHint(""), 2500)
                       }
                     ]
@@ -2295,17 +2415,16 @@ function Popup() {
               }}>
               <h3 style={{ ...styles.panelTitle, color: ui.text }}>
                 <AvisoIcon name="key" size={16} style={{ color: ui.accent }} />
-                配置和连通测试
+                {t("popup.service.title")}
               </h3>
               <p style={{ ...styles.helper, color: ui.text3 }}>
-                在这里连接自己的 AI 服务。配置并通过测试的服务会进入“设置”页模型下拉。API Key
-                只保存在本地浏览器，非密钥设置保存在同步设置中。
+                {t("popup.service.helper")}
               </p>
             </div>
 
             <div style={styles.serviceToolbar}>
               <span style={{ ...styles.serviceToolbarTitle, color: ui.text3 }}>
-                服务配置
+                {t("popup.service.configs")}
               </span>
               <div ref={providerDropdownRef} style={styles.providerDropdown}>
                 <button
@@ -2321,14 +2440,14 @@ function Popup() {
                   }}>
                   <span style={styles.providerTriggerLabel}>
                     <AvisoIcon name="plus" size={14} />
-                    添加
+                    {t("popup.service.add")}
                   </span>
                   <AvisoIcon name="chevdown" size={14} />
                 </button>
                 {providerDropdownOpen && (
                   <div
                     role="listbox"
-                    aria-label="选择要添加的 AI 服务"
+                    aria-label={t("popup.service.addAria")}
                     style={{
                       ...styles.providerMenu,
                       background: ui.surface2,
@@ -2344,7 +2463,7 @@ function Popup() {
                           ...styles.dropdownOption,
                           color: ui.text2
                         }}>
-                        {PROVIDER_COPY[provider].addLabel}
+                        {getProviderCopy(provider, t).addLabel}
                       </button>
                     ))}
                   </div>
@@ -2354,12 +2473,12 @@ function Popup() {
 
             {providerConfigs.length === 0 && (
               <p style={{ ...styles.emptyText, marginTop: 12 }}>
-                暂无 AI 服务配置。点击“添加”后创建 OpenAI、Anthropic 或豆包配置。
+                {t("popup.service.empty")}
               </p>
             )}
 
             {providerConfigs.map((config) => {
-              const copy = PROVIDER_COPY[config.provider]
+              const copy = getProviderCopy(config.provider, t)
               const route = buildProviderConfigRoute(config, settings)
               const mode = providerConfigModes[config.id] ?? "view"
               const isEditing = mode !== "view"
@@ -2383,35 +2502,43 @@ function Popup() {
                       : "danger"
               const connectionLabel =
                 testingProviderConfigId === config.id
-                  ? "测试中"
+                  ? t("popup.provider.status.testing")
                   : connectivity?.result === "success"
-                    ? "上次通过"
+                    ? t("popup.provider.status.lastPassed")
                     : connectivity
-                      ? "上次失败"
+                      ? t("popup.provider.status.lastFailed")
                       : keyConfigured && !missingEndpoint
                         ? isEditing
-                          ? "未测试"
-                          : "建议测试"
-                        : "未配置"
+                          ? t("popup.provider.status.untested")
+                          : t("popup.provider.status.recommendedTest")
+                        : t("popup.provider.config.unconfigured")
               const servicePills: {
                 label: string
                 tone: ModelAvailability["tone"]
               }[] = [
                 ...(isDefault
-                  ? [{ label: "默认", tone: "muted" as ModelAvailability["tone"] }]
+                  ? [
+                      {
+                        label: t("popup.provider.status.default"),
+                        tone: "muted" as ModelAvailability["tone"]
+                      }
+                    ]
                   : []),
                 ...(isAdd
                   ? [
                       {
-                        label: "新增中",
+                        label: t("popup.provider.status.adding"),
                         tone: "warning" as ModelAvailability["tone"]
                       },
-                      { label: "未保存", tone: "muted" as ModelAvailability["tone"] }
+                      {
+                        label: t("popup.provider.status.unsaved"),
+                        tone: "muted" as ModelAvailability["tone"]
+                      }
                     ]
                   : isEditing
                     ? [
                         {
-                          label: "编辑中",
+                          label: t("popup.provider.status.editing"),
                           tone: "warning" as ModelAvailability["tone"]
                         },
                         { label: connectionLabel, tone: connectionTone }
@@ -2419,20 +2546,20 @@ function Popup() {
                     : [{ label: connectionLabel, tone: connectionTone }])
               ]
               const configStateLabel = isAdd
-                ? "等待保存"
+                ? t("popup.provider.config.waitingSave")
                 : keyConfigured && !missingEndpoint
-                  ? "Key 已保存 · 模型已填写"
+                  ? t("popup.provider.config.savedReady")
                   : keyConfigured && missingEndpoint
-                    ? "Key 已保存 · 接入点未填写"
-                    : "尚未配置"
+                    ? t("popup.provider.config.savedEndpointMissing")
+                    : t("popup.provider.config.unconfigured")
               const testStateLabel =
                 testingProviderConfigId === config.id
-                  ? "测试中..."
+                  ? t("popup.provider.config.testingEllipsis")
                   : connectivity?.result === "success"
-                    ? "上次通过"
+                    ? t("popup.provider.status.lastPassed")
                     : connectivity
-                      ? "上次失败"
-                      : "未测试"
+                      ? t("popup.provider.status.lastFailed")
+                      : t("popup.provider.status.untested")
 
               return (
                 <div
@@ -2469,7 +2596,7 @@ function Popup() {
                               color: ui.danger,
                               background: ui.dangerBg
                             }}>
-                            确定删除
+                            {t("popup.service.confirmDelete")}
                           </button>
                           <button
                             type="button"
@@ -2480,15 +2607,15 @@ function Popup() {
                               borderColor: ui.line,
                               color: ui.text2
                             }}>
-                            取消
+                            {t("common.cancel")}
                           </button>
                         </>
                       ) : (
                         <>
                           <button
                             type="button"
-                            title="测试连接"
-                            aria-label={`测试 ${config.displayName} 连接`}
+                            title={t("popup.service.testConnection")}
+                            aria-label={`${t("popup.service.testConnection")} ${config.displayName}`}
                             className="aviso-popup-button"
                             onClick={() => testProviderConfigInstance(config)}
                             disabled={testingProviderConfigId !== null}
@@ -2506,8 +2633,8 @@ function Popup() {
                             <>
                               <button
                                 type="button"
-                                title="保存配置"
-                                aria-label={`保存 ${config.displayName} 配置`}
+                                title={t("popup.service.saveConfig")}
+                                aria-label={`${t("popup.service.saveConfig")} ${config.displayName}`}
                                 className="aviso-popup-button"
                                 onClick={() => saveProviderConfigInstance(config)}
                                 style={{
@@ -2519,8 +2646,12 @@ function Popup() {
                               </button>
                               <button
                                 type="button"
-                                title={isAdd ? "取消添加" : "取消编辑"}
-                                aria-label={`${isAdd ? "取消添加" : "取消编辑"} ${config.displayName}`}
+                                title={
+                                  isAdd
+                                    ? t("popup.service.cancelAdd")
+                                    : t("popup.service.cancelEdit")
+                                }
+                                aria-label={`${isAdd ? t("popup.service.cancelAdd") : t("popup.service.cancelEdit")} ${config.displayName}`}
                                 className="aviso-popup-button"
                                 onClick={() => cancelProviderConfigEdit(config)}
                                 style={{
@@ -2532,8 +2663,12 @@ function Popup() {
                               </button>
                               <button
                                 type="button"
-                                title={isAdd ? "删除草稿" : "删除配置"}
-                                aria-label={`${isAdd ? "删除草稿" : "删除"} ${config.displayName}`}
+                                title={
+                                  isAdd
+                                    ? t("popup.service.deleteDraft")
+                                    : t("popup.service.deleteConfig")
+                                }
+                                aria-label={`${isAdd ? t("popup.service.deleteDraft") : t("popup.service.delete")} ${config.displayName}`}
                                 className="aviso-popup-button"
                                 onClick={() =>
                                   isAdd
@@ -2552,8 +2687,8 @@ function Popup() {
                             <>
                               <button
                                 type="button"
-                                title="设为默认"
-                                aria-label={`设 ${config.displayName} 为默认`}
+                                title={t("popup.service.setDefault")}
+                                aria-label={`${t("popup.service.setDefault")} ${config.displayName}`}
                                 className="aviso-popup-button"
                                 onClick={() => setDefaultProviderConfig(config)}
                                 disabled={isDefault}
@@ -2567,8 +2702,8 @@ function Popup() {
                               </button>
                               <button
                                 type="button"
-                                title="编辑配置"
-                                aria-label={`编辑 ${config.displayName}`}
+                                title={t("popup.service.editConfig")}
+                                aria-label={`${t("popup.service.editConfig")} ${config.displayName}`}
                                 className="aviso-popup-button"
                                 onClick={() => {
                                   setConfirmingDeleteProviderConfigId(null)
@@ -2587,8 +2722,8 @@ function Popup() {
                               </button>
                               <button
                                 type="button"
-                                title="删除配置"
-                                aria-label={`删除 ${config.displayName} 配置`}
+                                title={t("popup.service.deleteConfig")}
+                                aria-label={`${t("popup.service.deleteConfig")} ${config.displayName}`}
                                 className="aviso-popup-button"
                                 onClick={() =>
                                   setConfirmingDeleteProviderConfigId(config.id)
@@ -2619,7 +2754,8 @@ function Popup() {
                     ))}
                     {route.provider.displayName} ·{" "}
                     {config.provider === "doubao"
-                      ? config.model || "未配置接入点"
+                      ? config.model ||
+                        t("popup.provider.status.endpointMissing")
                       : route.model.displayName}
                   </div>
                   {isEditing && (
@@ -2663,8 +2799,8 @@ function Popup() {
                               displayName: event.target.value
                             })
                           }
-                          placeholder="配置名称"
-                          aria-label={`${copy.title} 配置名称`}
+                          placeholder={t("popup.service.namePlaceholder")}
+                          aria-label={`${copy.title}${t("popup.service.nameAriaSuffix")}`}
                           style={styles.configInput}
                         />
                       </label>
@@ -2761,7 +2897,7 @@ function Popup() {
                       </label>
                       {config.provider !== "doubao" && (
                         <p style={{ ...styles.configHint, color: ui.text3 }}>
-                          当前基础版使用内置模型列表；同一 provider 可保存多个 Key 配置。
+                          {t("popup.service.modelHint")}
                         </p>
                       )}
                     </>
@@ -2773,11 +2909,11 @@ function Popup() {
                       color: ui.text3
                     }}>
                     <div style={{ ...styles.configStateRow, color: ui.text3 }}>
-                      <span>配置状态</span>
+                      <span>{t("popup.service.configStatus")}</span>
                       <strong>{configStateLabel}</strong>
                     </div>
                     <div style={{ ...styles.configStateRow, color: ui.text3 }}>
-                      <span>测试状态</span>
+                      <span>{t("popup.service.testStatus")}</span>
                       <strong>{testStateLabel}</strong>
                     </div>
                   </div>
@@ -2785,6 +2921,7 @@ function Popup() {
                     <ConnectivitySummaryView
                       summary={connectivity}
                       theme={resolvedAppearance}
+                      t={t}
                     />
                   )}
                 </div>
@@ -2799,10 +2936,10 @@ function Popup() {
               }}>
               <h3 style={{ ...styles.panelTitle, color: ui.text }}>
                 <AvisoIcon name="shield" size={16} style={{ color: ui.accent }} />
-                隐私边界
+                {t("popup.privacyBoundary.title")}
               </h3>
               <p style={{ ...styles.helper, color: ui.text3 }}>
-                Aviso 没有项目方服务器。你主动发起 AI 请求时，内容会由浏览器直接发送到你选择的模型厂商。
+                {t("popup.privacyBoundary.helper")}
               </p>
             </div>
           </div>
@@ -2819,61 +2956,64 @@ function Popup() {
               }}>
               <h3 style={{ ...styles.panelTitle, color: ui.text }}>
                 <AvisoIcon name="send" size={16} style={{ color: ui.accent }} />
-                常用指令
+                {t("popup.templates.title")}
               </h3>
               <p style={{ ...styles.helper, color: ui.text3 }}>
-                把常用的翻译、总结、润色要求保存起来，之后可以从命令面板或右键菜单直接使用。
+                {t("popup.templates.helper")}
               </p>
             </div>
 
             {settings.templates.length === 0 && !draft && (
               <p style={{ ...styles.emptyText, marginTop: 12 }}>
-                暂无常用指令，请点击下方添加。
+                {t("popup.templates.empty")}
               </p>
             )}
 
-            {settings.templates.map((t) =>
-              draft?.id === t.id ? (
-                renderTemplateForm(draft, t.id)
+            {settings.templates.map((template) =>
+              draft?.id === template.id ? (
+                renderTemplateForm(draft, template.id)
               ) : (
                 <div
-                  key={t.id}
+                  key={template.id}
                   style={{
                     ...styles.templateCard,
                     background: ui.bg,
                     borderColor: ui.line
                   }}>
                   <AvisoIcon
-                    name={getTemplateIcon(t)}
+                    name={getTemplateIcon(template)}
                     size={16}
                     style={{ color: ui.accent }}
                   />
                   <div style={styles.templateCardBody}>
                     <strong style={{ ...styles.templateName, color: ui.text }}>
-                      {t.name}
+                      {template.name}
                     </strong>
                     <small style={{ ...styles.templateSummary, color: ui.text3 }}>
-                      {getTemplateSummary(t)}
+                      {getTemplateSummary(template, t)}
                     </small>
                   </div>
                   <div style={styles.templateActions}>
                     <button
                       className="aviso-popup-button"
                       onClick={() =>
-                        setDraft({ ...t, contexts: [...t.contexts] })
+                        setDraft({
+                          ...template,
+                          contexts: [...template.contexts]
+                        })
                       }
                       style={{
                         ...styles.editBtn,
                         borderColor: ui.line
                       }}>
-                      编辑
+                      {t("popup.templates.edit")}
                     </button>
                     <button
                       className="aviso-popup-button"
                       onClick={() =>
                         updateSetting(
                           "templates",
-                          settings.templates.filter((x) => x.id !== t.id)
+                          settings.templates.filter((x) => x.id !== template.id)
                         )
                       }
                       style={{
@@ -2884,7 +3024,7 @@ function Popup() {
                         gap: 6
                       }}>
                       <AvisoIcon name="trash" size={13} />
-                      删除
+                      {t("popup.templates.delete")}
                     </button>
                   </div>
                 </div>
@@ -2909,7 +3049,7 @@ function Popup() {
                   borderColor: ui.accentBorder,
                   color: ui.accent
                 }}>
-                添加常用指令
+                {t("popup.templates.add")}
               </button>
             ) : null}
           </div>
@@ -2926,14 +3066,16 @@ function Popup() {
               }}>
               <h3 style={{ ...styles.panelTitle, color: ui.text }}>
                 <AvisoIcon name="history" size={16} style={{ color: ui.accent }} />
-                最近对话会自动保存
+                {t("popup.history.title")}
               </h3>
               <p style={{ ...styles.helper, color: ui.text3 }}>
-                不需要每次手动保存。点击记录可以恢复到结果面板；不需要的记录可以单条删除。
+                {t("popup.history.helper")}
               </p>
             </div>
             {history.length === 0 ? (
-              <p style={{ ...styles.emptyText, marginTop: 12 }}>暂无记录。</p>
+              <p style={{ ...styles.emptyText, marginTop: 12 }}>
+                {t("popup.history.empty")}
+              </p>
             ) : (
               <>
                 <div
@@ -2953,7 +3095,7 @@ function Popup() {
                       gap: 6
                     }}>
                     <AvisoIcon name="trash" size={13} />
-                    清空全部
+                    {t("popup.history.clearAll")}
                   </button>
                 </div>
                 {openHint && (
@@ -2971,7 +3113,7 @@ function Popup() {
                     }}>
                     <div
                       onClick={() => openHistory(e)}
-                      title="点击在页面右下角恢复这次对话"
+                      title={t("popup.history.restoreTitle")}
                       style={{ flex: 1, minWidth: 0, cursor: "pointer" }}>
                       <div style={{ ...styles.historyInput, color: ui.text }}>
                         {e.pinned && (
@@ -2980,15 +3122,15 @@ function Popup() {
                             style={{ color: aviso.sage400, marginRight: 4 }}
                           />
                         )}
-                        {getHistoryTitle(e)}
+                        {getHistoryTitle(e, t)}
                       </div>
                       <div style={{ ...styles.historyOutput, color: ui.text3 }}>
-                        {getHistorySummary(e)}
+                        {getHistorySummary(e, t)}
                       </div>
                     </div>
                     <div style={styles.historyActions}>
                       <span style={{ ...styles.historyMeta, color: ui.text3 }}>
-                        {formatRelativeTime(e.updatedAt ?? e.timestamp)}
+                        {formatRelativeTime(e.updatedAt ?? e.timestamp, t)}
                       </span>
                       <button
                         onClick={() => deleteEntry(e)}
@@ -3001,7 +3143,7 @@ function Popup() {
                           gap: 6
                         }}>
                         <AvisoIcon name="trash" size={13} />
-                        删除
+                        {t("popup.history.delete")}
                       </button>
                     </div>
                   </div>
@@ -3020,9 +3162,7 @@ function Popup() {
             borderTopColor: ui.line,
             color: ui.text2
           }}>
-          Aviso 不设项目方服务器，不收集或保存你的数据。API Key 经 AES-256
-          加密后仅存于本机；当你主动发起 AI 请求时，内容会由浏览器直连所选模型厂商（OpenAI
-          / Anthropic / 豆包·火山方舟），不经过 Aviso 中间服务器。历史记录与设置保存在浏览器本地存储中。
+          {t("popup.privacy.full")}
         </div>
       )}
       <footer
@@ -3032,13 +3172,13 @@ function Popup() {
           background: ui.surface
         }}>
         <span style={{ ...styles.autoSaveHint, color: ui.accent }}>
-          {saved ? "✓ 已保存" : "改动自动保存"}
+          {saved ? t("popup.footer.saved") : t("popup.footer.autoSave")}
         </span>
         <button
           className="aviso-popup-button"
           onClick={() => setShowPrivacy((v) => !v)}
           style={{ ...styles.link, color: ui.text3 }}>
-          隐私说明
+          {t("popup.footer.privacy")}
         </button>
       </footer>
     </div>
@@ -3059,45 +3199,58 @@ function getProviderModelValue(provider: ProviderId, settings: Settings) {
 
 function getProviderModelInputValue(
   provider: ProviderId,
-  drafts: Record<ProviderId, string>
+  drafts: Record<ProviderId, string>,
+  t: (key: I18nKey) => string
 ) {
   const value = drafts[provider]?.trim()
-  if (provider === "doubao") return value || "未配置"
+  if (provider === "doubao") return value || t("popup.provider.config.unconfigured")
   return value || PROVIDER_PRIMARY_MODEL[provider]
 }
 
-function formatRelativeTime(timestamp: number) {
+function formatRelativeTime(
+  timestamp: number,
+  t: (key: I18nKey) => string
+) {
   const diffMs = Date.now() - timestamp
   const minutes = Math.max(0, Math.floor(diffMs / 60_000))
-  if (minutes < 1) return "刚刚"
+  if (minutes < 1) return t("popup.history.justNow")
   if (minutes < 60) return `${minutes}m`
   const hours = Math.floor(minutes / 60)
   if (hours < 24) return `${hours}h`
   return `${Math.floor(hours / 24)}d`
 }
 
-function getHistoryTitle(entry: HistoryEntry) {
+function getHistoryTitle(
+  entry: HistoryEntry,
+  t: (key: I18nKey) => string
+) {
   const operationLabel =
     entry.operation === "translate"
-      ? "翻译网页选中文本"
+      ? t("popup.history.translateTitle")
       : entry.operation === "summarize"
-        ? "总结当前页面"
+        ? t("popup.history.summarizeTitle")
         : entry.operation === "explain"
-          ? "解释选中内容"
-          : "AI 对话"
+          ? t("popup.history.explainTitle")
+          : t("popup.history.chatTitle")
   return entry.input?.trim() ? entry.input.trim().slice(0, 28) : operationLabel
 }
 
-function getHistorySummary(entry: HistoryEntry) {
+function getHistorySummary(
+  entry: HistoryEntry,
+  t: (key: I18nKey) => string
+) {
   return entry.output?.trim()
     ? entry.output.trim().slice(0, 58)
-    : "点击恢复到结果面板"
+    : t("popup.history.restoreSummary")
 }
 
-function getTemplateSummary(template: PromptTemplate) {
+function getTemplateSummary(
+  template: PromptTemplate,
+  t: (key: I18nKey) => string
+) {
   return template.prompt.trim()
     ? template.prompt.trim().replace(/\s+/g, " ").slice(0, 42)
-    : "未填写内容"
+    : t("popup.templates.emptySummary")
 }
 
 function getTemplateIcon(template: PromptTemplate): AvisoIconName {
@@ -3108,15 +3261,17 @@ function getTemplateIcon(template: PromptTemplate): AvisoIconName {
 
 function ConnectivitySummaryView({
   summary,
-  theme
+  theme,
+  t
 }: {
   summary?: ConnectivityValidationSummary
   theme: ResolvedAvisoTheme
+  t: (key: I18nKey) => string
 }) {
   if (!summary) return null
   const ui = getAvisoThemeTokens(theme)
   const ok = summary.result === "success"
-  const isLastResult = summary.latency_note.startsWith("上次")
+  const isLastResult = /^上次|^Last/i.test(summary.latency_note)
   const rows = [
     ["provider", summary.provider],
     ["model_or_endpoint", summary.model_or_endpoint],
@@ -3149,11 +3304,11 @@ function ConnectivitySummaryView({
         />
         {isLastResult
           ? ok
-            ? "上次连接测试通过"
-            : "上次连接测试未通过"
+            ? t("popup.connectivity.lastPassed")
+            : t("popup.connectivity.lastFailed")
           : ok
-            ? "连接测试通过"
-            : "连接测试未通过"}
+            ? t("popup.connectivity.passed")
+            : t("popup.connectivity.failed")}
       </div>
       {rows.map(([key, value]) => (
         <div key={key} style={styles.summaryRow}>
@@ -3170,7 +3325,8 @@ function ConnectivitySummaryView({
 function buildPopupFallbackSummary(
   provider: ProviderId,
   modelOrEndpoint: string,
-  error?: string
+  error: string | undefined,
+  t: (key: I18nKey) => string
 ): ConnectivityValidationSummary {
   const hasError = Boolean(error)
 
@@ -3181,15 +3337,15 @@ function buildPopupFallbackSummary(
     trigger: "manual_settings_provider_button",
     host_permission_present: true,
     result: "failure",
-    latency_note: "未发起或未收到 background 摘要。",
+    latency_note: t("popup.connectivity.fallbackLatency"),
     error_category: "unknown_error",
     secret_leak_check: "pass",
     raw_prompt_logged: "no",
     raw_response_logged: "no",
     private_page_data_logged: "no",
     notes: hasError
-      ? "Popup 未收到可用的脱敏摘要；底层错误原文未展示。"
-      : "Popup 未收到可用的脱敏摘要。"
+      ? t("popup.connectivity.fallbackWithError")
+      : t("popup.connectivity.fallback")
   }
 }
 

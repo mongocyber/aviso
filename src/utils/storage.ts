@@ -27,6 +27,7 @@ const DEFAULT_SETTINGS: Settings = {
   defaultProviderConfigId: "",
   providerConfigs: [],
   appearanceTheme: "system",
+  uiLanguage: "auto",
   doubaoModel: "",
   enableClipboardSense: true,
   enableToolbar: true,

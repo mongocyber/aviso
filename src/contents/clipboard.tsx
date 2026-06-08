@@ -7,9 +7,9 @@ import {
   detectType,
   isSensitive,
   isSensitiveDomain,
-  TYPE_LABELS,
   type ClipboardType
 } from "~utils/clipboard-detect"
+import { useSyncedAvisoLanguage, type I18nKey } from "~utils/i18n"
 import { getSettings } from "~utils/storage"
 import { logTiming, startTiming } from "~utils/timing"
 
@@ -53,6 +53,7 @@ function isTopFrame(): boolean {
 }
 
 function ClipboardToast() {
+  const { t } = useSyncedAvisoLanguage()
   const [toast, setToast] = useState<ToastState>({
     visible: false,
     mode: "clipboard",
@@ -111,16 +112,16 @@ function ClipboardToast() {
         await writeTextToClipboard(text)
         showCopyContextToastThroughBackground({
           status: "success",
-          message: "当前上下文已复制",
-          detail: "只写入剪贴板，未发送给 AI。"
+          message: t("toast.copyContextSuccess"),
+          detail: t("toast.copyContextSuccessDetail")
         })
         return { success: true }
       } catch (err) {
         const error = err instanceof Error ? err.message : String(err)
         showCopyContextToastThroughBackground({
           status: "failure",
-          message: "复制失败",
-          detail: "请确认当前页面允许剪贴板写入后重试。"
+          message: t("toast.copyFailure"),
+          detail: t("toast.copyFailureDetail")
         })
         return { success: false, error }
       }
@@ -267,6 +268,7 @@ function ClipboardToast() {
   if (!toast.visible) return null
 
   const isCopyContextToast = toast.mode === "copy-context"
+  const typeLabel = getClipboardTypeLabel(toast.type, t)
   const iconColor =
     isCopyContextToast && toast.status === "failure"
       ? aviso.danger
@@ -304,7 +306,7 @@ function ClipboardToast() {
         <strong style={{ fontWeight: 600 }}>
           {isCopyContextToast
             ? toast.message
-            : `已复制 ${TYPE_LABELS[toast.type]}`}
+            : `${t("toast.copiedPrefix")}${typeLabel}`}
         </strong>
         {isCopyContextToast && toast.detail && (
           <span
@@ -355,7 +357,7 @@ function ClipboardToast() {
             whiteSpace: "nowrap"
           }}>
           <AvisoIcon name="send" size={14} />
-          发给 AI
+          {t("common.sendToAi")}
         </button>
       )}
       <span
@@ -399,6 +401,20 @@ function ClipboardToast() {
       `}</style>
     </div>
   )
+}
+
+function getClipboardTypeLabel(
+  type: ClipboardType,
+  t: (key: I18nKey) => string
+): string {
+  const key: Record<ClipboardType, I18nKey> = {
+    english: "clipboard.type.english",
+    code: "clipboard.type.code",
+    url: "clipboard.type.url",
+    chinese: "clipboard.type.chinese",
+    other: "clipboard.type.other"
+  }
+  return t(key[type])
 }
 
 async function writeTextToClipboard(text: string): Promise<void> {

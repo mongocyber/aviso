@@ -1,4 +1,5 @@
 import type { AIRequestPayload } from "~types/messages"
+import type { ResolvedUiLanguage } from "./i18n"
 
 export type TranslationTargetLanguage =
   | "auto"
@@ -154,6 +155,17 @@ export function formatTranslationUserBubble(inputText: string): string {
   return text ? `待翻译文本：\n${text}` : ""
 }
 
-export function formatTranslationError(error: string): string {
-  return /^翻译失败[：:]/.test(error) ? error : `翻译失败：${error}`
+export function formatTranslationError(
+  error: string,
+  language: ResolvedUiLanguage = "zh-CN"
+): string {
+  const prefix = language === "en" ? "Translation failed: " : "翻译失败："
+  if (
+    (language === "en" && /^Translation failed:\s*/i.test(error)) ||
+    (language === "zh-CN" && /^翻译失败[：:]/.test(error))
+  ) {
+    return error
+  }
+
+  return `${prefix}${error}`
 }

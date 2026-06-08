@@ -30,6 +30,13 @@ export function hasDefaultModelChanged(
   )
 }
 
+export function hasUiLanguageChanged(
+  previous?: Partial<Settings>,
+  next?: Partial<Settings>
+) {
+  return previous?.uiLanguage !== next?.uiLanguage
+}
+
 function providerConfigMenuSignature(settings?: Partial<Settings>) {
   return JSON.stringify({
     defaultProviderConfigId: settings?.defaultProviderConfigId ?? "",

@@ -16,12 +16,12 @@ import {
 import {
   shouldShowSlowResponseHint,
   SLOW_FIRST_CHUNK_MS,
-  SLOW_MODEL_RESPONSE_TEXT
 } from "~utils/response-guard"
 import {
   getDynamicLoadingStatusText,
   LOADING_STATUS_TICK_MS
 } from "~utils/loading-status"
+import { useSyncedAvisoLanguage, type I18nKey } from "~utils/i18n"
 import { getSettings } from "~utils/storage"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
 import {
@@ -64,12 +64,12 @@ type InlineTranslationCardState = {
 }
 type Operation = "explain" | "translate" | "polish" | "summarize" | "send"
 
-const TOOLBAR_BUTTONS: { op: Operation; label: string }[] = [
-  { op: "explain", label: "解释" },
-  { op: "translate", label: "翻译" },
-  { op: "polish", label: "润色" },
-  { op: "summarize", label: "总结" },
-  { op: "send", label: "发给 AI" }
+const TOOLBAR_BUTTONS: { op: Operation; labelKey: I18nKey }[] = [
+  { op: "explain", labelKey: "operation.explain" },
+  { op: "translate", labelKey: "operation.translate" },
+  { op: "polish", labelKey: "operation.polish" },
+  { op: "summarize", labelKey: "operation.summarize" },
+  { op: "send", labelKey: "common.sendToAi" }
 ]
 
 // "发给 AI" 走自由对话；其余按钮即操作名
@@ -150,6 +150,7 @@ const UNSAFE_SELECTOR = [
 
 function SelectionToolbar() {
   const { tokens: ui } = useSyncedAvisoTheme()
+  const { language, t } = useSyncedAvisoLanguage()
   const [visible, setVisible] = useState(false)
   const [position, setPosition] = useState<ToolbarPosition>({
     top: 0,
@@ -205,7 +206,7 @@ function SelectionToolbar() {
           return prev
         }
 
-        return { ...prev, statusText: SLOW_MODEL_RESPONSE_TEXT }
+        return { ...prev, statusText: t("model.slow") }
       })
     }, SLOW_FIRST_CHUNK_MS)
   }
@@ -305,7 +306,7 @@ function SelectionToolbar() {
                 ...prev,
                 mode: "error",
                 statusText: "",
-                error: formatTranslationError(error)
+                error: formatTranslationError(error, language)
               }
             : prev
         )
@@ -352,7 +353,7 @@ function SelectionToolbar() {
                   ...prev,
                   mode: "error",
                   statusText: "",
-                  error: formatTranslationError(runtimeError.message)
+                  error: formatTranslationError(runtimeError.message, language)
                 }
               : prev
           )
@@ -369,7 +370,7 @@ function SelectionToolbar() {
                   ...prev,
                   mode: "error",
                   statusText: "",
-                  error: formatTranslationError(response.error as string)
+                  error: formatTranslationError(response.error as string, language)
                 }
               : prev
           )
@@ -417,8 +418,8 @@ function SelectionToolbar() {
         statusText: "",
         error:
           route.reason === "too_many_lines"
-            ? "选区行数较多，建议点发给 AI，在对话面板中翻译。"
-            : "选区较长，建议点发给 AI，在对话面板中翻译。",
+            ? t("translation.manyLines")
+            : t("translation.longSelection"),
         targetLabel,
         copied: false,
         ...position
@@ -486,7 +487,7 @@ function SelectionToolbar() {
       setInlineCard((prev) => ({
         ...prev,
         mode: "error",
-        error: "复制失败，请手动选中译文复制。"
+        error: t("translation.copyError")
       }))
     }
   }
@@ -796,7 +797,7 @@ function SelectionToolbar() {
             flex: "0 0 auto"
           }}
         />
-        {TOOLBAR_BUTTONS.map(({ op, label }) => (
+        {TOOLBAR_BUTTONS.map(({ op, labelKey }) => (
           <button
             key={op}
             className="aviso-toolbar-button"
@@ -835,7 +836,7 @@ function SelectionToolbar() {
               size={16}
               style={{ opacity: op === "send" ? 1 : 0.85 }}
             />
-            {label}
+            {t(labelKey)}
           </button>
         ))}
       </div>
@@ -887,6 +888,8 @@ function SelectionToolbar() {
           onCopy={copyInlineTranslation}
           onRetry={retryInlineTranslation}
           onOpenResultPanel={openInlineTranslationInResultPanel}
+          language={language}
+          t={t}
         />
       )}
     </>
@@ -899,7 +902,9 @@ function InlineTranslationCard({
   onClose,
   onCopy,
   onRetry,
-  onOpenResultPanel
+  onOpenResultPanel,
+  language,
+  t
 }: {
   card: InlineTranslationCardState
   loadingTick: number
@@ -907,12 +912,14 @@ function InlineTranslationCard({
   onCopy: () => void
   onRetry: () => void
   onOpenResultPanel: () => void
+  language: ReturnType<typeof useSyncedAvisoLanguage>["language"]
+  t: (key: I18nKey) => string
 }) {
   const { tokens: ui } = useSyncedAvisoTheme()
   const title =
     card.targetLabel === "自动"
-      ? "自动翻译"
-      : `翻译为${card.targetLabel}`
+      ? t("translation.autoTitle")
+      : `${t("translation.toTitle")}${card.targetLabel}`
   const canCopy = card.output.trim().length > 0
   const showRetry = card.mode === "error" || card.mode === "success"
   const displayText =
@@ -921,14 +928,15 @@ function InlineTranslationCard({
       ? getDynamicLoadingStatusText({
           operation: "translate",
           statusText: card.statusText,
-          tick: loadingTick
+          tick: loadingTick,
+          language
         })
-      : card.statusText || "正在翻译...")
+      : card.statusText || t("translation.fallbackWaiting"))
 
   return (
     <div
       role="dialog"
-      aria-label="Aviso 内联翻译"
+      aria-label={t("translation.cardLabel")}
       style={{
         position: "fixed",
         top: card.top,
@@ -981,7 +989,7 @@ function InlineTranslationCard({
         </span>
         <button
           type="button"
-          aria-label="关闭内联翻译"
+          aria-label={t("translation.closeCard")}
           className="aviso-inline-translation-icon-button"
           onClick={onClose}
           style={{
@@ -1046,17 +1054,21 @@ function InlineTranslationCard({
           {canCopy && (
             <InlineCardButton
               icon="copy"
-              label={card.copied ? "已复制" : "复制"}
+              label={card.copied ? t("common.copied") : t("common.copy")}
               onClick={onCopy}
             />
           )}
           {showRetry && (
-            <InlineCardButton icon="refine" label="重试" onClick={onRetry} />
+            <InlineCardButton
+              icon="refine"
+              label={t("common.retry")}
+              onClick={onRetry}
+            />
           )}
         </div>
         <InlineCardButton
           icon="send"
-          label="发给 AI"
+          label={t("common.sendToAi")}
           onClick={onOpenResultPanel}
         />
       </div>

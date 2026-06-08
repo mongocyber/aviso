@@ -1,5 +1,6 @@
 import type { Settings } from "~types/history"
 import type { MessageRequest, MessageResponse } from "~types/messages"
+import { createI18n, resolveSettingsUiLanguage } from "~utils/i18n"
 import { parseIntentLocally } from "~utils/intent"
 import {
   bucketScreenshotDataUrl,
@@ -7,9 +8,11 @@ import {
 } from "~utils/screenshot"
 import {
   hasDefaultModelChanged,
+  hasUiLanguageChanged,
   haveProviderConfigMenusChanged,
   haveTemplatesChanged
 } from "~utils/settings-change"
+import { getSettings } from "~utils/storage"
 import { logTiming, markTiming } from "~utils/timing"
 
 import { handleAIRequest, handleProviderConnectivityTest } from "./ai-client"
@@ -38,9 +41,6 @@ import {
 const MAX_BOOKMARK_RESULTS = 12
 const MAX_BROWSER_HISTORY_RESULTS = 12
 const activeAIRequests = new Map<string, AbortController>()
-const SCREENSHOT_AUTH_ENTRY_MESSAGE = "截图需要从浏览器扩展入口启动"
-const SCREENSHOT_AUTH_ENTRY_DETAIL =
-  "请通过右键菜单里的“截图提问”、扩展按钮或浏览器快捷命令重新触发；页面内快捷按钮不会授予截图所需权限。"
 
 type BookmarkSearchSource = "native" | "tree-fallback"
 
@@ -110,7 +110,8 @@ chrome.storage.onChanged.addListener((changes, area) => {
 
     if (
       haveTemplatesChanged(previous, next) ||
-      haveProviderConfigMenusChanged(previous, next)
+      haveProviderConfigMenusChanged(previous, next) ||
+      hasUiLanguageChanged(previous, next)
     ) {
       void registerContextMenus()
       return
@@ -300,9 +301,10 @@ async function handleMessage(
 
       case "CAPTURE_VISIBLE_TAB": {
         if (!sender.tab?.windowId) {
+          const t = createI18n(resolveSettingsUiLanguage(await getSettings()))
           sendResponse({
             success: false,
-            error: "无法截图：没有可用的当前窗口。"
+            error: t("background.screenshotNoWindow")
           })
           break
         }
@@ -393,14 +395,15 @@ async function handleMessage(
           break
         }
 
+        const t = createI18n(resolveSettingsUiLanguage(await getSettings()))
         const result = await sendMessageToDisplayFrame(
           senderTabId,
           {
             action: "SHOW_COPY_CONTEXT_TOAST",
             payload: {
               status: "failure",
-              message: SCREENSHOT_AUTH_ENTRY_MESSAGE,
-              detail: SCREENSHOT_AUTH_ENTRY_DETAIL
+              message: t("background.screenshotAuthEntryMessage"),
+              detail: t("background.screenshotAuthEntryDetail")
             }
           },
           {

@@ -18,6 +18,12 @@ import {
   isSupportedScreenshotDataUrl,
   normalizeScreenshotRegion
 } from "~utils/screenshot"
+import {
+  createI18n,
+  resolveUiLanguage,
+  type ResolvedUiLanguage,
+  type UiLanguageSetting
+} from "~utils/i18n"
 import { logTiming, markTiming } from "~utils/timing"
 
 export const config: PlasmoCSConfig = {
@@ -59,6 +65,7 @@ const TOOLBAR_ESTIMATED_HEIGHT = 84
 let activeSession: OverlaySession | null = null
 let screenshotThemeMode: AvisoThemeMode = "system"
 let screenshotSystemPrefersDark = readScreenshotSystemPrefersDark()
+let screenshotUiLanguageSetting: UiLanguageSetting = "auto"
 
 type ScreenshotButtonIcon = "copy" | "download" | "retry" | "send" | "cancel"
 
@@ -93,21 +100,39 @@ function getScreenshotThemeTokens(): AvisoThemeTokens {
   )
 }
 
+function getScreenshotUiLanguage(): ResolvedUiLanguage {
+  return resolveUiLanguage(screenshotUiLanguageSetting)
+}
+
+function getScreenshotI18n() {
+  return createI18n(getScreenshotUiLanguage())
+}
+
 function initScreenshotThemeSync() {
   chrome.storage.sync.get("contextai_settings", (result) => {
     const nextMode = result.contextai_settings?.appearanceTheme
+    const nextLanguage = result.contextai_settings?.uiLanguage
     if (isAvisoThemeMode(nextMode)) {
       screenshotThemeMode = nextMode
       updateActiveScreenshotTheme()
+    }
+    if (nextLanguage === "auto" || nextLanguage === "zh-CN" || nextLanguage === "en") {
+      screenshotUiLanguageSetting = nextLanguage
+      updateActiveScreenshotCopy()
     }
   })
 
   chrome.storage.onChanged.addListener((changes, area) => {
     if (area !== "sync" || !changes.contextai_settings) return
     const nextMode = changes.contextai_settings.newValue?.appearanceTheme
+    const nextLanguage = changes.contextai_settings.newValue?.uiLanguage
     if (isAvisoThemeMode(nextMode)) {
       screenshotThemeMode = nextMode
       updateActiveScreenshotTheme()
+    }
+    if (nextLanguage === "auto" || nextLanguage === "zh-CN" || nextLanguage === "en") {
+      screenshotUiLanguageSetting = nextLanguage
+      updateActiveScreenshotCopy()
     }
   })
 
@@ -121,6 +146,11 @@ function initScreenshotThemeSync() {
 function updateActiveScreenshotTheme() {
   if (!activeSession) return
   applyScreenshotTheme(activeSession, getScreenshotThemeTokens())
+}
+
+function updateActiveScreenshotCopy() {
+  if (!activeSession) return
+  applyScreenshotCopy(activeSession)
 }
 
 function startScreenshotSelection(payload: StartPayload) {
@@ -260,7 +290,7 @@ function startScreenshotSelection(payload: StartPayload) {
     session.error.textContent = ""
     session.error.style.display = "none"
     updateSelection(null)
-    showOverlayMessage(session, "请重新拖动选择截图区域。", "success")
+    showOverlayMessage(session, getScreenshotI18n()("screenshot.retryHint"), "success")
   })
 
   session.copyButton.addEventListener("click", async () => {
@@ -271,21 +301,21 @@ function startScreenshotSelection(payload: StartPayload) {
   session.downloadButton.addEventListener("click", async () => {
     if (!selectedRegion) return
     const region = selectedRegion
-    await runScreenshotAction(session, session.downloadButton, "保存中…", async () => {
+    await runScreenshotAction(session, session.downloadButton, getScreenshotI18n()("screenshot.saving"), async () => {
       const { croppedDataUrl } = await captureSelectedScreenshot(
         payload,
         region,
         session
       )
       downloadScreenshot(croppedDataUrl)
-      showOverlayMessage(session, "截图已交给浏览器下载。", "success")
+      showOverlayMessage(session, getScreenshotI18n()("screenshot.downloadSuccess"), "success")
     })
   })
 
   session.sendButton.addEventListener("click", async () => {
     if (!selectedRegion) return
     const region = selectedRegion
-    await runScreenshotAction(session, session.sendButton, "发送中…", async () => {
+    await runScreenshotAction(session, session.sendButton, getScreenshotI18n()("screenshot.sending"), async () => {
       await sendScreenshotToAI(payload, region, session)
     })
   })
@@ -307,7 +337,7 @@ async function copySelectedScreenshot(
   region: ScreenshotRegion,
   session: OverlaySession
 ) {
-  await runScreenshotAction(session, session.copyButton, "复制中…", async () => {
+  await runScreenshotAction(session, session.copyButton, getScreenshotI18n()("screenshot.copying"), async () => {
     const capturePromise = captureSelectedScreenshot(payload, region, session, {
       restoreOverlay: false
     })
@@ -345,13 +375,13 @@ async function captureSelectedScreenshot(
     })
 
     if (!captureResponse.success) {
-      throw new Error(captureResponse.error || "截图失败，请重新尝试。")
+      throw new Error(captureResponse.error || getScreenshotI18n()("screenshot.captureError"))
     }
 
     const captureData = captureResponse.data
     const fullDataUrl = captureData?.dataUrl
     if (!fullDataUrl || !isSupportedScreenshotDataUrl(fullDataUrl)) {
-      throw new Error("截图格式暂不支持，请重新尝试。")
+      throw new Error(getScreenshotI18n()("screenshot.formatError"))
     }
 
     const croppedDataUrl = await cropScreenshotDataUrl(fullDataUrl, region)
@@ -389,13 +419,13 @@ async function sendScreenshotToAI(
       context: "page",
       imageSource: "screenshot-region",
       srcUrl: croppedDataUrl,
-      userMessage: "请解释这个截图区域。",
+      userMessage: getScreenshotI18n()("screenshot.askPrompt"),
       timing,
-      statusText: "正在发送截图给模型…"
+      statusText: getScreenshotI18n()("screenshot.sendingToModel")
     }
   })
   if (!floatingResponse.success) {
-    throw new Error(floatingResponse.error || "无法打开结果浮窗。")
+    throw new Error(floatingResponse.error || getScreenshotI18n()("screenshot.openFloatingError"))
   }
 
   cleanupOverlay()
@@ -422,7 +452,7 @@ async function cropScreenshotDataUrl(
   canvas.width = outputWidth
   canvas.height = outputHeight
   const ctx = canvas.getContext("2d")
-  if (!ctx) throw new Error("当前页面无法处理截图。")
+  if (!ctx) throw new Error(getScreenshotI18n()("screenshot.pageError"))
 
   ctx.drawImage(
     image,
@@ -443,7 +473,7 @@ async function copyScreenshotToClipboard(
   capturePromise: Promise<{ croppedDataUrl: string }>
 ): Promise<void> {
   if (!navigator.clipboard?.write || !("ClipboardItem" in window)) {
-    throw new Error("当前浏览器不支持直接复制图片，请改用下载。")
+    throw new Error(getScreenshotI18n()("screenshot.clipboardUnsupported"))
   }
 
   let captureError: unknown
@@ -465,7 +495,7 @@ async function copyScreenshotToClipboard(
       throw captureError
     }
     throw new Error(
-      "复制图片失败：Chrome 可能限制了异步截图写入剪贴板，请改用下载图片。"
+      getScreenshotI18n()("screenshot.copyImageFailure")
     )
   }
 }
@@ -562,7 +592,7 @@ function createOverlay(): OverlaySession {
   })
 
   const hint = document.createElement("div")
-  hint.textContent = "拖动选择截图区域，按 Esc 取消"
+  hint.textContent = getScreenshotI18n()("screenshot.hint")
   Object.assign(hint.style, {
     position: "fixed",
     top: "16px",
@@ -606,11 +636,12 @@ function createOverlay(): OverlaySession {
     boxShadow: ui.toolbarShadow
   })
 
-  const copyButton = createButton("复制图片", "copy", false, ui)
-  const downloadButton = createButton("下载图片", "download", false, ui)
-  const retryButton = createButton("重选", "retry", false, ui)
-  const sendButton = createButton("发送给 AI", "send", false, ui)
-  const cancelButton = createButton("取消", "cancel", false, ui)
+  const t = getScreenshotI18n()
+  const copyButton = createButton(t("screenshot.copyImage"), "copy", false, ui)
+  const downloadButton = createButton(t("screenshot.downloadImage"), "download", false, ui)
+  const retryButton = createButton(t("screenshot.reselect"), "retry", false, ui)
+  const sendButton = createButton(t("common.sendToAi"), "send", false, ui)
+  const cancelButton = createButton(t("common.cancel"), "cancel", false, ui)
   const error = document.createElement("div")
   Object.assign(error.style, {
     display: "none",
@@ -666,6 +697,7 @@ function createButton(
   button.setAttribute("aria-label", label)
   button.className = "aviso-screenshot-button"
   button.dataset.primary = primary ? "true" : "false"
+  button.dataset.icon = icon
   Object.assign(button.style, {
     display: "inline-flex",
     alignItems: "center",
@@ -751,6 +783,23 @@ function applyScreenshotTheme(session: OverlaySession, ui: AvisoThemeTokens) {
   })
 }
 
+function applyScreenshotCopy(session: OverlaySession) {
+  const t = getScreenshotI18n()
+  session.hint.textContent = t("screenshot.hint")
+  setButtonLabel(session.copyButton, t("screenshot.copyImage"))
+  setButtonLabel(session.downloadButton, t("screenshot.downloadImage"))
+  setButtonLabel(session.retryButton, t("screenshot.reselect"))
+  setButtonLabel(session.sendButton, t("common.sendToAi"))
+  setButtonLabel(session.cancelButton, t("common.cancel"))
+}
+
+function setButtonLabel(button: HTMLButtonElement, label: string) {
+  const icon = button.dataset.icon as ScreenshotButtonIcon | undefined
+  if (!icon) return
+  button.innerHTML = `${renderButtonIcon(icon)}<span>${label}</span>`
+  button.setAttribute("aria-label", label)
+}
+
 function renderButtonIcon(icon: ScreenshotButtonIcon): string {
   const paths: Record<ScreenshotButtonIcon, string> = {
     copy: '<path d="M8 8.5h7.5v8H8z"/><path d="M5 13.5V5h8.5"/>',
@@ -786,7 +835,7 @@ function loadImage(dataUrl: string): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image()
     image.onload = () => resolve(image)
-    image.onerror = () => reject(new Error("截图读取失败，请重新尝试。"))
+    image.onerror = () => reject(new Error(getScreenshotI18n()("screenshot.readFailure")))
     image.src = dataUrl
   })
 }
