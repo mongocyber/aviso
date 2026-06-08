@@ -12,6 +12,8 @@ Aviso 是一个 Chrome MV3 浏览器扩展，技术栈为 Plasmo、React 18、Ty
 
 v1.0 当前执行边界：继续保持 BYOK direct-provider、无项目方后端、无 telemetry、无 storage key 迁移；API Key 仍只保存在 encrypted `chrome.storage.local/contextai_api_keys`，非 secret 设置仍保存在 `chrome.storage.sync/contextai_settings`。截图功能当前暂停对普通用户强化展示，后续需单独决定隐藏、移除或 internal-only；当前商店截图 / promo 图片质量不达最终标准，只能作为占位草案。
 
+2026-06-08：V1-013 UI language localization 已追加为公开发布前需求，当前为 planned requirement / 未实现。目标是默认按 Chrome UI 语言显示中文或英文，并在设置里保留 `自动` / `中文` / `English` override；该设置应作为非 secret 字段继续写入现有 `chrome.storage.sync/contextai_settings`，不新增 storage key。此需求只影响 Aviso UI 文案与 Chrome 原生菜单/manifest 本地化，不改变翻译目标语言、provider 输出、BYOK direct-provider 架构、权限、依赖、backend、hosted AI、provider proxy、telemetry 或 API Key 存储边界。公开给英文用户前，需要完成实现、自动检查、manifest 权限复核和中英文 loaded-extension QA。
+
 2026-06-05：V1 basic hide screenshot entry 已做最小入口收敛。命令面板 quick actions 不再展示截图动作；双击快捷菜单不再展示截图入口；Chrome 右键菜单保留 `截图提问` 作为授权截图路径，不再作为 v1.0 BYOK 基础版商店卖点。底层截图 overlay、本地复制/下载和现有 `image_explain` 安全边界保留不变；未新增 manifest permission、host permission、依赖、backend、hosted AI、登录、额度、订阅、支付、telemetry 或 storage key 迁移。
 
 2026-06-08：截图与右键模型菜单补救已完成代码同步，待 loaded-extension focused QA。截图选区改为透明选区 + 外侧遮罩，不再用浅色填充遮挡选区内容；右键菜单 `截图提问` 去掉内部试用后缀。右键模型 radio 从固定五个模型改为读取已保存的 AI 服务配置，展示配置名和模型/接入点，勾选项跟随 `defaultProviderConfigId`；AI 服务配置、默认服务或本地 Key 变化会重建右键菜单。该调整未新增权限、依赖、provider、backend、hosted AI、provider proxy、telemetry 或 storage key；不改变 API Key 加密存储边界。

@@ -19,6 +19,7 @@ This file records the current manual QA state for the V1 core UI slices that wer
 - V1-007 Double-click dropdown shortcut
 - V1-011 Result panel title cleanup, conversation autosave, and follow-up input polish
 - V1-012 Custom template context-menu sync
+- V1-013 UI language localization, planned and not yet implemented
 
 Non-scope:
 
@@ -204,6 +205,30 @@ Local-only boundaries:
 
 Status: fixed in code; pending loaded-extension manual retest.
 
+### V1-013 UI Language Localization
+
+Current product truth:
+
+- V1-013 is a planned public-launch requirement, not implemented in the current build.
+- It is separate from the inline translation target-language selector.
+
+Expected:
+
+- Fresh install in Chinese Chrome defaults to Chinese UI.
+- Fresh install in English Chrome defaults to English UI.
+- Settings exposes `自动` / `中文` / `English`.
+- `中文` forces Chinese UI even in English Chrome.
+- `English` forces English UI even in Chinese Chrome.
+- `自动` returns to Chrome UI language resolution.
+- Popup, command palette, result panel, selection toolbar, inline translation card, double-click menu, native context menus, screenshot overlay/toolbars if kept, toasts/errors, and manifest copy if localized all use the resolved UI language.
+- Translation target language remains a separate setting and continues to control translation output only.
+
+Boundaries:
+
+- No new permission, host permission, dependency, provider route, backend, hosted AI, provider proxy, telemetry, analytics, storage key migration, API Key behavior change, or translation target-language behavior change.
+
+Status: planned; implementation and loaded-extension QA pending.
+
 ## QA Matrix
 
 | Item | Status | Notes |
@@ -239,6 +264,7 @@ Status: fixed in code; pending loaded-extension manual retest.
 | Popup AI service delete confirmation | Passed | Focused QA passed: saved config delete first enters `确定删除` / `取消`; cancel restores normal actions. Final confirm-delete was intentionally not clicked in QA; unsaved draft deletion remains direct. |
 | Popup AI service delete semantics | Fixed, partial focused QA passed | Unsaved draft deletion and saved delete confirmation UI passed. Real final-delete effects, including clearing encrypted key/metadata and default fallback, still need a safe dedicated retest if the owner wants destructive QA. |
 | Popup inline translation language labels | Fixed, pending retest | Verify `划词翻译` language labels show target-language names: `自动`, `中文`, `English`, `日本語`, `한국어`, `Español`, `Français`, `Deutsch`. |
+| V1-013 UI language localization | Planned, not implemented | After implementation, verify `自动` / `中文` / `English` across Popup, command palette, result panel, page-level cards, native context menus, toasts/errors, and manifest-facing copy where applicable. |
 | Translation card / result panel `发给 AI` copy | Passed | Focused QA passed: relevant handoff button copy is unified as `发给 AI`. |
 | Command palette auxiliary copy placement | Fixed, pending broader retest | Helper copy moved to the input-area right-side auxiliary text. Broader command palette behavior and visual polish remain pending/backlog. |
 | Global theme setting boundary | Fixed, pending retest | Verify `浅色` / `深色` / `跟随系统` persists without creating a new storage key and changes only Aviso-owned surfaces: Popup, command palette, result panel, selection toolbar, inline translation card, double-click menu, and screenshot overlay / toolbar. Host webpage `body/html` should not be restyled. In light mode, hover, dropdown, pill, footer, privacy, input, scrollbar, disabled, warning, danger, panel, button, and border states should not retain dark-theme colors. |
@@ -318,6 +344,10 @@ Status: fixed in code; pending loaded-extension manual retest.
 51. On `划词翻译`, verify the language select and row helper use `自动`, `中文`, `English`, `日本語`, `한국어`, `Español`, `Français`, `Deutsch` without changing stored setting values.
 50. On `记录`, verify `最近对话会自动保存`, clear-all, row title, summary, time, restore-on-click, and delete.
 51. On `指令`, verify custom template management is presented as 常用指令 cards with title/summary/edit/delete, and `添加常用指令` still uses the existing template behavior.
+52. After V1-013 implementation, verify `自动` in Chinese Chrome shows Chinese UI by default.
+53. After V1-013 implementation, verify `自动` in English Chrome shows English UI by default.
+54. After V1-013 implementation, switch Settings to `中文` and `English`; verify the override applies to Popup, command palette, result panel, selection toolbar, inline translation card, double-click menu, native context menus, and toasts/errors.
+55. Verify the UI language setting does not change the inline translation target-language setting or provider output language.
 
 ## Pass Criteria For This Checklist
 
@@ -338,6 +368,7 @@ Status: fixed in code; pending loaded-extension manual retest.
 - Inline translation language dropdown is not clipped by the Popup setting list and can open down/up based on available space.
 - Inline translation/result-panel handoff copy uses `发给 AI`.
 - Inline translation language labels use target-language display names in the Popup while preserving existing stored setting values.
+- V1-013 UI language localization is either still explicitly open, or implemented with Chinese/English defaults, Settings override, and surface-wide QA evidence before public English-user release.
 - Popup theme preference is stored as non-secret `appearanceTheme` in existing `contextai_settings`, with no new storage key and no API Key migration.
 - Popup theme switching does not affect webpage UI, content scripts, result panel, command palette, or page styles.
 - AI Service cards mask stored API Keys and never expose full real keys.

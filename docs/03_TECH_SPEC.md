@@ -81,6 +81,20 @@ For V2-007, `src/background/context-menus.ts` keeps translation scoped to select
 - history management
 - inline privacy explanation
 
+### UI Language Localization
+
+V1-013 is a planned public-launch requirement and is not implemented in the current build.
+
+Required technical constraints:
+
+- Default UI language resolution should use Chrome UI language for Chinese / English, such as `chrome.i18n.getUILanguage()`.
+- The Settings override should be stored as a non-secret field inside existing `chrome.storage.sync/contextai_settings`, not as a new storage key.
+- `auto` should resolve `zh-*` Chrome UI languages to Chinese UI and non-Chinese Chrome UI languages to English UI until more locales are approved.
+- The localization layer should cover Popup, command palette, floating result panel, selection toolbar, inline translation card, double-click menu, native context menus, toasts/errors, screenshot overlay/toolbars if kept, and manifest-facing copy if Chrome `_locales` is needed.
+- Changing UI language should refresh native context menus, similar to template/model menu sync.
+- UI language must stay separate from translation target-language settings and must not affect provider prompts except where user-facing UI copy is intentionally localized.
+- This requirement must not add permissions, host permissions, dependencies, provider routes, backend calls, hosted AI, provider proxy, telemetry, analytics, storage key migration, API Key behavior changes, or remote localization services.
+
 ## Message Flow
 
 1. User triggers an action through context menu, toolbar, command palette, clipboard, or history.
@@ -179,6 +193,7 @@ Current manifest permissions from `package.json`:
 - `contextMenus`
 - `activeTab`
 - `storage`
+- `history`
 - `bookmarks`
 - `clipboardWrite`
 
@@ -246,6 +261,7 @@ V2-008 improves visual consistency without changing runtime data flow:
 - V2-005 adds screenshot capture/crop timing marks and image-size/region buckets only. Raw image data, base64, page URLs, selected text, prompts, responses, and API Keys are not logged.
 - V2-007 keeps translation perf summaries on the existing redacted `[Aviso perf]` path. Translation source text is counted only by size bucket; raw text, page URL, link URL, page body, prompts, responses, screenshots, and API Keys are not logged or persisted.
 - V2-008 keeps existing perf and privacy behavior unchanged. Visual polish must not add raw-content logging, storage writes, remote calls, or telemetry.
+- V1-013 UI language localization must not log Chrome UI language, raw UI interactions, raw prompt, raw response, page content, selected text, full URL, screenshot/base64, clipboard content, provider output, or API Key, and must not send localization state to providers or remote services.
 
 ## Testing
 
@@ -255,6 +271,7 @@ Current test and manual assets:
 - V2-006 unit coverage includes copy-context formatting, body truncation, missing-field fallbacks, and manifest permission boundary checks.
 - V2-007 unit coverage includes local translation intent target extraction, translation prompt shape, translation payload input boundary, user-visible translation copy, and the unchanged manifest permission boundary.
 - V2-008 is a CSS/theme and user-visible copy polish. It is covered by type check and build; no new pure logic test was added because provider payloads, permissions, storage keys, routing, and message contracts are unchanged.
+- V1-013 should add focused coverage for locale resolution, Settings override, surface copy lookup, native context-menu rebuild trigger, and manifest permission boundary when implemented.
 - `tests/manual-test.html`: A-G manual QA fixture.
 - `tests/iframe-fixture.html`: iframe validation fixture for Hugging Face Spaces / Gradio-like embedding behavior.
 
@@ -302,6 +319,7 @@ The current `package.json` manifest permissions are:
 - `contextMenus`
 - `activeTab`
 - `storage`
+- `history`
 - `bookmarks`
 - `clipboardWrite`
 
@@ -311,7 +329,7 @@ The current `host_permissions` list contains only the approved provider hosts:
 - `https://api.anthropic.com/*`
 - `https://ark.cn-beijing.volces.com/*`
 
-The desktop v0.2 draft incorrectly treats `history`, `commands`, `scripting`, `clipboardRead`, and `tabs` as already present. They are not present in the current manifest.
+The desktop v0.2 draft incorrectly treats `commands`, `scripting`, `clipboardRead`, and `tabs` as already present. They are not present in the current manifest. `history` was later added for local command-palette browsing-history search and must remain documented as local-only.
 
 Any other new permission or host permission still requires a separate product/security decision before implementation.
 

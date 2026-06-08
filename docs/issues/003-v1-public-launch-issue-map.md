@@ -33,6 +33,7 @@ Current product truth:
 - V1-006 inline translation has a P0 implementation and passed user QA; V1-008 default model configuration state passed user QA.
 - V1-005 screenshot local action toolbar exists in code, but screenshot entry strategy is paused for ordinary users and must not be treated as store-ready.
 - V1-007 double-click dropdown shortcut now has a low-risk local MVP implementation: default-off setting, compact menu, existing action reuse, and unsafe target exclusions. This does not imply hosted AI, quota/login, subscription/payment, provider proxy, public release readiness, or loaded-extension manual QA are complete.
+- V1-013 UI language localization is now a public-launch requirement: default UI language follows Chrome UI language for Chinese / English, with a Settings override for `自动` / `中文` / `English`. This is not implemented yet and is separate from translation target-language settings.
 - V1-002 and V1-003 are decision drafts only. They are not approvals to implement backend, auth, payment, quota, hosted AI, privacy policy rewrite, manifest changes, or public release.
 - Provider host permission approval, code implementation, live validation, public claim readiness, and public release readiness must remain separate.
 
@@ -71,8 +72,9 @@ Planning conclusion:
 1. Scope cleanup: update docs, QA, and release copy to BYOK basic launch.
 2. Screenshot entry decision: hide, remove, or keep internal-only before ordinary-user QA.
 3. Basic UI QA: Popup, command palette, result panel/history, double-click menu, template context menu sync, inline translation, BYOK provider state.
-4. Store assets redo: rebuild screenshots and promo assets for the BYOK basic launch; current assets remain placeholders.
-5. Release gate: OpenAI / Anthropic native validation, final package/scan, Chrome Web Store privacy declaration, tag, and rollback point.
+4. UI language localization: default to Chrome UI language for Chinese / English and add the Settings override before final English-user QA.
+5. Store assets redo: rebuild screenshots and promo assets for the BYOK basic launch; current assets remain placeholders.
+6. Release gate: OpenAI / Anthropic native validation, final package/scan, Chrome Web Store privacy declaration, tag, and rollback point.
 
 The issue map below is retained as historical planning detail. Treat hosted AI, quota, login, subscription, payment, provider proxy, and hosted-route copy as future-state only.
 
@@ -485,6 +487,58 @@ Stop conditions:
 
 - Stop before vendor choice, production secrets, payment setup, new extension permissions, redirect routes, public pricing route, or live billing activity.
 
+### V1-013 UI Language Localization
+
+Goal:
+
+Make Aviso default to the user's Chrome UI language for Chinese / English before public release, while keeping a Settings override for `自动` / `中文` / `English`.
+
+In scope:
+
+- Add a non-secret UI language preference inside existing `chrome.storage.sync/contextai_settings`.
+- Resolve `自动` from Chrome UI language: `zh-*` shows Chinese UI; non-Chinese Chrome UI languages show English UI until more locales are approved.
+- Localize user-facing extension UI surfaces: Popup, command palette, result panel, selection toolbar, inline translation card, double-click menu, native context menus, screenshot overlay/toolbars if kept, toasts/errors, and extension manifest copy if needed.
+- Keep UI language separate from the inline translation target-language selector.
+
+Out of scope:
+
+- Translation target-language behavior, model output language, provider routing, provider prompts, backend, hosted AI, provider proxy, login, quota, subscription, payment, telemetry, analytics, permissions, host permissions, dependencies, storage key migration, or API Key handling.
+- Website localization; handle that separately if public website bilingual support becomes required.
+
+Dependencies:
+
+- Should land after the current Popup/settings IA is stable enough to host the language selector.
+- Should land before V1-009 final public release copy, screenshots, and English-user QA.
+
+Risk: Medium for UI consistency; low for privacy and permissions if kept local.
+
+Recommended execution:
+
+- Codex implementation thread with a shared i18n helper/dictionaries, focused tests, and loaded-extension QA.
+- Avoid scattering one-off copy switches across components.
+
+Acceptance criteria:
+
+- Fresh Chinese Chrome install defaults to Chinese UI.
+- Fresh English Chrome install defaults to English UI.
+- Settings exposes `自动` / `中文` / `English`, and explicit choices override Chrome UI language.
+- Native context menus update after language changes.
+- Translation target-language setting remains separate.
+- No new permission, dependency, provider, backend, hosted AI, provider proxy, telemetry, storage key migration, or API Key behavior change is introduced.
+
+Validation:
+
+- `npm test`
+- `npx tsc --noEmit`
+- `git diff --check`
+- `npm run build`
+- Inspect built manifest permissions and host permissions.
+- Loaded-extension QA for Auto / Chinese / English modes.
+
+Stop conditions:
+
+- Stop before permissions, dependencies, backend/remote localization calls, telemetry, provider calls, storage migration, public release claims, store submission, package, tag, push, or deploy.
+
 ### V1-009 Public Release Copy And Policy
 
 Goal:
@@ -493,10 +547,10 @@ Prepare final privacy policy, Chrome Web Store declarations, screenshots, releas
 
 In scope:
 
-- Early draft matrix of copy impacts from V1-002 to V1-008.
+- Early draft matrix of copy impacts from V1-002 to V1-008 and V1-013.
 - Store privacy declaration checklist.
 - Screenshot sanitization rules.
-- Release evidence checklist for hosted AI, BYOK, quota, auth, payment, screenshot, translation, command palette, and double-click.
+- Release evidence checklist for hosted AI, BYOK, quota, auth, payment, screenshot, translation, command palette, double-click, and UI language.
 
 Out of scope:
 
@@ -508,7 +562,7 @@ Out of scope:
 Dependencies:
 
 - Drafting can start early.
-- Final copy must wait for V1-002 to V1-008 implementation facts, validation evidence, final manifest, privacy approvals, and release checklist completion.
+- Final copy must wait for V1-002 to V1-008 plus V1-013 implementation facts, validation evidence, final manifest, privacy approvals, and release checklist completion.
 
 Risk: High for public trust and policy accuracy.
 
@@ -752,7 +806,7 @@ Not allowed now:
 - `/login/` or `/pricing/` production routes.
 - Store submission or production launch copy.
 
-## Recommended Merge Sequence: V1-004 To V1-009
+## Recommended Merge Sequence: V1-004 To V1-013
 
 1. V1-004 docs/contract baseline and mocked command palette states.
 2. V1-005 screenshot local copy/save states, excluding hosted send-to-AI if backend is not ready.
@@ -761,13 +815,15 @@ Not allowed now:
 5. V1-003 backend API contract docs, if not already merged; implementation only after owner confirmation.
 6. V1-003 backend/quota/auth/payment implementation slices in order: quota contract, auth, billing, extension wiring.
 7. V1-006 inline translation with mocked states first, then hosted route integration only after backend/quota/privacy gates.
-8. V1-009 public release copy and policy finalization last.
+8. V1-013 UI language localization before final English-user QA and public screenshots.
+9. V1-009 public release copy and policy finalization last.
 
 Conflict risks:
 
 - V1-004 and V1-007 may conflict on command/action naming.
 - V1-004, V1-006, and V1-008 may conflict on quota/provider state helpers.
 - V1-005 and V1-006 may conflict on overlay/card positioning and shared tokens.
+- V1-013 may touch most user-facing copy surfaces and should land after major IA churn but before screenshots and store copy.
 - V1-008 and V1-009 may conflict on settings/privacy copy.
 - Backend/auth/payment work should not merge into UI threads until contracts are stable.
 

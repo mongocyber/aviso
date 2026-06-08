@@ -24,6 +24,7 @@ This version assumes users can provide their own API Keys and understand that mo
 - Browser research often mixes selection, page, link, image, bookmark, and clipboard contexts.
 - Existing AI tools often hide where data goes or require a remote account system.
 - Long waits feel broken if the UI does not immediately show that a model request has started.
+- English Chrome users will see a mismatched Chinese-only extension experience unless Aviso follows browser UI language or offers an explicit UI language override.
 
 ## Product Goals
 
@@ -31,6 +32,7 @@ This version assumes users can provide their own API Keys and understand that mo
 - Keep the response in the current page through a floating window.
 - Keep data flow transparent: no Aviso backend, no telemetry, API Keys stored locally.
 - Keep permissions small enough for a credible public-release path.
+- Support Chinese and English UI before public release, defaulting to Chrome UI language with an explicit Settings override.
 - Provide enough internal docs and release gates to continue safely after v0.1.
 
 ## Non-Goals
@@ -52,6 +54,7 @@ This version assumes users can provide their own API Keys and understand that mo
 | Clipboard sensing | Implemented | Detects copied text, skips sensitive domains/content, and routes toast display to the top-level page. |
 | Floating window | Implemented | Shows streaming output, waiting states, copy, save, dedupe, and follow-up entry points. |
 | Popup settings | Implemented | Supports model selection, API Key entry, 豆包 endpoint, feature toggles, custom templates, history, and privacy copy. |
+| UI language localization | Planned | Public launch requirement: default to Chrome UI language for Chinese / English and keep Settings override `自动` / `中文` / `English`. Not implemented in the current build. |
 | History | Implemented | Saves result entries locally, supports search, pin, delete, and clear. |
 | Templates | Implemented | Supports add/edit/delete, context assignment, and `{{selection}}`, `{{url}}`, `{{page}}` substitution. |
 | Iframe routing | Implemented | Supports iframe toolbar, iframe context menu, iframe command shortcut bridge, top-level floating UI, and local iframe fixture. |
@@ -79,6 +82,7 @@ Before public release, Aviso still needs:
 - A fresh provider and error-behavior record for 豆包 / 火山方舟 is complete; OpenAI / Anthropic records remain open.
 - `npm run package` and the final extension zip.
 - Chrome Web Store screenshots, description, support copy, and privacy declarations.
+- UI language localization for Chinese / English Chrome users, including Settings override and loaded-extension QA.
 - Public privacy policy page consistent with Popup copy and actual implementation.
 - Git tag and rollback point.
 - Final permission and host-permission audit.

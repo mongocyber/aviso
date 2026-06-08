@@ -36,6 +36,7 @@
 - [x] V1-011 conversation autosave：结果面板标题只显示 `Aviso` 并保留动作标签；AI 结果默认自动保存为 `chrome.storage.local/contextai_history` conversation，最多保留最近 20 条；结果面板 visible 时新的划词工具栏 / 双击菜单 / 命令面板 AI 动作会追加到当前 conversation；点击“保存”保存整段 conversation；底部追问输入框支持多行自增高、Enter 发送、Shift+Enter 换行。本轮 P1 修复后，新结果打开面板时不再误显示为“已保存”；只有历史里本来 pinned/saved 的 conversation 才显示已保存。
 - [x] T1 v1-pre-qa-hardening：书签搜索日志和 meta 已脱敏为 query length / hasQuery / counts / source；保存或 pinned conversation 不再被普通最近 20 条上限静默淘汰，普通未保存记录仍只保留最近 20 条；`划词翻译` 关闭时目标语言下拉禁用；双击快捷菜单残留的 screenshot action 死代码已移除。
 - [x] V1-012 自定义模板右键菜单同步：Popup 模板新增、编辑、删除后，模板设置变化会触发 Chrome 原生右键菜单串行重建；仅默认模型变化时仍只同步模型 radio 勾选。未新增权限、依赖、provider、backend 或 storage secret。
+- [ ] V1-013 UI language localization：默认按 Chrome UI 语言显示中文或英文，并在设置里保留 `自动` / `中文` / `English` override；需覆盖 Popup、命令面板、结果面板、划词工具栏、内联翻译卡、双击菜单、原生右键菜单、Toast/error 和必要 manifest 文案。该需求尚未实现，公开给英文用户前必须补实现和 loaded-extension QA。
 
 ## 2. 手动 QA 记录
 
@@ -75,6 +76,7 @@ tests/manual-test.html
 | T1 v1-pre-qa-hardening                             | 代码通过待人工 QA | 自动检查已通过；加载扩展后需重点复看 `划词翻译` 关闭时语言下拉 disabled、双击菜单无截图入口、保存历史不会因普通最近 20 条淘汰而丢失。 |
 | V1-011 · Conversation 自动保存                     | 已修复待人工 QA | 需加载构建后验证两轮以上对话自动保存、点击保存后历史恢复完整多轮、超过 20 条删除最旧 conversation、追问输入框多行自增高；重点确认新对话打开结果面板时不会误显示为已保存。 |
 | V1-012 · 自定义模板右键菜单同步                    | 待人工 QA | 需加载构建后验证模板新增、编辑、删除后无需重装扩展，选中文字右键菜单即时出现、更新、移除对应模板。 |
+| V1-013 · UI language localization                  | 未实现 | 需实现后分别验证 `自动`、`中文`、`English`：中文 Chrome 默认中文，英文 Chrome 默认 English，手动 override 立即影响 Popup、命令面板、结果面板、页面内卡片、Toast/error 和原生右键菜单；翻译目标语言设置保持独立。 |
 
 Chrome 版本：用户未补录
 
@@ -111,6 +113,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] 2026-06-08 命令面板搜索范围修复已实现：新增 `history` 普通权限后，命令面板本地搜索 Chrome 浏览历史、Chrome 书签和 Aviso AI 对话历史；浏览历史只用于本地关键词匹配和打开 URL，不进入 AI 请求、provider、telemetry、`chrome.storage` 或远端服务。
 - [x] 2026-06-08 命令面板浏览历史搜索补充修复已实现：`chrome.history.search` 显式传入 `startTime: 0`，避免默认只搜索最近 24 小时导致较早浏览记录搜不到；结果来源标签区分为 `浏览历史`、`书签`、`AI 对话`。
 - [x] 2026-06-08 截图和右键模型菜单补救已实现：截图选区改为透明选区 + 外侧遮罩，不遮挡被框选内容；右键 `截图提问` 去掉内部试用后缀；右键模型 radio 改为读取已保存 AI 服务配置和默认配置，AI 服务配置 / 默认服务 / 本地 Key 变化时会重建菜单。
+- [ ] V1-013 UI language localization 未实现：实现时只能新增/复用现有 `chrome.storage.sync/contextai_settings` 内的非 secret UI 语言字段，不新增 storage key、manifest permission、host permission、依赖、backend、hosted AI、provider proxy、telemetry、analytics、provider route、API Key 处理或翻译目标语言行为变更。
 - [x] V2-006 复制当前上下文使用既有 `clipboardWrite` 能力，未新增 manifest permission 或 host permission；复制内容只写入用户剪贴板，不进入 provider、AI 请求、history、`chrome.storage`、文件、文档、console 或 telemetry。
 - [x] V2-007 翻译 MVP 未新增 manifest permission、host permission、provider、依赖、远端服务或第三方翻译 fallback；translate payload 只使用选区或用户输入，不把页面 URL、链接 URL 或页面正文当作翻译内容。
 - [x] V2-008 theme / panel polish 未新增 manifest permission、host permission、provider、依赖、远端服务、telemetry、cache、theme storage 设置或 `contextai_*` storage key 迁移；不改变 AI 请求 payload、provider routing、默认模型或 token 上限。
@@ -256,4 +259,5 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] V1 Popup AI 服务卡片 latest polish 已通过隔离临时 Chrome 加载 `build/chrome-mv3-prod` focused QA：外层输入框焦点、标题按钮垂直居中、已保存配置删除二次确认通过；未点击最终删除，未触发真实 provider 测试。
 - [ ] V2-005 真实 vision provider 验证仍未完成；OpenAI / Anthropic 原生 API Key 验证前，截图理解不能对外宣称 provider 已验证。
 - [ ] OpenAI / Anthropic 真实 provider 最小验证记录仍待原生 API Key 手动触发并补录；OpenAI / Anthropic 仍不可对外宣称已验证。
+- [ ] V1-013 UI language localization 仍待实现和中英文 loaded-extension QA；英文 Chrome 用户看到 English UI 前，不建议进入英文公开发布或英文商店素材定稿。
 - [x] 翻译和复制上下文能力已确认不会把缓存内容或私有网页信息写入日志、文档、截图或 release artifacts；本轮未实现翻译缓存。

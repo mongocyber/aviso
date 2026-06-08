@@ -123,4 +123,4 @@ Aviso 没有自建后端。AI 请求由浏览器扩展直接发往用户选择�
 
 ## 发布门禁
 
-发布或提交商店前，先完成 [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)。任何涉及发布凭证、商店提交、真实 API 调用或权限扩大的动作，都需要单独确认。
+发布或提交商店前，先完成 [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)。公开给英文用户前，还需要完成中文 / English UI language localization 和设置 override 验收。任何涉及发布凭证、商店提交、真实 API 调用或权限扩大的动作，都需要单独确认。

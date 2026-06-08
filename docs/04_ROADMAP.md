@@ -36,6 +36,7 @@ Aviso should move from internal dogfood to public release through evidence, not 
 - Anthropic real minimal call validation.
 - Fresh provider validation notes for 豆包 / 火山方舟 are complete through V2-004 manual single-provider validation.
 - Chrome version, OS, date, screenshots or concise evidence for manual QA.
+- UI language localization for Chinese / English Chrome users, with Settings override and loaded-extension QA.
 - `npm run package` and final zip verification.
 - Public privacy policy page.
 - Chrome Web Store screenshots, description, support copy, and permission declarations.
@@ -56,6 +57,7 @@ Aviso should move from internal dogfood to public release through evidence, not 
 | V2-006 copy current context                          | P1       | Copy title, URL, optional selection, and truncated page text as clean structured text.                                                                                   | V2-001                 | Implemented for internal dogfood; installed-extension QA completed                                             |
 | V2-007 translation MVP                               | P1       | Improve selection translation and floating-window translation output without third-party default fallback.                                                               | V2-003                 | Implemented for internal dogfood; installed-extension UI QA completed                                          |
 | V2-008 theme and Aviso panel polish                  | P2       | Improve shared visual tokens and user-facing panel naming without breaking shortcuts or iframe behavior.                                                                 | V2-001                 | Implemented for internal dogfood; loaded-extension UI QA completed                                             |
+| V1-013 UI language localization                      | P0       | Default UI language follows Chrome UI language for Chinese / English, with Settings override `自动` / `中文` / `English`.                                                | Popup/settings IA      | Planned; must complete before public English-user QA and final store screenshots                              |
 | V2-009 high-permission discovery backlog             | P3       | Separately evaluate multi-tab aggregation, tab grouping, voice input, full-page translation, YouTube subtitles, and remote-link body extraction.                         | V2-001                 | Read-only discovery / decision docs                                                                            |
 
 ### V2-002A Decision Docs
@@ -208,6 +210,7 @@ These items remain valid product ideas but should not be pulled into v0.2-alpha 
 - 2026-06-02: Marked V2-006 copy current context internal dogfood MVP implemented with installed-extension QA now completed for the internal dogfood main path.
 - 2026-06-03: Marked V2-008 theme and Aviso panel polish implemented without permission, provider, dependency, storage, or data-flow changes.
 - 2026-06-03: Recorded V2-008 loaded-extension UI QA completion for Popup, result panel, command palette, selection toolbar, Toast, screenshot cancel/confirm, copy current context, and follow-up stop waiting.
+- 2026-06-08: Added V1-013 UI language localization as a planned public-launch requirement before English-user QA and final store screenshots.
 - 2026-06-02: Recorded installed-extension QA completion for V2-004C follow-up speed guard and V2-006 copy current context based on user feedback.
 - 2026-06-02: Replaced the broad v0.2 candidate backlog with a v0.2-alpha issue map, recommended sequence, and high-permission discovery backlog.
 - 2026-06-01: Created Phase 1 roadmap from current internal dogfood baseline and release checklist.

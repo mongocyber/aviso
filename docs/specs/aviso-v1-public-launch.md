@@ -13,6 +13,7 @@ The current v1.0 basic launch direction is:
 - Keep non-secret settings in `chrome.storage.sync/contextai_settings`.
 - Do not implement or publicly imply login, subscription, payment, anonymous quota, hosted Aviso AI, provider proxy, backend fetch, remote link-body summarization, or web search.
 - Pause ordinary-user screenshot promotion until the owner decides whether screenshot entry points should be hidden, removed, or kept internal-only.
+- Add UI language localization as a public-launch requirement: default to Chrome UI language for Chinese / English, and keep a Settings override for `自动` / `中文` / `English`.
 - Treat current Chrome Web Store screenshots and promo images as placeholder drafts, not final store assets.
 
 Historical hosted-AI planning below remains useful only as future reference. It must not be used as current implementation authorization.
@@ -45,6 +46,7 @@ This overrides the earlier public-launch plan that moved Aviso from BYOK-first t
 | Double-click shortcut | Keep as default-off contextual shortcut pending manual QA. | It must not replace the selection toolbar or add provider/auth/payment behavior. |
 | Result panel and history | Keep local conversation autosave usable and bounded. | Local-only `chrome.storage.local/contextai_history`; no raw provider response or screenshot/base64 persistence. |
 | Template menus | Keep custom templates synchronized to context menus. | Non-secret settings only; no API Key migration. |
+| UI language | Default Aviso UI to Chrome UI language and allow `自动` / `中文` / `English` override in Settings. | English Chrome users must not see a Chinese-only extension UI by default. |
 | Privacy boundary | Keep public copy aligned with BYOK direct-provider and no backend. | Hosted AI/account/payment copy is not current. |
 
 ### Popup v1 Basic Settings Panel
@@ -56,6 +58,7 @@ Required `设置` tab:
 - Header shows the Aviso brand, Popup-only theme switcher (`浅色` / `深色` / `跟随系统`), and version number.
 - Theme preference is a non-secret `appearanceTheme: "light" | "dark" | "system"` field in existing `chrome.storage.sync/contextai_settings`; default is `system`.
 - Popup theme switching affects only the Popup settings panel. It must not change content scripts, result panels, command palette, or webpage styles.
+- UI language preference is a non-secret setting in existing `chrome.storage.sync/contextai_settings`; default is `auto`, resolved from Chrome UI language, with explicit `中文` and `English` overrides.
 - Current model area shows `当前模型`, provider state badge, manual test/refresh control, and a model dropdown.
 - Model dropdown only makes configured services selectable and includes an `添加 AI 服务` entry. Unconfigured or failed providers must not look available.
 - Common feature rows include `划词工具栏`, `命令面板`, `剪贴板提示`, `双击入口`, and `内联翻译`, each with title, helper copy, and a toggle. Inline translation keeps its language selector on the same row.
@@ -159,6 +162,26 @@ Translation boundaries:
 - Do not add third-party translation fallback in v1.0.
 - Full-page translation is a later design candidate and may eventually replace part of selection translation.
 
+## UI Language Requirements
+
+Aviso must not ship publicly as a Chinese-only UI in English Chrome. The v1.0 basic launch needs a small localization layer for Chinese and English UI surfaces.
+
+Required behavior:
+
+- Default setting is `自动`.
+- In `自动`, Aviso resolves UI language from Chrome UI language.
+- `zh-*` Chrome UI languages show Chinese UI.
+- Non-Chinese Chrome UI languages show English UI until additional locales are explicitly added.
+- Settings provides `自动` / `中文` / `English`.
+- Explicit `中文` or `English` overrides Chrome UI language.
+- The UI language setting is separate from the inline translation target-language setting.
+- Locale resolution applies to Popup, command palette, result panel, selection toolbar, inline translation card, double-click menu, native context menus, screenshot overlay/toolbars if kept, toasts/errors, and extension manifest copy if Chrome localization is needed.
+
+Boundaries:
+
+- Do not change provider output language or translation target-language behavior.
+- Do not add a remote localization service, provider call, telemetry, analytics, new permission, host permission, dependency, backend, hosted AI, provider proxy, storage key migration, or API Key behavior change.
+
 ## Command Palette Requirements
 
 The command palette is the future main entry point for Aviso.
@@ -261,7 +284,8 @@ The design package should include:
 | V1-006 inline selection translation | Immediate inline result, explicit enable/disable setting, target-language option, long-content routing, copy/follow-up states. | V1-001, V1-002 |
 | V1-007 double-click dropdown shortcut | Dropdown-style contextual menu and settings toggle. | V1-001 |
 | V1-008 BYOK settings cleanup | Keep existing provider config but make it advanced and clearer. | V1-001 |
-| V1-009 public release copy and policy | Privacy policy, store declarations, screenshots, support copy, release notes. | V1-002 to V1-008 |
+| V1-013 UI language localization | Default UI language follows Chrome UI language, with Settings override `自动` / `中文` / `English`. | V1-008, before V1-009 final copy |
+| V1-009 public release copy and policy | Privacy policy, store declarations, screenshots, support copy, release notes. | V1-002 to V1-008 and V1-013 |
 
 ## Acceptance Criteria For v1.0 Planning
 
@@ -271,6 +295,7 @@ The design package should include:
 - Selection translation is documented as immediate inline translation for short text, controlled by a user-facing setting and target-language option.
 - Command palette is documented as a useful local/AI entry without live quota/login/subscription claims.
 - Double-click dropdown shortcut is documented and explicitly separated from the selection toolbar.
+- UI language localization is documented as a public-launch requirement, separate from translation target-language settings.
 - Browser Session and Agent are explicitly out of v1.0.
 - Privacy and release documents keep the current no-backend BYOK data model unless a future hosted-AI decision is reopened.
 - User-facing route and access copy uses "Aviso" as the brand name and does not introduce a separate hosted-service product name.
