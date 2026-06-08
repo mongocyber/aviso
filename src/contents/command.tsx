@@ -10,7 +10,7 @@ import {
 } from "~styles/aviso"
 import type { Settings } from "~types/history"
 import type { MessageRequest, MessageResponse } from "~types/messages"
-import { parseUserIntent } from "~utils/intent"
+import { parseIntentLocally, type ParsedIntent } from "~utils/intent"
 import { resolveModelRoute, type ModelRoute } from "~utils/model-registry"
 import { getLegacyProviderFromConfigId } from "~utils/provider-configs"
 import { getSettings } from "~utils/storage"
@@ -368,7 +368,7 @@ function CommandPalette() {
     setQuery("")
   }
 
-  const handleSendToAI = async () => {
+  const handleSendToAI = (parsedIntent?: ParsedIntent) => {
     if (!query.trim()) return
     if (!aiConnection.connected) {
       setAiNotice({
@@ -382,7 +382,7 @@ function CommandPalette() {
     const requestId = `req-${Date.now()}`
     const timing = startTiming()
     setVisible(false)
-    const intent = await parseUserIntent(query)
+    const intent = parsedIntent ?? parseIntentLocally(query)
     const userMessage =
       intent.action === "translate" ? intent.target.trim() : query
     logTiming("trigger", requestId, timing, {
@@ -398,7 +398,10 @@ function CommandPalette() {
         trigger: "command-palette",
         operation: intent.action,
         userMessage,
-        timing
+        timing,
+        ...(intent.action === "translate"
+          ? { pageUrl: window.location.href }
+          : {})
       }
     })
     setQuery("")
@@ -429,7 +432,10 @@ function CommandPalette() {
       setSelectedIndex((i) => Math.max(i - 1, 0))
     } else if (e.key === "Enter") {
       e.preventDefault()
-      if (results.length > 0) {
+      const directTranslateIntent = parseIntentLocally(query)
+      if (isDirectTranslateIntent(directTranslateIntent)) {
+        handleSendToAI(directTranslateIntent)
+      } else if (results.length > 0) {
         handleSelect(results[selectedIndex])
       } else {
         handleSendToAI()
@@ -440,6 +446,9 @@ function CommandPalette() {
       setSelectionSuggestion("")
     }
   }
+
+  const isDirectTranslateIntent = (intent: ParsedIntent): boolean =>
+    intent.action === "translate" && Boolean(intent.target.trim())
 
   const handlePanelWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     const list = resultsListRef.current

@@ -220,7 +220,8 @@ async function handleMessage(
             },
             {
               requestId: request.requestId,
-              signal: abortController.signal
+              signal: abortController.signal,
+              pageUrl: request.payload.pageUrl ?? sender.tab?.url ?? sender.url
             }
           )
           sendResponse({ success: true })

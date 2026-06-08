@@ -98,6 +98,7 @@ import {
   formatTranslationError,
   formatTranslationUserBubble,
   getInlineTranslationRoute,
+  getTranslationMaxOutputTokens,
   getTranslationSourceText,
   getTranslationTargetLabel,
   INLINE_TRANSLATION_MAX_CHARS,
@@ -1829,12 +1830,39 @@ test("inline translation uses shared two-second slow hint without fake output", 
     "utf8"
   )
 
-  assert.match(toolbarSource, /const INLINE_TRANSLATION_DEBOUNCE_MS = 180/)
+  assert.match(toolbarSource, /const INLINE_TRANSLATION_DEBOUNCE_MS = 100/)
   assert.match(toolbarSource, /startInlineSlowHintTimer/)
   assert.match(toolbarSource, /shouldShowSlowResponseHint/)
   assert.match(toolbarSource, /statusText: SLOW_MODEL_RESPONSE_TEXT/)
   assert.match(toolbarSource, /card\.output \|\| card\.statusText \|\| "正在翻译\.\.\."/)
   assert.doesNotMatch(toolbarSource, /output: SLOW_MODEL_RESPONSE_TEXT/)
+})
+
+test("translation triggers avoid avoidable local waits", () => {
+  const toolbarSource = readFileSync(
+    new URL("../src/contents/toolbar.tsx", import.meta.url),
+    "utf8"
+  )
+  const commandSource = readFileSync(
+    new URL("../src/contents/command.tsx", import.meta.url),
+    "utf8"
+  )
+  const retryBlock =
+    toolbarSource.match(/const retryInlineTranslation = \(\) => \{[\s\S]*?\n  \}/)
+      ?.[0] ?? ""
+  const toolbarOperationBlock =
+    toolbarSource.match(/const handleOperation = \(op: Operation\) => \{[\s\S]*?\n  \}/)
+      ?.[0] ?? ""
+  const commandEnterBlock =
+    commandSource.match(/} else if \(e\.key === "Enter"\) \{[\s\S]*?\n    \}/)
+      ?.[0] ?? ""
+
+  assert.doesNotMatch(retryBlock, /setTimeout/)
+  assert.doesNotMatch(toolbarOperationBlock, /setTimeout/)
+  assert.match(commandSource, /parseIntentLocally/)
+  assert.match(commandSource, /isDirectTranslateIntent/)
+  assert.match(commandEnterBlock, /handleSendToAI\(directTranslateIntent\)/)
+  assert.doesNotMatch(commandSource, /await parseUserIntent/)
 })
 
 test("AI output token budgets stay small for common short operations", () => {
@@ -1846,9 +1874,59 @@ test("AI output token budgets stay small for common short operations", () => {
     aiClientSource.match(/export function getMaxOutputTokens[\s\S]*?\n\}/)?.[0] ??
     ""
 
-  assert.match(tokenBudgetBlock, /operation === "translate"\) return 512/)
+  assert.match(tokenBudgetBlock, /getTranslationMaxOutputTokens\(payload\)/)
   assert.match(tokenBudgetBlock, /operation === "polish"\) return 768/)
   assert.match(tokenBudgetBlock, /return 1024/)
+  assert.equal(
+    getTranslationMaxOutputTokens({ operation: "translate", selectionText: "hello" }),
+    128
+  )
+  assert.equal(
+    getTranslationMaxOutputTokens({
+      operation: "translate",
+      selectionText: "x".repeat(240)
+    }),
+    256
+  )
+  assert.equal(
+    getTranslationMaxOutputTokens({
+      operation: "translate",
+      selectionText: "x".repeat(700)
+    }),
+    512
+  )
+})
+
+test("short translation memory cache is service-worker only and hashed", () => {
+  const aiClientSource = readFileSync(
+    new URL("../src/background/ai-client.ts", import.meta.url),
+    "utf8"
+  )
+  const runtimeCacheSource = readFileSync(
+    new URL("../src/background/ai-runtime-cache.ts", import.meta.url),
+    "utf8"
+  )
+  const backgroundSource = readFileSync(
+    new URL("../src/background/index.ts", import.meta.url),
+    "utf8"
+  )
+  const translationCacheSource = readFileSync(
+    new URL("../src/background/translation-cache.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(translationCacheSource, /TRANSLATION_CACHE_TTL_MS/)
+  assert.match(translationCacheSource, /TRANSLATION_CACHE_MAX_SOURCE_CHARS/)
+  assert.match(translationCacheSource, /hashCacheValue\(sourceText\)/)
+  assert.match(translationCacheSource, /hashCacheValue\(pageKey\)/)
+  assert.doesNotMatch(translationCacheSource, /chrome\.storage/)
+  assert.match(runtimeCacheSource, /clearTranslationMemoryCache/)
+  assert.match(aiClientSource, /getCachedTranslation\(translationCacheKey\)/)
+  assert.match(aiClientSource, /setCachedTranslation\(translationCacheKey, translationOutput\)/)
+  assert.match(
+    backgroundSource,
+    /pageUrl: request\.payload\.pageUrl \?\? sender\.tab\?\.url \?\? sender\.url/
+  )
 })
 
 test("connectivity route 每次只解析当前 provider", () => {

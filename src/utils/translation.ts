@@ -37,6 +37,9 @@ export const TRANSLATION_EMPTY_INPUT_ERROR =
 
 export const INLINE_TRANSLATION_MAX_CHARS = 500
 export const INLINE_TRANSLATION_MAX_LINES = 8
+export const TRANSLATION_SHORT_MAX_TOKENS = 128
+export const TRANSLATION_MEDIUM_MAX_TOKENS = 256
+export const TRANSLATION_LONG_MAX_TOKENS = 512
 
 const TRANSLATION_TARGET_INSTRUCTIONS: Record<
   Exclude<TranslationTargetLanguage, "auto">,
@@ -135,6 +138,15 @@ export function buildTranslationUserContent(payload: AIRequestPayload): string {
   if (!sourceText) return ""
 
   return `待翻译文本：\n${sourceText}`
+}
+
+export function getTranslationMaxOutputTokens(
+  payload: Pick<AIRequestPayload, "operation" | "selectionText" | "userMessage">
+): number {
+  const sourceLength = getTranslationSourceText(payload as AIRequestPayload).length
+  if (sourceLength <= 120) return TRANSLATION_SHORT_MAX_TOKENS
+  if (sourceLength <= 500) return TRANSLATION_MEDIUM_MAX_TOKENS
+  return TRANSLATION_LONG_MAX_TOKENS
 }
 
 export function formatTranslationUserBubble(inputText: string): string {

@@ -94,7 +94,7 @@ const TOOLBAR_ESTIMATED_HEIGHT = 52
 const INLINE_CARD_WIDTH = 324
 const INLINE_CARD_ESTIMATED_HEIGHT = 218
 const INLINE_CARD_GAP = 12
-const INLINE_TRANSLATION_DEBOUNCE_MS = 180
+const INLINE_TRANSLATION_DEBOUNCE_MS = 100
 const SUPPRESS_SELECTION_TOOLBAR_EVENT = "aviso:suppress-selection-toolbar"
 const SELECTION_TOOLBAR_SUPPRESSION_MS = 700
 
@@ -446,11 +446,7 @@ function SelectionToolbar() {
       inlineRoute: "retry",
       selectionChars: inlineCard.sourceText.length
     })
-    inlineTimer.current = setTimeout(
-      () =>
-        sendInlineTranslationRequest(requestId, inlineCard.sourceText, timing),
-      INLINE_TRANSLATION_DEBOUNCE_MS
-    )
+    sendInlineTranslationRequest(requestId, inlineCard.sourceText, timing)
   }
 
   const copyInlineTranslation = async () => {

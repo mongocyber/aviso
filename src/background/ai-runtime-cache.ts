@@ -9,6 +9,8 @@ import {
 } from "~utils/model-registry"
 import { getApiKeys, getSettings, type ApiKeys } from "~utils/storage"
 
+import { clearTranslationMemoryCache } from "./translation-cache"
+
 type RuntimeConfigSnapshot = {
   settings: Settings
   apiKeys: ApiKeys
@@ -136,6 +138,7 @@ export function clearAIRuntimeCaches(): void {
   routeCache.clear()
   openAIClients.clear()
   anthropicClients.clear()
+  clearTranslationMemoryCache()
 }
 
 export function getAIRuntimeCacheStatsForTests() {

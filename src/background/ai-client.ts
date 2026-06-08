@@ -36,6 +36,7 @@ import {
 import {
   buildTranslationUserContent,
   buildTranslationSystemPrompt,
+  getTranslationMaxOutputTokens,
   getTranslationSourceText,
   sanitizeTranslationPayload,
   TRANSLATION_EMPTY_INPUT_ERROR,
@@ -50,6 +51,11 @@ import {
   resolveRuntimeModelRoute,
   resolveRuntimeProviderConfigRoute
 } from "./ai-runtime-cache"
+import {
+  getCachedTranslation,
+  getTranslationCacheKey,
+  setCachedTranslation
+} from "./translation-cache"
 
 export type StreamChunk = {
   text: string
@@ -158,7 +164,7 @@ export async function handleProviderConnectivityTest(
 export async function handleAIRequest(
   payload: AIRequestPayload,
   onChunk: (chunk: StreamChunk) => void,
-  options: { requestId?: string; signal?: AbortSignal } = {}
+  options: { requestId?: string; signal?: AbortSignal; pageUrl?: string } = {}
 ): Promise<void> {
   const { settings, apiKeys } = await getRuntimeConfigSnapshot()
 
@@ -188,8 +194,37 @@ export async function handleAIRequest(
     }
   }
 
+  if (payload.operation === "translate" && !getTranslationSourceText(payload)) {
+    logPreProviderPerf(payload, "openai", "translation-cache")
+    throw new Error(TRANSLATION_EMPTY_INPUT_ERROR)
+  }
+
+  const translationCacheKey = getTranslationCacheKey({
+    payload,
+    settings,
+    pageUrl: options.pageUrl
+  })
+  const cachedTranslation = getCachedTranslation(translationCacheKey)
+  if (cachedTranslation) {
+    let timing = markTiming(payload.timing, "firstChunkAt")
+    logTiming("translation_cache_hit", options.requestId ?? "unknown", timing, {
+      trigger: payload.trigger,
+      inputChars: getTranslationSourceText(payload).length
+    })
+    onChunk({ text: cachedTranslation, done: false })
+    timing = markTiming(timing, "doneAt")
+    logTiming("translation_cache_done", options.requestId ?? "unknown", timing)
+    onChunk({ text: "", done: true })
+    return
+  }
+
   const route = resolveRuntimeModelRoute(payload.model, settings)
   const imageInputBlockReason = getImageInputBlockReason(payload, route)
+  let translationOutput = ""
+  const forwardChunk = (chunk: StreamChunk) => {
+    if (translationCacheKey && chunk.text) translationOutput += chunk.text
+    onChunk(chunk)
+  }
 
   try {
     if (imageInputBlockReason) {
@@ -201,20 +236,12 @@ export async function handleAIRequest(
       )
       throw new Error(imageInputBlockReason)
     }
-    if (
-      payload.operation === "translate" &&
-      !getTranslationSourceText(payload)
-    ) {
-      logPreProviderPerf(payload, route.provider.id, route.requestModel)
-      throw new Error(TRANSLATION_EMPTY_INPUT_ERROR)
-    }
-
     if (route.provider.id === "anthropic") {
       await callAnthropic(
         route.requestModel,
         payload,
         getRouteApiKey(route, apiKeys),
-        onChunk,
+        forwardChunk,
         {
           requestId: options.requestId,
           signal: options.signal,
@@ -231,7 +258,7 @@ export async function handleAIRequest(
         route.requestModel,
         payload,
         getRouteApiKey(route, apiKeys),
-        onChunk,
+        forwardChunk,
         {
           baseURL: route.provider.baseURL,
           keyLabel: "豆包",
@@ -247,7 +274,7 @@ export async function handleAIRequest(
         route.requestModel,
         payload,
         getRouteApiKey(route, apiKeys),
-        onChunk,
+        forwardChunk,
         {
           keyLabel: route.provider.displayName,
           requestId: options.requestId,
@@ -258,6 +285,7 @@ export async function handleAIRequest(
         }
       )
     }
+    setCachedTranslation(translationCacheKey, translationOutput)
   } catch (err) {
     throw new Error(normalizeError(err))
   }
@@ -311,7 +339,7 @@ async function callOpenAI(
       payload.operation === "image_explain" && payload.srcUrl
         ? buildImageMessages(payload, "openai")
         : buildMessages(payload)
-    const maxTokens = getMaxOutputTokens(payload.operation)
+    const maxTokens = getMaxOutputTokens(payload)
     timing = markTiming(timing, "providerRequestStartedAt")
 
     logTiming("provider_request_start", requestId, timing, {
@@ -419,7 +447,7 @@ async function callAnthropic(
       payload.operation === "image_explain" && payload.srcUrl
         ? buildImageMessages(payload, "anthropic")
         : buildMessages(payload)
-    const maxTokens = getMaxOutputTokens(payload.operation)
+    const maxTokens = getMaxOutputTokens(payload)
     timing = markTiming(timing, "providerRequestStartedAt")
 
     logTiming("provider_request_start", requestId, timing, {
@@ -522,8 +550,9 @@ function resolveTemplatePromptFromTemplates(
   })
 }
 
-export function getMaxOutputTokens(operation?: string): number {
-  if (operation === "translate") return 512
+export function getMaxOutputTokens(payload: AIRequestPayload): number {
+  const operation = payload.operation
+  if (operation === "translate") return getTranslationMaxOutputTokens(payload)
   if (operation === "polish") return 768
   return 1024
 }
