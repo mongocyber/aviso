@@ -1927,7 +1927,8 @@ test("dynamic loading status rotates by operation without claiming fake tools", 
   assert.match(loadingStatusSource, /正在读取网页内容/)
   assert.match(loadingStatusSource, /正在提取页面重点/)
   assert.match(loadingStatusSource, /准备发送给模型/)
-  assert.match(loadingStatusSource, /可随时停止等待/)
+  assert.match(loadingStatusSource, /还在响应中/)
+  assert.doesNotMatch(loadingStatusSource, /可随时停止等待/)
   assert.doesNotMatch(loadingStatusSource, /正在使用工具|正在查找网页/)
 })
 
