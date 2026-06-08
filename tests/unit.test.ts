@@ -87,9 +87,16 @@ import {
 } from "../src/utils/screenshot.ts"
 import {
   hasDefaultModelChanged,
+  hasUiLanguageChanged,
   haveProviderConfigMenusChanged,
   haveTemplatesChanged
 } from "../src/utils/settings-change.ts"
+import {
+  createI18n,
+  getI18nMessage,
+  normalizeUiLanguageSetting,
+  resolveUiLanguage
+} from "../src/utils/i18n.ts"
 import { expandTemplate } from "../src/utils/template.ts"
 import {
   bucketInputSize,
@@ -225,10 +232,10 @@ test("command palette is a search panel without mock access cards", () => {
   assert.equal(commandSource.includes("buildQuickActions"), false)
   assert.equal(commandSource.includes("复制当前上下文"), false)
   assert.equal(commandSource.includes("总结当前页面"), false)
-  assert.match(commandSource, /搜索浏览历史、书签、AI 对话/)
-  assert.match(commandSource, /AI 可用/)
-  assert.match(commandSource, /AI 未连接/)
-  assert.match(commandSource, /Tab 填入/)
+  assert.match(commandSource, /t\("command\.placeholder"\)/)
+  assert.match(commandSource, /t\("command\.aiConnected"\)/)
+  assert.match(commandSource, /t\("command\.aiDisconnected"\)/)
+  assert.match(commandSource, /t\("command\.fillSelection"\)/)
 
   const inputArea =
     commandSource.match(/\{\/\* 输入框 \*\/\}[\s\S]*?<\/div>\n\n        \{\(canFillSelection \|\| aiNotice\)/)?.[0] ??
@@ -261,7 +268,7 @@ test("command palette searches browser history, bookmarks, and AI conversations"
   assert.match(commandSource, /searchBrowserHistory\(q\)/)
   assert.match(commandSource, /searchChromeBookmarks\(q\)/)
   assert.match(commandSource, /searchAvisoHistory\(q\)/)
-  assert.match(commandSource, /browser-history[\s\S]*浏览历史/)
+  assert.match(commandSource, /browser-history[\s\S]*command\.history/)
   assert.match(commandSource, /type: "browser-history"/)
   assert.match(commandSource, /type: "bookmark"/)
   assert.match(commandSource, /type: "ai-history"/)
@@ -278,9 +285,16 @@ test("popup avoids BYOK and hosted account entry copy", () => {
   assert.equal(popupSource.includes("匿名额度"), false)
   assert.equal(popupSource.includes("订阅"), false)
   assert.equal(popupSource.includes("登录"), false)
-  assert.match(popupSource, /AI 服务/)
-  assert.match(popupSource, /连接自己的 AI 服务/)
-  assert.match(popupSource, /常用指令/)
+  assert.match(popupSource, /popup\.tabs\.api/)
+  assert.match(popupSource, /popup\.addAiService/)
+  assert.match(popupSource, /popup\.templates\.title/)
+  assert.equal(getI18nMessage("popup.tabs.api", "zh-CN"), "AI 服务")
+  assert.equal(getI18nMessage("popup.addAiService", "en"), "Add AI service")
+  assert.match(
+    getI18nMessage("popup.service.helper", "en"),
+    /Connect your own AI services/
+  )
+  assert.equal(getI18nMessage("popup.templates.title", "zh-CN"), "常用指令")
 })
 
 test("popup high-fidelity settings panel keeps four tabs and local theme setting", () => {
@@ -297,27 +311,30 @@ test("popup high-fidelity settings panel keeps four tabs and local theme setting
     "utf8"
   )
 
-  assert.match(popupSource, /设置/)
-  assert.match(popupSource, /AI 服务/)
-  assert.match(popupSource, /记录/)
-  assert.match(popupSource, /指令/)
-  assert.match(popupSource, /当前模型/)
-  assert.match(popupSource, /添加 AI 服务/)
-  assert.match(popupSource, /本地可用/)
-  assert.match(popupSource, /配置和连通测试/)
+  assert.match(popupSource, /popup\.tabs\.general/)
+  assert.match(popupSource, /popup\.tabs\.api/)
+  assert.match(popupSource, /popup\.tabs\.history/)
+  assert.match(popupSource, /popup\.tabs\.templates/)
+  assert.match(popupSource, /popup\.currentModel/)
+  assert.match(popupSource, /popup\.addAiService/)
+  assert.match(popupSource, /popup\.localAvailable/)
+  assert.match(popupSource, /popup\.language\.title/)
+  assert.match(popupSource, /popup\.service\.title/)
   assert.match(popupSource, /type ProviderCardMode = "view" \| "edit" \| "add"/)
   assert.match(popupSource, /providerConfigs/)
   assert.match(popupSource, /providerConfigKeyInputs/)
   assert.match(popupSource, /addProviderConfigDraft/)
   assert.match(popupSource, /deleteProviderConfigInstance/)
-  assert.match(popupSource, /新增中/)
-  assert.match(popupSource, /未保存/)
-  assert.match(popupSource, /编辑配置/)
-  assert.match(popupSource, /删除草稿/)
-  assert.match(popupSource, /最近对话会自动保存/)
-  assert.match(popupSource, /浅色/)
-  assert.match(popupSource, /深色/)
-  assert.match(popupSource, /跟随系统/)
+  assert.match(popupSource, /popup\.provider\.status\.adding/)
+  assert.match(popupSource, /popup\.provider\.status\.unsaved/)
+  assert.match(popupSource, /popup\.service\.editConfig/)
+  assert.match(popupSource, /popup\.service\.deleteDraft/)
+  assert.match(popupSource, /popup\.history\.title/)
+  assert.equal(getI18nMessage("popup.service.title", "en"), "Configuration and connection test")
+  assert.equal(getI18nMessage("popup.history.title", "en"), "Recent chats are saved automatically")
+  assert.match(popupSource, /popup\.theme\.light/)
+  assert.match(popupSource, /popup\.theme\.dark/)
+  assert.match(popupSource, /popup\.theme\.system/)
   assert.match(typeSource, /appearanceTheme: "light" \| "dark" \| "system"/)
   assert.match(typeSource, /providerConfigs\?: ProviderConfig\[\]/)
   assert.match(typeSource, /defaultProviderConfigId\?: string/)
@@ -335,20 +352,20 @@ test("popup common features keep two-line copy and mutually exclusive selection 
     new URL("../src/popup/index.tsx", import.meta.url),
     "utf8"
   )
-  const toolbarIndex = popupSource.indexOf('"划词工具栏"')
-  const translationIndex = popupSource.indexOf('"内联翻译"')
-  const commandIndex = popupSource.indexOf('"命令面板"')
+  const toolbarIndex = popupSource.indexOf('"popup.features.selection"')
+  const translationIndex = popupSource.indexOf('"popup.features.translation"')
+  const commandIndex = popupSource.indexOf('"popup.features.command"')
 
   assert.ok(toolbarIndex > 0)
   assert.ok(translationIndex > toolbarIndex)
   assert.ok(commandIndex > translationIndex)
-  assert.equal(popupSource.includes('"划词翻译"'), false)
+  assert.equal(popupSource.includes('"内联翻译"'), false)
   assert.match(popupSource, /name="features"/)
-  assert.match(popupSource, /"selection",\s*"划词工具栏"/)
-  assert.match(popupSource, /"translate",\s*"内联翻译"/)
-  assert.match(popupSource, /"commandPanel",\s*"命令面板"/)
-  assert.match(popupSource, /"clipboard",\s*"剪贴板提示"/)
-  assert.match(popupSource, /"doubleClick",\s*"双击入口"/)
+  assert.match(popupSource, /"selection",\s*t\("popup\.features\.selection"\)/)
+  assert.match(popupSource, /"translate",\s*t\("popup\.features\.translation"\)/)
+  assert.match(popupSource, /"commandPanel",\s*t\("popup\.features\.command"\)/)
+  assert.match(popupSource, /"clipboard",\s*t\("popup\.features\.clipboard"\)/)
+  assert.match(popupSource, /"doubleClick",\s*t\("popup\.features\.doubleClick"\)/)
   assert.match(popupSource, /name="local"/)
   assert.match(popupSource, /en: "English"/)
   assert.match(popupSource, /ja: "日本語"/)
@@ -376,6 +393,80 @@ test("popup common features keep two-line copy and mutually exclusive selection 
   )
   assert.match(popupSource, /styles\.settingTitle/)
   assert.match(popupSource, /styles\.settingHelper/)
+})
+
+test("ui language resolves from Chrome language and settings override", () => {
+  assert.equal(normalizeUiLanguageSetting("bad"), "auto")
+  assert.equal(resolveUiLanguage("auto", "zh-CN"), "zh-CN")
+  assert.equal(resolveUiLanguage("auto", "zh-TW"), "zh-CN")
+  assert.equal(resolveUiLanguage("auto", "en-US"), "en")
+  assert.equal(resolveUiLanguage("zh-CN", "en-US"), "zh-CN")
+  assert.equal(resolveUiLanguage("en", "zh-CN"), "en")
+})
+
+test("ui language copy lookup keeps Chinese and English surface labels", () => {
+  const zh = createI18n("zh-CN")
+  const en = createI18n("en")
+
+  assert.equal(zh("popup.tabs.general"), "设置")
+  assert.equal(en("popup.tabs.general"), "Settings")
+  assert.equal(zh("popup.service.title"), "配置和连通测试")
+  assert.equal(en("popup.service.title"), "Configuration and connection test")
+  assert.equal(zh("popup.templates.title"), "常用指令")
+  assert.equal(en("popup.templates.title"), "Saved prompts")
+  assert.equal(zh("popup.history.title"), "最近对话会自动保存")
+  assert.equal(en("popup.history.title"), "Recent chats are saved automatically")
+  assert.equal(zh("popup.footer.privacy"), "隐私说明")
+  assert.equal(en("popup.footer.privacy"), "Privacy")
+  assert.equal(zh("popup.features.translation"), "划词翻译")
+  assert.equal(en("popup.features.translation"), "Selection translation")
+  assert.equal(en("action.translateSelection"), "Translate selection")
+  assert.equal(en("common.sendToAi"), "Send to AI")
+  assert.equal(en("translation.errorPrefix"), "Translation failed: ")
+  assert.equal(getI18nMessage("settings.language.auto", "zh-CN"), "自动")
+  assert.equal(getI18nMessage("settings.language.auto", "en"), "Auto")
+})
+
+test("popup localization keeps user saved labels and provider display names raw", () => {
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(popupSource, /\{config\.displayName\}/)
+  assert.match(popupSource, /\{template\.name\}/)
+  assert.match(popupSource, /settings\.templates\.map\(\(template\) =>/)
+  assert.match(popupSource, /getTemplateSummary\(template, t\)/)
+  assert.match(popupSource, /template\.prompt/)
+  assert.doesNotMatch(popupSource, /t\(config\.displayName\)/)
+  assert.doesNotMatch(popupSource, /t\(template\.name\)/)
+  assert.doesNotMatch(popupSource, /t\(template\.prompt\)/)
+})
+
+test("ui language setting uses existing settings object and rebuilds context menu", () => {
+  const typeSource = readFileSync(
+    new URL("../src/types/history.ts", import.meta.url),
+    "utf8"
+  )
+  const storageSource = readFileSync(
+    new URL("../src/utils/storage.ts", import.meta.url),
+    "utf8"
+  )
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+  const backgroundSource = readFileSync(
+    new URL("../src/background/index.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(typeSource, /uiLanguage: UiLanguageSetting/)
+  assert.match(storageSource, /uiLanguage: "auto"/)
+  assert.match(popupSource, /updateSetting\(\s*"uiLanguage"/)
+  assert.match(backgroundSource, /hasUiLanguageChanged\(previous, next\)/)
+  assert.equal(hasUiLanguageChanged({ uiLanguage: "auto" }, { uiLanguage: "en" }), true)
+  assert.equal(hasUiLanguageChanged({ uiLanguage: "en" }, { uiLanguage: "en" }), false)
 })
 
 test("popup language mini dropdown chooses direction instead of fixed upward only", () => {
@@ -422,10 +513,12 @@ test("popup AI service card statuses render in meta pills, not the title row", (
   assert.doesNotMatch(serviceConfigTopBlock, /默认/)
   assert.doesNotMatch(serviceConfigTopBlock, /新增中/)
   assert.doesNotMatch(serviceConfigTopBlock, /编辑中/)
-  assert.match(servicePillsBlock, /label: "默认"/)
-  assert.match(servicePillsBlock, /label: "新增中"/)
-  assert.match(servicePillsBlock, /label: "编辑中"/)
-  assert.match(servicePillsBlock, /label: "未保存"/)
+  assert.match(servicePillsBlock, /label: t\("popup\.provider\.status\.default"\)/)
+  assert.match(servicePillsBlock, /label: t\("popup\.provider\.status\.adding"\)/)
+  assert.match(servicePillsBlock, /label: t\("popup\.provider\.status\.editing"\)/)
+  assert.match(servicePillsBlock, /label: t\("popup\.provider\.status\.unsaved"\)/)
+  assert.equal(getI18nMessage("popup.provider.status.default", "en"), "Default")
+  assert.equal(getI18nMessage("popup.provider.status.adding", "zh-CN"), "新增中")
   assert.match(popupSource, /servicePills\.map\(\(pill\) =>/)
   assert.match(popupSource, /getDropdownStatusStyle\(pill\.tone, ui\)/)
 })
@@ -456,15 +549,15 @@ test("popup AI service cards use outer field focus and delete confirmation", () 
   assert.match(serviceNameBlock, /minHeight: 32/)
   assert.match(popupSource, /confirmingDeleteProviderConfigId/)
   assert.match(popupSource, /isConfirmingDelete \? \(/)
-  assert.match(popupSource, /确定删除/)
-  assert.match(popupSource, /取消/)
+  assert.match(popupSource, /popup\.service\.confirmDelete/)
+  assert.match(popupSource, /common\.cancel/)
   assert.match(
     popupSource,
     /isAdd\s*\?\s*deleteProviderConfigInstance\(config\)\s*:\s*setConfirmingDeleteProviderConfigId\(config\.id\)/
   )
   assert.match(
     popupSource,
-    /title="删除配置"[\s\S]{0,500}setConfirmingDeleteProviderConfigId\(config\.id\)/
+    /title=\{t\("popup\.service\.deleteConfig"\)\}[\s\S]{0,500}setConfirmingDeleteProviderConfigId\(config\.id\)/
   )
 })
 
@@ -500,7 +593,7 @@ test("popup draft icons and wrapping styles match settings panel reference", () 
   assert.match(popupSource, /name="trash"/)
   assert.doesNotMatch(
     popupSource,
-    /title=\{isAdd \? "删除草稿" : "删除配置"\}[\s\S]{0,500}name="close"/
+    /title=\{isAdd \? t\("popup\.service\.deleteDraft"\) : t\("popup\.service\.deleteConfig"\)\}[\s\S]{0,500}name="close"/
   )
   assert.doesNotMatch(
     popupSource,
@@ -535,8 +628,25 @@ test("inline translation card uses send-to-ai result button copy", () => {
     toolbarSource.match(/function InlineTranslationCard\([\s\S]*?\nfunction InlineCardButton/)?.[0] ??
     ""
 
-  assert.match(inlineCardBlock, /label="发给 AI"/)
+  assert.match(inlineCardBlock, /label=\{t\("common\.sendToAi"\)\}/)
   assert.doesNotMatch(inlineCardBlock, /label="结果面板"/)
+})
+
+test("inline translation error prefix follows English UI language", () => {
+  const toolbarSource = readFileSync(
+    new URL("../src/contents/toolbar.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(toolbarSource, /formatTranslationError\(error,\s*language\)/)
+  assert.match(
+    toolbarSource,
+    /formatTranslationError\(runtimeError\.message,\s*language\)/
+  )
+  assert.match(
+    toolbarSource,
+    /formatTranslationError\(response\.error as string,\s*language\)/
+  )
 })
 
 test("popup local cards keep draft icons and two-line copy", () => {
@@ -545,9 +655,9 @@ test("popup local cards keep draft icons and two-line copy", () => {
     "utf8"
   )
 
-  assert.match(popupSource, /\["copy", "复制上下文", "复制当前页"/)
-  assert.match(popupSource, /\["search", "搜索记录", "打开命令面板"/)
-  assert.match(popupSource, /"history",\s*"恢复对话",\s*"打开记录"/)
+  assert.match(popupSource, /t\("popup\.local\.copy"\)/)
+  assert.match(popupSource, /t\("popup\.local\.search"\)/)
+  assert.match(popupSource, /t\("popup\.local\.restore"\)/)
   assert.match(popupSource, /styles\.compactLocalIcon/)
   assert.match(popupSource, /styles\.compactLocalCopy/)
   assert.match(popupSource, /styles\.compactLocalTitle/)
@@ -565,9 +675,9 @@ test("popup theme tabs and scroll match draft structure", () => {
   assert.match(popupSource, /A7\.2 7\.2/)
   assert.match(popupSource, /M9 20h6/)
   assert.equal(popupSource.includes("shortLabel"), false)
-  assert.match(popupSource, /label: "浅色模式"/)
-  assert.match(popupSource, /label: "深色模式"/)
-  assert.match(popupSource, /label: "跟随系统"/)
+  assert.match(popupSource, /labelKey: "popup\.theme\.light"/)
+  assert.match(popupSource, /labelKey: "popup\.theme\.dark"/)
+  assert.match(popupSource, /labelKey: "popup\.theme\.system"/)
   assert.match(popupSource, /id="aviso-popup-shell"/)
   assert.match(popupSource, /id="aviso-popup-content"/)
   assert.match(popupSource, /#aviso-popup-shell/)
@@ -601,7 +711,7 @@ test("popup theme tabs and scroll match draft structure", () => {
   )
   assert.match(
     popupSource,
-    /borderBottomColor: tab === t \? ui\.accent : "transparent"/
+    /borderBottomColor: tab === tabId \? ui\.accent : "transparent"/
   )
   assert.doesNotMatch(popupSource, /tabBtnActive/)
 })
@@ -698,7 +808,7 @@ test("context-menu screenshot entry uses plain user-facing copy", () => {
     "utf8"
   )
 
-  assert.match(contextMenuSource, /title: "截图提问"/)
+  assert.match(contextMenuSource, /title: t\("action\.askScreenshot"\)/)
   assert.equal(contextMenuSource.includes("截图提问（内部试用）"), false)
 })
 
@@ -741,10 +851,10 @@ test("context-menu selection titles are static and keep selection payload", () =
   assert.doesNotMatch(contextMenuSource, /registerSelectionMenuPreviewUpdater/)
   assert.doesNotMatch(backgroundSource, /registerSelectionMenuPreviewUpdater/)
 
-  assert.match(contextMenuSource, /title: "解释选中文本"/)
-  assert.match(contextMenuSource, /title: "翻译选中文本"/)
-  assert.match(contextMenuSource, /title: "润色选中文本"/)
-  assert.match(contextMenuSource, /title: "总结选中文本"/)
+  assert.match(contextMenuSource, /title: t\("action\.explainSelection"\)/)
+  assert.match(contextMenuSource, /title: t\("action\.translateSelection"\)/)
+  assert.match(contextMenuSource, /title: t\("action\.polishSelection"\)/)
+  assert.match(contextMenuSource, /title: t\("action\.summarizeSelection"\)/)
   assert.match(contextMenuSource, /selectionText: info\.selectionText \?\? ""/)
 })
 
@@ -823,7 +933,7 @@ test("popup template edit replaces the current card instead of adding a second f
   )
   assert.match(
     popupSource,
-    /settings\.templates\.map\(\(t\) =>\s+draft\?\.id === t\.id \? \(\s+renderTemplateForm\(draft, t\.id\)/s
+    /settings\.templates\.map\(\(template\) =>\s+draft\?\.id === template\.id \? \(\s+renderTemplateForm\(draft, template\.id\)/s
   )
   assert.match(
     popupSource,
@@ -1130,6 +1240,14 @@ test("translation display 文案明确翻译状态和失败反馈", () => {
     formatTranslationError("翻译失败：网络错误"),
     "翻译失败：网络错误"
   )
+  assert.equal(
+    formatTranslationError("API key missing", "en"),
+    "Translation failed: API key missing"
+  )
+  assert.equal(
+    formatTranslationError("Translation failed: network error", "en"),
+    "Translation failed: network error"
+  )
 })
 
 test("translation target language prompt supports explicit targets", () => {
@@ -1368,8 +1486,10 @@ test("provider config stores last connectivity result by provider and model", ()
   assert.match(connectivitySource, /上次通过/)
   assert.match(connectivitySource, /上次失败/)
   assert.match(popupSource, /buildLastConnectivityTestSummaryMap\(configs\)/)
-  assert.match(popupSource, /上次连接测试通过/)
-  assert.match(popupSource, /上次连接测试未通过/)
+  assert.match(popupSource, /popup\.connectivity\.lastPassed/)
+  assert.match(popupSource, /popup\.connectivity\.lastFailed/)
+  assert.equal(getI18nMessage("popup.connectivity.lastPassed", "en"), "Last connection test passed")
+  assert.equal(getI18nMessage("popup.connectivity.lastFailed", "zh-CN"), "上次连接测试未通过")
 })
 
 test("provider config connectivity result invalidates on key or model changes", () => {
@@ -1441,6 +1561,20 @@ test("model availability blocks unconfigured provider keys", () => {
     status: "未配置 Key",
     tone: "danger"
   })
+
+  const englishAvailability = getModelAvailability({
+    route: resolveModelRoute("gpt-4o-mini", {}),
+    providerConfigured: {},
+    connectivityResults: {},
+    uiLanguage: "en"
+  })
+
+  assert.deepEqual(englishAvailability, {
+    disabled: true,
+    status: "Key missing",
+    tone: "danger"
+  })
+  assert.doesNotMatch(englishAvailability.status, /未配置|未测试|无效/)
 })
 
 test("model availability allows configured but untested models with status", () => {
@@ -1455,6 +1589,20 @@ test("model availability allows configured but untested models with status", () 
     status: "未测试",
     tone: "muted"
   })
+
+  const englishAvailability = getModelAvailability({
+    route: resolveModelRoute("gpt-4o", {}),
+    providerConfigured: { openai: true },
+    connectivityResults: {},
+    uiLanguage: "en"
+  })
+
+  assert.deepEqual(englishAvailability, {
+    disabled: false,
+    status: "Untested",
+    tone: "muted"
+  })
+  assert.doesNotMatch(englishAvailability.status, /未配置|未测试|无效/)
 })
 
 test("model availability disables known failed connectivity", () => {
@@ -1479,6 +1627,40 @@ test("model availability disables known failed connectivity", () => {
     status: "Key 无效",
     tone: "danger"
   })
+
+  const englishAvailability = getModelAvailability({
+    route: resolveModelRoute("gpt-4o-mini", {}),
+    providerConfigured: { openai: true },
+    connectivityResults: {
+      openai: buildConnectivityValidationSummary({
+        provider: "openai",
+        modelOrEndpoint: "gpt-4o-mini",
+        hostPermissionPresent: true,
+        result: "failure",
+        latencyNote: "failed",
+        errorCategory: "unauthorized",
+        notes: "failed"
+      })
+    },
+    uiLanguage: "en"
+  })
+
+  assert.deepEqual(englishAvailability, {
+    disabled: true,
+    status: "Invalid key",
+    tone: "danger"
+  })
+  assert.doesNotMatch(englishAvailability.status, /未配置|未测试|无效/)
+})
+
+test("popup passes UI language into legacy model availability status", () => {
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(popupSource, /const resolvedUiLanguage = resolveUiLanguage/)
+  assert.match(popupSource, /uiLanguage: resolvedUiLanguage/)
 })
 
 test("model availability handles doubao endpoint configuration", () => {
@@ -1607,6 +1789,41 @@ test("package 普通权限保持最小边界且包含 clipboardWrite 和 history
     "history",
     "storage"
   ])
+})
+
+test("manifest-facing localization uses Chrome _locales without permission expansion", () => {
+  const pkg = JSON.parse(
+    readFileSync(new URL("../package.json", import.meta.url), "utf8")
+  )
+  const zhMessages = JSON.parse(
+    readFileSync(
+      new URL("../locales/zh_CN/messages.json", import.meta.url),
+      "utf8"
+    )
+  )
+  const enMessages = JSON.parse(
+    readFileSync(new URL("../locales/en/messages.json", import.meta.url), "utf8")
+  )
+
+  assert.equal(pkg.manifest.default_locale, "zh_CN")
+  assert.equal(pkg.manifest.description, "__MSG_app_description__")
+  assert.equal(
+    pkg.manifest.commands["open-command-palette"].description,
+    "__MSG_open_command_palette_description__"
+  )
+  assert.equal(
+    zhMessages.app_description.message,
+    "智能浏览器助手，感知操作对象，就地调用 AI，浮窗展示结果。"
+  )
+  assert.equal(
+    enMessages.app_description.message,
+    "An AI browser assistant for explaining, translating, polishing, and summarizing content in place."
+  )
+  assert.equal(zhMessages.open_command_palette_description.message, "打开命令面板")
+  assert.equal(
+    enMessages.open_command_palette_description.message,
+    "Open command palette"
+  )
 })
 
 test("connectivity test payload 只包含固定公开短句，不带页面私有上下文", () => {
@@ -1953,7 +2170,7 @@ test("inline translation uses shared two-second slow hint without fake output", 
   assert.match(toolbarSource, /const INLINE_TRANSLATION_DEBOUNCE_MS = 100/)
   assert.match(toolbarSource, /startInlineSlowHintTimer/)
   assert.match(toolbarSource, /shouldShowSlowResponseHint/)
-  assert.match(toolbarSource, /statusText: SLOW_MODEL_RESPONSE_TEXT/)
+  assert.match(toolbarSource, /statusText: t\("model\.slow"\)/)
   assert.match(toolbarSource, /getDynamicLoadingStatusText/)
   assert.match(toolbarSource, /operation: "translate"/)
   assert.doesNotMatch(toolbarSource, /output: SLOW_MODEL_RESPONSE_TEXT/)
