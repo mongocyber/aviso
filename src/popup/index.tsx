@@ -2889,17 +2889,14 @@ function Popup() {
                               model: event.target.value
                             })
                           }
-                          readOnly={config.provider !== "doubao"}
                           placeholder={copy.modelPlaceholder}
                           aria-label={copy.modelLabel}
                           style={styles.configInput}
                         />
                       </label>
-                      {config.provider !== "doubao" && (
-                        <p style={{ ...styles.configHint, color: ui.text3 }}>
-                          {t("popup.service.modelHint")}
-                        </p>
-                      )}
+                      <p style={{ ...styles.configHint, color: ui.text3 }}>
+                        {t("popup.service.modelHint")}
+                      </p>
                     </>
                   )}
                   <div

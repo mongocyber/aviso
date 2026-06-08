@@ -523,6 +523,24 @@ test("popup AI service card statuses render in meta pills, not the title row", (
   assert.match(popupSource, /getDropdownStatusStyle\(pill\.tone, ui\)/)
 })
 
+test("popup provider config model ID is manually editable", () => {
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.doesNotMatch(popupSource, /readOnly=\{config\.provider !== "doubao"\}/)
+  assert.match(popupSource, /updateProviderConfigDraft\(config\.id, \{\s*model: event\.target\.value/s)
+  assert.equal(
+    getI18nMessage("popup.service.modelHint", "zh-CN"),
+    "手动填写模型 ID；Aviso 不会自动读取你的账号模型列表。"
+  )
+  assert.equal(
+    getI18nMessage("popup.service.modelHint", "en"),
+    "Enter a model ID manually. Aviso does not fetch your account model list."
+  )
+})
+
 test("popup AI service cards use outer field focus and delete confirmation", () => {
   const popupSource = readFileSync(
     new URL("../src/popup/index.tsx", import.meta.url),

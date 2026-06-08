@@ -572,8 +572,8 @@ const MESSAGES = {
     en: " configuration name"
   },
   "popup.service.modelHint": {
-    "zh-CN": "当前基础版使用内置模型列表；同一 provider 可保存多个 Key 配置。",
-    en: "The basic version uses the built-in model list. You can save multiple keys for the same provider."
+    "zh-CN": "手动填写模型 ID；Aviso 不会自动读取你的账号模型列表。",
+    en: "Enter a model ID manually. Aviso does not fetch your account model list."
   },
   "popup.service.configStatus": {
     "zh-CN": "配置状态",
