@@ -72,16 +72,6 @@ Aviso 当前不收集、不远端保存：
 - 剪贴板内容日志。
 - 远端 telemetry 或 analytics。
 
-## 当前不包含的数据能力
-
-- 项目方后端。
-- Provider proxy。
-- 账号、登录、订阅、支付、匿名额度。
-- 项目方托管 AI。
-- 联网搜索。
-- 远端链接正文抓取。
-- 第三方翻译 fallback。
-
 ## 安全维护要求
 
 - 修改权限、host permissions、API Key 存储、provider route 或真实 provider 调用前必须单独确认。

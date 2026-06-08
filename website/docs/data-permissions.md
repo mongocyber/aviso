@@ -17,7 +17,7 @@ Aviso 的权限设计遵循最小可用原则：只申请当前功能需要的�
 5. provider 返回结果后，Aviso 在当前页面浮窗中展示。
 6. 如果用户保存结果，历史记录保存在浏览器本地。
 
-Aviso 当前没有项目方后端，因此没有“发送到 Aviso 服务器”的步骤。
+AI 请求由浏览器扩展直接发送到用户选择的 provider。
 
 ## 本地数据
 
@@ -60,9 +60,9 @@ https://api.anthropic.com/*
 https://ark.cn-beijing.volces.com/*
 ```
 
-它们分别用于 OpenAI、Anthropic 和豆包 / 火山方舟 OpenAI 兼容接口。OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，但真实最小调用尚未完成验收；当前不能写成已验证 provider。
+它们分别用于 OpenAI、Anthropic 和豆包 / 火山方舟 OpenAI 兼容接口。OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，真实最小调用保持待验收状态。
 
-Aviso 当前没有为了抓取任意网页正文而申请 `http://*/*` 或 `https://*/*` 这类广域 host permission。
+当前 host permissions 保持在已批准的 provider 域名范围内。
 
 ## 敏感内容处理
 

@@ -12,7 +12,7 @@ sidebar_position: 6
 
 Aviso 是一个 Chrome 浏览器扩展。它帮助用户在当前网页中调用 AI 解释、翻译、润色、总结或处理自定义提示词。
 
-Aviso 当前没有自建后端，不提供项目方账号系统，不添加遥测，不添加分析 SDK，也不使用 Aviso 项目方服务器中转模型请求。你主动发起 AI 请求时，请求会由浏览器扩展直接发送到你选择的模型 provider。
+Aviso 采用浏览器扩展直连 provider 的方式。你主动发起 AI 请求时，请求会由浏览器扩展直接发送到你选择的模型 provider；API Key、设置和历史记录保存在浏览器扩展存储中。
 
 ## 本地保存的数据
 
@@ -59,18 +59,9 @@ Provider 连接测试只能由用户手动触发，一次只测试一个 provide
 
 Aviso 的性能摘要只输出到本地扩展 console，用于内部排查等待时间；摘要只包含固定阶段和分桶字段，不包含原文、完整 URL、图片/base64、截图、API Key、raw prompt 或 raw response，也不会发送到远端 telemetry。
 
-## 不会发送给 Aviso 的数据
+## Aviso 项目方可见数据
 
 Aviso 当前没有自建后端，因此不会把用户文本、历史、API Key、页面内容或模型请求发送到 Aviso 项目方服务器。
-
-Aviso 当前也不包含：
-
-- 遥测。
-- 分析 SDK。
-- 跟踪像素。
-- 项目方账号标识。
-- 项目方日志服务。
-- 项目方模型代理。
 
 ## API Key
 
@@ -108,19 +99,6 @@ Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文�
 
 OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，但真实最小调用尚未完成验收。当前豆包 / 火山方舟已有用户可用反馈。
 
-## 当前不包含
-
-Aviso 当前不包含：
-
-- 广域 host permission。
-- 任意远端链接正文抓取。
-- 全页 DOM 翻译。
-- Google、百度、有道等第三方翻译 fallback。
-- 多 Tab 聚合或 Tab 分组。
-- 语音输入。
-- 本地结果缓存。
-- 项目方 telemetry、analytics 或远端日志。
-
 ## 用户控制
 
 用户可以在 Aviso Popup 中：
@@ -132,6 +110,6 @@ Aviso 当前不包含：
 
 如果卸载 Aviso，Chrome 会清理该扩展的本地存储。你也可以在 provider 后台轮换或撤销不再使用的 API Key。
 
-## 当前未验收项
+## Provider 验收状态
 
-本文不会把 OpenAI / Anthropic 真实调用、Chrome Web Store 提交或公开发布写成已经完成。
+OpenAI 和 Anthropic 的真实最小调用保持在待验收状态。当前豆包 / 火山方舟已有用户可用反馈。

@@ -6,7 +6,7 @@ sidebar_position: 3
 
 # API Key 设置
 
-Aviso 使用你自己的模型 provider API Key 发起请求。Aviso 没有自建后端，也不提供项目方账号系统。
+Aviso 使用你自己的模型 provider API Key 发起请求。请求会从浏览器扩展直连你选择的 provider。
 
 ## 支持的 provider
 
@@ -15,10 +15,10 @@ Aviso 使用你自己的模型 provider API Key 发起请求。Aviso 没有自�
 | Provider | 当前状态 |
 | --- | --- |
 | 豆包 / 火山方舟 | 已有用户可用反馈。 |
-| OpenAI | 代码路径已实现，真实调用尚未正式验证。 |
-| Anthropic | 代码路径已实现，真实调用尚未正式验证。 |
+| OpenAI | 代码路径已实现，真实调用待验收。 |
+| Anthropic | 代码路径已实现，真实调用待验收。 |
 
-文档中不会把 OpenAI 或 Anthropic 写成已验证。
+OpenAI 和 Anthropic 保持待验收状态。
 
 ## 设置步骤
 
@@ -30,7 +30,7 @@ Aviso 使用你自己的模型 provider API Key 发起请求。Aviso 没有自�
 
 ## API Key 如何保存
 
-API Key 会经过 AES 加密后保存在 Chrome 的本地扩展存储中。Aviso 不会把 API Key 发送到 Aviso 自建服务器，因为当前没有 Aviso 自建服务器。
+API Key 会经过 AES 加密后保存在 Chrome 的本地扩展存储中，并用于浏览器扩展直连所选 provider。
 
 仍需理解这个边界：
 

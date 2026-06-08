@@ -6,7 +6,7 @@ sidebar_position: 8
 
 # 已知限制
 
-Aviso 当前是 v0.1 内部试用状态。以下限制是有意保守记录，不应在公开材料中省略或改写成已解决。
+Aviso 当前是 v0.1 内部试用状态。以下记录用于说明当前版本的使用边界。
 
 ## Provider 响应速度
 
@@ -47,13 +47,4 @@ Aviso 会对支持的图片 URL 或支持格式的 base64 图片数据发起解�
 - OpenAI 真实调用尚未正式验证。
 - Anthropic 真实调用尚未正式验证。
 
-不应把 OpenAI 或 Anthropic 写成已验证 provider。
-
-## 当前不包含
-
-以下事项不是当前内部试用能力：
-
-- Chrome Web Store 公开提交。
-- 项目方后端、账号、登录、订阅、支付或匿名额度。
-- 联网搜索或远端链接正文抓取。
-- OpenAI / Anthropic 已验收的真实调用记录。
+OpenAI 和 Anthropic 保持在待验收状态。

@@ -36,7 +36,7 @@ const copy = {
     docsCta: "查看文档",
     demo: "看看演示",
     privacyPolicy: "隐私政策",
-    micro: "当前尚未上架 Chrome Web Store；安装入口会先进入内部试用加载说明。",
+    micro: "当前安装入口会进入内部试用加载说明。",
     langLabel: "语言",
     mockDocLabel: "文档 · EFFECT",
     mockDocTitle: "与外部系统同步",
@@ -74,7 +74,7 @@ const copy = {
     privacyTitlePrefix: "你的 Key、设置和历史，",
     privacyTitleEmphasis: "先留在本地浏览器",
     privacyLead:
-      "Aviso 当前没有自建后端，不添加遥测，不添加分析 SDK，也不使用项目方服务器中转模型请求。用户主动触发 AI 操作时，请求会直接发送给所选 provider。",
+      "API Key、设置和历史先保存在本地浏览器。用户主动触发 AI 操作时，请求会直接发送给所选 provider。",
     privacyResearch:
       "provider 的计费、日志、滞留和数据处理规则，以用户选择的 provider 条款为准。",
     privacyCta: "阅读完整隐私政策",
@@ -101,7 +101,7 @@ const copy = {
     demo: "Watch demo",
     privacyPolicy: "Privacy policy",
     micro:
-      "Aviso is not listed in the Chrome Web Store yet; the install entry opens the internal dogfood loading guide.",
+      "The install entry opens the internal dogfood loading guide.",
     langLabel: "Language",
     mockDocLabel: "DOCS · EFFECT",
     mockDocTitle: "Synchronizing with Effects",
@@ -139,7 +139,7 @@ const copy = {
     privacyTitlePrefix: "Your keys, settings, and history ",
     privacyTitleEmphasis: "start in local browser storage",
     privacyLead:
-      "Aviso currently has no first-party backend, no telemetry, no analytics SDK, and no project-operated model relay. When you trigger an AI action, the request goes directly to the provider you choose.",
+      "API keys, settings, and history start in local browser storage. When you trigger an AI action, the request goes directly to the provider you choose.",
     privacyResearch:
       "Provider billing, logging, retention, and data handling follow the terms of the provider selected by the user.",
     privacyCta: "Read the full privacy policy",
@@ -256,8 +256,8 @@ const privacyItems = [
     icon: "key",
     zhTitle: "API Key 保存在本地浏览器",
     enTitle: "API keys are stored in the local browser",
-    zhText: "用于直连用户选择的 provider；Aviso 当前不提供项目方模型账号或中转服务。",
-    enText: "Used to connect directly to the provider you choose; Aviso does not provide a project model account or relay."
+    zhText: "用于直连用户选择的 provider；模型账号由用户自己的 provider 账户提供。",
+    enText: "Used to connect directly to the provider you choose, using your own provider account."
   },
   {
     icon: "shield",
@@ -304,39 +304,39 @@ const modelItems = [
 
 const faqs = [
   {
-    zhQ: "现在可以公开安装吗？",
-    enQ: "Can it be publicly installed now?",
-    zhA: "还不行。Aviso 当前是 v0.1 internal dogfood，尚未公开上架 Chrome Web Store。安装入口会先进入内部试用加载说明。",
+    zhQ: "当前怎么安装？",
+    enQ: "How do I install it now?",
+    zhA: "Aviso 当前是 v0.1 internal dogfood，安装入口会进入内部试用加载说明。",
     enA:
-      "Not yet. Aviso is currently v0.1 internal dogfood and is not listed in the Chrome Web Store. The install entry opens the internal loading guide."
+      "Aviso is currently v0.1 internal dogfood. The install entry opens the internal loading guide."
   },
   {
     zhQ: "使用前需要准备什么？",
     enQ: "What do I need before using it?",
-    zhA: "内部试用需要可加载的扩展构建目录，以及你自己选择的 provider API Key。Aviso 不提供项目方模型账号。",
+    zhA: "内部试用需要可加载的扩展构建目录，以及你自己选择的 provider API Key。",
     enA:
-      "Internal dogfood requires a loadable extension build and your own provider API key. Aviso does not provide a project-operated model account."
+      "Internal dogfood requires a loadable extension build and your own provider API key."
   },
   {
     zhQ: "请求会经过 Aviso 服务器吗？",
     enQ: "Do requests go through an Aviso server?",
-    zhA: "当前实现没有 Aviso 自建后端，也没有分析 SDK。用户主动触发 AI 操作时，请求会直接发送给所选 provider。",
+    zhA: "用户主动触发 AI 操作时，请求会从浏览器扩展直接发送给所选 provider。",
     enA:
-      "The current implementation has no Aviso-operated backend and no analytics SDK. When you trigger an AI action, the request goes directly to the selected provider."
+      "When you trigger an AI action, the request goes directly from the browser extension to the selected provider."
   },
   {
     zhQ: "哪些 provider 已经完成验证？",
     enQ: "Which providers have completed validation?",
-    zhA: "豆包 / 火山方舟路径已有用户可用反馈；OpenAI / Anthropic 真实调用仍是发布前验证事项，不会写成已完成状态。",
+    zhA: "豆包 / 火山方舟路径已有用户可用反馈；OpenAI / Anthropic 真实调用保持在待验收状态。",
     enA:
-      "The Doubao / Volcengine Ark path has user feedback. OpenAI / Anthropic real calls remain pre-release validation items and are not presented as completed."
+      "The Doubao / Volcengine Ark path has user feedback. OpenAI / Anthropic real calls remain pending validation."
   },
   {
-    zhQ: "会不会抓取所有网页内容？",
-    enQ: "Does it fetch every page's content?",
-    zhA: "不会按公开发布口径这样描述。当前产品只在用户主动触发时处理必要上下文，也不请求广域 host permissions 来抓取任意远端网页正文。",
+    zhQ: "网页内容如何处理？",
+    enQ: "How does it handle page content?",
+    zhA: "当前产品只在用户主动触发时处理必要上下文，并使用已批准的 provider host permissions。",
     enA:
-      "No. The current product only processes the needed context when the user triggers an action and does not request broad host permissions to fetch arbitrary remote pages."
+      "The current product processes the needed context only when the user triggers an action and uses the approved provider host permissions."
   }
 ] as const;
 

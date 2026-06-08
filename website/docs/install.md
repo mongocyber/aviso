@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # 安装
 
-Aviso 目前尚未公开上架 Chrome Web Store。当前安装说明主要面向内部试用和审核准备场景。
+当前安装说明主要面向内部试用和审核准备场景。
 
 ## 当前可用方式
 
@@ -38,11 +38,4 @@ build/chrome-mv3-prod
 - 在网页中右键，检查是否出现 Aviso 菜单。
 - Mac 使用 `Command+Shift+Space`，Windows/Linux 使用 `Ctrl+Shift+Space`，检查命令面板是否能打开。
 
-## 当前不提供的安装方式
-
-以下事项不是当前内部试用安装方式：
-
-- Chrome Web Store 公开安装入口。
-- 自动部署或发布流程。
-
-如果你是审核人员，请以“内部试用构建 + 文档草案”的状态理解当前材料。
+如果你是审核人员，请按“内部试用构建”的状态理解当前材料。
