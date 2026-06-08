@@ -13,7 +13,10 @@ import {
 import { logTiming, markTiming } from "~utils/timing"
 
 import { handleAIRequest, handleProviderConnectivityTest } from "./ai-client"
-import { clearAIRuntimeCaches } from "./ai-runtime-cache"
+import {
+  clearAIRuntimeCaches,
+  getRuntimeConfigSnapshot
+} from "./ai-runtime-cache"
 import { handleCommandQuickAction } from "./command-actions"
 import {
   copyCurrentContextFromFrame,
@@ -166,6 +169,15 @@ async function handleMessage(
       // ── toolbar / clipboard / command 触发浮窗：转发给同一 tab ────────────
       case "SHOW_FLOATING_WINDOW": {
         if (senderTabId) {
+          if (!request.payload.deferAiRequest && !request.payload.restore) {
+            void getRuntimeConfigSnapshot().catch((err) => {
+              console.warn("[Aviso] Runtime config warmup failed", {
+                requestId: request.payload.requestId,
+                error: err instanceof Error ? err.message : String(err)
+              })
+            })
+          }
+
           const result = await sendMessageToDisplayFrame(
             senderTabId,
             {

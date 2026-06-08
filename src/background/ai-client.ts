@@ -3,6 +3,7 @@ import type {
   AIRequestPayload,
   ProviderConnectivityPayload
 } from "~types/messages"
+import { applyAIContextBudget } from "~utils/ai-context"
 import { normalizeError } from "~utils/errors"
 import { assertSupportedImageSrc } from "~utils/image-src"
 import { parseIntentLocally } from "~utils/intent"
@@ -184,7 +185,7 @@ export async function handleAIRequest(
       }
     }
   }
-  payload = sanitizeTranslationPayload(payload)
+  payload = applyAIContextBudget(sanitizeTranslationPayload(payload))
   if (payload.operation === "translate" && !payload.systemPrompt) {
     payload = {
       ...payload,
@@ -670,23 +671,23 @@ function buildMessages(
 function getDefaultSystemPrompt(operation?: string): string {
   const prompts: Record<string, string> = {
     explain:
-      "你是一个专业的内容解释助手。请用清晰、简洁的中文解释用户提供的内容，必要时给出示例。",
+      "请先用一句话给出核心解释，再用简洁中文补充必要细节。避免冗长背景。",
     translate: TRANSLATION_SYSTEM_PROMPT,
     polish:
-      "你是一个专业文字润色助手。请改善用户提供文字的表达，使其更流畅、专业，保持原意不变。",
+      "请直接输出润色后的文字，保持原意不变，让表达更流畅、清楚、专业。不要添加解释。",
     summarize:
-      "你是一个内容摘要助手。请用简洁的要点总结用户提供的内容，突出核心信息。",
+      "请先给一句核心摘要，再用不超过 5 个要点总结关键信息。优先简洁。",
     intent:
       "你是一个意图解析助手。将用户输入解析为结构化指令，输出 JSON 格式：{action, target, params}。",
     image_explain:
-      "你是一个图像分析助手。请用简洁、清晰的中文描述并解释图片内容，包括主要元素、场景、文字等关键信息。",
-    search: "你是一个知识助手。请就用户的问题提供准确、相关的信息和解答。",
+      "请先用一句话说明图片或截图的核心内容，再列出关键元素、文字和可见细节。",
+    search: "请直接回答用户问题，先给结论，必要时补充要点。",
     navigate:
       "你是一个查询助手。请帮用户找到并说明其想要查找的信息，必要时给出可访问的途径或关键词。",
-    custom: "你是一个智能助手，请根据上下文帮助用户处理其问题。"
+    custom: "请直接回答用户问题，先给结论，必要时用简短要点补充。"
   }
   return (
-    prompts[operation ?? ""] ?? "你是一个智能助手，请帮助用户处理以下内容。"
+    prompts[operation ?? ""] ?? "请直接处理用户提供的内容，先给结论。"
   )
 }
 

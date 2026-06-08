@@ -1,14 +1,20 @@
 import type { MessageResponse } from "~types/messages"
+import { AI_CONTEXT_LIMITS } from "~utils/ai-context"
 import type { CommandQuickActionId } from "~utils/command-access"
 import { formatCurrentContext, truncatePageContent } from "~utils/page-content"
 import { WAITING_MODEL_RESPONSE_TEXT } from "~utils/response-guard"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
 
+import { getRuntimeConfigSnapshot } from "./ai-runtime-cache"
 import {
   sendMessageToDisplayFrame,
   sendMessageToFrame,
   TOP_FRAME_ID
 } from "./frame-router"
+import {
+  getCachedPageContent,
+  setCachedPageContent
+} from "./page-content-cache"
 
 export async function handleCommandQuickAction(
   actionId: CommandQuickActionId,
@@ -100,7 +106,14 @@ async function summarizePageQuickAction(
     frameUrl: sourceFrameUrl
   })
 
-  const displayResult = await sendMessageToDisplayFrame(
+  const runtimeWarmup = getRuntimeConfigSnapshot().catch((err) => {
+    console.warn("[Aviso] Runtime config warmup failed", {
+      requestId,
+      error: err instanceof Error ? err.message : String(err)
+    })
+  })
+
+  const displayPromise = sendMessageToDisplayFrame(
     tabId,
     {
       action: "SHOW_FLOATING_WINDOW",
@@ -122,18 +135,21 @@ async function summarizePageQuickAction(
     }
   )
 
+  const contentPromise = requestPageContentForCommandSummary(
+    tabId,
+    requestId,
+    timing,
+    sourceFrameId,
+    sourceFrameUrl,
+    pageUrl
+  )
+  const [displayResult, { pageContent, timing: contentTiming }] =
+    await Promise.all([displayPromise, contentPromise])
+  await runtimeWarmup
+
   if (displayResult.ok === false) {
     return { success: false, error: displayResult.error }
   }
-
-  const { pageContent, timing: contentTiming } =
-    await requestPageContentForCommandSummary(
-      tabId,
-      requestId,
-      timing,
-      sourceFrameId,
-      sourceFrameUrl
-    )
 
   const startResult = await sendMessageToFrame<MessageResponse>(
     tabId,
@@ -171,13 +187,30 @@ async function requestPageContentForCommandSummary(
   requestId: string,
   timing: ReturnType<typeof startTiming>,
   frameId: number,
-  frameUrl?: string
+  frameUrl?: string,
+  pageUrl?: string
 ): Promise<{ pageContent: string; timing: ReturnType<typeof startTiming> }> {
   let nextTiming = markTiming(timing, "pageContentRequestStartedAt")
   logTiming("page_content_request_start", requestId, nextTiming, {
     frameId,
     frameUrl
   })
+
+  const cachedPageContent = getCachedPageContent({
+    tabId,
+    frameId,
+    frameUrl,
+    pageUrl
+  })
+  if (cachedPageContent) {
+    nextTiming = markTiming(nextTiming, "pageContentReadyAt")
+    logTiming("page_content_cache_hit", requestId, nextTiming, {
+      frameId,
+      frameUrl,
+      sentChars: cachedPageContent.length
+    })
+    return { pageContent: cachedPageContent, timing: nextTiming }
+  }
 
   const result = await sendMessageToFrame<MessageResponse>(
     tabId,
@@ -196,7 +229,10 @@ async function requestPageContentForCommandSummary(
       | { textContent?: string }
       | undefined
     const text = data?.textContent
-    const pageContent = text ? truncatePageContent(text) : ""
+    const pageContent = text
+      ? truncatePageContent(text, AI_CONTEXT_LIMITS.pageSummaryChars)
+      : ""
+    setCachedPageContent({ tabId, frameId, frameUrl, pageUrl }, pageContent)
     nextTiming = markTiming(nextTiming, "pageContentReadyAt")
     logTiming("page_content_ready", requestId, nextTiming, {
       frameId,

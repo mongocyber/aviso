@@ -3,6 +3,10 @@ import { readFileSync } from "node:fs"
 import { test } from "node:test"
 
 import {
+  AI_CONTEXT_LIMITS,
+  applyAIContextBudget
+} from "../src/utils/ai-context.ts"
+import {
   detectType,
   isSensitive,
   isSensitiveDomain
@@ -110,6 +114,12 @@ import {
   TRANSLATION_SYSTEM_PROMPT,
   TRANSLATION_WAITING_TEXT
 } from "../src/utils/translation.ts"
+import {
+  clearPageContentMemoryCache,
+  getCachedPageContent,
+  getPageContentMemoryCacheStatsForTests,
+  setCachedPageContent
+} from "../src/background/page-content-cache.ts"
 
 test("detectType 识别 URL", () => {
   assert.equal(detectType("https://example.com/path?q=1"), "url")
@@ -1976,6 +1986,135 @@ test("AI output token budgets stay small for common short operations", () => {
     }),
     512
   )
+})
+
+test("AI context budget keeps selection requests compact", () => {
+  const payload = applyAIContextBudget({
+    operation: "explain",
+    context: "selection",
+    selectionText: "s".repeat(AI_CONTEXT_LIMITS.selectionChars + 50),
+    userMessage: "u".repeat(AI_CONTEXT_LIMITS.userMessageChars + 50),
+    priorContext: "p".repeat(AI_CONTEXT_LIMITS.priorContextChars + 50),
+    pageContent: "private page body",
+    pageUrl: "https://example.com/private"
+  })
+
+  assert.equal(payload.pageUrl, undefined)
+  assert.equal(payload.pageContent, undefined)
+  assert.match(payload.selectionText ?? "", /内容过长已截断/)
+  assert.match(payload.userMessage ?? "", /内容过长已截断/)
+  assert.match(payload.priorContext ?? "", /内容过长已截断/)
+  assert.ok(
+    (payload.selectionText?.length ?? 0) <=
+      AI_CONTEXT_LIMITS.selectionChars + "\n…（内容过长已截断）".length
+  )
+})
+
+test("AI context budget keeps page summary bounded", () => {
+  const payload = applyAIContextBudget({
+    operation: "summarize",
+    context: "page",
+    pageContent: "p".repeat(AI_CONTEXT_LIMITS.pageSummaryChars + 50),
+    priorContext: "old private conversation",
+    linkUrl: "https://example.com/link",
+    srcUrl: "https://example.com/image.png"
+  })
+
+  assert.equal(payload.priorContext, undefined)
+  assert.equal(payload.linkUrl, undefined)
+  assert.equal(payload.srcUrl, undefined)
+  assert.match(payload.pageContent ?? "", /内容过长已截断/)
+  assert.ok(
+    (payload.pageContent?.length ?? 0) <=
+      AI_CONTEXT_LIMITS.pageSummaryChars + "\n…（内容过长已截断）".length
+  )
+})
+
+test("AI prompts are concise and first-answer oriented", () => {
+  const aiClientSource = readFileSync(
+    new URL("../src/background/ai-client.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(aiClientSource, /先用一句话给出核心解释/)
+  assert.match(aiClientSource, /请直接输出润色后的文字/)
+  assert.match(aiClientSource, /先给一句核心摘要/)
+  assert.match(aiClientSource, /请直接回答用户问题，先给结论/)
+})
+
+test("page content cache is memory-only, bounded and URL-hashed", () => {
+  const pageContentCacheSource = readFileSync(
+    new URL("../src/background/page-content-cache.ts", import.meta.url),
+    "utf8"
+  )
+
+  clearPageContentMemoryCache()
+  setCachedPageContent(
+    {
+      tabId: 1,
+      frameId: 0,
+      pageUrl: "https://example.com/article#section"
+    },
+    "cached summary page content",
+    1000
+  )
+
+  assert.equal(
+    getCachedPageContent(
+      {
+        tabId: 1,
+        frameId: 0,
+        pageUrl: "https://example.com/article"
+      },
+      1500
+    ),
+    "cached summary page content"
+  )
+  assert.equal(
+    getCachedPageContent(
+      {
+        tabId: 1,
+        frameId: 0,
+        pageUrl: "https://example.com/article"
+      },
+      62_000
+    ),
+    null
+  )
+  assert.equal(getPageContentMemoryCacheStatsForTests().entryCount, 0)
+  assert.match(pageContentCacheSource, /PAGE_CONTENT_CACHE_TTL_MS = 60_000/)
+  assert.match(pageContentCacheSource, /hashCacheValue\(normalizeUrl/)
+  assert.doesNotMatch(pageContentCacheSource, /chrome\.storage/)
+})
+
+test("page summary paths parallelize page extraction and runtime warmup", () => {
+  const contextMenuSource = readFileSync(
+    new URL("../src/background/context-menus.ts", import.meta.url),
+    "utf8"
+  )
+  const commandActionsSource = readFileSync(
+    new URL("../src/background/command-actions.ts", import.meta.url),
+    "utf8"
+  )
+  const backgroundSource = readFileSync(
+    new URL("../src/background/index.ts", import.meta.url),
+    "utf8"
+  )
+  const runtimeCacheSource = readFileSync(
+    new URL("../src/background/ai-runtime-cache.ts", import.meta.url),
+    "utf8"
+  )
+
+  for (const source of [contextMenuSource, commandActionsSource]) {
+    assert.match(source, /const runtimeWarmup = getRuntimeConfigSnapshot/)
+    assert.match(source, /const displayPromise = sendMessageToDisplayFrame/)
+    assert.match(source, /const contentPromise = requestPageContent/)
+    assert.match(source, /await Promise\.all\(\[displayPromise, contentPromise\]\)/)
+    assert.match(source, /page_content_cache_hit/)
+    assert.match(source, /AI_CONTEXT_LIMITS\.pageSummaryChars/)
+  }
+  assert.match(backgroundSource, /getRuntimeConfigSnapshot\(\)\.catch/)
+  assert.match(runtimeCacheSource, /clearPageContentMemoryCache/)
 })
 
 test("short translation memory cache is service-worker only and hashed", () => {

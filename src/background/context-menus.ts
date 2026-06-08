@@ -1,4 +1,5 @@
 import type { ContextMenuContext, MessageResponse } from "~types/messages"
+import { AI_CONTEXT_LIMITS } from "~utils/ai-context"
 import {
   getTemplateParentMenuContexts,
   normalizeTemplateMenuContexts
@@ -22,11 +23,16 @@ import { WAITING_MODEL_RESPONSE_TEXT } from "~utils/response-guard"
 import { getApiKeys, getSettings, saveSettings } from "~utils/storage"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
 
+import { getRuntimeConfigSnapshot } from "./ai-runtime-cache"
 import {
   sendMessageToDisplayFrame,
   sendMessageToFrame,
   TOP_FRAME_ID
 } from "./frame-router"
+import {
+  getCachedPageContent,
+  setCachedPageContent
+} from "./page-content-cache"
 
 const MENU_ID_ROOT = "contextai-root"
 const MENU_ID_EXPLAIN = "contextai-explain"
@@ -402,6 +408,13 @@ export async function handleContextMenuClick(
       return
     }
 
+    void getRuntimeConfigSnapshot().catch((err) => {
+      console.warn("[Aviso] Runtime config warmup failed", {
+        requestId,
+        error: err instanceof Error ? err.message : String(err)
+      })
+    })
+
     await sendMessageToDisplayFrame(
       tabId,
       {
@@ -432,6 +445,13 @@ export async function handleContextMenuClick(
       frameId: sourceFrameId,
       frameUrl: sourceFrameUrl
     })
+    void getRuntimeConfigSnapshot().catch((err) => {
+      console.warn("[Aviso] Runtime config warmup failed", {
+        requestId,
+        error: err instanceof Error ? err.message : String(err)
+      })
+    })
+
     await sendMessageToDisplayFrame(
       tabId,
       {
@@ -587,7 +607,14 @@ export async function summarizePageFromFrame({
     frameUrl: sourceFrameUrl
   })
 
-  const displayResult = await sendMessageToDisplayFrame(
+  const runtimeWarmup = getRuntimeConfigSnapshot().catch((err) => {
+    console.warn("[Aviso] Runtime config warmup failed", {
+      requestId,
+      error: err instanceof Error ? err.message : String(err)
+    })
+  })
+
+  const displayPromise = sendMessageToDisplayFrame(
     tabId,
     {
       action: "SHOW_FLOATING_WINDOW",
@@ -612,13 +639,17 @@ export async function summarizePageFromFrame({
     }
   )
 
-  const { pageContent, timing: contentTiming } = await requestPageContent(
+  const contentPromise = requestPageContent(
     tabId,
     requestId,
     timing,
     sourceFrameId,
-    sourceFrameUrl
+    sourceFrameUrl,
+    sourcePageUrl
   )
+  const [displayResult, { pageContent, timing: contentTiming }] =
+    await Promise.all([displayPromise, contentPromise])
+  await runtimeWarmup
 
   if (displayResult.ok) {
     await sendMessageToFrame(
@@ -682,13 +713,30 @@ async function requestPageContent(
   requestId: string,
   timing: ReturnType<typeof startTiming>,
   frameId: number,
-  frameUrl?: string
+  frameUrl?: string,
+  pageUrl?: string
 ): Promise<{ pageContent: string; timing: ReturnType<typeof startTiming> }> {
   let nextTiming = markTiming(timing, "pageContentRequestStartedAt")
   logTiming("page_content_request_start", requestId, nextTiming, {
     frameId,
     frameUrl
   })
+
+  const cachedPageContent = getCachedPageContent({
+    tabId,
+    frameId,
+    frameUrl,
+    pageUrl
+  })
+  if (cachedPageContent) {
+    nextTiming = markTiming(nextTiming, "pageContentReadyAt")
+    logTiming("page_content_cache_hit", requestId, nextTiming, {
+      frameId,
+      frameUrl,
+      sentChars: cachedPageContent.length
+    })
+    return { pageContent: cachedPageContent, timing: nextTiming }
+  }
 
   const result = await sendMessageToFrame<MessageResponse>(
     tabId,
@@ -706,7 +754,10 @@ async function requestPageContent(
     const resp = result.response
     const data = resp?.data as { textContent?: string } | undefined
     const text = data?.textContent
-    const pageContent = text ? truncatePageContent(text) : ""
+    const pageContent = text
+      ? truncatePageContent(text, AI_CONTEXT_LIMITS.pageSummaryChars)
+      : ""
+    setCachedPageContent({ tabId, frameId, frameUrl, pageUrl }, pageContent)
     nextTiming = markTiming(nextTiming, "pageContentReadyAt")
     logTiming("page_content_ready", requestId, nextTiming, {
       frameId,

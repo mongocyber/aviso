@@ -9,6 +9,7 @@ import {
 } from "~utils/model-registry"
 import { getApiKeys, getSettings, type ApiKeys } from "~utils/storage"
 
+import { clearPageContentMemoryCache } from "./page-content-cache"
 import { clearTranslationMemoryCache } from "./translation-cache"
 
 type RuntimeConfigSnapshot = {
@@ -138,6 +139,7 @@ export function clearAIRuntimeCaches(): void {
   routeCache.clear()
   openAIClients.clear()
   anthropicClients.clear()
+  clearPageContentMemoryCache()
   clearTranslationMemoryCache()
 }
 

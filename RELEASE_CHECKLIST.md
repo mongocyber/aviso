@@ -197,6 +197,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] 已新增 V2-004C / 2026-06-07 可感知响应保护：追问上下文预算、约 2 秒慢响应提示、停止等待并忽略后续 chunk、background abort signal、`user_cancelled` 脱敏分类；真实 provider 首 token 仍不承诺稳定 2 秒内。
 - [x] 已新增 2026-06-08 请求前置准备优化：settings / API key / route 短缓存和 SDK client 复用只降低本地准备成本与“每次重新连接”的体感；真实 provider 首 token 仍可能受模型、网络、API Key 状态、provider 负载、连接复用策略和输入长度影响。
 - [x] 已新增 2026-06-08 翻译速度二次优化：短文本翻译输出预算动态下调，内联自动翻译 debounce 100ms，重试 / 命令面板翻译直发，同页同文本同目标语言短文本可在 service worker 内存缓存命中后秒回；真实 provider 首 token 仍不承诺稳定 2 秒内。
+- [x] 已新增 2026-06-08 `t_first_chunk` 本地侧优化：按功能压缩上下文，选区/自由问不再携带页面正文，页面总结正文预算收敛到 3000 字符，prompt 改为首句优先，页面总结正文使用 service worker 内存短缓存并与 runtime config 预热并行；真实 provider 首 token 仍不承诺稳定 2 秒内。
 - [x] 默认模型为较快的 `gpt-4o-mini`。
 - [x] provider 首 token 仍可能受模型、网络、API Key 状态、provider 负载和输入长度影响。
 - [x] Aviso v0.1 不承诺模型秒回；本版本不做后端中转、不扩大权限、不新增依赖、不继续重构 AI 客户端。
