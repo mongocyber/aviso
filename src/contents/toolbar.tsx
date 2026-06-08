@@ -395,8 +395,8 @@ function SelectionToolbar() {
         statusText: "",
         error:
           route.reason === "too_many_lines"
-            ? "选区行数较多，建议在结果面板中翻译。"
-            : "选区较长，建议在结果面板中翻译。",
+            ? "选区行数较多，建议点发给 AI，在对话面板中翻译。"
+            : "选区较长，建议点发给 AI，在对话面板中翻译。",
         targetLabel,
         copied: false,
         ...position
