@@ -246,9 +246,11 @@ test("command palette searches browser history, bookmarks, and AI conversations"
 
   assert.match(messageSource, /SEARCH_BROWSER_HISTORY/)
   assert.match(backgroundSource, /chrome\.history\.search/)
+  assert.match(backgroundSource, /startTime: 0/)
   assert.match(commandSource, /searchBrowserHistory\(q\)/)
   assert.match(commandSource, /searchChromeBookmarks\(q\)/)
   assert.match(commandSource, /searchAvisoHistory\(q\)/)
+  assert.match(commandSource, /browser-history[\s\S]*浏览历史/)
   assert.match(commandSource, /type: "browser-history"/)
   assert.match(commandSource, /type: "bookmark"/)
   assert.match(commandSource, /type: "ai-history"/)

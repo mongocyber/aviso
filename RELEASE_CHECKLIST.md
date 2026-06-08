@@ -109,6 +109,7 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] 2026-06-08 翻译速度二次优化已实现：翻译 `max_tokens` 按输入长度动态下调为 128 / 256 / 512；划词自动内联翻译 debounce 降为 100ms；内联翻译重试和命令面板 `翻译 xxx` 回车直发；短文本翻译缓存仅存在 service worker 内存中，cache key 使用页面 / 文本 / 目标语言 hash，设置或 Key 变化时失效。
 - [x] 2026-06-08 翻译缓存边界已核对：未新增 manifest permission、host permission、provider、第三方翻译 fallback、依赖、backend、hosted AI、provider proxy、telemetry、storage key 迁移或持久化 raw source text、raw prompt、raw response、完整 URL、页面正文、API Key。
 - [x] 2026-06-08 命令面板搜索范围修复已实现：新增 `history` 普通权限后，命令面板本地搜索 Chrome 浏览历史、Chrome 书签和 Aviso AI 对话历史；浏览历史只用于本地关键词匹配和打开 URL，不进入 AI 请求、provider、telemetry、`chrome.storage` 或远端服务。
+- [x] 2026-06-08 命令面板浏览历史搜索补充修复已实现：`chrome.history.search` 显式传入 `startTime: 0`，避免默认只搜索最近 24 小时导致较早浏览记录搜不到；结果来源标签区分为 `浏览历史`、`书签`、`AI 对话`。
 - [x] V2-006 复制当前上下文使用既有 `clipboardWrite` 能力，未新增 manifest permission 或 host permission；复制内容只写入用户剪贴板，不进入 provider、AI 请求、history、`chrome.storage`、文件、文档、console 或 telemetry。
 - [x] V2-007 翻译 MVP 未新增 manifest permission、host permission、provider、依赖、远端服务或第三方翻译 fallback；translate payload 只使用选区或用户输入，不把页面 URL、链接 URL 或页面正文当作翻译内容。
 - [x] V2-008 theme / panel polish 未新增 manifest permission、host permission、provider、依赖、远端服务、telemetry、cache、theme storage 设置或 `contextai_*` storage key 迁移；不改变 AI 请求 payload、provider routing、默认模型或 token 上限。
@@ -130,18 +131,22 @@ AI 回复速度反馈：豆包/火山方舟 API 用户确认可用；V2-004C 追
 - [x] `npm test` 通过。2026-06-08，AI 请求前置准备与连接状态体感优化后 110/110 项测试通过；仍存在既有 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
 - [x] `npm test` 通过。2026-06-08，翻译速度二次优化后 112/112 项测试通过；仍存在既有 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
 - [x] `npm test` 通过。2026-06-08，命令面板浏览历史搜索修复后 113/113 项测试通过；仍存在既有 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
+- [x] `npm test` 通过。2026-06-08，命令面板浏览历史全量时间范围补丁后 113/113 项测试通过；仍存在既有 Node `MODULE_TYPELESS_PACKAGE_JSON` 性能警告，非阻塞。
 - [x] `npx tsc --noEmit` 通过。2026-06-07，V1 Popup AI 服务卡片 latest polish 后无错误输出。
 - [x] `npx tsc --noEmit` 通过。2026-06-08，AI 请求前置准备与连接状态体感优化后无错误输出。
 - [x] `npx tsc --noEmit` 通过。2026-06-08，翻译速度二次优化后无错误输出。
 - [x] `npx tsc --noEmit` 通过。2026-06-08，命令面板浏览历史搜索修复后无错误输出。
+- [x] `npx tsc --noEmit` 通过。2026-06-08，命令面板浏览历史全量时间范围补丁后无错误输出。
 - [x] `npm run build` 通过。2026-06-07，默认沙箱内仍为已知 `Operation not permitted`，沙箱外同命令重跑通过。
 - [x] `npm run build` 通过。2026-06-08，默认沙箱内仍为已知 `Operation not permitted`，沙箱外同命令重跑通过。
 - [x] `npm run build` 通过。2026-06-08，翻译速度二次优化后默认沙箱内仍为已知 `Operation not permitted`，沙箱外同命令重跑通过。
 - [x] `npm run build` 通过。2026-06-08，命令面板浏览历史搜索修复后默认沙箱内仍为已知 `Operation not permitted`，沙箱外同命令重跑通过；构建 manifest 普通权限为 `contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`clipboardWrite`。
+- [x] `npm run build` 通过。2026-06-08，命令面板浏览历史全量时间范围补丁后默认沙箱内仍为已知 `Operation not permitted`，沙箱外同命令重跑通过。
 - [x] `git diff --check` 通过。2026-06-07，V1 Popup AI 服务卡片 latest polish 后通过。
 - [x] `git diff --check` 通过。2026-06-08，AI 请求前置准备与连接状态体感优化后通过。
 - [x] `git diff --check` 通过。2026-06-08，翻译速度二次优化后通过。
 - [x] `git diff --check` 通过。2026-06-08，命令面板浏览历史搜索修复后通过。
+- [x] `git diff --check` 通过。2026-06-08，命令面板浏览历史全量时间范围补丁后通过。
 - [x] `package.json` / lock 文件无 diff。2026-06-07，未新增依赖；构建 manifest 权限仍为 `contextMenus`、`activeTab`、`storage`、`bookmarks`、`clipboardWrite`，`host_permissions` 仍只包含 OpenAI、Anthropic、Ark 三个已批准 provider 域名。
 - [x] `package.json` / lock 文件无 diff。2026-06-08，未新增依赖；构建 manifest 权限仍为 `contextMenus`、`activeTab`、`storage`、`bookmarks`、`clipboardWrite`，`host_permissions` 仍只包含 OpenAI、Anthropic、Ark 三个已批准 provider 域名。
 - [x] `package.json` / lock 文件无 diff。2026-06-08，翻译速度二次优化未新增依赖；构建 manifest 权限仍为 `contextMenus`、`activeTab`、`storage`、`bookmarks`、`clipboardWrite`，`host_permissions` 仍只包含 OpenAI、Anthropic、Ark 三个已批准 provider 域名。

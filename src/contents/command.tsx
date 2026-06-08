@@ -59,6 +59,12 @@ const SEARCH_RESPONSE_TIMEOUT_MS = 4000
 const EMPTY_SEARCH_TEXT = "没有找到浏览历史、书签或 AI 对话"
 const SEARCH_ERROR_TEXT = "浏览历史或书签搜索失败，请检查扩展权限或重新加载扩展"
 
+function getResultTypeLabel(type: ResultItem["type"]): string {
+  if (type === "browser-history") return "浏览历史"
+  if (type === "bookmark") return "书签"
+  return "AI 对话"
+}
+
 function readSelectionSuggestion(): string {
   const text = window.getSelection()?.toString().replace(/\s+/g, " ").trim()
   if (!text) return ""
@@ -800,7 +806,7 @@ function CommandPalette() {
                     border: `1px solid ${ui.line}`,
                     color: ui.text3
                   }}>
-                  {item.type === "bookmark" ? "书签" : "AI 对话"}
+                  {getResultTypeLabel(item.type)}
                 </span>
               </div>
             ))}

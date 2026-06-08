@@ -644,6 +644,7 @@ function searchBrowserHistory(
     chrome.history.search(
       {
         text: trimmedQuery,
+        startTime: 0,
         maxResults: MAX_BROWSER_HISTORY_RESULTS
       },
       (results) => {
