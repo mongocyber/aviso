@@ -32,7 +32,8 @@
   },
   "manifest": {
     "name": "Aviso",
-    "description": "智能浏览器助手，感知操作对象，就地调用 AI，浮窗展示结果。",
+    "default_locale": "zh_CN",
+    "description": "__MSG_app_description__",
     "host_permissions": [
       "https://api.openai.com/*",
       "https://api.anthropic.com/*",
@@ -52,7 +53,7 @@
           "default": "Ctrl+Shift+Space",
           "mac": "Command+Shift+Space"
         },
-        "description": "打开命令面板"
+        "description": "__MSG_open_command_palette_description__"
       }
     }
   }
