@@ -6,7 +6,7 @@ sidebar_position: 9
 
 # Support & Feedback
 
-The Aviso support page is intended for public release use. The extension is still in listing preparation, and the official Chrome Web Store link is not available yet. This page explains what information to include in feedback and what not to send.
+The Aviso support page is intended for public release use. Version `0.1.0` has been submitted for Chrome Web Store review, and the official Chrome Web Store link is not available yet. This page explains what information to include in feedback and what not to send.
 
 ## Check Before Reporting
 

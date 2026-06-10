@@ -6,7 +6,7 @@ Updated: 2026-06-10
 
 Aviso 是一个 Chrome MV3 浏览器扩展。它把用户在网页上的当前操作对象转成可控的 AI 输入，并在页面内结果面板中展示输出。
 
-当前项目状态是 `v0.1 internal dogfood / 内部试用版`，正在进入 Chrome Web Store 上架准备 / 发布候选阶段。它用于内部试用、质量收口、上架准备和边界验证；还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
+当前项目状态是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Chrome Web Store 审核，等待审核结果。它用于内部试用、质量收口、商店审核和边界验证；还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
 
 ## 当前目标
 

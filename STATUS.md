@@ -4,7 +4,7 @@ Updated: 2026-06-10
 
 ## 结论
 
-Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，正在进入 Chrome Web Store 上架准备 / 发布候选阶段。它是一个 Chrome MV3 扩展，使用 Plasmo、React 18 和 TypeScript 构建，在网页当前上下文里通过右键菜单、划词工具栏、命令面板、剪贴板提示和页面内结果面板触发 AI 操作。
+Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Chrome Web Store 审核，正在等待审核结果。它是一个 Chrome MV3 扩展，使用 Plasmo、React 18 和 TypeScript 构建，在网页当前上下文里通过右键菜单、划词工具栏、命令面板、剪贴板提示和页面内结果面板触发 AI 操作。
 
 当前版本还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
 
@@ -28,6 +28,8 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，正在进入 Chrome 
 
 - 主线检查已通过：`git diff --check`、`npm test`、`npx tsc --noEmit`、`npm run build`、`cd website && npm run build`、`npm run package`。
 - 最终 Chrome Web Store 提交包路径：`build/chrome-mv3-prod.zip`。
+- Chrome Web Store 提交状态：已人工提交审核，Git tag 为 `v0.1.0-cws-submitted`。
+- GitHub CI：`CI` workflow 已在 `597391b` 通过。
 - 最终 manifest 已核对，普通权限和 host permissions 未扩大。
 - package zip 真实形态密钥扫描未发现 OpenAI、Anthropic、GitHub、AWS、Google、Slack 或私钥格式凭证。
 - `@mozilla/readability` 已升级到 `0.6.0`，直接运行时 DoS 审计项已移除。
@@ -85,4 +87,4 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，正在进入 Chrome 
 
 - 当前 Git 节奏由 CTO 统一收口：先保持本地 `main` 干净和检查通过，再按批次同步到远端。
 - GitHub push 只同步代码和文档历史，不等于 Chrome Web Store 发布、tag、release 或生产上线。
-- Chrome Web Store 提交、审核通过确认、正式商店链接、tag、GitHub Release 和公开发布仍需要单独人工确认。
+- Chrome Web Store 审核通过确认、正式商店链接、正式 `v0.1.0` tag、GitHub Release 和公开发布仍需要单独人工确认。

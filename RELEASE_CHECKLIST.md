@@ -2,15 +2,15 @@
 
 版本：`0.1.0`
 
-状态：`v0.1 internal dogfood / 内部试用版`，Chrome Web Store 上架准备 / 发布候选
+状态：`v0.1 internal dogfood / 内部试用版`，Chrome Web Store 已提交审核 / 待审核
 
 日期：2026-06-10
 
 ## 当前结论
 
-当前构建用于内部试用和 Chrome Web Store 上架准备。用户已验证 A-G 手动验收基本通过，豆包 / 火山方舟 API 可用。OpenAI 和 Anthropic 支持在设置中配置 API Key 和模型 ID。
+当前构建用于内部试用和 Chrome Web Store 审核。用户已验证 A-G 手动验收基本通过，豆包 / 火山方舟 API 可用。OpenAI 和 Anthropic 支持在设置中配置 API Key 和模型 ID。
 
-本清单用于记录当前内部试用质量和发布候选准备状态，不代表 Chrome Web Store 审核通过、正式上架或发布批准。
+本清单用于记录当前内部试用质量、发布候选准备和已提交审核状态，不代表 Chrome Web Store 审核通过、正式上架或发布批准。
 
 ## 功能验收
 
@@ -80,7 +80,7 @@ npm run package
 
 当前仍有公开发布级风险：Plasmo `0.90.5` 是 npm 当前最新版本，但官方 `npm audit` 仍报告其 Parcel 构建链存在 high 级审计项；`npm audit fix --force` 会把 Plasmo 降级到不适合当前项目的旧版本，因此不能自动修复。该风险主要落在本地构建工具链，不是当前扩展运行时 manifest 权限扩大，但公开提交前需要 owner 明确接受或等待 Plasmo / Parcel 上游修复。
 
-当前仍未完成公开发布级收口：CI / workflow 运行证据、Chrome Web Store 审核通过证据、正式商店链接和人工发布批准。
+当前仍未完成公开发布级收口：Chrome Web Store 审核通过证据、正式商店链接、正式 `v0.1.0` tag、GitHub Release 和人工发布批准。
 
 ## 手动 QA 记录
 
@@ -114,6 +114,7 @@ Chrome 版本、操作系统、截图或录屏未补录；当前记录只作为�
 
 - 当前状态不是公开上架。
 - 当前状态不是 Chrome Web Store 审核通过。
+- 当前状态是已提交审核 / 待审核，不是审核通过。
 - OpenAI / Anthropic 当前只描述为支持配置的 provider，不描述为可用状态。
 - 当前没有项目方后端、登录、订阅、支付、匿名额度、托管 AI、联网搜索或远端链接正文抓取。
 - GitHub push、构建通过或内部手动 QA 不等于 Chrome Web Store 发布批准。

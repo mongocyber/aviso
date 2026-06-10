@@ -4,13 +4,13 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它在当前网页内提供右键�
 
 当前版本：`0.1.0`
 
-当前状态：`v0.1 internal dogfood / 内部试用版`，正在进入 Chrome Web Store 上架准备 / 发布候选阶段
+当前状态：`v0.1 internal dogfood / 内部试用版`，已提交 Chrome Web Store 审核，等待审核结果
 
 技术栈：Plasmo、React 18、TypeScript、Chrome MV3
 
 ## 当前状态
 
-- 当前代码用于内部试用和上架准备；还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
+- 当前代码和 `0.1.0` 上传包已提交 Chrome Web Store 审核；还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
 - 主要功能已经实现，并已有用户 A-G 手动验收“基本通过”的内部记录。
 - 豆包 / 火山方舟已由用户确认可用；OpenAI / Anthropic 支持在设置中配置 API Key 和模型 ID，请求由浏览器直连用户选择的 provider。
 - UI 支持中文和英文：默认跟随 Chrome 界面语言，Popup 设置里可以手动切换。

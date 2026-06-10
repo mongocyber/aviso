@@ -5,7 +5,7 @@
 ## 当前项目事实
 
 - Aviso 是 Chrome MV3 扩展，技术栈为 Plasmo、React 18、TypeScript。
-- 当前状态是 `v0.1 internal dogfood / 内部试用版`，正在进入 Chrome Web Store 上架准备 / 发布候选阶段；还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
+- 当前状态是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Chrome Web Store 审核，等待审核结果；还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
 - 当前产品模型是 BYOK direct-provider：用户提供自己的 API Key，浏览器扩展直连模型厂商。
 - 当前没有项目方后端、provider proxy、账号、登录、订阅、支付、匿名额度、遥测、分析 SDK、远端链接正文抓取或联网搜索。
 - API Key 不明文保存，保存在 `chrome.storage.local/contextai_api_keys`；当前口令由扩展 ID 派生，属于本地加密 / 混淆级保护，不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。非敏感设置保存在 `chrome.storage.sync/contextai_settings`；本地对话历史保存在 `chrome.storage.local/contextai_history`。
@@ -54,7 +54,7 @@
 - 修改 `manifest` 权限、host permissions 或 API Key 存储逻辑。
 - 增加 provider、依赖、后端、远端服务、遥测、分析 SDK 或真实网络验证。
 - 读取、打印、记录或提交 API Key、raw prompt、raw response、私人网页正文、截图/base64、完整 URL。
-- 触发发布、tag、Chrome Web Store workflow、push 或生产部署。
+- 触发发布、tag、Chrome Web Store workflow、push 或生产部署，除非 owner 在当前任务中明确授权。
 - 把当前内部试用状态改写成公开发布状态。
 
 ## 改动纪律

@@ -12,17 +12,17 @@ Aviso is not trying to replace a full chat app. Its goal is to reduce copy-paste
 
 ## Current Status
 
-Aviso is currently version `0.1.0`. This site is the public product website and documentation, covering current capabilities, privacy boundaries, and installation guidance. The official Chrome Web Store install link is not available yet and will be updated after review approval. Core features are implemented, internal manual acceptance has a basic-pass record, and internal testing plus user feedback confirm the Doubao / Volcengine Ark path works.
+Aviso is currently version `0.1.0`. This site is the public product website and documentation, covering current capabilities, privacy boundaries, and installation guidance. Version `0.1.0` has been submitted for Chrome Web Store review. The official install link is not available yet and will be updated after review approval. Core features are implemented, internal manual acceptance has a basic-pass record, and internal testing plus user feedback confirm the Doubao / Volcengine Ark path works.
 
 Current facts:
 
 - This site describes the current product in public website form; the Chrome Web Store install link is not available yet and will be updated after review approval.
-- The current build directory is provided only to invited testers and listing-preparation maintainers.
+- Version `0.1.0` has been submitted for Chrome Web Store review. Before the official link is available, the build directory is provided only to invited testers and review-preparation maintainers.
 - Right-click menu, selection toolbar, selection translation card, command palette, double-click quick menu, clipboard prompt, in-page result panel, and Popup settings are implemented.
 - Multiple AI service configs, default service switching, editable model IDs, Chinese / English UI, and Manifest localization are implemented.
 - Internal testing and user feedback confirm the Doubao / Volcengine Ark path works.
 - OpenAI and Anthropic can be configured with an API key and model ID; actual availability depends on your key, model access, and provider status.
-- This site explains the current implemented capabilities and boundaries. It does not mean the extension has already been submitted to or approved by the Chrome Web Store.
+- This site explains the current implemented capabilities and boundaries. The extension has been submitted for review, but it has not been approved by the Chrome Web Store yet.
 
 ## Who It Is For
 

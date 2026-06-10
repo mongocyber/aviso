@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # Install
 
-Aviso documentation is public-facing, but the official Chrome Web Store install link is still in listing preparation. This page covers both the future store install path and the current loading method for invited testers and listing-preparation maintainers.
+Aviso documentation is public-facing, and version `0.1.0` has been submitted for Chrome Web Store review, but the official install link is not available yet. This page covers both the future store install path and the current loading method for invited testers and review-preparation maintainers.
 
 ## Install After Chrome Web Store Approval
 
@@ -20,13 +20,13 @@ At that point, the website homepage and navigation CTA will also point to the of
 
 ## Current Build Access
 
-Before the official store link is available, the build directory is provided only to invited testers and listing-preparation maintainers. The current production build directory is:
+Before the official store link is available, the build directory is provided only to invited testers and review-preparation maintainers. The current production build directory is:
 
 ```text
 build/chrome-mv3-prod
 ```
 
-This directory comes from the local project build and is currently used for invited testing and listing preparation. After the Chrome Web Store link is available, this page will be replaced with the official install steps.
+This directory comes from the local project build and is currently used for invited testing and review preparation. After the Chrome Web Store link is available, this page will be replaced with the official install steps.
 
 ## Load the Extension in Chrome
 
@@ -49,4 +49,4 @@ Recommended checks:
 - On Mac, use `Command+Shift+Space`; on Windows/Linux, use `Ctrl+Shift+Space`; check whether the command palette opens.
 - If the selection translation card or double-click quick menu is enabled, confirm that it appears only in normal webpage areas.
 
-Treat the current material as “listing preparation; official store link not available yet; currently verified through the build directory provided by the maintainer.”
+Treat the current material as “submitted for Chrome Web Store review; official store link not available yet; currently verified through the build directory provided by the maintainer.”
