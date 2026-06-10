@@ -4,11 +4,11 @@
 
 状态：`v0.1 internal dogfood / 内部试用版`
 
-日期：2026-06-08
+日期：2026-06-10
 
 ## 当前结论
 
-当前构建只用于内部试用。用户已验证 A-G 手动验收基本通过，豆包 / 火山方舟 API 可用。OpenAI 和 Anthropic 因当前没有可用 API Key，真实最小调用暂缓验收。
+当前构建只用于内部试用。用户已验证 A-G 手动验收基本通过，豆包 / 火山方舟 API 可用。OpenAI 和 Anthropic 支持在设置中配置 API Key 和模型 ID。
 
 本清单用于记录当前内部试用质量，不代表 Chrome Web Store 发布批准。
 
@@ -31,13 +31,13 @@
 
 截图能力仅保留在右键主动触发的内部路径中；命令面板和双击快捷菜单不展示截图入口。当前清单不把截图作为普通用户主入口或公开卖点。
 
-## Provider 验收
+## Provider 配置状态
 
 | Provider | 状态 |
 | --- | --- |
 | 豆包 / 火山方舟 | 用户确认可用。 |
-| OpenAI | Host permission 已存在；当前没有可用 API Key，真实最小调用暂缓验收。 |
-| Anthropic | Host permission 已存在；当前没有可用 API Key，真实最小调用暂缓验收。 |
+| OpenAI | 支持配置 API Key 和模型 ID。 |
+| Anthropic | 支持配置 API Key 和模型 ID。 |
 
 Provider 连接测试只能由用户在 Popup 手动触发，一次只测一个 provider，并只展示脱敏摘要。
 
@@ -64,6 +64,15 @@ npm run build
 ```
 
 检查通过只说明代码和构建基线可用；真实 Chrome 加载体验和真实 provider 调用仍以手动验收为准。
+
+## 上线前安全扫描
+
+安全扫描建议分两轮：
+
+- 官网文案、隐私政策和使用说明修改期间，可以先做轻量 secret / 敏感信息 / 权限引用扫描。
+- Chrome Web Store 提交前，等官网、隐私政策、商店素材和最终 package zip 都稳定后，再做最终依赖安全扫描、最终泄漏扫描和发布包权限核对。
+
+当前仍未完成公开发布级安全收口：依赖安全扫描、最终 package zip 泄漏扫描、CI / workflow 运行证据和人工发布批准。
 
 ## 手动 QA 记录
 
@@ -93,12 +102,10 @@ tests/manual-test.html
 
 Chrome 版本、操作系统、截图或录屏未补录；当前记录只作为内部试用记录。
 
-OpenAI / Anthropic 真实最小调用暂缓，不作为当前内部试用收口阻塞项；恢复验收需要用户提供可用 API Key 并在 Popup 手动触发连接测试。
-
 ## 禁止误判
 
 - 当前状态不是公开发布。
 - 当前状态不是 Chrome Web Store 提交。
-- OpenAI / Anthropic 还不能写成真实调用已验收；当前状态是因没有可用 API Key 暂缓。
+- OpenAI / Anthropic 当前只描述为支持配置的 provider，不描述为可用状态。
 - 当前没有项目方后端、登录、订阅、支付、匿名额度、托管 AI、联网搜索或远端链接正文抓取。
 - GitHub push、构建通过或内部手动 QA 不等于 Chrome Web Store 发布批准。

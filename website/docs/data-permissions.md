@@ -67,7 +67,7 @@ https://api.anthropic.com/*
 https://ark.cn-beijing.volces.com/*
 ```
 
-它们分别用于 OpenAI、Anthropic 和豆包 / 火山方舟 OpenAI 兼容接口。OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现；当前没有可用 API Key，真实最小调用暂缓验收。
+它们分别用于 OpenAI、Anthropic 和豆包 / 火山方舟 OpenAI 兼容接口。OpenAI 和 Anthropic 支持在设置中配置 API Key 和模型 ID，请求由浏览器扩展直连用户选择的 provider。
 
 当前 host permissions 保持在已批准的 provider 域名范围内。
 

@@ -12,7 +12,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它在当前网页内提供右键�
 
 - 当前代码用于内部试用，不是公开发布版本，也没有提交 Chrome Web Store。
 - 主要功能已经实现，并已有用户 A-G 手动验收“基本通过”的内部记录。
-- 豆包 / 火山方舟已由用户确认可用；OpenAI / Anthropic 已具备 provider host permission，但由于当前没有可用 API Key，真实最小调用暂缓验收。
+- 豆包 / 火山方舟已由用户确认可用；OpenAI / Anthropic 支持在设置中配置 API Key 和模型 ID，请求由浏览器直连用户选择的 provider。
 - UI 支持中文和英文：默认跟随 Chrome 界面语言，Popup 设置里可以手动切换。
 - Aviso 没有项目方后端、账号系统、订阅支付、匿名额度、遥测、分析 SDK、远端链接正文抓取或联网搜索。
 

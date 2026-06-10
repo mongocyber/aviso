@@ -4,8 +4,7 @@ const sidebars: SidebarsConfig = {
   guideSidebar: [
     {
       type: "doc",
-      id: "intro",
-      label: "产品介绍"
+      id: "intro"
     },
     {
       type: "category",

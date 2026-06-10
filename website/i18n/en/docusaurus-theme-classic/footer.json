@@ -1,0 +1,38 @@
+{
+  "link.title.开始使用": {
+    "message": "Get Started",
+    "description": "The title of the footer links column with title=开始使用 in the footer"
+  },
+  "link.title.隐私与发布": {
+    "message": "Privacy & Release",
+    "description": "The title of the footer links column with title=隐私与发布 in the footer"
+  },
+  "link.item.label.产品介绍": {
+    "message": "Product Intro",
+    "description": "The label of footer link with label=产品介绍 linking to /docs/intro"
+  },
+  "link.item.label.安装 Aviso": {
+    "message": "Install Aviso",
+    "description": "The label of footer link with label=安装 Aviso linking to /docs/install"
+  },
+  "link.item.label.首次使用": {
+    "message": "First Use",
+    "description": "The label of footer link with label=首次使用 linking to /docs/first-use"
+  },
+  "link.item.label.隐私政策": {
+    "message": "Privacy Policy",
+    "description": "The label of footer link with label=隐私政策 linking to /docs/privacy-policy"
+  },
+  "link.item.label.数据与权限": {
+    "message": "Data & Permissions",
+    "description": "The label of footer link with label=数据与权限 linking to /docs/data-permissions"
+  },
+  "link.item.label.已知限制": {
+    "message": "Known Limitations",
+    "description": "The label of footer link with label=已知限制 linking to /docs/known-limitations"
+  },
+  "copyright": {
+    "message": "Copyright © 2026 Aviso. Public product documentation.",
+    "description": "The footer copyright"
+  }
+}

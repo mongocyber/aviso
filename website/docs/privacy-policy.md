@@ -6,7 +6,7 @@ sidebar_position: 6
 
 # 隐私政策
 
-本文说明 Aviso 当前内部试用版的数据流和权限边界。
+本文说明 Aviso 当前版本的数据流和权限边界。
 
 ## 概述
 
@@ -99,7 +99,7 @@ https://ark.cn-beijing.volces.com/*
 
 Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文。
 
-OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，但由于当前没有可用 API Key，真实最小调用暂缓验收。当前豆包 / 火山方舟已有用户可用反馈。
+OpenAI 和 Anthropic 支持在设置中配置 API Key 和模型 ID；请求由浏览器扩展直连用户选择的 provider。当前豆包 / 火山方舟已有用户可用反馈。
 
 ## 用户控制
 
@@ -118,4 +118,4 @@ OpenAI 和 Anthropic 的 host permission 已在扩展 manifest 中实现，但�
 
 ## Provider 验收状态
 
-OpenAI 和 Anthropic 的真实最小调用因当前没有可用 API Key 暂缓验收，不作为当前内部试用收口阻塞项。当前豆包 / 火山方舟已有用户可用反馈。
+Aviso 支持配置 OpenAI、Anthropic 和豆包 / 火山方舟。用户可以在设置中填写自己的 API Key、模型 ID 或接入点；请求由浏览器扩展直连用户选择的 provider。

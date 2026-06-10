@@ -1,0 +1,18 @@
+{
+  "version.label": {
+    "message": "Next",
+    "description": "The label for version current"
+  },
+  "sidebar.guideSidebar.category.开始使用": {
+    "message": "Get Started",
+    "description": "The label for category '开始使用' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.功能与边界": {
+    "message": "Features & Boundaries",
+    "description": "The label for category '功能与边界' in sidebar 'guideSidebar'"
+  },
+  "sidebar.guideSidebar.category.信任与支持": {
+    "message": "Trust & Support",
+    "description": "The label for category '信任与支持' in sidebar 'guideSidebar'"
+  }
+}

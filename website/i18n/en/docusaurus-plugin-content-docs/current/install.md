@@ -1,0 +1,52 @@
+---
+title: Install
+description: Current installation guidance for the Aviso Chrome extension.
+sidebar_position: 2
+---
+
+# Install
+
+Aviso documentation is public-facing, but the official Chrome Web Store install link is still in submission preparation. This page covers both the future store install path and the current testing / review loading method.
+
+## Install After Chrome Web Store Approval
+
+After the Chrome Web Store listing is approved, this page will be updated with the official store link and final install steps. For now, no fake store URL is shown:
+
+```text
+Chrome Web Store official link: pending approval
+```
+
+At that point, the website homepage and navigation CTA will also point to the official store listing.
+
+## Current Testing / Review Loading Method
+
+Before the official store link is available, testers and reviewers load the extension from a build directory. The current production build directory is:
+
+```text
+build/chrome-mv3-prod
+```
+
+This directory comes from the local project build and is currently used for testing / review loading.
+
+## Load the Extension in Chrome
+
+1. Open Chrome.
+2. Go to `chrome://extensions/`.
+3. Turn on “Developer mode” in the top-right corner.
+4. Click “Load unpacked”.
+5. Select the provided `build/chrome-mv3-prod` directory.
+6. Confirm that Aviso appears in the extensions list.
+
+After installation, Aviso appears in the Chrome toolbar. From the Popup you can set UI language, theme, default model, AI service configs, API keys, feature switches, local history, and custom templates.
+
+## Check After Installing
+
+Recommended checks:
+
+- Open the Aviso Popup and confirm that model and API key settings are visible.
+- Open a normal webpage, select text, and check whether the selection toolbar appears.
+- Right-click on a webpage and check whether the Aviso menu appears.
+- On Mac, use `Command+Shift+Space`; on Windows/Linux, use `Ctrl+Shift+Space`; check whether the command palette opens.
+- If the selection translation card or double-click quick menu is enabled, confirm that it appears only in normal webpage areas.
+
+If you are a reviewer, treat the current material as “store pending; currently verified by manually loading the build directory.”

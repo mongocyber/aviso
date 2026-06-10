@@ -1,555 +1,610 @@
 import Link from "@docusaurus/Link";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import useBaseUrl from "@docusaurus/useBaseUrl";
 import Layout from "@theme/Layout";
-import {useEffect, useState} from "react";
-import {createPortal} from "react-dom";
+import {useEffect, useMemo, useState} from "react";
 
 type Lang = "zh" | "en";
+
 type IconName =
-  | "bookmark"
-  | "check"
-  | "close"
+  | "explain"
+  | "translate"
+  | "refine"
+  | "summarize"
+  | "send"
   | "command"
   | "copy"
-  | "history"
-  | "key"
-  | "model"
-  | "more"
-  | "refine"
   | "save"
-  | "send"
+  | "close"
+  | "settings"
+  | "model"
+  | "key"
+  | "network"
   | "shield"
-  | "spark"
-  | "summary";
+  | "more"
+  | "bookmark"
+  | "sliders"
+  | "check"
+  | "camera"
+  | "history"
+  | "continue";
+
+const iconPaths: Record<IconName, string> = {
+  explain:
+    '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/>',
+  translate:
+    '<text x="3.5" y="11" font-family="Hanken Grotesk,sans-serif" font-size="9.5" font-weight="700" fill="currentColor" stroke="none">A</text><text x="11" y="20.5" font-family="sans-serif" font-size="10" font-weight="600" fill="currentColor" stroke="none">文</text><path d="M3.5 14.5h6"/>',
+  refine: '<path d="M4 20l1-4L16 5l3 3L8 19l-4 1z"/><path d="M14 7l3 3"/>',
+  summarize: '<path d="M5 7h14M5 12h10M5 17h6"/>',
+  send: '<path d="M21 3 3 10.5l7 2.6L12.5 20 21 3z"/><path d="M21 3 10 13.1"/>',
+  command:
+    '<text x="12" y="17" text-anchor="middle" font-family="sans-serif" font-size="15" fill="currentColor" stroke="none">⌘</text>',
+  copy:
+    '<rect x="8" y="8" width="12" height="12" rx="2.4"/><path d="M16 8V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h2"/>',
+  save: '<path d="M7 4h10a1 1 0 0 1 1 1v15l-6-4-6 4V5a1 1 0 0 1 1-1z"/>',
+  close: '<path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/>',
+  settings:
+    '<path d="M4 7.5h10M4 12h13M4 16.5h7"/><circle cx="17" cy="7.5" r="2.4" fill="currentColor" stroke="none"/><circle cx="9" cy="16.5" r="2.4" fill="currentColor" stroke="none"/>',
+  model:
+    '<path d="M12 3l7.5 4.3v8.6L12 21l-7.5-5.1V7.3L12 3z"/><circle cx="12" cy="11.6" r="2.6" fill="currentColor" stroke="none"/>',
+  key: '<circle cx="8" cy="8" r="4.2"/><path d="M11 11l8.5 8.5M16.5 16.5l2-2M19.5 19.5l1.6-1.6"/>',
+  network:
+    '<path d="M4.5 11.5a11 11 0 0 1 15 0M7.8 15a6.5 6.5 0 0 1 8.4 0"/><circle cx="12" cy="18.6" r="1.1" fill="currentColor" stroke="none"/><path d="M3 3l18 18" stroke-width="1.6"/>',
+  shield: '<path d="M12 3.2l7 2.8v5.2c0 4.2-3 7.3-7 8.6-4-1.3-7-4.4-7-8.6V6l7-2.8z"/><path d="M9 11.6l2.1 2.1L15.5 9.5"/>',
+  more:
+    '<circle cx="6" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.3" fill="currentColor" stroke="none"/><circle cx="18" cy="12" r="1.3" fill="currentColor" stroke="none"/>',
+  bookmark: '<rect x="4" y="5" width="14" height="14" rx="2"/><path d="M8 5v6l2.5-1.8L13 11V5"/>',
+  sliders:
+    '<path d="M4 7.5h10M4 16.5h7"/><circle cx="17" cy="7.5" r="2.4" fill="currentColor" stroke="none"/><circle cx="11" cy="16.5" r="2.4" fill="currentColor" stroke="none"/>',
+  check: '<path d="M5 12.5l4.5 4.5L19 7"/>',
+  camera:
+    '<path d="M4 8.5h3l1.5-2.2h7L17 8.5h3a1 1 0 0 1 1 1v8.5a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9.5a1 1 0 0 1 1-1z"/><circle cx="12" cy="13" r="3.1"/>',
+  history: '<path d="M3.6 9.5A8.5 8.5 0 1 1 4 14"/><path d="M3 5v4.5h4.5"/><path d="M12 8v4.2l3 1.8"/>',
+  continue: '<path d="M5 12h13M13 6.5l6 5.5-6 5.5"/>'
+};
+
+function Mark({className = ""}: {className?: string}): JSX.Element {
+  return <img className={`mk ${className}`.trim()} src={useBaseUrl("/img/aviso-mark-sage.svg")} alt="" aria-hidden="true" />;
+}
+
+function Icon({name, className = ""}: {name: IconName; className?: string}): JSX.Element {
+  return (
+    <span className={`ic ${className}`.trim()} aria-hidden="true">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth={1.6}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        dangerouslySetInnerHTML={{__html: iconPaths[name]}}
+      />
+    </span>
+  );
+}
+
+function ShortcutIcon({type}: {type: "command" | "shift"}): JSX.Element {
+  return (
+    <span className={`shortcut-icon shortcut-icon-${type}`} aria-hidden="true">
+      {type === "command" ? (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M9 9H6.8A2.8 2.8 0 1 1 9.6 6.2V17.8A2.8 2.8 0 1 1 6.8 15H18A2.8 2.8 0 1 1 15.2 17.8V6.2A2.8 2.8 0 1 1 18 9H6" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 5 5.6 12.1h3.2V19h6.4v-6.9h3.2L12 5Z" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
+const anthropicLines = [0, 36, 72, 108, 144, 180, 216, 252, 288, 324];
+
+function GlyphOpenAI(): JSX.Element {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+      <ellipse cx="12" cy="12" rx="4.1" ry="8.6" />
+      <ellipse cx="12" cy="12" rx="4.1" ry="8.6" transform="rotate(60 12 12)" />
+      <ellipse cx="12" cy="12" rx="4.1" ry="8.6" transform="rotate(120 12 12)" />
+    </svg>
+  );
+}
+
+function GlyphAnthropic(): JSX.Element {
+  return (
+    <svg viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.6} strokeLinecap="round" fill="none">
+      {anthropicLines.map((deg) => (
+        <line key={deg} x1="12" y1="3" x2="12" y2="9" transform={`rotate(${deg} 12 12)`} />
+      ))}
+    </svg>
+  );
+}
+
+function GlyphDoubao(): JSX.Element {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinejoin="round">
+      <path d="M12 3.2c2 3 .6 4.9 2.4 6.6 1.6 1.5 3.1 2.8 3.1 5.4a5.5 5.5 0 0 1-11 0c0-1.9.9-3 2-3.9.8 1.6 2 1.9 2 1.9-1-2.3-.4-5.4 1.5-9z" />
+    </svg>
+  );
+}
 
 const copy = {
   zh: {
-    pageDescription:
-      "Aviso 是一个在当前网页就地调用 AI 的 Chrome 扩展，当前处于 v0.1 internal dogfood。",
-    eyebrow: "Chrome 扩展 · v0.1 internal dogfood",
-    titlePrefix: "会留意的",
-    titleEmphasis: "AI",
-    subtitle:
-      "把 AI 操作带到浏览器的每一个角落，需要时随手即得。选中或右键任何内容，就地解释、翻译、润色和总结。",
-    install: "添加到浏览器",
-    docs: "产品文档",
-    docsCta: "查看文档",
-    demo: "看看演示",
-    privacyPolicy: "隐私政策",
-    micro: "当前安装入口会进入内部试用加载说明。",
-    langLabel: "语言",
-    mockDocLabel: "文档 · EFFECT",
-    mockDocTitle: "与外部系统同步",
-    mockDocP1:
-      "有些组件需要与外部系统保持同步。例如，根据页面状态控制非 React 组件、建立连接或更新页面内容。",
-    mockHighlight:
-      "清理函数会在组件卸载前，以及下一次 effect 重新运行前执行，用来撤销上一次的副作用。",
-    mockDocP3: "依赖发生变化时，React 会先清理旧的 effect，再执行新的。",
-    mockMode: "用户选择 provider",
-    mockAction: "解释",
-    mockQuestion: "清理函数会在组件卸载前…",
-    mockAnswer1:
-      "清理函数用于撤销上一次 effect 带来的副作用，例如取消订阅、清除定时器或断开连接。",
-    mockAnswer2:
-      "它在组件卸载前，以及下一次 effect 运行前执行，帮助页面保持稳定。",
-    copied: "复制",
-    saved: "保存",
-    close: "关闭",
-    trustLabel: "自带 API Key，直连你信任的模型",
-    whyTag: "为什么是 Aviso",
-    whyTitle: "别再每次都这样了。",
-    without: "没有 Aviso",
-    with: "有了 Aviso",
-    badSteps: ["在页面上选中文字", "复制内容", "切换到新标签页", "打开聊天工具", "粘贴文字", "等待回复", "再切回来"],
-    goodSteps: ["选中文字", "右键或工具栏问 AI"],
-    badFoot: "多次切换。每一次都打断上下文。",
-    goodFoot: "留在当前页面，就地处理。",
-    featureTag: "能做什么",
-    featureTitle: "阅读、写作、查证，都不必离开当前页面",
-    featureLead:
-      "Aviso 把 AI 叠加在你正在看的网页之上。轻量、克制，只在你主动触发的那一刻出现。",
-    howTag: "三步上手",
-    howTitle: "从选中，到答案，保持在同一个上下文里",
-    privacyTag: "隐私边界",
-    privacyTitlePrefix: "你的 Key、设置和历史，",
-    privacyTitleEmphasis: "先留在本地浏览器",
-    privacyLead:
-      "API Key、设置和历史先保存在本地浏览器。用户主动触发 AI 操作时，请求会直接发送给所选 provider。",
-    privacyResearch:
-      "provider 的计费、日志、滞留和数据处理规则，以用户选择的 provider 条款为准。",
-    privacyCta: "阅读完整隐私政策",
-    modelTag: "你的模型",
-    modelTitle: "用你信任的模型，随时切换",
-    modelLead: "自带 API Key 直连。在设置或右键菜单里切换已配置的 provider。",
+    pageDescription: "Aviso 是一个在当前网页就地调用 AI 的 Chrome 扩展。使用你自己的 API Key,直连模型厂商,隐私优先。",
+    badge: "v0.1 · Chrome 扩展",
+    heroLine1: "在你正看的网页里,",
+    heroLine2Pre: "就地调用 ",
+    heroEm: "AI",
+    sub: "一个快捷键唤起命令面板,搜本地历史与书签,或把问题直接交给 AI。解释、翻译、润色、总结,结果就浮在原文旁边 —— 不跳转、不复制粘贴。使用自己的 API Key 直连模型厂商。",
+    install: "添加到 Chrome",
+    readDocs: "产品文档",
+    viewDocs: "查看文档",
+    micro: "无需注册账号 · 使用自己的模型 API Key · Chrome 桌面版",
+    shortcutPre: "在任意网页按下",
+    cmdPlaceholder: "搜索浏览历史、书签、AI 对话…",
+    cmdStatus: "AI 可用",
+    cmdNav: "导航",
+    cmdSelect: "选择",
+    cmdHint: "无结果时可发给 AI",
+    cmdNoMatch: "无匹配结果 — 回车把输入交给",
+    cmdNoMatchTail: "按意图处理",
+    providerLab: "使用自己的 Key,浏览器直连这些模型厂商",
+    doubao: "豆包",
+    ark: "火山方舟",
+    entriesTag: "01 — 触发入口",
+    entriesTitle: "需要的那一刻,从哪都能叫出它",
+    entriesLede: "Aviso 不强迫你换一种用浏览器的方式。它接进你已有的习惯 —— 右键、划词、快捷键,你顺手怎么用都行。",
+    resultTag: "02 — 结果留在页面",
+    resultTitlePre: "答案浮在原文旁,",
+    resultTitleEm: "不必",
+    resultTitlePost: "离开这一页",
+    resultLede: "页面内浮窗是 Aviso 的主结果位。内容流式输出,可以复制、保存、继续追问。保存的对话进入本地历史,之后能在命令面板里复用。",
+    winModel: "解释",
+    winUser: "清理函数会在组件卸载前…",
+    winAnswerStrong: "清理函数",
+    winAnswer1: "用来撤销上一次 effect 的副作用 —— 取消订阅、清掉定时器、断开连接,避免内存泄漏。",
+    winAnswer2: "它在两个时机执行:组件卸载前,以及下一次 effect 运行前。",
+    copyLabel: "复制",
+    saveLabel: "保存",
+    followup: "继续追问…",
+    sendLabel: "发送",
+    byokTag: "03 — 你的模型,直连",
+    byokTitlePre: "你的 Key,直连厂商。",
+    byokTitleMid: "没有订阅,没有",
+    byokTitleEm: "额度",
+    byokLede: "Aviso 用你自己的 API Key,浏览器直连你选的模型厂商。请求不经过我们的服务器,也没有在模型费之外再收的月费或信用点。你按厂商的价付费,仅此而已。",
+    provCardTitle: "AI 服务",
+    provCardTag: "本地加密",
+    provDaily: "Anthropic",
+    provDoubao: "豆包接入点",
+    provDefault: "可配置",
+    provConnected: "已配置",
+    provUnset: "待填入 API Key",
+    provNotSet: "未配置",
+    privacyTag: "04 — 隐私边界",
+    privacyTitlePre: "别让扩展悄悄收走你的对话。",
+    privacyTitleEm: "Aviso 没有可收集的",
+    privacyLede: "很多 AI 扩展可能把你正在看的内容、甚至 AI 对话本身收走再变现。Aviso 在结构上就做不到这件事 —— 因为它根本没有接收这些数据的后端。",
+    compareThem: "多数 AI 助手扩展",
+    compareUs: "Aviso",
+    privacyNote:
+      "这不是空话:Aviso 的隐私边界写进了实现本身。API Key 在本地加密保存,对话历史只存在你的浏览器里,命令面板搜历史和书签都在本地完成。只有你主动触发的请求,才会由浏览器直连你选择的 provider;Aviso 没有自建后端、遥测或第三方分析 SDK。",
+    metricBackendNum: "0",
+    metricBackend: "个项目方后端服务器接收你的数据",
+    metricTelemetryNum: "0",
+    metricTelemetry: "个遥测或第三方分析 SDK",
+    metricTriggerNum: "主动触发",
+    metricTrigger: "才发送 —— 平时不监听、不上传",
+    docsTag: "产品文档",
+    docsTitle: "几分钟上手,数据流向写在明面上",
+    docsLede: "文档帮你两件事:把 Aviso 顺手装好用起来,以及看清每个操作会把哪些内容发给哪个 provider。读完,你能放心地决定怎么用它。",
+    docRead: "阅读 →",
     faqTag: "常见问题",
-    faqTitle: "还有疑问？",
-    finalTitle: "把 AI 留在你需要的那一刻",
-    finalLead:
-      "Aviso v0.1 继续保持 internal dogfood 口径。产品文档保留安装、隐私、权限和已知限制说明。"
+    faqTitle: "还有疑问?",
+    finalTitle: "把 AI 留在你需要它的那一刻",
+    finalLede: "用自己的 Key、隐私优先、无需账号。装好,按 ⌘⇧Space,就能开始。",
+    badgeKey: "自备 API Key",
+    badgeNoData: "不收集数据",
+    badgeNoAccount: "无需注册账号",
+    cmdReady: "AI 可用"
   },
   en: {
     pageDescription:
-      "Aviso is a Chrome extension for asking AI inside the current page. It is currently v0.1 internal dogfood.",
-    eyebrow: "Chrome extension · v0.1 internal dogfood",
-    titlePrefix: "AI that",
-    titleEmphasis: "notices",
-    subtitle:
-      "Bring AI actions to every corner of the browser, right when you need them. Select or right-click anything to explain, translate, refine, or summarize in place.",
-    install: "Add to browser",
-    docs: "Product docs",
-    docsCta: "View docs",
-    demo: "Watch demo",
-    privacyPolicy: "Privacy policy",
-    micro:
-      "The install entry opens the internal dogfood loading guide.",
-    langLabel: "Language",
-    mockDocLabel: "DOCS · EFFECT",
-    mockDocTitle: "Synchronizing with Effects",
-    mockDocP1:
-      "Some components need to stay connected to external systems, such as controlling non-React widgets or updating page state.",
-    mockHighlight:
-      "The cleanup function runs before unmount and before the next effect run, undoing the previous side effect.",
-    mockDocP3: "When dependencies change, React cleans up the old effect before running the new one.",
-    mockMode: "User-selected provider",
-    mockAction: "Explain",
-    mockQuestion: "The cleanup function runs before…",
-    mockAnswer1:
-      "A cleanup function undoes the previous effect, such as unsubscribing, clearing timers, or closing a connection.",
-    mockAnswer2:
-      "It runs before unmount and before the next effect run, helping the page stay consistent.",
-    copied: "Copy",
-    saved: "Save",
-    close: "Close",
-    trustLabel: "Bring your own API key — connect the model you trust",
-    whyTag: "Why Aviso",
-    whyTitle: "Stop doing this every time.",
-    without: "Without Aviso",
-    with: "With Aviso",
-    badSteps: ["Select text on a page", "Copy content", "Switch to a new tab", "Open a chat tool", "Paste the text", "Wait for a response", "Switch back"],
-    goodSteps: ["Select text", "Ask AI from the menu or toolbar"],
-    badFoot: "Repeated context switches. Every time.",
-    goodFoot: "Stay on the current page and keep working.",
-    featureTag: "What it does",
-    featureTitle: "Read, write, and check without leaving the page",
-    featureLead:
-      "Aviso layers AI over the page you are already viewing. Light, restrained, and visible only when you trigger it.",
-    howTag: "Three steps",
-    howTitle: "From selection to answer in the same context",
-    privacyTag: "Privacy boundary",
-    privacyTitlePrefix: "Your keys, settings, and history ",
-    privacyTitleEmphasis: "start in local browser storage",
-    privacyLead:
-      "API keys, settings, and history start in local browser storage. When you trigger an AI action, the request goes directly to the provider you choose.",
-    privacyResearch:
-      "Provider billing, logging, retention, and data handling follow the terms of the provider selected by the user.",
-    privacyCta: "Read the full privacy policy",
-    modelTag: "Your models",
-    modelTitle: "Bring the model you trust and switch anytime",
-    modelLead: "Connected with your own API key. Switch configured providers from settings or the right-click menu.",
+      "Aviso is a Chrome extension for calling AI inside the current page. Bring your own API key, connect direct, privacy first.",
+    badge: "v0.1 · Chrome extension",
+    heroLine1: "Call AI right",
+    heroLine2Pre: "inside the page ",
+    heroEm: "you're on",
+    sub: "One shortcut opens the command palette — search your history and bookmarks, or hand a question straight to the AI. Explain, translate, refine, summarize; the answer floats right beside the text. No tab-switching, no copy-paste. Connects with your own API key.",
+    install: "Add to Chrome",
+    readDocs: "Read the docs",
+    viewDocs: "View docs",
+    micro: "No account · Bring your own API key · Chrome desktop",
+    shortcutPre: "On any page, press",
+    cmdPlaceholder: "Search browser history, bookmarks, AI chats…",
+    cmdStatus: "AI ready",
+    cmdNav: "Navigate",
+    cmdSelect: "Select",
+    cmdHint: "Send to AI when no results",
+    cmdNoMatch: "No match — press Enter to hand it to",
+    cmdNoMatchTail: "",
+    providerLab: "Bring your key — your browser connects directly to",
+    doubao: "Doubao",
+    ark: "Volcano Ark",
+    entriesTag: "01 — Entry points",
+    entriesTitle: "Reach it from wherever you already are",
+    entriesLede:
+      "Aviso doesn't make you learn a new way to browse. It plugs into the habits you already have — right-click, select, a keystroke. Whatever's nearest.",
+    resultTag: "02 — Results stay in place",
+    resultTitlePre: "The answer floats by the text —",
+    resultTitleEm: "you never",
+    resultTitlePost: "leave the page",
+    resultLede:
+      "The in-page panel is where Aviso puts results. Output streams in; copy it, save it, or keep asking. Saved chats go to local history and can be reused later from the command palette.",
+    winModel: "Explain",
+    winUser: "The cleanup function runs before…",
+    winAnswerStrong: "The cleanup function",
+    winAnswer1: " undoes the previous effect's side-effects — unsubscribing, clearing timers, closing connections — to avoid leaks.",
+    winAnswer2: "It runs at two moments: before unmount, and before the effect re-runs.",
+    copyLabel: "Copy",
+    saveLabel: "Save",
+    followup: "Ask a follow-up…",
+    sendLabel: "Send",
+    byokTag: "03 — Your models, direct",
+    byokTitlePre: "Your key, straight to the provider.",
+    byokTitleMid: "No subscription, no ",
+    byokTitleEm: "credits",
+    byokLede:
+      "Aviso uses your own API key and connects your browser straight to the provider you choose. Requests never pass through our servers — and there's no monthly fee or credit system layered on top of the model cost. You pay the provider, nothing more.",
+    provCardTitle: "AI services",
+    provCardTag: "local · encrypted",
+    provDaily: "Daily · Claude",
+    provDoubao: "Doubao endpoint",
+    provDefault: "configurable",
+    provConnected: "configured",
+    provUnset: "API key not set",
+    provNotSet: "not set",
+    privacyTag: "04 — Privacy boundary",
+    privacyTitlePre: "Don't let extensions quietly take your chats.",
+    privacyTitleEm: "Aviso has nothing to collect",
+    privacyLede:
+      "Many AI extensions may collect what you read — sometimes the AI conversations themselves — and monetize it. Aviso structurally can't: there is no backend to receive that data in the first place.",
+    compareThem: "Most AI assistant extensions",
+    compareUs: "Aviso",
+    privacyNote:
+      "This isn't a slogan — Aviso's privacy boundary is built into the implementation. API keys are encrypted locally, chat history stays in your browser, and command-palette searches over history and bookmarks run locally. Only the requests you trigger go — browser-direct — to the provider you chose; Aviso has no backend of its own, no telemetry, and no third-party analytics SDK.",
+    metricBackendNum: "0",
+    metricBackend: "backend servers receiving your data",
+    metricTelemetryNum: "0",
+    metricTelemetry: "telemetry or third-party analytics SDKs",
+    metricTriggerNum: "On trigger",
+    metricTrigger: "only — no passive listening, no uploads",
+    docsTag: "Documentation",
+    docsTitle: "Set up in minutes — every data path in plain sight",
+    docsLede:
+      "The docs do two things: get Aviso running smoothly, and show you exactly which content each action sends to which provider. Read them and you'll know precisely how to trust it.",
+    docRead: "Read →",
     faqTag: "FAQ",
-    faqTitle: "Questions?",
+    faqTitle: "Still wondering?",
     finalTitle: "Keep AI for the moment you need it",
-    finalLead:
-      "Aviso v0.1 remains internal dogfood. Product docs keep the install, privacy, permissions, and known limitations explicit."
+    finalLede: "Bring your key, privacy-first, no account. Install, press ⌘⇧Space, and go.",
+    badgeKey: "Bring your own key",
+    badgeNoData: "No data collected",
+    badgeNoAccount: "No account needed",
+    cmdReady: "AI ready"
   }
 } as const;
 
-const trustItems = [
-  {
-    zh: "OpenAI API",
-    en: "OpenAI API"
-  },
-  {
-    zh: "Anthropic API",
-    en: "Anthropic API"
-  },
-  {
-    zh: "豆包 / 火山方舟",
-    en: "Volcengine Ark"
-  }
-] as const;
+type Entry = {
+  no: string;
+  icon: IconName;
+  kbd?: string;
+  kbdZh?: string;
+  kbdEn?: string;
+  zhTitle: string;
+  enTitle: string;
+  zhText?: string;
+  enText?: string;
+  code?: string;
+  zhTextPre?: string;
+  zhTextPost?: string;
+  enTextPre?: string;
+  enTextPost?: string;
+};
 
-const navLabels = {
-  zh: {
-    features: "功能",
-    privacy: "隐私",
-    docs: "文档",
-    install: "添加到浏览器"
-  },
-  en: {
-    features: "Features",
-    privacy: "Privacy",
-    docs: "Docs",
-    install: "Add to browser"
-  }
-} as const;
-
-const features = [
+const entries: Entry[] = [
   {
-    icon: "send",
-    wide: true,
-    zhTitle: "划词工具栏",
-    enTitle: "Selection toolbar",
-    zhText: "选中网页文字后，工具栏就地浮出。解释、翻译、润色、总结一键直达，或直接发给 AI 自由提问。",
-    enText:
-      "Select page text and the toolbar appears in place. Explain, translate, refine, summarize, or ask AI directly.",
-    visual: "toolbar"
-  },
-  {
+    no: "01",
     icon: "command",
-    wide: true,
+    kbd: "⌘⇧Space",
     zhTitle: "命令面板",
     enTitle: "Command palette",
-    zhText: "一个快捷键，随处唤起。搜索浏览历史、书签和 AI 对话，或直接把问题交给 AI 按意图处理。",
-    enText: "One shortcut, anywhere. Search browsing history, bookmarks, and AI conversations, or hand a question to AI with intent.",
-    visual: "command"
+    zhText:
+      "一个快捷键随处唤起。搜本地历史、书签、浏览记录和过往 AI 对话;没有结果时,回车把输入直接交给 AI 按意图处理。",
+    enText:
+      "One shortcut, anywhere. Search local history, bookmarks, browsing history, and past AI chats — and when nothing matches, Enter hands your input straight to the AI."
   },
   {
+    no: "02",
+    icon: "send",
+    zhTitle: "划词工具栏",
+    enTitle: "Selection toolbar",
+    zhText: "选中网页文字,轻量工具栏就地浮出。解释、翻译、润色、总结一键直达,或整段发给 AI 自由提问。",
+    enText:
+      "Select text and a light toolbar appears in place. Explain, translate, refine, summarize in one tap — or send the whole passage to the AI."
+  },
+  {
+    no: "03",
     icon: "more",
     zhTitle: "右键菜单",
     enTitle: "Right-click menu",
-    zhText: "融入原生右键菜单，条目随选区、图片、链接等上下文自动变化。",
-    enText: "Woven into the native context menu, with entries that adapt to selected text, images, or links.",
-    visual: "context"
+    zhText: "融入原生右键菜单,条目随选区、页面、链接、图片自动变化。还能复制当前上下文,或切换模型。",
+    enText:
+      "Woven into the native context menu, with entries that adapt to selection, page, link, or image — plus copy-context and model switching."
   },
   {
+    no: "04",
     icon: "copy",
     zhTitle: "剪贴板感知",
     enTitle: "Clipboard-aware",
-    zhText: "复制普通文字后轻量提示；敏感页面和敏感内容会被跳过。",
-    enText: "A lightweight nudge after copying ordinary text; sensitive pages and sensitive content are skipped.",
-    visual: "nudge"
+    zhText: "复制普通文字后,轻轻提示一下,要不要交给 AI。复制密码、密钥、支付等敏感内容时,绝不触发。",
+    enText:
+      "After you copy plain text, a gentle nudge offers to hand it to the AI. On passwords, keys, or payment fields, it never fires."
   },
   {
+    no: "05",
+    icon: "explain",
+    kbdZh: "可选",
+    kbdEn: "optional",
+    zhTitle: "双击快捷菜单",
+    enTitle: "Double-click menu",
+    zhText: "可选开启。在安全网页区域双击,弹出紧凑入口;自动避开输入框、可编辑区和常见代码编辑器。",
+    enText:
+      "Optional. Double-click in a safe area of the page for a compact entry — automatically steering clear of inputs, editable regions, and code editors."
+  },
+  {
+    no: "06",
     icon: "refine",
-    zhTitle: "自定义模板",
-    enTitle: "Prompt templates",
-    zhText: "把常用 Prompt 放进右键菜单，支持选区等占位符，适合重复工作流。",
-    enText: "Put repeated prompts into the right-click menu, with placeholders for selected text and similar workflows.",
-    visual: "templates"
+    zhTitle: "自定义指令",
+    enTitle: "Custom prompts",
+    zhTextPre: "把你常用的 Prompt 存成模板,出现在右键菜单里。支持 ",
+    zhTextPost: " 等占位符,随取随用。",
+    enTextPre: "Save your go-to prompts as templates that surface in the right-click menu. Placeholders like ",
+    enTextPost: " fill themselves in.",
+    code: "{{selection}}"
   }
+];
+
+const caps = [
+  {icon: "explain", zh: "解释", en: "Explain"},
+  {icon: "translate", zh: "翻译", en: "Translate"},
+  {icon: "refine", zh: "润色", en: "Refine"},
+  {icon: "summarize", zh: "总结", en: "Summarize"},
+  {icon: "camera", zh: "图片说明", en: "Image caption"},
+  {icon: "refine", zh: "自定义指令", en: "Custom prompt"}
 ] as const;
 
-const howSteps = [
+const byokPoints = [
   {
-    zhTitle: "选中文字",
-    enTitle: "Select text",
-    zhText: "在任意网页上划选你想处理的内容，工具栏立即就地浮出。",
-    enText: "Highlight text on a page. The toolbar appears near the selection."
-  },
-  {
-    zhTitle: "选个动作",
-    enTitle: "Pick an action",
-    zhText: "解释、翻译、润色、总结，或直接发给 AI 自由提问。",
-    enText: "Explain, translate, refine, summarize, or ask AI directly."
-  },
-  {
-    zhTitle: "就地拿到答案",
-    enTitle: "Answer in place",
-    zhText: "结果浮在原文旁，支持复制、保存或继续追问，不必离开当前页面。",
-    enText: "The answer appears beside the source, with copy, save, and follow-up controls."
-  }
-] as const;
-
-const privacyItems = [
-  {
-    icon: "key",
-    zhTitle: "API Key 保存在本地浏览器",
-    enTitle: "API keys are stored in the local browser",
-    zhText: "用于直连用户选择的 provider；模型账号由用户自己的 provider 账户提供。",
-    enText: "Used to connect directly to the provider you choose, using your own provider account."
-  },
-  {
-    icon: "shield",
-    zhTitle: "当前无自建后端、无遥测、无分析 SDK",
-    enTitle: "No first-party backend, telemetry, or analytics SDK",
-    zhText: "官网文案只说明当前内部试用版的实现边界，不承诺项目方中转或远端记录。",
-    enText: "The site states the current internal dogfood boundary, with no project relay or remote logging promised."
+    icon: "sliders",
+    zhTitle: "多套配置,随时切换",
+    enTitle: "Multiple configs, switch anytime",
+    zhText: "同一厂商可存多套配置,设默认服务,右键菜单里也能换模型。",
+    enText: "Keep several configs per provider, set a default, and swap models from the right-click menu."
   },
   {
     icon: "model",
-    zhTitle: "provider 条款决定远端处理规则",
-    enTitle: "Provider terms decide remote data handling",
-    zhText: "用户主动触发 AI 操作时，请求内容会发送给用户选择的 provider。",
-    enText: "When you trigger an AI action, request content is sent to the provider you selected."
+    zhTitle: "模型 ID 手动可填",
+    enTitle: "Model IDs are editable",
+    zhText: "OpenAI、Anthropic 的模型 ID,以及豆包/火山方舟的接入点,都能自己填。",
+    enText: "Type in model IDs for OpenAI and Anthropic, plus endpoints for Doubao / Volcano Ark."
+  },
+  {
+    icon: "check",
+    zhTitle: "手动连接测试",
+    enTitle: "Manual connection test",
+    zhText: "想确认能用,手动测一下单个 provider;结果只显示脱敏摘要。",
+    enText: "Verify a single provider on demand; the test shows only a redacted summary."
   }
 ] as const;
 
-const modelItems = [
+const compareRows = [
   {
-    badge: "C",
-    tone: "sage",
-    zhTitle: "Claude",
-    enTitle: "Claude",
-    zhText: "Sonnet · Opus",
-    enText: "Sonnet · Opus"
+    zhCrit: "你的内容去哪",
+    enCrit: "Where your content goes",
+    zhThem: "可能被收集、画像,甚至转卖给数据经纪商",
+    enThem: "May be collected, profiled, even sold to data brokers",
+    zhUs: "没有后端,Aviso 不接收你的任何内容",
+    enUs: "No backend — Aviso never receives your content"
   },
   {
-    badge: "G",
-    tone: "ink",
-    zhTitle: "ChatGPT",
-    enTitle: "ChatGPT",
-    zhText: "4o · o-series",
-    enText: "4o · o-series"
+    zhCrit: "怎么计费",
+    enCrit: "How it's billed",
+    zhThem: "在模型费之外再收月费,按信用点限额,成本难预估",
+    enThem: "A monthly fee on top of model cost, credit caps, unpredictable spend",
+    zhUs: "自备 Key 直连厂商,Aviso 不加价、不设额度",
+    enUs: "BYOK direct to the provider — no markup, no credits"
   },
   {
-    badge: "豆",
-    tone: "warm",
-    zhTitle: "豆包",
-    enTitle: "Doubao",
-    zhText: "火山方舟 ARK",
-    enText: "Volcengine Ark"
+    zhCrit: "要不要账号",
+    enCrit: "Account required?",
+    zhThem: "常需注册登录才能用",
+    enThem: "Often sign-up and login required",
+    zhUs: "无账号、无登录,装好即用",
+    enUs: "No account, no login — install and go"
+  },
+  {
+    zhCrit: "索取什么权限",
+    enCrit: "What it asks for",
+    zhThem: "常索取“读取并更改所有网站数据”",
+    enThem: 'Often wants "read and change all your data on all sites"',
+    zhUs: "host 权限仅限你选的三个 provider 域名",
+    enUs: "Host permissions limited to your three provider domains"
+  },
+  {
+    zhCrit: "什么时候在工作",
+    enCrit: "When it runs",
+    zhThem: "后台常驻,持续监听页面",
+    enThem: "Runs in the background, watching pages",
+    zhUs: "只在你主动触发的那一刻工作",
+    enUs: "Only the moment you trigger it"
+  }
+] as const;
+
+const docsCards = [
+  {
+    no: "01",
+    icon: "settings",
+    href: "/docs/install/",
+    zhTitle: "安装与首次使用",
+    enTitle: "Install & first use",
+    zhText: "加载扩展、填入 API Key、跑通第一个动作。",
+    enText: "Load the extension, add a key, run your first action."
+  },
+  {
+    no: "02",
+    icon: "command",
+    href: "/docs/core-features/",
+    zhTitle: "核心功能",
+    enTitle: "Core features",
+    zhText: "五个入口、结果面板、翻译、命令面板的用法。",
+    enText: "The five entries, result panel, translation, palette."
+  },
+  {
+    no: "03",
+    icon: "shield",
+    href: "/docs/data-permissions/",
+    zhTitle: "数据 · 权限 · 隐私",
+    enTitle: "Data · permissions · privacy",
+    zhText: "哪些数据本地保存、哪些会发给 provider。",
+    enText: "What stays local, what goes to the provider."
   }
 ] as const;
 
 const faqs = [
   {
-    zhQ: "当前怎么安装？",
-    enQ: "How do I install it now?",
-    zhA: "Aviso 当前是 v0.1 internal dogfood，安装入口会进入内部试用加载说明。",
-    enA:
-      "Aviso is currently v0.1 internal dogfood. The install entry opens the internal loading guide."
+    zhQ: "Aviso 收费吗?",
+    enQ: "Does Aviso cost money?",
+    zhA: "扩展本身不收费。你付的是自己模型厂商的 API 费用 —— 用 OpenAI、Anthropic 或豆包/火山方舟自己的 Key,按量付给厂商。Aviso 不在中间加价,也没有订阅或信用点。",
+    enA: "The extension itself doesn't charge. You pay your own provider's API costs — using your OpenAI, Anthropic, or Doubao / Volcano Ark key, billed by the provider. Aviso adds no markup, no subscription, no credits."
   },
   {
-    zhQ: "使用前需要准备什么？",
-    enQ: "What do I need before using it?",
-    zhA: "内部试用需要可加载的扩展构建目录，以及你自己选择的 provider API Key。",
-    enA:
-      "Internal dogfood requires a loadable extension build and your own provider API key."
+    zhQ: "必须自己准备 API Key 吗?",
+    enQ: "Do I need my own API key?",
+    zhA: "是的。Aviso 是 BYOK(自备 Key)直连:你在设置里填入自己的模型 API Key,浏览器直接连你选的厂商。豆包/火山方舟已有用户可用反馈;OpenAI 与 Anthropic 支持配置,实际可用性取决于你的 Key、模型权限和 provider 状态。",
+    enA: "Yes. Aviso is BYOK (bring your own key) and direct: you enter your own model API key in settings, and the browser connects straight to your chosen provider. Doubao / Volcano Ark has existing user-usable feedback; OpenAI and Anthropic are configurable, with availability depending on your key, model access, and provider status."
   },
   {
-    zhQ: "请求会经过 Aviso 服务器吗？",
-    enQ: "Do requests go through an Aviso server?",
-    zhA: "用户主动触发 AI 操作时，请求会从浏览器扩展直接发送给所选 provider。",
-    enA:
-      "When you trigger an AI action, the request goes directly from the browser extension to the selected provider."
+    zhQ: "Aviso 会收集我的浏览数据吗?",
+    enQ: "Does Aviso collect my browsing data?",
+    zhA: "不会。Aviso 没有项目方后端,也没有遥测或第三方分析 SDK。API Key 本地加密保存,对话历史只存在浏览器里。命令面板搜历史和书签都在本地完成。只有你主动触发的 AI 请求,才会由浏览器直连你选的 provider。",
+    enA: "No. Aviso has no backend of ours, and no telemetry or third-party analytics SDK. API keys are encrypted locally and chat history stays in your browser. Command-palette searches over history and bookmarks run locally. Only the AI requests you trigger go — browser-direct — to your chosen provider."
   },
   {
-    zhQ: "哪些 provider 已经完成验证？",
-    enQ: "Which providers have completed validation?",
-    zhA: "豆包 / 火山方舟路径已有用户可用反馈；OpenAI / Anthropic 因当前没有可用 API Key，真实最小调用暂缓验收。",
-    enA:
-      "The Doubao / Volcengine Ark path has user feedback. OpenAI / Anthropic minimum live validation is deferred because no usable API key is currently available."
+    zhQ: "它在每个网站都能用吗?",
+    enQ: "Does it work on every site?",
+    zhA: "绝大多数网站都能用:右键菜单、划词工具栏和命令面板覆盖面很广。少数自定义右键菜单的站点(如某些在线编辑器)上,划词工具栏和快捷键仍然好用。更复杂或跨域的嵌入页面,目前仍在持续打磨。",
+    enA: "On the vast majority of sites: the right-click menu, selection toolbar, and command palette have broad coverage. On a few sites with custom right-click menus (like some online editors), the selection toolbar and shortcut still work. More complex or cross-origin embeds are still being refined."
   },
   {
-    zhQ: "网页内容如何处理？",
-    enQ: "How does it handle page content?",
-    zhA: "当前产品只在用户主动触发时处理必要上下文，并使用已批准的 provider host permissions。",
-    enA:
-      "The current product processes the needed context only when the user triggers an action and uses the approved provider host permissions."
+    zhQ: "当前版本的边界是什么?",
+    enQ: "What are the current limits?",
+    zhA: "核心功能已经实现、可以日常使用,并经过手动验收;同时我们对当前的可用边界保持坦白 —— 比如豆包/火山方舟已有用户可用反馈,OpenAI/Anthropic 支持配置但仍取决于你的 Key 和模型权限。首段返回速度会受网络、模型、输入长度和 provider 状态影响,这一点我们不夸口。",
+    enA: "The core features are built, usable day-to-day, and manually verified — while we stay candid about the current edges, like Doubao / Volcano Ark having user-usable feedback and OpenAI / Anthropic being configurable depending on your key and model access. First-token latency depends on network, model, input length, and provider status; we don't overpromise there."
   }
 ] as const;
 
-function Mark({className = ""}: {className?: string}): JSX.Element {
-  return <img className={className} src={useBaseUrl("/img/aviso-mark-sage.svg")} alt="" aria-hidden="true" />;
-}
+const paletteData = [
+  {ic: "bookmark", zhBadge: "书签", enBadge: "Bookmark", zhT1: "季度复盘 · 协作文档", enT1: "Quarterly review · shared doc", t2: "docs.internal.example/q3-review"},
+  {ic: "history", zhBadge: "AI 对话", enBadge: "AI chat", zhT1: "解释:这段授权流程的时序", enT1: "Explain: this authorization sequence", zhT2: "3 小时前 · 解释", enT2: "3h ago · Explain"},
+  {ic: "history", zhBadge: "浏览历史", enBadge: "History", zhT1: "后端接口设计规范 v2", enT1: "Backend API design spec v2", t2: "wiki.internal.example/api-spec"},
+  {ic: "history", zhBadge: "AI 对话", enBadge: "AI chat", zhT1: "总结:这篇架构拆分实践", enT1: "Summarize: this architecture breakdown", zhT2: "昨天 · 总结", enT2: "Yesterday · Summarize"},
+  {ic: "bookmark", zhBadge: "书签", enBadge: "Bookmark", zhT1: "团队周报模板", enT1: "Team weekly report template", t2: "notes.internal.example/weekly"}
+] as const;
 
-function Icon({name, className = ""}: {name: IconName; className?: string}): JSX.Element {
-  const common = {
-    className: `avIcon ${className}`.trim(),
-    viewBox: "0 0 24 24",
-    fill: "none",
-    "aria-hidden": true
-  } as const;
+type Copy = (typeof copy)[Lang];
 
-  const strokeProps = {
-    stroke: "currentColor",
-    strokeLinecap: "round",
-    strokeLinejoin: "round",
-    strokeWidth: 1.8
-  } as const;
+function HeroPalette({lang, t}: {lang: Lang; t: Copy}): JSX.Element {
+  const [query, setQuery] = useState("");
+  const [sel, setSel] = useState(0);
 
-  switch (name) {
-    case "bookmark":
-      return (
-        <svg {...common}>
-          <path {...strokeProps} d="M7 4.5h10a1.5 1.5 0 0 1 1.5 1.5v15l-6.5-3.4L5.5 21V6A1.5 1.5 0 0 1 7 4.5Z" />
-        </svg>
-      );
-    case "check":
-      return (
-        <svg {...common}>
-          <path {...strokeProps} d="m5 12.5 4 4L19 7" />
-        </svg>
-      );
-    case "close":
-      return (
-        <svg {...common}>
-          <path {...strokeProps} d="m7 7 10 10M17 7 7 17" />
-        </svg>
-      );
-    case "command":
-      return (
-        <svg {...common}>
-          <path {...strokeProps} d="M9 9H6.5A2.5 2.5 0 1 1 9 6.5V9Zm0 0h6m0 0h2.5A2.5 2.5 0 1 0 15 6.5V9Zm0 0v6m0 0v2.5A2.5 2.5 0 1 0 17.5 15H15Zm0 0H9m0 0H6.5A2.5 2.5 0 1 1 9 17.5V15Zm0 0V9" />
-        </svg>
-      );
-    case "copy":
-      return (
-        <svg {...common}>
-          <rect {...strokeProps} x="8" y="8" width="11" height="11" rx="2" />
-          <path {...strokeProps} d="M5 15V6.8C5 5.8 5.8 5 6.8 5H15" />
-        </svg>
-      );
-    case "history":
-      return (
-        <svg {...common}>
-          <path {...strokeProps} d="M5 6v5h5" />
-          <path {...strokeProps} d="M5.8 11A7 7 0 1 0 8 6.1" />
-          <path {...strokeProps} d="M12 8v4l3 2" />
-        </svg>
-      );
-    case "key":
-      return (
-        <svg {...common}>
-          <circle {...strokeProps} cx="8" cy="14" r="3.3" />
-          <path {...strokeProps} d="M11 12.5 20 3.5m-4 4 2.4 2.4M14 9.5l2 2" />
-        </svg>
-      );
-    case "model":
-      return (
-        <svg {...common}>
-          <rect {...strokeProps} x="5" y="5" width="14" height="14" rx="3" />
-          <path {...strokeProps} d="M9 9h6v6H9zM9 2v3m6-3v3M9 19v3m6-3v3M2 9h3m-3 6h3m14-6h3m-3 6h3" />
-        </svg>
-      );
-    case "more":
-      return (
-        <svg {...common}>
-          <circle cx="6" cy="12" r="1.6" fill="currentColor" />
-          <circle cx="12" cy="12" r="1.6" fill="currentColor" />
-          <circle cx="18" cy="12" r="1.6" fill="currentColor" />
-        </svg>
-      );
-    case "refine":
-      return (
-        <svg {...common}>
-          <path {...strokeProps} d="m4 20 4.5-1 10-10a2.1 2.1 0 0 0-3-3l-10 10L4 20Z" />
-          <path {...strokeProps} d="m14.5 6.5 3 3" />
-        </svg>
-      );
-    case "save":
-      return (
-        <svg {...common}>
-          <path {...strokeProps} d="M6 4.5h12l1.5 1.7v13.3h-15v-15Z" />
-          <path {...strokeProps} d="M8 4.5v6h8v-6M8 19v-5h8v5" />
-        </svg>
-      );
-    case "send":
-      return (
-        <svg {...common}>
-          <path {...strokeProps} d="M4 12 20 4l-5.2 16-3-6.8L4 12Z" />
-          <path {...strokeProps} d="m11.8 13.2 4.8-4.8" />
-        </svg>
-      );
-    case "shield":
-      return (
-        <svg {...common}>
-          <path {...strokeProps} d="M12 3.5 19 6v5.4c0 4.1-2.5 6.9-7 8.6-4.5-1.7-7-4.5-7-8.6V6l7-2.5Z" />
-          <path {...strokeProps} d="m8.8 12.2 2.2 2.2 5-5.2" />
-        </svg>
-      );
-    case "spark":
-      return (
-        <svg {...common}>
-          <path {...strokeProps} d="M12 3.5 14 9l5.5 2-5.5 2-2 5.5-2-5.5-5.5-2L10 9l2-5.5Z" />
-        </svg>
-      );
-    case "summary":
-      return (
-        <svg {...common}>
-          <path {...strokeProps} d="M6 6h12M6 10h12M6 14h8M6 18h5" />
-        </svg>
-      );
-    default:
-      return (
-        <svg {...common}>
-          <circle {...strokeProps} cx="12" cy="12" r="7" />
-        </svg>
-      );
-  }
-}
+  const items = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    return paletteData
+      .map((d) => ({
+        ic: d.ic as IconName,
+        badge: lang === "zh" ? d.zhBadge : d.enBadge,
+        t1: lang === "zh" ? d.zhT1 : d.enT1,
+        t2: lang === "zh" ? ("zhT2" in d ? d.zhT2 : d.t2) : "enT2" in d ? d.enT2 : d.t2
+      }))
+      .filter((d) => !q || d.t1.toLowerCase().includes(q));
+  }, [query, lang]);
 
-function FeatureVisual({kind, lang}: {kind: string; lang: Lang}): JSX.Element {
-  if (kind === "toolbar") {
-    return (
-      <div className="miniToolbar" aria-hidden="true">
-        <span className="miniToolbarBrand">
-          <Mark />
-        </span>
-        <span className="miniSep" />
-        <span className="miniTool"><Icon name="spark" />{lang === "zh" ? "解释" : "Explain"}</span>
-        <span className="miniTool"><Icon name="refine" />{lang === "zh" ? "润色" : "Refine"}</span>
-        <span className="miniSep" />
-        <span className="miniTool primary"><Icon name="send" />{lang === "zh" ? "发给 AI" : "Ask AI"}</span>
-      </div>
-    );
-  }
-
-  if (kind === "command") {
-    return (
-      <div className="miniCommand" aria-hidden="true">
-        <div className="miniCommandInput"><Mark />{lang === "zh" ? "搜索浏览历史、书签，或发问 AI…" : "Search browsing history, bookmarks, or ask AI…"}</div>
-        <div className="miniCommandRow selected"><Icon name="history" />{lang === "zh" ? "总结：产品试用反馈" : "Summary: product dogfood notes"}<span>{lang === "zh" ? "历史" : "History"}</span></div>
-        <div className="miniCommandRow"><Icon name="bookmark" />{lang === "zh" ? "隐私政策" : "Privacy policy"}<span>{lang === "zh" ? "书签" : "Mark"}</span></div>
-      </div>
-    );
-  }
-
-  if (kind === "context") {
-    return (
-      <div className="miniContext" aria-hidden="true">
-        <span><Icon name="copy" />{lang === "zh" ? "复制" : "Copy"}</span>
-        <i />
-        <span className="aviso"><Mark />{lang === "zh" ? "解释所选" : "Explain selection"}</span>
-        <span className="aviso"><Icon name="send" />{lang === "zh" ? "发给 Aviso" : "Send to Aviso"}</span>
-      </div>
-    );
-  }
-
-  if (kind === "nudge") {
-    return (
-      <div className="miniNudge" aria-hidden="true">
-        <Mark />
-        <span><b>{lang === "zh" ? "已复制一段文字" : "Text copied"}</b><small>{lang === "zh" ? "需要翻译吗？" : "Translate it?"}</small></span>
-        <em>{lang === "zh" ? "翻译" : "Translate"}</em>
-      </div>
-    );
-  }
+  const noMatch = items.length === 0 && query.trim().length > 0;
 
   return (
-    <div className="miniTemplates" aria-hidden="true">
-      <span><Icon name="refine" />{lang === "zh" ? "改写得更专业" : "Rewrite professionally"}</span>
-      <span><Icon name="summary" />{lang === "zh" ? "三句话总结本页" : "Summarize page in three lines"}</span>
+    <div className="cmdp" role="group" aria-label="Aviso command palette">
+      <div className="cmdp-input">
+        <Mark />
+        <input
+          value={query}
+          onChange={(event) => {
+            setQuery(event.target.value);
+            setSel(0);
+          }}
+          placeholder={t.cmdPlaceholder}
+          aria-label={t.cmdPlaceholder}
+        />
+        <span className="cmdp-status">
+          <Icon name="shield" />
+          <span>{t.cmdStatus} · Claude</span>
+        </span>
+      </div>
+      {noMatch ? (
+        <div className="cmdp-intent">
+          <span>{t.cmdNoMatch}</span>
+          <span className="pill">
+            <Icon name="model" />
+            Aviso
+          </span>
+          {t.cmdNoMatchTail ? <span>{t.cmdNoMatchTail}</span> : null}
+        </div>
+      ) : (
+        <div className="cmdp-list">
+          {items.map((item, index) => (
+            <div
+              key={item.t1}
+              className={`cmdp-row${index === sel ? " sel" : ""}`}
+              onMouseEnter={() => setSel(index)}
+            >
+              <Icon name={item.ic} />
+              <span className="txt">
+                <div className="t1">{item.t1}</div>
+                <div className="t2">{item.t2}</div>
+              </span>
+              <span className="badge">{item.badge}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <div className="cmdp-foot">
+        <span>
+          <span className="kbd">↑↓</span> {t.cmdNav} · <span className="kbd">Enter</span> {t.cmdSelect}
+        </span>
+        <span className="r">{t.cmdHint}</span>
+      </div>
     </div>
   );
 }
 
 export default function Home(): JSX.Element {
-  const [lang, setLang] = useState<Lang>("zh");
+  const {
+    i18n: {currentLocale}
+  } = useDocusaurusContext();
+  const lang: Lang = currentLocale === "en" ? "en" : "zh";
   const [openFaq, setOpenFaq] = useState(0);
-  const [navbarTools, setNavbarTools] = useState<HTMLElement | null>(null);
   const t = copy[lang];
-  const scrollToDemo = () => {
-    document.getElementById("demo")?.scrollIntoView({behavior: "smooth", block: "center"});
-  };
-
-  useEffect(() => {
-    const syncNavbarTools = () => {
-      setNavbarTools(document.querySelector(".navbar__items--right"));
-    };
-
-    syncNavbarTools();
-
-    const root = document.getElementById("__docusaurus");
-    if (!root) {
-      return;
-    }
-
-    const observer = new MutationObserver(syncNavbarTools);
-    observer.observe(root, {childList: true, subtree: true});
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -561,313 +616,405 @@ export default function Home(): JSX.Element {
     });
   }, []);
 
-  useEffect(() => {
-    const labels = navLabels[lang];
-    const htmlLang = lang === "zh" ? "zh-Hans" : "en";
-    const setNavText = (selector: string, label: string) => {
-      document.querySelectorAll<HTMLAnchorElement>(selector).forEach((link) => {
-        if (link.textContent !== label) {
-          link.textContent = label;
-        }
-      });
-    };
-
-    const applyNavbarLanguage = () => {
-      if (document.documentElement.getAttribute("lang") !== htmlLang) {
-        document.documentElement.setAttribute("lang", htmlLang);
-      }
-      setNavText(".navbar a[href='/?section=features'], .navbar-sidebar a[href='/?section=features']", labels.features);
-      setNavText(".navbar a[href='/docs/privacy-policy/'], .navbar-sidebar a[href='/docs/privacy-policy/']", labels.privacy);
-      setNavText(".navbar a[href='/docs/intro/'], .navbar-sidebar a[href='/docs/intro/']", labels.docs);
-      setNavText(".navbar a[href='/docs/install/'].navbar-cta, .navbar-sidebar a[href='/docs/install/'].navbar-cta", labels.install);
-    };
-
-    applyNavbarLanguage();
-
-    const root = document.getElementById("__docusaurus");
-    if (!root) {
-      return;
-    }
-
-    const observer = new MutationObserver(applyNavbarLanguage);
-    observer.observe(root, {childList: true, subtree: true});
-    const langObserver = new MutationObserver(applyNavbarLanguage);
-    langObserver.observe(document.documentElement, {attributeFilter: ["lang"], attributes: true});
-    return () => {
-      observer.disconnect();
-      langObserver.disconnect();
-    };
-  }, [lang]);
-
-  const languageToggle = (
-    <div className="avNavbarLangSlot navbar__item" aria-label={t.langLabel}>
-      <div className="avLangToggle">
-        <button
-          type="button"
-          aria-pressed={lang === "zh"}
-          className={lang === "zh" ? "active" : ""}
-          onClick={() => setLang("zh")}
-        >
-          中
-        </button>
-        <button
-          type="button"
-          aria-pressed={lang === "en"}
-          className={lang === "en" ? "active" : ""}
-          onClick={() => setLang("en")}
-        >
-          EN
-        </button>
-      </div>
-    </div>
-  );
-
   return (
     <Layout title="Aviso" description={t.pageDescription}>
-      {navbarTools ? createPortal(languageToggle, navbarTools) : null}
       <main className="avLanding" lang={lang}>
-        <section className="avHero" id="top">
-          <div className="avWrap">
-            <span className="avEyebrow">
-              <Mark />
-              {t.eyebrow}
+        {/* HERO */}
+        <header className="shero" id="top">
+          <div className="swrap">
+            <span className="badge">
+              <span className="dot" />
+              {t.badge}
             </span>
             <h1>
-              {t.titlePrefix} <em>{t.titleEmphasis}</em>
+              {t.heroLine1}
+              <br />
+              {t.heroLine2Pre}
+              <em>{t.heroEm}</em>
             </h1>
-            <p className="avHeroSub">{t.subtitle}</p>
-            <div className="avCtaRow" aria-label={lang === "zh" ? "首页主要操作" : "Primary actions"}>
-              <Link className="avBtn avBtnPrimary avBtnLarge" to="/docs/install/">
+            <p className="sub">{t.sub}</p>
+            <div className="cta-row">
+              <Link className="sbtn sbtn-primary sbtn-lg" to="/docs/install/">
                 <Mark />
                 {t.install}
               </Link>
-              <button type="button" className="avBtn avBtnGhost avBtnLarge" onClick={scrollToDemo}>
-                {t.demo}
-              </button>
+              <Link className="sbtn sbtn-ghost sbtn-lg" to="/docs/intro/">
+                {t.readDocs}
+              </Link>
             </div>
-            <p className="avMicro">
-              <Icon name="shield" />
+            <p className="micro">
+              <Icon name="key" />
               {t.micro}
             </p>
 
-            <div className="avBrowserScale" id="demo">
-              <div className="avBrowser" aria-label={lang === "zh" ? "Aviso 页面内浮窗效果示意" : "Aviso in-page floating window mockup"}>
-                <div className="avBrowserBar">
-                  <span className="avBrowserDots" aria-hidden="true"><i /><i /><i /></span>
-                  <span className="avBrowserUrl"><Icon name="shield" />react.dev/learn/synchronizing-with-effects</span>
-                  <span className="avBrowserExt"><Mark /></span>
-                </div>
-                <div className="avBrowserPage">
-                  <article className="avMockDoc">
-                    <p className="avMockKick">{t.mockDocLabel}</p>
-                    <h2>{t.mockDocTitle}</h2>
-                    <p>{t.mockDocP1}</p>
-                    <p><span>{t.mockHighlight}</span></p>
-                    <p>{t.mockDocP3}</p>
-                  </article>
-                  <aside className="avResultWindow">
-                    <div className="avWinHead">
-                      <Mark />
-                      <strong>Aviso</strong>
-                      <span>{t.mockMode}</span>
-                      <button type="button" aria-label={t.close}><Icon name="close" /></button>
-                    </div>
-                    <div className="avWinBody">
-                      <div className="avUserLine">
-                        <Icon name="spark" />
-                        <span>{t.mockAction}</span>
-                        <b>{t.mockQuestion}</b>
-                      </div>
-                      <p><strong>{lang === "zh" ? "清理函数" : "Cleanup function"}</strong>{lang === "zh" ? "：" : ": "}{t.mockAnswer1}</p>
-                      <p>{t.mockAnswer2}</p>
-                    </div>
-                    <div className="avWinActions">
-                      <span><Icon name="copy" />{t.copied}</span>
-                      <span><Icon name="save" />{t.saved}</span>
-                      <i />
-                      <span className="muted"><Icon name="close" />{t.close}</span>
-                    </div>
-                  </aside>
-                </div>
+            <div className="palette-stage">
+              <div className="shortcut-hint">
+                <span>{t.shortcutPre}</span>
+                <kbd aria-label="Command Shift Space">
+                  <ShortcutIcon type="command" />
+                  <ShortcutIcon type="shift" />
+                  <span>Space</span>
+                </kbd>
               </div>
+              <HeroPalette lang={lang} t={t} />
+            </div>
+          </div>
+        </header>
+
+        {/* PROVIDER STRIP */}
+        <section className="providers" aria-label={t.providerLab}>
+          <div className="swrap">
+            <p className="lab">{t.providerLab}</p>
+            <div className="row">
+              <span className="p">
+                <span className="glyph">
+                  <GlyphOpenAI />
+                </span>
+                OpenAI
+              </span>
+              <span className="sep" />
+              <span className="p">
+                <span className="glyph">
+                  <GlyphAnthropic />
+                </span>
+                Anthropic
+              </span>
+              <span className="sep" />
+              <span className="p">
+                <span className="glyph">
+                  <GlyphDoubao />
+                </span>
+                <span>
+                  {t.doubao}
+                  <small>{t.ark}</small>
+                </span>
+              </span>
             </div>
           </div>
         </section>
 
-        <section className="avTrust" aria-label={t.trustLabel}>
-          <div className="avWrap">
-            <p>{t.trustLabel}</p>
-            <div>
-              {trustItems.map((item) => (
-                <span key={item.zh}>{item[lang]}</span>
-              ))}
+        {/* 01 ENTRIES */}
+        <section className="sblock" id="features">
+          <div className="swrap">
+            <div className="shead">
+              <p className="eyebrow">
+                <span>{t.entriesTag}</span>
+              </p>
+              <h2>{t.entriesTitle}</h2>
+              <p className="lede">{t.entriesLede}</p>
             </div>
-          </div>
-        </section>
-
-        <section className="avBlock" id="why">
-          <div className="avWrap">
-            <p className="avSectionTag">{t.whyTag}</p>
-            <h2 className="avSectionTitle">{t.whyTitle}</h2>
-            <div className="avProblemGrid">
-              <article className="avProblemCard bad">
-                <h3><Icon name="close" />{t.without}</h3>
-                <ol>
-                  {t.badSteps.map((step) => (
-                    <li key={step}>{step}</li>
-                  ))}
-                </ol>
-                <p>{t.badFoot}</p>
-              </article>
-              <article className="avProblemCard good">
-                <h3><Icon name="check" />{t.with}</h3>
-                <ol>
-                  {t.goodSteps.map((step) => (
-                    <li key={step}>{step}</li>
-                  ))}
-                </ol>
-                <p>{t.goodFoot}</p>
-              </article>
-            </div>
-          </div>
-        </section>
-
-        <section className="avBlock" id="features">
-          <div className="avWrap">
-            <p className="avSectionTag">{t.featureTag}</p>
-            <h2 className="avSectionTitle">{t.featureTitle}</h2>
-            <p className="avSectionLead">{t.featureLead}</p>
-            <div className="avFeatureGrid">
-              {features.map((feature) => (
-                <article className={`avFeature ${feature.wide ? "wide" : ""}`} key={feature.zhTitle}>
-                  <span className="avFeatureIcon"><Icon name={feature.icon} /></span>
-                  <h3>{lang === "zh" ? feature.zhTitle : feature.enTitle}</h3>
-                  <p>{lang === "zh" ? feature.zhText : feature.enText}</p>
-                  <FeatureVisual kind={feature.visual} lang={lang} />
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="avBlock avHow" id="how">
-          <div className="avWrap">
-            <p className="avSectionTag">{t.howTag}</p>
-            <h2 className="avSectionTitle">{t.howTitle}</h2>
-            <div className="avSteps">
-              {howSteps.map((step) => (
-                <article key={step.zhTitle}>
-                  <div className="avStepBar" />
-                  <h3>{lang === "zh" ? step.zhTitle : step.enTitle}</h3>
-                  <p>{lang === "zh" ? step.zhText : step.enText}</p>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
-
-        <section className="avPrivacy" id="privacy">
-          <Mark className="avPrivacyWatermark" />
-          <div className="avWrap avPrivacyInner">
-            <div>
-              <p className="avSectionTag">{t.privacyTag}</p>
-              <h2>
-                {t.privacyTitlePrefix}
-                <em>{t.privacyTitleEmphasis}</em>
-              </h2>
-              <p className="avPrivacyLead">{t.privacyLead}</p>
-              <ul className="avPrivacyList">
-                {privacyItems.map((item) => (
-                  <li key={item.zhTitle}>
-                    <span><Icon name={item.icon} /></span>
-                    <div>
-                      <b>{lang === "zh" ? item.zhTitle : item.enTitle}</b>
-                      <p>{lang === "zh" ? item.zhText : item.enText}</p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <aside className="avPrivacyCard">
-              <div className="avPrivacyCardHead">
-                <Icon name="key" />
-                <span>{lang === "zh" ? "API Key · 本地浏览器" : "API keys · local browser"}</span>
-                <b>{lang === "zh" ? "直连 provider" : "Direct provider"}</b>
-              </div>
-              <div className="avKeyRow"><Icon name="model" /><span>{lang === "zh" ? "用户选择 provider" : "User-selected provider"}</span><i /></div>
-              <div className="avKeyRow"><Icon name="shield" /><span>{lang === "zh" ? "无 Aviso 自建后端" : "No Aviso-operated backend"}</span><i /></div>
-              <div className="avKeyRow"><Icon name="key" /><code>sk-••••••••••••</code></div>
-              <p><Icon name="shield" />{lang === "zh" ? "本地保存 · 主动触发后直连所选 provider" : "Local storage · direct request to selected provider after user action"}</p>
-            </aside>
-          </div>
-          <div className="avWrap">
-            <p className="avPrivacyResearch">{t.privacyResearch}</p>
-            <div className="avMetrics">
-              <div><b>{lang === "zh" ? "无" : "No"}</b><span>{lang === "zh" ? "自建后端" : "first-party backend"}</span></div>
-              <div><b>{lang === "zh" ? "无" : "No"}</b><span>{lang === "zh" ? "遥测与分析 SDK" : "telemetry or analytics SDK"}</span></div>
-              <div><b>{lang === "zh" ? "以条款为准" : "Terms apply"}</b><span>{lang === "zh" ? "provider 远端处理" : "provider-side handling"}</span></div>
-            </div>
-            <Link className="avPrivacyLink" to="/docs/privacy-policy/">{t.privacyCta}</Link>
-          </div>
-        </section>
-
-        <section className="avBlock" id="models">
-          <div className="avWrap">
-            <p className="avSectionTag">{t.modelTag}</p>
-            <h2 className="avSectionTitle">{t.modelTitle}</h2>
-            <p className="avSectionLead">{t.modelLead}</p>
-            <div className="avModels">
-              {modelItems.map((item) => (
-                <article key={item.zhTitle} className={`tone-${item.tone}`}>
-                  <span>{item.badge}</span>
+            <div className="entries">
+              {entries.map((entry) => (
+                <div className="entry" key={entry.no}>
+                  <span className="no">{entry.no}</span>
                   <div>
-                    <h3>{lang === "zh" ? item.zhTitle : item.enTitle}</h3>
-                    <p>{lang === "zh" ? item.zhText : item.enText}</p>
+                    <h3>
+                      <Icon name={entry.icon as IconName} />
+                      <span>{lang === "zh" ? entry.zhTitle : entry.enTitle}</span>
+                      {entry.kbd ? <span className="kbd">{entry.kbd}</span> : null}
+                      {entry.kbdZh ? <span className="kbd">{lang === "zh" ? entry.kbdZh : entry.kbdEn}</span> : null}
+                    </h3>
+                    {entry.code ? (
+                      <p>
+                        {lang === "zh" ? entry.zhTextPre : entry.enTextPre}
+                        <code>{entry.code}</code>
+                        {lang === "zh" ? entry.zhTextPost : entry.enTextPost}
+                      </p>
+                    ) : (
+                      <p>{lang === "zh" ? entry.zhText : entry.enText}</p>
+                    )}
                   </div>
-                </article>
+                </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="avBlock" id="faq">
-          <div className="avWrap">
-            <p className="avSectionTag">{t.faqTag}</p>
-            <h2 className="avSectionTitle">{t.faqTitle}</h2>
-            <div className="avFaq">
+        {/* 02 RESULT */}
+        <section className="sblock tint" id="result">
+          <div className="swrap">
+            <div className="split">
+              <div>
+                <p className="eyebrow">
+                  <span>{t.resultTag}</span>
+                </p>
+                <h2>
+                  {t.resultTitlePre}
+                  <br />
+                  <em>{t.resultTitleEm}</em>
+                  {lang === "zh" ? "" : " "}
+                  {t.resultTitlePost}
+                </h2>
+                <p className="lede">{t.resultLede}</p>
+                <div className="caps">
+                  {caps.map((cap, index) => (
+                    <span className="cap-chip" key={index}>
+                      <Icon name={cap.icon as IconName} />
+                      {lang === "zh" ? cap.zh : cap.en}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <div className="split-media">
+                <div className="win">
+                  <div className="win-head">
+                    <Mark />
+                    <span className="win-title">Aviso</span>
+                    <span className="win-model">{t.winModel}</span>
+                    <span className="spacer" />
+                    <button className="iconbtn" type="button" aria-label={lang === "zh" ? "关闭" : "Close"}>
+                      <Icon name="close" />
+                    </button>
+                  </div>
+                  <div className="win-body">
+                    <div className="user-bubble">{t.winUser}</div>
+                    <div className="ai-msg">
+                      <p>
+                        <strong>{t.winAnswerStrong}</strong>
+                        {lang === "zh" ? "" : ""}
+                        {t.winAnswer1}
+                      </p>
+                      <p>{t.winAnswer2}</p>
+                    </div>
+                  </div>
+                  <div className="win-actions">
+                    <button className="act" type="button">
+                      <Icon name="copy" />
+                      <span className="lab">{t.copyLabel}</span>
+                    </button>
+                    <button className="act" type="button">
+                      <Icon name="save" />
+                      <span className="lab">{t.saveLabel}</span>
+                    </button>
+                  </div>
+                  <div className="win-followup">
+                    <input className="fi" placeholder={t.followup} aria-label={t.followup} />
+                    <button className="send" type="button">
+                      <Icon name="send" />
+                      {t.sendLabel}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 03 BYOK */}
+        <section className="sblock" id="byok">
+          <div className="swrap">
+            <div className="byok">
+              <div>
+                <p className="eyebrow">
+                  <span>{t.byokTag}</span>
+                </p>
+                <h2>
+                  {t.byokTitlePre}
+                  <br />
+                  {t.byokTitleMid}
+                  <em>{t.byokTitleEm}</em>
+                </h2>
+                <p className="lede">{t.byokLede}</p>
+                <ul className="byok-points">
+                  {byokPoints.map((point) => (
+                    <li key={point.icon + point.zhTitle}>
+                      <span className="pic">
+                        <Icon name={point.icon as IconName} />
+                      </span>
+                      <div>
+                        <b>{lang === "zh" ? point.zhTitle : point.enTitle}</b>
+                        <span>{lang === "zh" ? point.zhText : point.enText}</span>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+              <div className="split-media">
+                <div className="provcard">
+                  <div className="ph">
+                    <Icon name="key" />
+                    <span>{t.provCardTitle}</span>
+                    <span className="tag">
+                      <Icon name="shield" />
+                      {t.provCardTag}
+                    </span>
+                  </div>
+                  <div className="provrow">
+                    <span className="glyph">
+                      <GlyphAnthropic />
+                    </span>
+                    <span className="nm">
+                      <b>{t.provDaily}</b>
+                      <small>Anthropic · claude-haiku-4-5-20251001</small>
+                    </span>
+                    <span className="st def">{t.provDefault}</span>
+                  </div>
+                  <div className="provrow">
+                    <span className="glyph">
+                      <GlyphDoubao />
+                    </span>
+                    <span className="nm">
+                      <b>{t.provDoubao}</b>
+                      <small>{lang === "zh" ? "接入点已配置" : "endpoint configured"}</small>
+                    </span>
+                    <span className="st ok">
+                      <span className="d" />
+                      {t.provConnected}
+                    </span>
+                  </div>
+                  <div className="provrow">
+                    <span className="glyph">
+                      <GlyphOpenAI />
+                    </span>
+                    <span className="nm">
+                      <b>OpenAI</b>
+                      <small>{t.provUnset}</small>
+                    </span>
+                    <span className="st idle">{t.provNotSet}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* 04 PRIVACY */}
+        <section className="sblock tint" id="privacy">
+          <div className="swrap">
+            <div className="shead">
+              <p className="eyebrow">
+                <span>{t.privacyTag}</span>
+              </p>
+              <h2>
+                {t.privacyTitlePre}
+                <br />
+                <em>{t.privacyTitleEm}</em>
+              </h2>
+              <p className="lede">{t.privacyLede}</p>
+            </div>
+
+            <div className="compare-tbl">
+              <div className="crow head">
+                <span className="cc" />
+                <span className="cc them">{t.compareThem}</span>
+                <span className="cc us">{t.compareUs}</span>
+              </div>
+              {compareRows.map((row) => (
+                <div className="crow" key={row.zhCrit}>
+                  <span className="cc">
+                    <span className="crit">{lang === "zh" ? row.zhCrit : row.enCrit}</span>
+                  </span>
+                  <span className="cc dim">
+                    <span className="rl">{t.compareThem}</span>
+                    {lang === "zh" ? row.zhThem : row.enThem}
+                  </span>
+                  <span className="cc us">
+                    <span className="rl">Aviso</span>
+                    <Icon name="check" className="mark" />
+                    {lang === "zh" ? row.zhUs : row.enUs}
+                  </span>
+                </div>
+              ))}
+            </div>
+
+            <p className="privacy-note">{t.privacyNote}</p>
+
+            <div className="metrics">
+              <div className="metric">
+                <div className="num">{t.metricBackendNum}</div>
+                <div className="desc">{t.metricBackend}</div>
+              </div>
+              <div className="metric">
+                <div className="num">{t.metricTelemetryNum}</div>
+                <div className="desc">{t.metricTelemetry}</div>
+              </div>
+              <div className="metric">
+                <div className="num">{t.metricTriggerNum}</div>
+                <div className="desc">{t.metricTrigger}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {/* DOCS ENTRY */}
+        <section className="sblock" id="docs">
+          <div className="swrap">
+            <div className="shead">
+              <p className="eyebrow">
+                <span>{t.docsTag}</span>
+              </p>
+              <h2>{t.docsTitle}</h2>
+              <p className="lede">{t.docsLede}</p>
+            </div>
+            <div className="docs-grid">
+              {docsCards.map((card) => (
+                <Link className="doc-card" to={card.href} key={card.no}>
+                  <span className="no">{card.no}</span>
+                  <h3>
+                    <Icon name={card.icon as IconName} />
+                    <span>{lang === "zh" ? card.zhTitle : card.enTitle}</span>
+                  </h3>
+                  <p>{lang === "zh" ? card.zhText : card.enText}</p>
+                  <span className="arrow">{t.docRead}</span>
+                </Link>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* FAQ */}
+        <section className="sblock tint" id="faq">
+          <div className="swrap">
+            <div className="shead center">
+              <p className="eyebrow center">
+                <span>{t.faqTag}</span>
+              </p>
+              <h2>{t.faqTitle}</h2>
+            </div>
+            <div className="faq">
               {faqs.map((faq, index) => (
-                <article className={openFaq === index ? "open" : ""} key={faq.zhQ}>
-                  <button type="button" onClick={() => setOpenFaq(openFaq === index ? -1 : index)}>
+                <div className={`faq-item${openFaq === index ? " open" : ""}`} key={faq.zhQ}>
+                  <button className="faq-q" type="button" onClick={() => setOpenFaq(openFaq === index ? -1 : index)}>
                     <span>{lang === "zh" ? faq.zhQ : faq.enQ}</span>
-                    <i />
+                    <span className="pm" />
                   </button>
-                  <div>
+                  <div className="faq-a">
                     <p>{lang === "zh" ? faq.zhA : faq.enA}</p>
                   </div>
-                </article>
+                </div>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="avFinal" id="install">
-          <div className="avWrap">
-            <Mark className="avFinalMark" />
+        {/* FINAL CTA */}
+        <section className="final" id="install">
+          <div className="swrap">
+            <Mark className="mk-big" />
             <h2>{t.finalTitle}</h2>
-            <p>{t.finalLead}</p>
-            <div className="avCtaRow">
-              <Link className="avBtn avBtnPrimary avBtnLarge" to="/docs/install/">
+            <p>{t.finalLede}</p>
+            <div className="cta-row">
+              <Link className="sbtn sbtn-primary sbtn-lg" to="/docs/install/">
                 <Mark />
                 {t.install}
               </Link>
-              <Link className="avBtn avBtnGhost avBtnLarge" to="/docs/intro/">
-                {t.docsCta}
+              <Link className="sbtn sbtn-ghost sbtn-lg" to="/docs/intro/">
+                {t.viewDocs}
               </Link>
             </div>
-            <div className="avFinalBadges">
-              <span><Icon name="shield" />internal dogfood</span>
-              <span><Icon name="check" />{lang === "zh" ? "无自建后端" : "No first-party backend"}</span>
-              <span><Icon name="key" />{lang === "zh" ? "API Key 本地保存" : "Local API key storage"}</span>
+            <div className="badges">
+              <span className="b">
+                <Icon name="key" />
+                {t.badgeKey}
+              </span>
+              <span className="b">
+                <Icon name="shield" />
+                {t.badgeNoData}
+              </span>
+              <span className="b">
+                <Icon name="check" />
+                {t.badgeNoAccount}
+              </span>
             </div>
           </div>
         </section>

@@ -1,0 +1,121 @@
+---
+title: Privacy Policy
+description: Aviso privacy policy and permission explanation.
+sidebar_position: 6
+---
+
+# Privacy Policy
+
+This page explains the data flow and permission boundaries of the current Aviso version.
+
+## Overview
+
+Aviso is a Chrome extension. It helps users call AI inside the current webpage to explain, translate, refine, summarize, or run custom prompts.
+
+Aviso uses a direct browser-to-provider model. When you actively trigger an AI request, the browser extension sends the request directly to the model provider you selected. API keys, settings, and history are stored in Chrome extension storage.
+
+## Data Stored Locally
+
+Aviso stores necessary data in browser extension storage:
+
+| Data type | Storage location | Notes |
+| --- | --- | --- |
+| API key | Chrome local extension storage | AES-encrypted before storage; used only for requests to the provider you select. |
+| Settings | Chrome sync settings | Includes UI language, theme, feature switches, custom templates, default service, and provider metadata. |
+| History | Chrome local extension storage | Stores user-saved results for later viewing, search, and reuse. |
+| Runtime short cache | Extension runtime memory | Reduces repeated preparation cost; not persisted. |
+
+Some internal storage keys still use `contextai_*` names for compatibility with data before the rename. This does not mean data is sent to an old service or third party.
+
+## Data Sent to Model Providers
+
+When you actively trigger an AI action, Aviso sends only the information needed for that action directly to the provider you selected. Depending on the action, this may include:
+
+- Selected text.
+- User-entered question or prompt.
+- Current page URL.
+- Selected link URL.
+- Supported image URL or supported base64 image data.
+- Page text excerpt for page summarization.
+- Expanded custom template prompt.
+- Recent conversation excerpt for follow-up questions.
+
+Page summarization truncates page text by default to reduce request size and waiting time. The current internal default is 5000 characters.
+
+### Translation
+
+Translation only uses the selected text or the text entered in the command palette. The current MVP does not include page URL, link URL, page body, remote link body, screenshot, or clipboard content as translation input.
+
+### Screenshot Questions
+
+Screenshot questions are kept only in a user-triggered internal right-click path. The user must manually select and confirm a visible page region. Aviso uses the selected screenshot only for that request; screenshot data is not written to history, extension storage, files, documentation, or logs. Provider support depends on whether the selected model supports visual input. This is not a main public entry point or promotional feature.
+
+### Copy Current Context
+
+Copy current context writes page title, URL, optional selected text, and truncated page text to the user’s clipboard. This action does not call an AI provider, save to history, or send anything to Aviso or any remote service.
+
+### Connection Tests and Performance Summary
+
+Provider connection tests can only be triggered manually by the user and test one provider at a time. The test uses a fixed public short phrase and does not include page body, selected text, link, image, screenshot, clipboard content, API key, raw prompt, or raw response.
+
+Aviso’s performance summary is only written to the local extension console for internal latency debugging. It contains fixed stages and bucketed fields. It does not include original text, full URLs, images/base64, screenshots, API keys, raw prompts, or raw responses, and it is not sent to remote telemetry.
+
+## Data Visible to the Aviso Project
+
+Aviso currently has no project-owned backend. It does not send user text, history, API keys, page content, or model requests to Aviso project servers.
+
+## API Keys
+
+API keys are encrypted and stored in browser local extension storage. Aviso does not upload API keys to Aviso servers.
+
+When you use a provider, the request goes directly from the browser extension to that provider. The provider may process request content, logs, billing, and retention according to its own terms. Review and accept the provider’s terms and privacy policy before use.
+
+## Chrome Web Store Limited Use Statement
+
+Aviso uses user data only to provide user-triggered AI assistant features on the current webpage. Aviso does not sell user data, use user data for advertising, use user data for credit/lending or similar decisions, or allow Aviso project personnel to read user content.
+
+When the user actively triggers an AI action, required content is sent directly from the browser extension to the selected model provider. Provider handling depends on the user’s account relationship, provider terms, and provider privacy policy.
+
+## Browser Permissions
+
+Aviso currently uses these permissions:
+
+- `contextMenus`: create right-click menu actions.
+- `activeTab`: interact with the current tab after user action.
+- `storage`: save settings, API keys, and history.
+- `history`: search Chrome browsing history in the command palette; search runs locally.
+- `bookmarks`: search bookmarks in the command palette.
+- `clipboardWrite`: copy results from the floating panel.
+
+Aviso content scripts match webpage URLs to show the selection toolbar, selection translation card, double-click quick menu, command palette, in-page result panel, clipboard prompt, iframe bridge, and the screenshot selection UI used by the internal right-click path. This site access is not used to fetch arbitrary remote link bodies, serve ads, run telemetry, run analytics, or send page content to Aviso servers. Only when the user actively triggers an AI action that requires page content does the browser extension send relevant content directly to the selected provider.
+
+Current host permissions are limited to approved provider domains:
+
+```text
+https://api.openai.com/*
+https://api.anthropic.com/*
+https://ark.cn-beijing.volces.com/*
+```
+
+Aviso does not request broad host permissions to fetch arbitrary remote webpage bodies.
+
+OpenAI and Anthropic can be configured with API key and model ID; requests are sent directly to the provider the user selects. Doubao / Volcengine Ark has user-usable feedback.
+
+## User Control
+
+In the Aviso Popup, users can:
+
+- Modify or delete API keys.
+- Add, edit, or delete AI service configs.
+- Switch default service and default model.
+- Manually edit model IDs.
+- Turn local feature switches on or off.
+- Switch UI language and theme.
+- Manage custom templates.
+- View and manage local history.
+
+If you uninstall Aviso, Chrome clears the extension’s local storage. You can also rotate or revoke unused API keys in the provider console.
+
+## Provider Acceptance Status
+
+Aviso supports configurable OpenAI, Anthropic, and Doubao / Volcengine Ark paths. Users can enter their own API key, model ID, or endpoint in settings; requests are sent directly from the browser extension to the selected provider.

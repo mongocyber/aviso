@@ -1,6 +1,6 @@
 # Aviso Status
 
-Updated: 2026-06-08
+Updated: 2026-06-10
 
 ## 结论
 
@@ -32,8 +32,8 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`。它是一个 Chrome 
 | --- | --- |
 | A-G 手动验收 | 用户已验证基本通过，作为内部试用记录。 |
 | 豆包 / 火山方舟 | 用户确认可用。 |
-| OpenAI | Host permission 已存在；当前没有可用 API Key，真实最小调用暂缓验收。 |
-| Anthropic | Host permission 已存在；当前没有可用 API Key，真实最小调用暂缓验收。 |
+| OpenAI | 支持在设置中配置 API Key 和模型 ID；请求由浏览器直连该 provider。 |
+| Anthropic | 支持在设置中配置 API Key 和模型 ID；请求由浏览器直连该 provider。 |
 | 英文界面 | 用户 smoke check 未发现明显问题。 |
 | 模型 ID 编辑 | 用户确认可以编辑。 |
 | 权限边界 | 当前普通权限为 `contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`clipboardWrite`；host permissions 仅限三类 provider host。 |

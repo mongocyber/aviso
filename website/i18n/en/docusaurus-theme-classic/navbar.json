@@ -1,0 +1,26 @@
+{
+  "title": {
+    "message": "Aviso",
+    "description": "The title in the navbar"
+  },
+  "logo.alt": {
+    "message": "Aviso",
+    "description": "The alt text of navbar logo"
+  },
+  "item.label.功能": {
+    "message": "Features",
+    "description": "Navbar item with label 功能"
+  },
+  "item.label.隐私": {
+    "message": "Privacy",
+    "description": "Navbar item with label 隐私"
+  },
+  "item.label.文档": {
+    "message": "Docs",
+    "description": "Navbar item with label 文档"
+  },
+  "item.label.添加到 Chrome": {
+    "message": "Add to Chrome",
+    "description": "Navbar item with label 添加到 Chrome"
+  }
+}

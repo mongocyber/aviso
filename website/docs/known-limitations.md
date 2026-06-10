@@ -6,7 +6,7 @@ sidebar_position: 8
 
 # 已知限制
 
-Aviso 当前是 v0.1 内部试用状态。以下记录用于说明当前版本的使用边界。
+Aviso 当前是 v0.1。以下记录用于说明当前版本的使用边界。
 
 ## Provider 响应速度
 
@@ -56,7 +56,7 @@ Aviso 仅在右键内部路径中，对支持的图片 URL 或支持格式的 ba
 当前记录中：
 
 - 豆包 / 火山方舟 API 路径已有用户可用反馈。
-- OpenAI 因当前没有可用 API Key，真实最小调用暂缓验收。
-- Anthropic 因当前没有可用 API Key，真实最小调用暂缓验收。
+- OpenAI 支持配置 API Key 和模型 ID；实际可用性取决于你的 Key、模型权限和 provider 状态。
+- Anthropic 支持配置 API Key 和模型 ID；实际可用性取决于你的 Key、模型权限和 provider 状态。
 
-OpenAI 和 Anthropic 不作为当前内部试用收口阻塞项；恢复验收需要可用 API Key，并由用户在 Popup 手动触发连接测试。
+OpenAI 和 Anthropic 不作为当前版本的主卖点；需要由用户填写自己的可用 API Key，并在 Popup 中手动触发连接测试。

@@ -1,6 +1,6 @@
 # Aviso Acceptance Criteria
 
-Updated: 2026-06-08
+Updated: 2026-06-10
 
 ## 基础验收
 
@@ -47,8 +47,8 @@ Updated: 2026-06-08
 
 - A-G 手动验收：用户已验证基本通过。
 - 豆包 / 火山方舟：用户确认可用。
-- OpenAI：当前没有可用 API Key，真实最小调用暂缓验收。
-- Anthropic：当前没有可用 API Key，真实最小调用暂缓验收。
+- OpenAI：支持配置 API Key 和模型 ID。
+- Anthropic：支持配置 API Key 和模型 ID。
 - 英文界面：用户 smoke check 未发现明显问题。
 - 模型 ID 编辑：用户确认可以编辑。
 

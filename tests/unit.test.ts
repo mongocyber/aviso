@@ -1856,6 +1856,56 @@ test("connectivity test payload 只包含固定公开短句，不带页面私有
   assert.equal(payload.pageUrl, undefined)
 })
 
+test("OpenAI / Anthropic mock-only connectivity gate covers route and sanitized summary", () => {
+  for (const provider of ["openai", "anthropic"] as const) {
+    const route = resolveModelRoute(getConnectivityModelId(provider), {})
+    const summary = buildConnectivityValidationSummary({
+      provider,
+      modelOrEndpoint: route.requestModel,
+      hostPermissionPresent: isProviderHostPermissionPresent(
+        PROVIDER_REGISTRY[provider],
+        APPROVED_PROVIDER_HOST_PERMISSIONS
+      ),
+      result: "success",
+      latencyNote: "mock-only: provider SDK path returned a simulated stream.",
+      errorCategory: "none",
+      notes:
+        "Mock validation only; no live provider request, raw prompt, raw response, private page data, screenshot, or API Key was recorded."
+    })
+
+    assert.equal(route.provider.id, provider)
+    assert.equal(route.provider.sdk, provider)
+    assert.equal(route.provider.requiresEndpointConfig, false)
+    assert.equal(summary.result, "success")
+    assert.equal(summary.host_permission_present, true)
+    assert.equal(summary.secret_leak_check, "pass")
+    assert.equal(summary.raw_prompt_logged, "no")
+    assert.equal(summary.raw_response_logged, "no")
+    assert.equal(summary.private_page_data_logged, "no")
+    assert.match(summary.notes, /Mock validation only/)
+    assert.match(summary.notes, /no live provider request/)
+  }
+})
+
+test("OpenAI / Anthropic connectivity implementation stays manual and uses fixed payload", () => {
+  const aiClientSource = readFileSync(
+    new URL("../src/background/ai-client.ts", import.meta.url),
+    "utf8"
+  )
+  const connectivityBlock =
+    aiClientSource.match(
+      /export async function handleProviderConnectivityTest[\s\S]*?\nexport async function handleAIRequest/
+    )?.[0] ?? ""
+
+  assert.match(connectivityBlock, /const testPayload = buildConnectivityTestPayload\(\)/)
+  assert.match(connectivityBlock, /hasPrivateContextPayload\(testPayload\)/)
+  assert.match(connectivityBlock, /route\.provider\.id === "anthropic"/)
+  assert.match(connectivityBlock, /await callAnthropic/)
+  assert.match(connectivityBlock, /await callOpenAI/)
+  assert.match(connectivityBlock, /requestId: `connectivity-\$\{route\.provider\.id\}`/)
+  assert.match(connectivityBlock, /raw prompt、raw response、网页正文、截图或 API Key/)
+})
+
 test("connectivity 私有上下文检查覆盖追问 priorContext", () => {
   assert.equal(
     hasPrivateContextPayload({

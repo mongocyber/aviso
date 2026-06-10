@@ -17,7 +17,17 @@ const config: Config = {
   trailingSlash: true,
   i18n: {
     defaultLocale: "zh-Hans",
-    locales: ["zh-Hans"]
+    locales: ["zh-Hans", "en"],
+    localeConfigs: {
+      "zh-Hans": {
+        label: "中文",
+        htmlLang: "zh-Hans"
+      },
+      en: {
+        label: "English",
+        htmlLang: "en-US"
+      }
+    }
   },
   presets: [
     [
@@ -44,14 +54,9 @@ const config: Config = {
       },
       items: [
         {
-          href: "/?section=features",
+          to: "/?section=features",
           position: "left",
           label: "功能"
-        },
-        {
-          to: "/docs/privacy-policy/",
-          position: "left",
-          label: "隐私"
         },
         {
           to: "/docs/intro/",
@@ -59,9 +64,18 @@ const config: Config = {
           label: "文档"
         },
         {
+          to: "/docs/privacy-policy/",
+          position: "left",
+          label: "隐私"
+        },
+        {
+          type: "localeDropdown",
+          position: "right"
+        },
+        {
           to: "/docs/install/",
           position: "right",
-          label: "添加到浏览器",
+          label: "添加到 Chrome",
           className: "navbar-cta"
         }
       ]
@@ -104,7 +118,7 @@ const config: Config = {
           ]
         }
       ],
-      copyright: `Copyright © ${new Date().getFullYear()} Aviso. Documentation draft for release preparation.`
+      copyright: `Copyright © ${new Date().getFullYear()} Aviso. 公开产品文档。`
     },
     colorMode: {
       defaultMode: "light",
