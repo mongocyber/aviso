@@ -23,7 +23,7 @@ AI 请求由浏览器扩展直接发送到用户选择的 provider。
 
 | 数据 | 用途 | 当前保存方式 |
 | --- | --- | --- |
-| API Key | 调用用户选择的 provider | 加密后保存在 Chrome 本地扩展存储。 |
+| API Key | 调用用户选择的 provider | 不明文保存；经过本地加密/混淆级保护后保存在 Chrome local extension storage。 |
 | 设置 | 模型、开关、界面语言、主题、模板和 provider metadata | 保存在 Chrome 同步设置中。 |
 | 历史 | 方便搜索、保存和复用过往结果 | 保存在 Chrome 本地扩展存储。 |
 | 运行时短缓存 | 降低重复准备成本 | 只存在于扩展运行时内存，不持久化。 |
@@ -67,7 +67,7 @@ https://api.anthropic.com/*
 https://ark.cn-beijing.volces.com/*
 ```
 
-它们分别用于 OpenAI、Anthropic 和豆包 / 火山方舟 OpenAI 兼容接口。OpenAI 和 Anthropic 支持在设置中配置 API Key 和模型 ID，请求由浏览器扩展直连用户选择的 provider。
+它们分别用于 OpenAI、Anthropic 和豆包 / Volcengine Ark OpenAI 兼容接口。OpenAI 和 Anthropic 支持在设置中配置 API Key 和模型 ID，请求由浏览器扩展直连用户选择的 provider。
 
 当前 host permissions 保持在已批准的 provider 域名范围内。
 
@@ -76,6 +76,8 @@ https://ark.cn-beijing.volces.com/*
 Aviso 对剪贴板感知做了敏感域名和敏感内容过滤，尽量避免在密码、密钥、支付、后台管理等场景里误触发。
 
 这不是对所有敏感信息的完整保证。用户仍应自行判断哪些内容可以发送给模型 provider。
+
+API Key 的本地保护也不是本机安全边界：它不防御已经能读取本机浏览器 profile、控制本机或控制当前 Chrome 用户环境的攻击者。
 
 ## 截图能力
 

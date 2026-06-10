@@ -6,7 +6,7 @@ sidebar_position: 9
 
 # Support & Feedback
 
-The Aviso support page is intended for public release use. The extension is still in testing / review preparation and has not yet passed Chrome Web Store review. This page explains what information to include in feedback and what not to send.
+The Aviso support page is intended for public release use. The extension is still in listing preparation, and the official Chrome Web Store link is not available yet. This page explains what information to include in feedback and what not to send.
 
 ## Check Before Reporting
 
@@ -62,5 +62,6 @@ Before sending screenshots or recordings, redact API keys, private webpages, rea
 
 ## Support Entry
 
-- During testing / review, this page is the support information page.
+- The current preferred feedback entry is [GitHub Issues](https://github.com/mongocyber/aviso/issues).
+- If you are an invited tester, you can also use the feedback channel provided by the maintainer.
 - After Chrome Web Store approval, the Store Support URL should point to this page.

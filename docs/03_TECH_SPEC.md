@@ -11,9 +11,9 @@ Updated: 2026-06-08
 - Node test runner
 - Provider SDK：OpenAI SDK、Anthropic SDK
 - 内容抽取：`@mozilla/readability`
-- API Key 加密：`crypto-js`
+- API Key 本地保护依赖：`crypto-js`
 
-## 目录结构
+## 主要文件和目录
 
 | 路径 | 作用 |
 | --- | --- |
@@ -34,6 +34,10 @@ Updated: 2026-06-08
 | `src/utils/provider-configs.ts` | AI 服务配置解析。 |
 | `src/utils/model-registry.ts` | 当前 provider / model registry。 |
 | `src/utils/translation.ts` | 翻译 payload 与目标语言处理。 |
+| `locales/zh_CN/messages.json` | Chrome manifest 中文本地化源码。 |
+| `locales/en/messages.json` | Chrome manifest 英文本地化源码。 |
+
+本表只列当前维护最常用的主要文件和目录，不作为完整源码清单。
 
 ## Manifest
 
@@ -80,7 +84,7 @@ OpenAI / Anthropic 新配置会提供默认模型 ID，但输入框允许用户�
 
 | 数据 | 存储位置 | 说明 |
 | --- | --- | --- |
-| API Key | `chrome.storage.local/contextai_api_keys` | 加密保存，不进入 sync。 |
+| API Key | `chrome.storage.local/contextai_api_keys` | 不明文保存，不进入 sync；当前使用由扩展 ID 派生的口令做本地加密 / 混淆级保护，不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。 |
 | 非敏感设置 | `chrome.storage.sync/contextai_settings` | 包括功能开关、默认模型、界面语言、主题、自定义指令和 provider metadata。 |
 | 本地对话历史 | `chrome.storage.local/contextai_history` | 本地保存，不同步。 |
 | 运行时短缓存 | Service worker 内存 | 用于 settings、route、translation 和 page content 短期复用；不持久化。 |
@@ -106,7 +110,7 @@ OpenAI / Anthropic 新配置会提供默认模型 ID，但输入框允许用户�
 
 - 运行时 UI 文案由 `src/utils/i18n.ts` 提供。
 - `contextai_settings.uiLanguage` 是非敏感设置，可选自动、中文、English。
-- Chrome manifest 文案位于 `_locales/zh_CN/messages.json` 和 `_locales/en/messages.json`。
+- Chrome manifest 文案源码位于 `locales/zh_CN/messages.json` 和 `locales/en/messages.json`；Plasmo 构建时映射到 Chrome 扩展要求的 `_locales/zh_CN/messages.json` 和 `_locales/en/messages.json`。
 - 翻译目标语言与 UI 语言互相独立。
 
 ## 检查命令

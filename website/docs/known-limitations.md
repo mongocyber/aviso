@@ -55,7 +55,7 @@ Aviso 仅在右键内部路径中，对支持的图片 URL 或支持格式的 ba
 
 当前记录中：
 
-- 豆包 / 火山方舟 API 路径已有用户可用反馈。
+- 内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用。
 - OpenAI 支持配置 API Key 和模型 ID；实际可用性取决于你的 Key、模型权限和 provider 状态。
 - Anthropic 支持配置 API Key 和模型 ID；实际可用性取决于你的 Key、模型权限和 provider 状态。
 

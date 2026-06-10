@@ -702,7 +702,7 @@ function SelectionToolbar() {
         if (runtimeError) {
           console.warn("[Aviso] Toolbar failed to open floating window", {
             requestId,
-            frameUrl: window.location.href,
+            frameUrlPresent: Boolean(window.location.href),
             error: runtimeError.message
           })
           return
@@ -711,7 +711,7 @@ function SelectionToolbar() {
         if (response && !response.success) {
           console.warn("[Aviso] Toolbar floating window request failed", {
             requestId,
-            frameUrl: window.location.href,
+            frameUrlPresent: Boolean(window.location.href),
             error: response.error
           })
         }

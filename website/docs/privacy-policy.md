@@ -20,7 +20,7 @@ Aviso 会在浏览器扩展存储中保存必要数据：
 
 | 数据类型 | 保存位置 | 说明 |
 | --- | --- | --- |
-| API Key | Chrome 本地扩展存储 | 保存前会使用 AES 加密，仅用于你选择的模型 provider 请求。 |
+| API Key | Chrome local extension storage | 不明文保存；保存前会经过本地加密/混淆级保护，仅用于你选择的模型 provider 请求。 |
 | 设置 | Chrome 同步设置 | 包括界面语言、外观主题、功能开关、自定义模板、默认服务和 provider metadata。 |
 | 历史记录 | Chrome 本地扩展存储 | 保存用户主动触发并保存的请求结果，便于后续查看、搜索和复用。 |
 | 运行时短缓存 | 扩展运行时内存 | 用于降低重复准备成本，不持久化。 |
@@ -66,7 +66,9 @@ Aviso 当前没有自建后端，因此不会把用户文本、历史、API Key�
 
 ## API Key
 
-API Key 会加密保存在浏览器本地扩展存储中。Aviso 不会把 API Key 上传到 Aviso 服务器。
+API Key 不明文保存，会经过本地加密/混淆级保护后保存在 Chrome local extension storage 中。Aviso 不会把 API Key 上传到 Aviso 服务器。
+
+这类保护不防御已经能读取本机浏览器 profile、控制本机或控制当前 Chrome 用户环境的攻击者。如果你怀疑本机或浏览器 profile 已被控制，请先在 provider 后台轮换或撤销 API Key。
 
 当你使用某个 provider 时，请求会从浏览器扩展直接发送到该 provider。provider 可能会按照其服务条款处理请求内容、日志、计费和滞留数据。使用 provider 前，请自行阅读并接受对应 provider 的条款和隐私政策。
 
@@ -99,8 +101,6 @@ https://ark.cn-beijing.volces.com/*
 
 Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文。
 
-OpenAI 和 Anthropic 支持在设置中配置 API Key 和模型 ID；请求由浏览器扩展直连用户选择的 provider。当前豆包 / 火山方舟已有用户可用反馈。
-
 ## 用户控制
 
 用户可以在 Aviso Popup 中：
@@ -118,4 +118,6 @@ OpenAI 和 Anthropic 支持在设置中配置 API Key 和模型 ID；请求由�
 
 ## Provider 验收状态
 
-Aviso 支持配置 OpenAI、Anthropic 和豆包 / 火山方舟。用户可以在设置中填写自己的 API Key、模型 ID 或接入点；请求由浏览器扩展直连用户选择的 provider。
+Aviso 支持配置 OpenAI、Anthropic 和豆包 / Volcengine Ark。用户可以在设置中填写自己的 API Key、模型 ID 或接入点；请求由浏览器扩展直连用户选择的 provider。
+
+当前内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用。OpenAI 和 Anthropic 支持配置，但实际可用性取决于用户自己的 Key、模型权限和 provider 状态；本站不把它们写成已经完成真实可用验收。

@@ -55,7 +55,7 @@ Screenshot questions also depend on whether the selected model supports visual i
 
 Current records:
 
-- Doubao / Volcengine Ark has user-usable feedback.
+- Internal testing and user feedback confirm the Doubao / Volcengine Ark path works.
 - OpenAI can be configured with API key and model ID; actual availability depends on your key, model access, and provider status.
 - Anthropic can be configured with API key and model ID; actual availability depends on your key, model access, and provider status.
 

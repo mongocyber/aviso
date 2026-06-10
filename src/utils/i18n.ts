@@ -603,6 +603,10 @@ const MESSAGES = {
     "zh-CN": "改动自动保存",
     en: "Changes save automatically"
   },
+  "popup.footer.saveError": {
+    "zh-CN": "保存失败，请稍后重试",
+    en: "Save failed. Try again."
+  },
   "popup.footer.privacy": {
     "zh-CN": "隐私说明",
     en: "Privacy"
@@ -754,6 +758,14 @@ const MESSAGES = {
   "command.searchError": {
     "zh-CN": "浏览历史或书签搜索失败，请检查扩展权限或重新加载扩展",
     en: "History or bookmark search failed. Check extension permissions or reload Aviso."
+  },
+  "command.unsafeUrlBlocked": {
+    "zh-CN": "链接未打开",
+    en: "Link not opened"
+  },
+  "command.unsafeUrlBlockedDetail": {
+    "zh-CN": "Aviso 只会打开 http 或 https 链接。",
+    en: "Aviso only opens http or https links."
   },
   "command.history": {
     "zh-CN": "浏览历史",

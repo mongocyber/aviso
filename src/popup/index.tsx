@@ -304,6 +304,7 @@ function Popup() {
   const [anthropicKey, setAnthropicKey] = useState("")
   const [doubaoKey, setDoubaoKey] = useState("")
   const [saved, setSaved] = useState(false)
+  const [saveErrorKey, setSaveErrorKey] = useState<I18nKey | null>(null)
   const [tab, setTab] = useState<PopupTab>("general")
   const [testingProvider, setTestingProvider] = useState<ProviderId | null>(
     null
@@ -387,8 +388,15 @@ function Popup() {
 
   // 顶部短暂提示"已保存"
   const flashSaved = () => {
+    setSaveErrorKey(null)
     setSaved(true)
     setTimeout(() => setSaved(false), 1500)
+  }
+
+  const flashSaveError = () => {
+    setSaved(false)
+    setSaveErrorKey("popup.footer.saveError")
+    setTimeout(() => setSaveErrorKey(null), 2500)
   }
 
   const loadHistory = () => {
@@ -627,11 +635,15 @@ function Popup() {
     if (nextSignature === persistedSettingsSignature.current) return
     clearTimeout(saveTimer.current)
     saveTimer.current = setTimeout(async () => {
-      await saveSettings(settings)
-      persistedSettingsSignature.current = nextSignature
-      // 通知 background 重建右键菜单，使模板/模型变更即时生效
-      chrome.runtime.sendMessage({ action: "UPDATE_TEMPLATES" })
-      flashSaved()
+      try {
+        await saveSettings(settings)
+        persistedSettingsSignature.current = nextSignature
+        // 通知 background 重建右键菜单，使模板/模型变更即时生效
+        chrome.runtime.sendMessage({ action: "UPDATE_TEMPLATES" })
+        flashSaved()
+      } catch {
+        flashSaveError()
+      }
     }, 300)
     return () => clearTimeout(saveTimer.current)
   }, [settings])
@@ -3168,8 +3180,16 @@ function Popup() {
           borderTopColor: ui.line,
           background: ui.surface
         }}>
-        <span style={{ ...styles.autoSaveHint, color: ui.accent }}>
-          {saved ? t("popup.footer.saved") : t("popup.footer.autoSave")}
+        <span
+          style={{
+            ...styles.autoSaveHint,
+            color: saveErrorKey ? ui.danger : ui.accent
+          }}>
+          {saveErrorKey
+            ? t(saveErrorKey)
+            : saved
+              ? t("popup.footer.saved")
+              : t("popup.footer.autoSave")}
         </span>
         <button
           className="aviso-popup-button"

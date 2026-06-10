@@ -16,7 +16,7 @@ After installing Aviso and setting an API key, start from a normal public webpag
 4. Choose explain, translate, refine, summarize, or send to AI.
 5. Check the in-page result panel.
 
-The selection toolbar is intended for short pieces of text you are currently reading or editing.
+If the selection translation card is enabled, short selections can show an inline translation result with copy, retry, and open-result-panel actions.
 
 ## Option 2: Use the Right-Click Menu
 
@@ -28,11 +28,15 @@ Common actions include:
 - Translate selected text.
 - Refine selected text.
 - Summarize selected text or the current page.
-- Use a custom template.
 - Copy the current context to the clipboard without calling a provider.
 - Switch model from the right-click menu.
+- Use a custom template.
+- Explain supported image URLs.
+- Start a summary prompt for a link URL.
 
 Image explanation and screenshot-related flows remain internal right-click paths and are not the main user entry.
+
+Link summary sends the link itself as context to the model.
 
 ## Option 3: Use the Command Palette
 
@@ -51,15 +55,15 @@ If there are no matching local results, pressing Enter can send your input to th
 
 The command palette does not show a screenshot entry.
 
-## Option 4: Use Optional Local Helpers
+## Option 4: Use the Double-Click Quick Menu
 
-You can enable optional helpers in the Popup:
-
-- Selection translation card.
-- Double-click quick menu.
-- Clipboard prompt.
+The double-click quick menu is off by default. After you enable it, double-clicking in a normal webpage area can show a compact entry for local actions and AI actions.
 
 Aviso avoids input fields, editable regions, common code editors, and its own UI. The double-click quick menu does not show a screenshot entry.
+
+## Option 5: Use the Clipboard Prompt
+
+After you copy normal text, Aviso can show a prompt so you can send clipboard content to AI. Sensitive pages and sensitive content are skipped to reduce accidental triggers in high-risk contexts.
 
 ## If Nothing Happens
 
@@ -70,3 +74,15 @@ Check:
 - The current webpage allows extension content scripts.
 - The feature switch is enabled.
 - The model may simply be slow rather than failed.
+
+## View and Save Results
+
+AI results appear in the in-page Aviso floating panel. The panel supports:
+
+- Streaming output.
+- Copying the result.
+- Saving to local history.
+- Asking follow-up questions based on the current result.
+- Restoring saved local conversations.
+
+History is stored locally in the browser.

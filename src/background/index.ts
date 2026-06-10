@@ -386,41 +386,6 @@ async function handleMessage(
         break
       }
 
-      case "REQUEST_START_SCREENSHOT_SELECTION": {
-        if (!senderTabId) {
-          sendResponse({
-            success: false,
-            error: "Cannot start screenshot without sender tab"
-          })
-          break
-        }
-
-        const t = createI18n(resolveSettingsUiLanguage(await getSettings()))
-        const result = await sendMessageToDisplayFrame(
-          senderTabId,
-          {
-            action: "SHOW_COPY_CONTEXT_TOAST",
-            payload: {
-              status: "failure",
-              message: t("background.screenshotAuthEntryMessage"),
-              detail: t("background.screenshotAuthEntryDetail")
-            }
-          },
-          {
-            fallbackFrameId: sender.frameId,
-            fallbackFrameUrl: sender.url,
-            label: "page-screenshot-auth-toast"
-          }
-        )
-
-        sendResponse(
-          result.ok === true
-            ? { success: true }
-            : { success: false, error: result.error }
-        )
-        break
-      }
-
       case "REQUEST_COPY_CURRENT_CONTEXT": {
         const activeTab =
           senderTabId === undefined

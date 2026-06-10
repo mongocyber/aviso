@@ -16,6 +16,7 @@ import { resolveModelRoute, type ModelRoute } from "~utils/model-registry"
 import { getLegacyProviderFromConfigId } from "~utils/provider-configs"
 import { getSettings } from "~utils/storage"
 import { logTiming, startTiming } from "~utils/timing"
+import { isSafeBrowserOpenUrl } from "~utils/url-safety"
 
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"],
@@ -377,6 +378,14 @@ function CommandPalette() {
 
   const handleSelect = (item: ResultItem) => {
     if (item.url) {
+      if (!isSafeBrowserOpenUrl(item.url)) {
+        setAiNotice({
+          title: t("command.unsafeUrlBlocked"),
+          detail: t("command.unsafeUrlBlockedDetail"),
+          type: "error"
+        })
+        return
+      }
       window.open(item.url, "_blank")
     } else if (item.type === "ai-history") {
       // 复用历史项原始操作重新执行；缺失时回退到解释

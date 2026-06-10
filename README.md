@@ -4,13 +4,13 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它在当前网页内提供右键�
 
 当前版本：`0.1.0`
 
-当前状态：`v0.1 internal dogfood / 内部试用版`
+当前状态：`v0.1 internal dogfood / 内部试用版`，正在进入 Chrome Web Store 上架准备 / 发布候选阶段
 
 技术栈：Plasmo、React 18、TypeScript、Chrome MV3
 
 ## 当前状态
 
-- 当前代码用于内部试用，不是公开发布版本，也没有提交 Chrome Web Store。
+- 当前代码用于内部试用和上架准备；还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
 - 主要功能已经实现，并已有用户 A-G 手动验收“基本通过”的内部记录。
 - 豆包 / 火山方舟已由用户确认可用；OpenAI / Anthropic 支持在设置中配置 API Key 和模型 ID，请求由浏览器直连用户选择的 provider。
 - UI 支持中文和英文：默认跟随 Chrome 界面语言，Popup 设置里可以手动切换。
@@ -20,7 +20,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它在当前网页内提供右键�
 
 ## 当前功能
 
-- 右键菜单：解释、翻译、润色、总结选区、总结当前页面、解释图片、复制当前上下文、模型切换、自定义指令。
+- 右键菜单：解释、翻译、润色选区、润色可编辑区域、总结选区、总结当前页面、总结链接、总结视频、解释图片、复制当前上下文、模型切换、自定义指令。
 - 划词工具栏：对选中文本快速解释、翻译、润色、总结或发送给 AI。
 - 划词翻译卡：开启后可对短选区显示就地翻译结果，支持复制、重试和打开结果面板。
 - 命令面板：Mac 使用 `Command+Shift+Space`，Windows/Linux 使用 `Ctrl+Shift+Space`；可搜索 Chrome 浏览历史、Chrome 书签和 Aviso 本地 AI 对话，也可直接输入问题。
@@ -103,7 +103,8 @@ npm run build
 
 Aviso 的 AI 请求由浏览器扩展直接发往用户选择的模型厂商。
 
-- API Key 加密后保存在 `chrome.storage.local/contextai_api_keys`。
+- API Key 不明文保存，保存在 `chrome.storage.local/contextai_api_keys`，不进入 Chrome sync。
+- 当前保护方式使用由扩展 ID 派生的口令，属于本地加密 / 混淆级保护；它能避免普通配置同步和直接明文暴露，但不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。
 - 非敏感设置保存在 `chrome.storage.sync/contextai_settings`。
 - 本地 AI 对话历史保存在 `chrome.storage.local/contextai_history`。
 - 允许访问的 provider host 只有 OpenAI、Anthropic 和火山方舟北京网关。

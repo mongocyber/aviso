@@ -193,7 +193,7 @@ function ClipboardToast() {
           const runtimeError = chrome.runtime.lastError
           if (runtimeError) {
             console.warn("[Aviso] Clipboard toast request failed", {
-              frameUrl: window.location.href,
+              frameUrlPresent: Boolean(window.location.href),
               error: runtimeError.message
             })
             return
@@ -201,7 +201,7 @@ function ClipboardToast() {
 
           if (response && !response.success) {
             console.warn("[Aviso] Clipboard toast request was rejected", {
-              frameUrl: window.location.href,
+              frameUrlPresent: Boolean(window.location.href),
               error: response.error
             })
           }

@@ -151,7 +151,7 @@ const copy = {
     cmdNoMatchTail: "按意图处理",
     providerLab: "使用自己的 Key,浏览器直连这些模型厂商",
     doubao: "豆包",
-    ark: "火山方舟",
+    ark: "Volcengine Ark",
     entriesTag: "01 — 触发入口",
     entriesTitle: "需要的那一刻,从哪都能叫出它",
     entriesLede: "Aviso 不强迫你换一种用浏览器的方式。它接进你已有的习惯 —— 右键、划词、快捷键,你顺手怎么用都行。",
@@ -176,7 +176,7 @@ const copy = {
     byokLede: "Aviso 用你自己的 API Key,浏览器直连你选的模型厂商。请求不经过我们的服务器,也没有在模型费之外再收的月费或信用点。你按厂商的价付费,仅此而已。",
     provCardTitle: "AI 服务",
     provCardTag: "本地加密",
-    provDaily: "Anthropic",
+    provDaily: "Volcengine Ark",
     provDoubao: "豆包接入点",
     provDefault: "可配置",
     provConnected: "已配置",
@@ -231,7 +231,7 @@ const copy = {
     cmdNoMatchTail: "",
     providerLab: "Bring your key — your browser connects directly to",
     doubao: "Doubao",
-    ark: "Volcano Ark",
+    ark: "Volcengine Ark",
     entriesTag: "01 — Entry points",
     entriesTitle: "Reach it from wherever you already are",
     entriesLede:
@@ -259,7 +259,7 @@ const copy = {
       "Aviso uses your own API key and connects your browser straight to the provider you choose. Requests never pass through our servers — and there's no monthly fee or credit system layered on top of the model cost. You pay the provider, nothing more.",
     provCardTitle: "AI services",
     provCardTag: "local · encrypted",
-    provDaily: "Daily · Claude",
+    provDaily: "Volcengine Ark",
     provDoubao: "Doubao endpoint",
     provDefault: "configurable",
     provConnected: "configured",
@@ -381,7 +381,7 @@ const caps = [
   {icon: "translate", zh: "翻译", en: "Translate"},
   {icon: "refine", zh: "润色", en: "Refine"},
   {icon: "summarize", zh: "总结", en: "Summarize"},
-  {icon: "camera", zh: "图片说明", en: "Image caption"},
+  {icon: "continue", zh: "继续追问", en: "Follow-up"},
   {icon: "refine", zh: "自定义指令", en: "Custom prompt"}
 ] as const;
 
@@ -397,8 +397,8 @@ const byokPoints = [
     icon: "model",
     zhTitle: "模型 ID 手动可填",
     enTitle: "Model IDs are editable",
-    zhText: "OpenAI、Anthropic 的模型 ID,以及豆包/火山方舟的接入点,都能自己填。",
-    enText: "Type in model IDs for OpenAI and Anthropic, plus endpoints for Doubao / Volcano Ark."
+    zhText: "OpenAI、Anthropic 的模型 ID,以及豆包 / Volcengine Ark 的接入点,都能自己填。",
+    enText: "Type in model IDs for OpenAI and Anthropic, plus endpoints for Doubao / Volcengine Ark."
   },
   {
     icon: "check",
@@ -486,14 +486,14 @@ const faqs = [
   {
     zhQ: "Aviso 收费吗?",
     enQ: "Does Aviso cost money?",
-    zhA: "扩展本身不收费。你付的是自己模型厂商的 API 费用 —— 用 OpenAI、Anthropic 或豆包/火山方舟自己的 Key,按量付给厂商。Aviso 不在中间加价,也没有订阅或信用点。",
-    enA: "The extension itself doesn't charge. You pay your own provider's API costs — using your OpenAI, Anthropic, or Doubao / Volcano Ark key, billed by the provider. Aviso adds no markup, no subscription, no credits."
+    zhA: "扩展本身不收费。你付的是自己模型厂商的 API 费用 —— 用 OpenAI、Anthropic 或豆包 / Volcengine Ark 自己的 Key,按量付给厂商。Aviso 不在中间加价,也没有订阅或信用点。",
+    enA: "The extension itself doesn't charge. You pay your own provider's API costs — using your OpenAI, Anthropic, or Doubao / Volcengine Ark key, billed by the provider. Aviso adds no markup, no subscription, no credits."
   },
   {
     zhQ: "必须自己准备 API Key 吗?",
     enQ: "Do I need my own API key?",
-    zhA: "是的。Aviso 是 BYOK(自备 Key)直连:你在设置里填入自己的模型 API Key,浏览器直接连你选的厂商。豆包/火山方舟已有用户可用反馈;OpenAI 与 Anthropic 支持配置,实际可用性取决于你的 Key、模型权限和 provider 状态。",
-    enA: "Yes. Aviso is BYOK (bring your own key) and direct: you enter your own model API key in settings, and the browser connects straight to your chosen provider. Doubao / Volcano Ark has existing user-usable feedback; OpenAI and Anthropic are configurable, with availability depending on your key, model access, and provider status."
+    zhA: "是的。Aviso 是 BYOK(自备 Key)直连:你在设置里填入自己的模型 API Key,浏览器直接连你选的厂商。内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用;OpenAI 与 Anthropic 支持配置,实际可用性取决于你的 Key、模型权限和 provider 状态。",
+    enA: "Yes. Aviso is BYOK (bring your own key) and direct: you enter your own model API key in settings, and the browser connects straight to your chosen provider. Internal testing and user feedback confirm the Doubao / Volcengine Ark path works; OpenAI and Anthropic are configurable, with availability depending on your key, model access, and provider status."
   },
   {
     zhQ: "Aviso 会收集我的浏览数据吗?",
@@ -510,8 +510,8 @@ const faqs = [
   {
     zhQ: "当前版本的边界是什么?",
     enQ: "What are the current limits?",
-    zhA: "核心功能已经实现、可以日常使用,并经过手动验收;同时我们对当前的可用边界保持坦白 —— 比如豆包/火山方舟已有用户可用反馈,OpenAI/Anthropic 支持配置但仍取决于你的 Key 和模型权限。首段返回速度会受网络、模型、输入长度和 provider 状态影响,这一点我们不夸口。",
-    enA: "The core features are built, usable day-to-day, and manually verified — while we stay candid about the current edges, like Doubao / Volcano Ark having user-usable feedback and OpenAI / Anthropic being configurable depending on your key and model access. First-token latency depends on network, model, input length, and provider status; we don't overpromise there."
+    zhA: "核心功能已经实现、可以日常使用,并经过内部手动验收;同时我们对当前的可用边界保持坦白 —— 比如内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用,OpenAI/Anthropic 支持配置但仍取决于你的 Key 和模型权限。首段返回速度会受网络、模型、输入长度和 provider 状态影响,这一点我们不夸口。",
+    enA: "The core features are built, usable day-to-day, and internally manually verified — while we stay candid about the current edges, like internal testing and user feedback confirming the Doubao / Volcengine Ark path works, and OpenAI / Anthropic being configurable depending on your key and model access. First-token latency depends on network, model, input length, and provider status; we don't overpromise there."
   }
 ] as const;
 
@@ -558,7 +558,7 @@ function HeroPalette({lang, t}: {lang: Lang; t: Copy}): JSX.Element {
         />
         <span className="cmdp-status">
           <Icon name="shield" />
-          <span>{t.cmdStatus} · Claude</span>
+          <span>{t.cmdStatus}</span>
         </span>
       </div>
       {noMatch ? (
@@ -841,11 +841,11 @@ export default function Home(): JSX.Element {
                   </div>
                   <div className="provrow">
                     <span className="glyph">
-                      <GlyphAnthropic />
+                      <GlyphDoubao />
                     </span>
                     <span className="nm">
                       <b>{t.provDaily}</b>
-                      <small>Anthropic · claude-haiku-4-5-20251001</small>
+                      <small>{lang === "zh" ? "豆包 · 接入点已配置" : "Doubao · endpoint configured"}</small>
                     </span>
                     <span className="st def">{t.provDefault}</span>
                   </div>

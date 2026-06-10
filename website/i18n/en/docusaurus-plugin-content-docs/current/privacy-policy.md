@@ -20,7 +20,7 @@ Aviso stores necessary data in browser extension storage:
 
 | Data type | Storage location | Notes |
 | --- | --- | --- |
-| API key | Chrome local extension storage | AES-encrypted before storage; used only for requests to the provider you select. |
+| API key | Chrome local extension storage | Not stored in plaintext; protected locally with encryption/obfuscation-level protection before storage; used only for requests to the provider you select. |
 | Settings | Chrome sync settings | Includes UI language, theme, feature switches, custom templates, default service, and provider metadata. |
 | History | Chrome local extension storage | Stores user-saved results for later viewing, search, and reuse. |
 | Runtime short cache | Extension runtime memory | Reduces repeated preparation cost; not persisted. |
@@ -66,7 +66,9 @@ Aviso currently has no project-owned backend. It does not send user text, histor
 
 ## API Keys
 
-API keys are encrypted and stored in browser local extension storage. Aviso does not upload API keys to Aviso servers.
+API keys are not stored in plaintext. They are stored in Chrome local extension storage with local encryption/obfuscation-level protection. Aviso does not upload API keys to Aviso servers.
+
+This protection does not defend against an attacker who can read the local browser profile, control the device, or control the current Chrome user environment. If you suspect the device or browser profile is compromised, rotate or revoke the API key in the provider console first.
 
 When you use a provider, the request goes directly from the browser extension to that provider. The provider may process request content, logs, billing, and retention according to its own terms. Review and accept the provider’s terms and privacy policy before use.
 
@@ -99,8 +101,6 @@ https://ark.cn-beijing.volces.com/*
 
 Aviso does not request broad host permissions to fetch arbitrary remote webpage bodies.
 
-OpenAI and Anthropic can be configured with API key and model ID; requests are sent directly to the provider the user selects. Doubao / Volcengine Ark has user-usable feedback.
-
 ## User Control
 
 In the Aviso Popup, users can:
@@ -119,3 +119,5 @@ If you uninstall Aviso, Chrome clears the extension’s local storage. You can a
 ## Provider Acceptance Status
 
 Aviso supports configurable OpenAI, Anthropic, and Doubao / Volcengine Ark paths. Users can enter their own API key, model ID, or endpoint in settings; requests are sent directly from the browser extension to the selected provider.
+
+Current internal testing and user feedback confirm the Doubao / Volcengine Ark path works. OpenAI and Anthropic are configurable, but actual availability depends on the user's own key, model access, and provider status. This site does not describe them as having completed real availability acceptance.

@@ -2,15 +2,15 @@
 
 版本：`0.1.0`
 
-状态：`v0.1 internal dogfood / 内部试用版`
+状态：`v0.1 internal dogfood / 内部试用版`，Chrome Web Store 上架准备 / 发布候选
 
 日期：2026-06-10
 
 ## 当前结论
 
-当前构建只用于内部试用。用户已验证 A-G 手动验收基本通过，豆包 / 火山方舟 API 可用。OpenAI 和 Anthropic 支持在设置中配置 API Key 和模型 ID。
+当前构建用于内部试用和 Chrome Web Store 上架准备。用户已验证 A-G 手动验收基本通过，豆包 / 火山方舟 API 可用。OpenAI 和 Anthropic 支持在设置中配置 API Key 和模型 ID。
 
-本清单用于记录当前内部试用质量，不代表 Chrome Web Store 发布批准。
+本清单用于记录当前内部试用质量和发布候选准备状态，不代表 Chrome Web Store 审核通过、正式上架或发布批准。
 
 ## 功能验收
 
@@ -45,7 +45,8 @@ Provider 连接测试只能由用户在 Popup 手动触发，一次只测一个 
 
 - [x] 普通权限只包含当前功能需要的 `contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`clipboardWrite`。
 - [x] Host permissions 只包含 `https://api.openai.com/*`、`https://api.anthropic.com/*`、`https://ark.cn-beijing.volces.com/*`。
-- [x] API Key 加密保存在 `chrome.storage.local/contextai_api_keys`。
+- [x] API Key 不明文保存，保存在 `chrome.storage.local/contextai_api_keys`，不进入 sync。
+- [x] 当前 API Key 保护属于由扩展 ID 派生口令的本地加密 / 混淆级保护，不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。
 - [x] 非敏感设置保存在 `chrome.storage.sync/contextai_settings`。
 - [x] 本地对话历史保存在 `chrome.storage.local/contextai_history`。
 - [x] 无项目方后端、provider proxy、遥测、分析 SDK 或远端日志。
@@ -61,18 +62,25 @@ git diff --check
 npm test
 npx tsc --noEmit
 npm run build
+cd website && npm run build
+npm run package
 ```
 
 检查通过只说明代码和构建基线可用；真实 Chrome 加载体验和真实 provider 调用仍以手动验收为准。
 
 ## 上线前安全扫描
 
-安全扫描建议分两轮：
+2026-06-10 发布候选收口已执行：
 
-- 官网文案、隐私政策和使用说明修改期间，可以先做轻量 secret / 敏感信息 / 权限引用扫描。
-- Chrome Web Store 提交前，等官网、隐私政策、商店素材和最终 package zip 都稳定后，再做最终依赖安全扫描、最终泄漏扫描和发布包权限核对。
+- `npm audit --registry=https://registry.npmjs.org --audit-level=high` 已执行。
+- `@mozilla/readability` 已升级到 `0.6.0`，直接运行时 DoS 审计项已移除。
+- 最终 package zip 已执行真实形态密钥扫描，未发现 OpenAI、Anthropic、GitHub、AWS、Google、Slack 或私钥格式凭证。
+- 最终 package zip 已核对内容，只包含扩展运行文件和 Chrome `_locales`。
+- 最终 manifest 已核对权限边界，普通权限和 host permissions 未扩大。
 
-当前仍未完成公开发布级安全收口：依赖安全扫描、最终 package zip 泄漏扫描、CI / workflow 运行证据和人工发布批准。
+当前仍有公开发布级风险：Plasmo `0.90.5` 是 npm 当前最新版本，但官方 `npm audit` 仍报告其 Parcel 构建链存在 high 级审计项；`npm audit fix --force` 会把 Plasmo 降级到不适合当前项目的旧版本，因此不能自动修复。该风险主要落在本地构建工具链，不是当前扩展运行时 manifest 权限扩大，但公开提交前需要 owner 明确接受或等待 Plasmo / Parcel 上游修复。
+
+当前仍未完成公开发布级收口：CI / workflow 运行证据、Chrome Web Store 审核通过证据、正式商店链接和人工发布批准。
 
 ## 手动 QA 记录
 
@@ -104,8 +112,8 @@ Chrome 版本、操作系统、截图或录屏未补录；当前记录只作为�
 
 ## 禁止误判
 
-- 当前状态不是公开发布。
-- 当前状态不是 Chrome Web Store 提交。
+- 当前状态不是公开上架。
+- 当前状态不是 Chrome Web Store 审核通过。
 - OpenAI / Anthropic 当前只描述为支持配置的 provider，不描述为可用状态。
 - 当前没有项目方后端、登录、订阅、支付、匿名额度、托管 AI、联网搜索或远端链接正文抓取。
 - GitHub push、构建通过或内部手动 QA 不等于 Chrome Web Store 发布批准。

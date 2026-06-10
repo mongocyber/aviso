@@ -6,7 +6,7 @@ Updated: 2026-06-09
 
 Aviso 帮用户在当前网页内快速调用 AI。用户不需要离开页面，就可以对选中文字、当前页面、图片或自己输入的问题进行解释、翻译、润色、总结和继续追问。
 
-当前版本面向内部试用，核心价值是提供“网页上下文 + 用户主动触发 + 页面内结果面板”的稳定工作流。
+当前版本面向内部试用和 Chrome Web Store 上架准备，核心价值是提供“网页上下文 + 用户主动触发 + 页面内结果面板”的稳定工作流。它还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
 
 ## 用户对象
 
@@ -51,11 +51,12 @@ Aviso 帮用户在当前网页内快速调用 AI。用户不需要离开页面�
 
 - 运行时 UI 默认跟随 Chrome UI language：中文环境显示中文，其他环境显示 English。
 - 用户可以在 Popup 中覆盖界面语言。
-- Chrome 扩展描述和快捷键说明通过 `_locales/zh_CN` 和 `_locales/en` 本地化。
+- Chrome 扩展描述和快捷键说明通过源码 `locales/zh_CN` 和 `locales/en` 本地化；Plasmo 构建时映射到 Chrome 扩展的 `_locales` 目录。
 
 ## 数据与隐私需求
 
-- API Key 必须加密保存在 `chrome.storage.local/contextai_api_keys`。
+- API Key 必须不明文保存，并保存在 `chrome.storage.local/contextai_api_keys`，不进入 sync。
+- 当前 API Key 保护属于由扩展 ID 派生口令的本地加密 / 混淆级保护；它不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。
 - 非敏感设置必须保存在 `chrome.storage.sync/contextai_settings`。
 - 本地 AI 对话历史保存在 `chrome.storage.local/contextai_history`。
 - AI 请求只在用户主动触发时发送到用户选择的 provider。

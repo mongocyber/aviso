@@ -23,7 +23,7 @@ AI requests are sent directly from the browser extension to the provider selecte
 
 | Data | Purpose | Current storage |
 | --- | --- | --- |
-| API key | Call the provider selected by the user | Encrypted and stored in Chrome local extension storage. |
+| API key | Call the provider selected by the user | Not stored in plaintext; stored in Chrome local extension storage with local encryption/obfuscation-level protection. |
 | Settings | Models, switches, UI language, theme, templates, and provider metadata | Stored in Chrome sync settings. |
 | History | Search, save, and reuse previous results | Stored in Chrome local extension storage. |
 | Runtime short cache | Reduce repeated preparation cost | Only in extension runtime memory; not persisted. |
@@ -76,6 +76,8 @@ Host permissions remain limited to approved provider domains.
 Aviso applies sensitive-domain and sensitive-content filtering to clipboard-aware prompts to reduce accidental handling of passwords, keys, payment pages, admin panels, and similar high-risk content.
 
 This is not a complete guarantee for all sensitive information. Users should still judge which content may be sent to model providers.
+
+Local API key protection is not a device-security boundary. It does not defend against an attacker who can read the local browser profile, control the device, or control the current Chrome user environment.
 
 ## Screenshot Capability
 

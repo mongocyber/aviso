@@ -121,6 +121,7 @@ import {
   TRANSLATION_SYSTEM_PROMPT,
   TRANSLATION_WAITING_TEXT
 } from "../src/utils/translation.ts"
+import { isSafeBrowserOpenUrl } from "../src/utils/url-safety.ts"
 import {
   clearPageContentMemoryCache,
   getCachedPageContent,
@@ -130,6 +131,16 @@ import {
 
 test("detectType 识别 URL", () => {
   assert.equal(detectType("https://example.com/path?q=1"), "url")
+})
+
+test("browser URL opening only allows http and https", () => {
+  assert.equal(isSafeBrowserOpenUrl("https://example.com/path?q=1"), true)
+  assert.equal(isSafeBrowserOpenUrl("http://example.com/path"), true)
+  assert.equal(isSafeBrowserOpenUrl("javascript:alert(1)"), false)
+  assert.equal(isSafeBrowserOpenUrl("data:text/html,<script></script>"), false)
+  assert.equal(isSafeBrowserOpenUrl("file:///Users/example/private.txt"), false)
+  assert.equal(isSafeBrowserOpenUrl("chrome-extension://abc/options.html"), false)
+  assert.equal(isSafeBrowserOpenUrl("not a url"), false)
 })
 
 test("double-click menu safety blocks editable and code-editor targets", () => {
@@ -200,6 +211,92 @@ test("command quick action layer removes screenshot action", () => {
     commandActionsSource,
     /REQUEST_START_SCREENSHOT_SELECTION/
   )
+})
+
+test("screenshot request dead message is removed while context-menu path remains", () => {
+  const backgroundSource = readFileSync(
+    new URL("../src/background/index.ts", import.meta.url),
+    "utf8"
+  )
+  const messageSource = readFileSync(
+    new URL("../src/types/messages.ts", import.meta.url),
+    "utf8"
+  )
+  const contextMenusSource = readFileSync(
+    new URL("../src/background/context-menus.ts", import.meta.url),
+    "utf8"
+  )
+  const screenshotSource = readFileSync(
+    new URL("../src/contents/screenshot.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.doesNotMatch(backgroundSource, /REQUEST_START_SCREENSHOT_SELECTION/)
+  assert.doesNotMatch(messageSource, /REQUEST_START_SCREENSHOT_SELECTION/)
+  assert.match(messageSource, /action: "START_SCREENSHOT_SELECTION"/)
+  assert.match(contextMenusSource, /MENU_ID_SCREENSHOT_ASK/)
+  assert.match(contextMenusSource, /action: "START_SCREENSHOT_SELECTION"/)
+  assert.match(screenshotSource, /START_SCREENSHOT_SELECTION/)
+})
+
+test("command palette guards bookmark and history URLs before opening", () => {
+  const commandSource = readFileSync(
+    new URL("../src/contents/command.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(commandSource, /isSafeBrowserOpenUrl\(item\.url\)/)
+  assert.match(commandSource, /window\.open\(item\.url,\s*"_blank"\)/)
+  assert.doesNotMatch(
+    commandSource,
+    /if \(item\.url\) \{\s*window\.open\(item\.url,\s*"_blank"\)/
+  )
+})
+
+test("URL-bearing warning logs use presence fields instead of raw URLs", () => {
+  const sources = [
+    "../src/background/frame-router.ts",
+    "../src/contents/frame-bridge.ts",
+    "../src/contents/clipboard.tsx",
+    "../src/contents/toolbar.tsx"
+  ].map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
+
+  for (const source of sources) {
+    assert.doesNotMatch(
+      source,
+      /console\.warn\([\s\S]*?frameUrl:\s*(window\.location\.href|frameUrl)/
+    )
+    assert.match(source, /frameUrlPresent/)
+  }
+})
+
+test("readability listener only handles extraction without holding sync channel", () => {
+  const readabilitySource = readFileSync(
+    new URL("../src/contents/readability.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(readabilitySource, /message\.action !== "EXTRACT_PAGE_CONTENT"/)
+  assert.match(readabilitySource, /sendResponse\(\{ success: true, data: content \}\)/)
+  assert.match(readabilitySource, /return false/)
+  assert.doesNotMatch(readabilitySource, /return true/)
+})
+
+test("test script and submit workflow use Node 22 type stripping", () => {
+  const packageJson = JSON.parse(
+    readFileSync(new URL("../package.json", import.meta.url), "utf8")
+  )
+  const workflowSource = readFileSync(
+    new URL("../.github/workflows/submit.yml", import.meta.url),
+    "utf8"
+  )
+
+  assert.equal(
+    packageJson.scripts.test,
+    'node --experimental-strip-types --test "tests/**/*.test.ts"'
+  )
+  assert.equal(packageJson.engines.node, ">=22.6.0")
+  assert.match(workflowSource, /node-version: 22\.x/)
 })
 
 test("bookmark search meta does not expose raw query", () => {

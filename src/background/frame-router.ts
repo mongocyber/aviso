@@ -39,7 +39,7 @@ export async function sendMessageToFrame<TResponse = unknown>(
       action: message.action,
       tabId,
       frameId,
-      frameUrl,
+      frameUrlPresent: Boolean(frameUrl),
       error
     })
     return { ok: false, frameId, error }

@@ -14,7 +14,7 @@ Aviso 使用你自己的模型 provider API Key 发起请求。请求会从浏�
 
 | Provider | 当前状态 |
 | --- | --- |
-| 豆包 / 火山方舟 | 已有用户可用反馈。 |
+| 豆包 / Volcengine Ark | 内部测试和用户反馈确认路径可用。 |
 | OpenAI | 支持配置 API Key 和模型 ID；实际可用性取决于你的 Key、模型权限和 provider 状态。 |
 | Anthropic | 支持配置 API Key 和模型 ID；实际可用性取决于你的 Key、模型权限和 provider 状态。 |
 
@@ -27,7 +27,7 @@ Popup 支持多 AI 服务配置。你可以：
 - 为同一个 provider 保存多个配置。
 - 设置当前默认服务。
 - 手动编辑 OpenAI / Anthropic 的模型 ID。
-- 为豆包 / 火山方舟填写接入点和模型字段。
+- 为豆包 / Volcengine Ark 填写接入点和模型字段。
 - 手动触发连接测试；测试一次只针对当前 provider，并只展示脱敏摘要。
 
 Aviso 不会自动读取 provider 账号里的模型列表，也不会自动调用 list-models API。
@@ -43,11 +43,12 @@ Aviso 不会自动读取 provider 账号里的模型列表，也不会自动调�
 
 ## API Key 如何保存
 
-API Key 会经过 AES 加密后保存在 Chrome 的本地扩展存储中，并用于浏览器扩展直连所选 provider。
+API Key 不明文保存，会经过本地加密/混淆级保护后保存在 Chrome local extension storage 中，并用于浏览器扩展直连所选 provider。
 
 仍需理解这个边界：
 
 - API Key 存在于你的浏览器本地环境中。
+- 当前保护不防御已经能读取本机浏览器 profile、控制本机或控制当前 Chrome 用户环境的攻击者。
 - 非敏感服务设置保存在 Chrome 同步设置中，API Key 不进入同步设置。
 - 使用模型时，请求会直接发送给你选择的 provider。
 - provider 的计费、日志、数据保留和使用限制由你的 provider 账户条款决定。

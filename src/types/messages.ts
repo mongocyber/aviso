@@ -139,10 +139,6 @@ export type MessageRequest =
   | { action: "OPEN_COMMAND_PALETTE" }
   | { action: "REQUEST_OPEN_COMMAND_PALETTE" }
   | {
-      action: "REQUEST_START_SCREENSHOT_SELECTION"
-      payload: { pageUrl: string }
-    }
-  | {
       action: "REQUEST_COPY_CURRENT_CONTEXT"
       payload: { selectionText?: string; pageUrl: string; title?: string }
     }

@@ -33,7 +33,7 @@ function requestTopFrameCommandPalette() {
       const runtimeError = chrome.runtime.lastError
       if (runtimeError) {
         console.warn("[Aviso] Failed to request command palette from iframe", {
-          frameUrl: window.location.href,
+          frameUrlPresent: Boolean(window.location.href),
           error: runtimeError.message
         })
         return
@@ -41,7 +41,7 @@ function requestTopFrameCommandPalette() {
 
       if (response && !response.success) {
         console.warn("[Aviso] Command palette request from iframe failed", {
-          frameUrl: window.location.href,
+          frameUrlPresent: Boolean(window.location.href),
           error: response.error
         })
       }

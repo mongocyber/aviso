@@ -14,7 +14,7 @@ The current code includes these provider paths:
 
 | Provider | Current status |
 | --- | --- |
-| Doubao / Volcengine Ark | Has user-usable feedback. |
+| Doubao / Volcengine Ark | Internal testing and user feedback confirm the path works. |
 | OpenAI | API key and model ID can be configured; actual availability depends on your key, model access, and provider status. |
 | Anthropic | API key and model ID can be configured; actual availability depends on your key, model access, and provider status. |
 
@@ -43,11 +43,12 @@ Aviso does not automatically read model lists from your provider account and doe
 
 ## How API Keys Are Stored
 
-API keys are encrypted with AES and stored in Chrome local extension storage. They are used for direct browser-to-provider requests.
+API keys are not stored in plaintext. They are stored in Chrome local extension storage with local encryption/obfuscation-level protection and are used for direct browser-to-provider requests.
 
 Important boundaries:
 
 - The API key exists in your local browser environment.
+- This protection does not defend against an attacker who can read the local browser profile, control the device, or control the current Chrome user environment.
 - Non-secret service settings are stored in Chrome sync settings; API keys are not stored there.
 - When you use a model, the request is sent directly to the provider you selected.
 - Provider billing, logs, retention, and limits follow your provider account terms.

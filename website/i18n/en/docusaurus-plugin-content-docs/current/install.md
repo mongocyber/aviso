@@ -6,27 +6,27 @@ sidebar_position: 2
 
 # Install
 
-Aviso documentation is public-facing, but the official Chrome Web Store install link is still in submission preparation. This page covers both the future store install path and the current testing / review loading method.
+Aviso documentation is public-facing, but the official Chrome Web Store install link is still in listing preparation. This page covers both the future store install path and the current loading method for invited testers and listing-preparation maintainers.
 
 ## Install After Chrome Web Store Approval
 
 After the Chrome Web Store listing is approved, this page will be updated with the official store link and final install steps. For now, no fake store URL is shown:
 
 ```text
-Chrome Web Store official link: pending approval
+Chrome Web Store official link: not available yet; will be updated after review approval
 ```
 
 At that point, the website homepage and navigation CTA will also point to the official store listing.
 
-## Current Testing / Review Loading Method
+## Current Build Access
 
-Before the official store link is available, testers and reviewers load the extension from a build directory. The current production build directory is:
+Before the official store link is available, the build directory is provided only to invited testers and listing-preparation maintainers. The current production build directory is:
 
 ```text
 build/chrome-mv3-prod
 ```
 
-This directory comes from the local project build and is currently used for testing / review loading.
+This directory comes from the local project build and is currently used for invited testing and listing preparation. After the Chrome Web Store link is available, this page will be replaced with the official install steps.
 
 ## Load the Extension in Chrome
 
@@ -49,4 +49,4 @@ Recommended checks:
 - On Mac, use `Command+Shift+Space`; on Windows/Linux, use `Ctrl+Shift+Space`; check whether the command palette opens.
 - If the selection translation card or double-click quick menu is enabled, confirm that it appears only in normal webpage areas.
 
-If you are a reviewer, treat the current material as “store pending; currently verified by manually loading the build directory.”
+Treat the current material as “listing preparation; official store link not available yet; currently verified through the build directory provided by the maintainer.”

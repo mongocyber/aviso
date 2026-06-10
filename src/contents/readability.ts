@@ -43,9 +43,11 @@ export function extractPageContent(): ExtractedContent | null {
 
 // 监听来自 background 的提取请求
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
-  if (message.action === "EXTRACT_PAGE_CONTENT") {
-    const content = extractPageContent()
-    sendResponse({ success: true, data: content })
+  if (message.action !== "EXTRACT_PAGE_CONTENT") {
+    return false
   }
-  return true
+
+  const content = extractPageContent()
+  sendResponse({ success: true, data: content })
+  return false
 })

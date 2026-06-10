@@ -77,7 +77,7 @@ Popup 用于管理：
 - 多 AI 服务配置。
 - API Key。
 - OpenAI / Anthropic 模型 ID。
-- 豆包 / 火山方舟接入点和模型字段。
+- 豆包 / Volcengine Ark 接入点和模型字段。
 - 功能开关。
 - 自定义模板。
 - 历史记录。
