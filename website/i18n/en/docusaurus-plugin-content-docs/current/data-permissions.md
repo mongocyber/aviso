@@ -87,7 +87,7 @@ The command palette and double-click quick menu do not show screenshot entries. 
 
 ## Screenshots and Feedback
 
-When submitting feedback or preparing store screenshots, do not expose:
+When submitting an issue through the [website feedback form](/en/feedback/) or preparing store screenshots, do not expose:
 
 - API keys.
 - Private webpages.
@@ -95,3 +95,5 @@ When submitting feedback or preparing store screenshots, do not expose:
 - Customer data.
 - Unpublished business materials.
 - Sensitive content that may appear in raw provider errors.
+
+The website feedback form sends only the issue description, optional issue tag, optional contact email, and images or screenshots actively uploaded by the user. It does not read extension history, API keys, Chrome extension storage, or model request content.

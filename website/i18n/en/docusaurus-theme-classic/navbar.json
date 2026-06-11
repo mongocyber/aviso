@@ -15,6 +15,10 @@
     "message": "Privacy",
     "description": "Navbar item with label 隐私"
   },
+  "item.label.反馈": {
+    "message": "Feedback",
+    "description": "Navbar item with label 反馈"
+  },
   "item.label.文档": {
     "message": "Docs",
     "description": "Navbar item with label 文档"

@@ -62,7 +62,11 @@ Aviso’s performance summary is only written to the local extension console for
 
 ## Data Visible to the Aviso Project
 
-Aviso currently has no project-owned backend. It does not send user text, history, API keys, page content, or model requests to Aviso project servers.
+The Aviso browser extension currently has no project-owned backend for receiving user content or model requests. It does not send user text, history, API keys, page content, or model requests to Aviso project servers.
+
+The website feedback form is a separate website email channel. Only when a user actively submits feedback, the issue description, optional issue tag, optional contact email, and user-uploaded images or screenshots are sent through a Vercel Function and Resend email service to the maintainer mailbox. The feedback form does not read extension history, API keys, Chrome extension storage, or model request content, and it is not extension telemetry.
+
+Do not submit API keys, tokens, private webpage bodies, customer data, unpublished documents, or unredacted screenshots in the feedback form. Feedback emails are retained in the maintainer mailbox for issue triage and replies.
 
 ## API Keys
 
@@ -74,7 +78,7 @@ When you use a provider, the request goes directly from the browser extension to
 
 ## Chrome Web Store Limited Use Statement
 
-Aviso uses user data only to provide user-triggered AI assistant features on the current webpage. Aviso does not sell user data, use user data for advertising, use user data for credit/lending or similar decisions, or allow Aviso project personnel to read user content.
+Aviso uses extension-handled user data only to provide user-triggered AI assistant features on the current webpage. Aviso does not sell user data, use user data for advertising, use user data for credit/lending or similar decisions, or allow Aviso project personnel to read page content, history, API keys, or model request content handled by the extension.
 
 When the user actively triggers an AI action, required content is sent directly from the browser extension to the selected model provider. Provider handling depends on the user’s account relationship, provider terms, and provider privacy policy.
 

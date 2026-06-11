@@ -69,6 +69,11 @@ const config: Config = {
           label: "隐私"
         },
         {
+          to: "/feedback/",
+          position: "left",
+          label: "反馈"
+        },
+        {
           type: "localeDropdown",
           position: "right"
         },
@@ -114,6 +119,14 @@ const config: Config = {
             {
               label: "已知限制",
               to: "/docs/known-limitations"
+            },
+            {
+              label: "支持反馈",
+              to: "/docs/support-feedback"
+            },
+            {
+              label: "提交反馈",
+              to: "/feedback/"
             }
           ]
         }

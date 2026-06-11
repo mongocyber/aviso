@@ -31,6 +31,14 @@
     "message": "Known Limitations",
     "description": "The label of footer link with label=已知限制 linking to /docs/known-limitations"
   },
+  "link.item.label.支持反馈": {
+    "message": "Support & Feedback",
+    "description": "The label of footer link with label=支持反馈 linking to /docs/support-feedback"
+  },
+  "link.item.label.提交反馈": {
+    "message": "Send Feedback",
+    "description": "The label of footer link with label=提交反馈 linking to /feedback/"
+  },
   "copyright": {
     "message": "Copyright © 2026 Aviso. Public product documentation.",
     "description": "The footer copyright"

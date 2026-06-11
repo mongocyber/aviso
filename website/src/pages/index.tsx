@@ -185,13 +185,13 @@ const copy = {
     privacyTag: "04 — 隐私边界",
     privacyTitlePre: "别让扩展悄悄收走你的对话。",
     privacyTitleEm: "Aviso 没有可收集的",
-    privacyLede: "很多 AI 扩展可能把你正在看的内容、甚至 AI 对话本身收走再变现。Aviso 在结构上就做不到这件事 —— 因为它根本没有接收这些数据的后端。",
+    privacyLede: "很多 AI 扩展可能把你正在看的内容、甚至 AI 对话本身收走再变现。Aviso 扩展在结构上就做不到这件事 —— 因为扩展没有接收这些数据的后端。",
     compareThem: "多数 AI 助手扩展",
     compareUs: "Aviso",
     privacyNote:
-      "这不是空话:Aviso 的隐私边界写进了实现本身。API Key 在本地加密保存,对话历史只存在你的浏览器里,命令面板搜历史和书签都在本地完成。只有你主动触发的请求,才会由浏览器直连你选择的 provider;Aviso 没有自建后端、遥测或第三方分析 SDK。",
+      "这不是空话:Aviso 的隐私边界写进了实现本身。API Key 在本地加密保存,对话历史只存在你的浏览器里,命令面板搜历史和书签都在本地完成。只有你主动触发的请求,才会由浏览器直连你选择的 provider;扩展没有接收用户内容的自建后端、遥测或第三方分析 SDK。",
     metricBackendNum: "0",
-    metricBackend: "个项目方后端服务器接收你的数据",
+    metricBackend: "个项目方后端服务器接收你的扩展数据",
     metricTelemetryNum: "0",
     metricTelemetry: "个遥测或第三方分析 SDK",
     metricTriggerNum: "主动触发",
@@ -269,13 +269,13 @@ const copy = {
     privacyTitlePre: "Don't let extensions quietly take your chats.",
     privacyTitleEm: "Aviso has nothing to collect",
     privacyLede:
-      "Many AI extensions may collect what you read — sometimes the AI conversations themselves — and monetize it. Aviso structurally can't: there is no backend to receive that data in the first place.",
+      "Many AI extensions may collect what you read — sometimes the AI conversations themselves — and monetize it. The Aviso extension structurally can't: there is no extension backend to receive that data in the first place.",
     compareThem: "Most AI assistant extensions",
     compareUs: "Aviso",
     privacyNote:
-      "This isn't a slogan — Aviso's privacy boundary is built into the implementation. API keys are encrypted locally, chat history stays in your browser, and command-palette searches over history and bookmarks run locally. Only the requests you trigger go — browser-direct — to the provider you chose; Aviso has no backend of its own, no telemetry, and no third-party analytics SDK.",
+      "This isn't a slogan — Aviso's privacy boundary is built into the implementation. API keys are encrypted locally, chat history stays in your browser, and command-palette searches over history and bookmarks run locally. Only the requests you trigger go — browser-direct — to the provider you chose; the extension has no backend for receiving user content, no telemetry, and no third-party analytics SDK.",
     metricBackendNum: "0",
-    metricBackend: "backend servers receiving your data",
+    metricBackend: "backend servers receiving your extension data",
     metricTelemetryNum: "0",
     metricTelemetry: "telemetry or third-party analytics SDKs",
     metricTriggerNum: "On trigger",
@@ -415,8 +415,8 @@ const compareRows = [
     enCrit: "Where your content goes",
     zhThem: "可能被收集、画像,甚至转卖给数据经纪商",
     enThem: "May be collected, profiled, even sold to data brokers",
-    zhUs: "没有后端,Aviso 不接收你的任何内容",
-    enUs: "No backend — Aviso never receives your content"
+    zhUs: "扩展没有接收后端,Aviso 不接收你的任何页面内容",
+    enUs: "No extension backend — Aviso never receives your page content"
   },
   {
     zhCrit: "怎么计费",
@@ -498,8 +498,8 @@ const faqs = [
   {
     zhQ: "Aviso 会收集我的浏览数据吗?",
     enQ: "Does Aviso collect my browsing data?",
-    zhA: "不会。Aviso 没有项目方后端,也没有遥测或第三方分析 SDK。API Key 本地加密保存,对话历史只存在浏览器里。命令面板搜历史和书签都在本地完成。只有你主动触发的 AI 请求,才会由浏览器直连你选的 provider。",
-    enA: "No. Aviso has no backend of ours, and no telemetry or third-party analytics SDK. API keys are encrypted locally and chat history stays in your browser. Command-palette searches over history and bookmarks run locally. Only the AI requests you trigger go — browser-direct — to your chosen provider."
+    zhA: "不会。Aviso 扩展没有接收用户内容的项目方后端,也没有遥测或第三方分析 SDK。API Key 本地加密保存,对话历史只存在浏览器里。命令面板搜历史和书签都在本地完成。只有你主动触发的 AI 请求,才会由浏览器直连你选的 provider。",
+    enA: "No. The Aviso extension has no project backend for receiving user content, and no telemetry or third-party analytics SDK. API keys are encrypted locally and chat history stays in your browser. Command-palette searches over history and bookmarks run locally. Only the AI requests you trigger go — browser-direct — to your chosen provider."
   },
   {
     zhQ: "它在每个网站都能用吗?",

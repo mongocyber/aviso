@@ -6,7 +6,13 @@ sidebar_position: 9
 
 # Support & Feedback
 
-The Aviso support page is intended for public release use. Version `0.1.0` has been submitted for Chrome Web Store review, and the official Chrome Web Store link is not available yet. This page explains what information to include in feedback and what not to send.
+The Aviso support page is intended for public release use. Version `0.1.0` has been submitted for Chrome Web Store review, and the official Chrome Web Store link is not available yet. This page explains where to send feedback, what information to include, and what not to send.
+
+## Feedback Entry
+
+Use the website [feedback form](/en/feedback/) first. The form supports an issue description, redacted images or screenshots, an optional issue tag, and an optional contact email. Submissions are emailed to the maintainer through the website email channel.
+
+If you are an invited tester, you can also use the feedback channel provided by the maintainer. GitHub Issues are only useful if you have been granted repository access.
 
 ## Check Before Reporting
 
@@ -19,9 +25,18 @@ If Aviso does not work as expected, first check:
 - Relevant feature switches are enabled, such as the selection translation card or double-click quick menu.
 - The model may be slow rather than the request not being sent.
 
-## Useful Information to Provide
+## Feedback Form Support
 
-When reporting an issue, include:
+The website feedback form supports:
+
+- One issue description field for reproduction steps, expected result, and actual behavior.
+- Optional image or screenshot attachments; redact them before uploading.
+- Optional issue type tags, such as bug, suggestion, install, or privacy.
+- Optional contact email for replies.
+
+## Useful Information to Include
+
+In the issue description, include:
 
 - Chrome version.
 - Operating system.
@@ -31,7 +46,7 @@ When reporting an issue, include:
 - Model or AI service config name, but never the API key.
 - Page type where the issue appeared, such as normal webpage, iframe page, form page, or image page.
 - Reproduction steps.
-- Redacted screenshot or recording if safe.
+- Notes about a redacted screenshot or recording if useful.
 
 ## Do Not Provide
 
@@ -62,6 +77,6 @@ Before sending screenshots or recordings, redact API keys, private webpages, rea
 
 ## Support Entry
 
-- The current preferred feedback entry is [GitHub Issues](https://github.com/mongocyber/aviso/issues).
+- The current public feedback entry is the [website feedback form](/en/feedback/).
 - If you are an invited tester, you can also use the feedback channel provided by the maintainer.
 - After Chrome Web Store approval, the Store Support URL should point to this page.

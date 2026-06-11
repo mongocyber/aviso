@@ -22,4 +22,16 @@ npm install
 npm run build
 ```
 
-This site only contains user documentation and does not run provider calls or deployment actions.
+This site contains user documentation and a website-only feedback endpoint. It does not run extension provider calls or extension deployment actions.
+
+## Feedback email settings
+
+The feedback form posts to `website/api/feedback.js`. It sends the issue description, optional contact email, optional tag, and up to three image attachments. On Vercel, configure these environment variables for the website project:
+
+```bash
+RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+FEEDBACK_TO_EMAIL=you@example.com
+FEEDBACK_FROM_EMAIL=Aviso Feedback <feedback@your-domain.example>
+```
+
+Use a verified sender domain for `FEEDBACK_FROM_EMAIL`. Do not commit real secrets.
