@@ -19,7 +19,7 @@ export const config: PlasmoCSConfig = {
 }
 
 export const getShadowHostId: PlasmoGetShadowHostId = () =>
-  "contextai-clipboard-host"
+  "aviso-clipboard-host"
 
 type ToastState = {
   visible: boolean

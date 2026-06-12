@@ -251,7 +251,12 @@ function sanitizeProvider(provider: string | undefined): string {
   if (
     provider === "openai" ||
     provider === "anthropic" ||
-    provider === "doubao"
+    provider === "doubao" ||
+    provider === "deepseek" ||
+    provider === "moonshot" ||
+    provider === "openrouter" ||
+    provider === "gemini" ||
+    provider === "hunyuan"
   ) {
     return provider
   }

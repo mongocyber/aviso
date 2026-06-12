@@ -25,6 +25,7 @@ export function decryptApiKey(ciphertext: string): string {
 const DEFAULT_SETTINGS: Settings = {
   defaultModel: "gpt-4o-mini",
   defaultProviderConfigId: "",
+  fastProviderConfigId: "",
   providerConfigs: [],
   appearanceTheme: "system",
   uiLanguage: "auto",
@@ -57,6 +58,11 @@ export type ApiKeys = {
   openai: string
   anthropic: string
   doubao: string
+  deepseek: string
+  moonshot: string
+  openrouter: string
+  gemini: string
+  hunyuan: string
   providerConfigKeys: Record<string, string>
 }
 
@@ -68,6 +74,11 @@ export async function getApiKeys(): Promise<ApiKeys> {
     openai: raw.openai ? decryptApiKey(raw.openai) : "",
     anthropic: raw.anthropic ? decryptApiKey(raw.anthropic) : "",
     doubao: raw.doubao ? decryptApiKey(raw.doubao) : "",
+    deepseek: "",
+    moonshot: "",
+    openrouter: "",
+    gemini: "",
+    hunyuan: "",
     providerConfigKeys: Object.fromEntries(
       Object.entries(providerConfigKeys).map(([configId, encrypted]) => [
         configId,

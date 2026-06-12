@@ -1,7 +1,15 @@
 import type { TranslationTargetLanguage } from "~utils/translation"
 import type { UiLanguageSetting } from "~utils/i18n"
 
-export type ProviderConfigProvider = "openai" | "anthropic" | "doubao"
+export type ProviderConfigProvider =
+  | "openai"
+  | "anthropic"
+  | "doubao"
+  | "deepseek"
+  | "moonshot"
+  | "openrouter"
+  | "gemini"
+  | "hunyuan"
 
 export type HistoryTrigger =
   | "context-menu"
@@ -35,6 +43,7 @@ export type ConversationMessage = {
 export type Settings = {
   defaultModel: string
   defaultProviderConfigId?: string
+  fastProviderConfigId?: string
   providerConfigs?: ProviderConfig[]
   appearanceTheme: "light" | "dark" | "system"
   uiLanguage: UiLanguageSetting

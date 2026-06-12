@@ -1,5 +1,6 @@
 import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
+import { register } from "node:module"
 import { test } from "node:test"
 
 import {
@@ -32,7 +33,7 @@ import {
   hasValidDoubleClickSelection,
   isUnsafeDoubleClickTarget
 } from "../src/utils/double-click-menu.ts"
-import { normalizeError } from "../src/utils/errors.ts"
+import { buildSafeErrorLog, normalizeError } from "../src/utils/errors.ts"
 import {
   buildFollowUpPriorContext,
   DEFAULT_FOLLOW_UP_CONTEXT_BUDGET
@@ -50,11 +51,18 @@ import {
   APPROVED_PROVIDER_HOST_PERMISSIONS,
   buildProviderConfigRoute,
   DEFAULT_MODEL_ID,
+  DEEPSEEK_BASE_URL,
   DOUBAO_BASE_URL,
+  GEMINI_BASE_URL,
+  HUNYUAN_BASE_URL,
+  getReasoningControlBlockReason,
   LEGACY_PROVIDER_CONFIG_IDS,
   MODEL_REGISTRY,
+  MOONSHOT_BASE_URL,
+  OPENROUTER_BASE_URL,
   PROVIDER_PRIMARY_MODEL,
   PROVIDER_REGISTRY,
+  resolveFastModelRouteForOperation,
   resolveModelRoute
 } from "../src/utils/model-registry.ts"
 import {
@@ -80,6 +88,7 @@ import {
 import {
   bucketScreenshotDataUrl,
   clampScreenshotToolbarPosition,
+  getImageInputBlockReason,
   getScreenshotVisionBlockReason,
   isSupportedScreenshotDataUrl,
   normalizeScreenshotCaptureError,
@@ -121,13 +130,40 @@ import {
   TRANSLATION_SYSTEM_PROMPT,
   TRANSLATION_WAITING_TEXT
 } from "../src/utils/translation.ts"
-import { isSafeBrowserOpenUrl } from "../src/utils/url-safety.ts"
+import {
+  isSafeBrowserOpenUrl,
+  normalizeSafeBrowserOpenUrl
+} from "../src/utils/url-safety.ts"
 import {
   clearPageContentMemoryCache,
   getCachedPageContent,
   getPageContentMemoryCacheStatsForTests,
   setCachedPageContent
 } from "../src/background/page-content-cache.ts"
+
+const testImportAliasHook = `
+const testFileUrl = ${JSON.stringify(import.meta.url)}
+
+export async function resolve(specifier, context, nextResolve) {
+  for (const [alias, target] of [
+    ["~types/", "../src/types/"],
+    ["~utils/", "../src/utils/"]
+  ]) {
+    if (!specifier.startsWith(alias)) continue
+
+    const relativePath = specifier.slice(alias.length)
+    const extension = /\\.[cm]?[tj]sx?$/.test(relativePath) ? "" : ".ts"
+    return nextResolve(
+      new URL(target + relativePath + extension, testFileUrl).href,
+      context
+    )
+  }
+
+  return nextResolve(specifier, context)
+}
+`
+
+register(`data:text/javascript,${encodeURIComponent(testImportAliasHook)}`)
 
 test("detectType 识别 URL", () => {
   assert.equal(detectType("https://example.com/path?q=1"), "url")
@@ -136,9 +172,14 @@ test("detectType 识别 URL", () => {
 test("browser URL opening only allows http and https", () => {
   assert.equal(isSafeBrowserOpenUrl("https://example.com/path?q=1"), true)
   assert.equal(isSafeBrowserOpenUrl("http://example.com/path"), true)
+  assert.equal(normalizeSafeBrowserOpenUrl("example.com/docs"), "https://example.com/docs")
+  assert.equal(normalizeSafeBrowserOpenUrl("localhost:3000"), "http://localhost:3000/")
   assert.equal(isSafeBrowserOpenUrl("javascript:alert(1)"), false)
   assert.equal(isSafeBrowserOpenUrl("data:text/html,<script></script>"), false)
   assert.equal(isSafeBrowserOpenUrl("file:///Users/example/private.txt"), false)
+  assert.equal(isSafeBrowserOpenUrl("chrome://extensions"), false)
+  assert.equal(isSafeBrowserOpenUrl("about:blank"), false)
+  assert.equal(isSafeBrowserOpenUrl("blob:https://example.com/id"), false)
   assert.equal(isSafeBrowserOpenUrl("chrome-extension://abc/options.html"), false)
   assert.equal(isSafeBrowserOpenUrl("not a url"), false)
 })
@@ -247,9 +288,32 @@ test("command palette guards bookmark and history URLs before opening", () => {
 
   assert.match(commandSource, /isSafeBrowserOpenUrl\(item\.url\)/)
   assert.match(commandSource, /window\.open\(item\.url,\s*"_blank"\)/)
+  assert.match(commandSource, /normalizeSafeBrowserOpenUrl\(item\.url \?\? ""\)/)
+  assert.match(commandSource, /requiresConfirmation: true/)
   assert.doesNotMatch(
     commandSource,
     /if \(item\.url\) \{\s*window\.open\(item\.url,\s*"_blank"\)/
+  )
+})
+
+test("command palette local candidates are confirm-first and local-only", () => {
+  const commandSource = readFileSync(
+    new URL("../src/contents/command.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(commandSource, /buildIntentResults\(intent, q\)/)
+  assert.match(commandSource, /actionId: "page_translate"/)
+  assert.match(commandSource, /actionId: "page_summary"/)
+  assert.match(commandSource, /RUN_COMMAND_QUICK_ACTION/)
+  assert.match(commandSource, /restore: item\.restore/)
+  const handleSelectBlock =
+    commandSource.match(
+      /const handleSelect = async \(item: ResultItem\) => \{[\s\S]*?\n  \}\n\n  const handleSendToAI/
+    )?.[0] ?? ""
+  assert.doesNotMatch(
+    handleSelectBlock,
+    /trigger: "command-palette-history"[\s\S]*selectionText: item\.title/
   )
 })
 
@@ -362,9 +426,9 @@ test("command palette searches browser history, bookmarks, and AI conversations"
   assert.match(messageSource, /SEARCH_BROWSER_HISTORY/)
   assert.match(backgroundSource, /chrome\.history\.search/)
   assert.match(backgroundSource, /startTime: 0/)
-  assert.match(commandSource, /searchBrowserHistory\(q\)/)
-  assert.match(commandSource, /searchChromeBookmarks\(q\)/)
-  assert.match(commandSource, /searchAvisoHistory\(q\)/)
+  assert.match(commandSource, /searchBrowserHistory\(searchTarget\)/)
+  assert.match(commandSource, /searchChromeBookmarks\(searchTarget\)/)
+  assert.match(commandSource, /searchAvisoHistory\(searchTarget\)/)
   assert.match(commandSource, /browser-history[\s\S]*command\.history/)
   assert.match(commandSource, /type: "browser-history"/)
   assert.match(commandSource, /type: "bookmark"/)
@@ -387,9 +451,15 @@ test("popup avoids BYOK and hosted account entry copy", () => {
   assert.match(popupSource, /popup\.templates\.title/)
   assert.equal(getI18nMessage("popup.tabs.api", "zh-CN"), "AI 服务")
   assert.equal(getI18nMessage("popup.addAiService", "en"), "Add AI service")
+  assert.match(popupSource, /"gemini"/)
+  assert.match(popupSource, /"hunyuan"/)
+  assert.match(popupSource, /popup\.provider\.gemini/)
+  assert.match(popupSource, /popup\.provider\.hunyuan/)
+  assert.equal(getI18nMessage("popup.provider.gemini", "en"), "Gemini")
+  assert.equal(getI18nMessage("popup.provider.hunyuan", "zh-CN"), "腾讯混元")
   assert.match(
     getI18nMessage("popup.service.helper", "en"),
-    /Connect your own AI services/
+    /Configure your own AI services/
   )
   assert.equal(getI18nMessage("popup.templates.title", "zh-CN"), "常用指令")
 })
@@ -635,6 +705,39 @@ test("popup provider config model ID is manually editable", () => {
   assert.equal(
     getI18nMessage("popup.service.modelHint", "en"),
     "Enter a model ID manually. Aviso does not fetch your account model list."
+  )
+  assert.equal(
+    getI18nMessage("popup.service.fastTitle", "zh-CN"),
+    "快速任务服务"
+  )
+  assert.match(
+    getI18nMessage("popup.service.fastHelper", "en"),
+    /short translate, explain, and polish/
+  )
+  assert.equal(
+    getI18nMessage("popup.provider.geminiModelPlaceholder", "en"),
+    "e.g. gemini-2.5-flash"
+  )
+  assert.equal(
+    getI18nMessage("popup.provider.hunyuanModelPlaceholder", "zh-CN"),
+    "如：hunyuan-lite"
+  )
+})
+
+test("popup provider picker exposes Gemini and Tencent Hunyuan configuration presets", () => {
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(popupSource, /const PROVIDER_ORDER:[\s\S]*"gemini"[\s\S]*"hunyuan"/)
+  assert.match(popupSource, /titleKey: "popup\.provider\.gemini"/)
+  assert.match(popupSource, /titleKey: "popup\.provider\.hunyuan"/)
+  assert.equal(getI18nMessage("popup.provider.gemini", "en"), "Gemini")
+  assert.equal(getI18nMessage("popup.provider.hunyuan", "zh-CN"), "腾讯混元")
+  assert.equal(
+    getI18nMessage("popup.provider.hunyuanKeyPlaceholder", "en"),
+    "From the Tencent Hunyuan console"
   )
 })
 
@@ -973,6 +1076,16 @@ test("context-menu selection titles are static and keep selection payload", () =
   assert.match(contextMenuSource, /selectionText: info\.selectionText \?\? ""/)
 })
 
+test("context-menu image explain marks remote image source", () => {
+  const contextMenuSource = readFileSync(
+    new URL("../src/background/context-menus.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(contextMenuSource, /imageSource:/)
+  assert.match(contextMenuSource, /MENU_ID_IMAGE_EXPLAIN[\s\S]*"remote-image"/)
+})
+
 test("restored conversations only show saved state when pinned", () => {
   const popupSource = readFileSync(
     new URL("../src/popup/index.tsx", import.meta.url),
@@ -1174,8 +1287,82 @@ test("normalizeError 限流与网络", () => {
   assert.match(normalizeError(new Error("fetch failed")), /网络/)
 })
 
-test("normalizeError 透传未知错误原文", () => {
-  assert.equal(normalizeError(new Error("something odd")), "something odd")
+test("normalizeError 不透传未知错误原文", () => {
+  assert.equal(normalizeError(new Error("something odd")), "请求失败，请稍后再试。")
+})
+
+test("normalizeError 和安全日志摘要不泄漏 provider raw error body", () => {
+  const sensitiveMessage = [
+    "Provider 500 raw body",
+    "https://private.example.com/path?token=abc",
+    "sk-test-raw-provider-token-123456",
+    "{\"error\":{\"message\":\"customer private draft\"}}",
+    "客户并购计划草稿"
+  ].join(" ")
+  const err = Object.assign(new Error(sensitiveMessage), { status: 500 })
+  const normalized = normalizeError(err)
+  const logSummary = buildSafeErrorLog(err)
+  const serializedLog = JSON.stringify(logSummary)
+
+  assert.equal(normalized, "AI 服务返回错误，请稍后再试或检查设置。")
+  assert.deepEqual(logSummary, {
+    category: "provider_error",
+    status: 500
+  })
+
+  for (const sensitiveFragment of [
+    "private.example.com",
+    "token=abc",
+    "sk-test-raw-provider-token",
+    "customer private draft",
+    "客户并购计划草稿",
+    "raw body"
+  ]) {
+    assert.equal(normalized.includes(sensitiveFragment), false)
+    assert.equal(serializedLog.includes(sensitiveFragment), false)
+  }
+})
+
+test("background global error logging uses safe error summaries", () => {
+  const backgroundSource = readFileSync(
+    new URL("../src/background/index.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(backgroundSource, /buildSafeErrorLog\(err\)/)
+  assert.match(backgroundSource, /const error = normalizeError\(err\)/)
+  assert.match(backgroundSource, /error: "Unknown action"/)
+  assert.doesNotMatch(backgroundSource, /Unknown action: \$\{/)
+  assert.doesNotMatch(
+    backgroundSource,
+    /err instanceof Error \? err\.message : String\(err\)/
+  )
+  assert.doesNotMatch(
+    backgroundSource,
+    /console\.error\("\[Aviso\] Unhandled error in message handler:", error\)/
+  )
+})
+
+test("background warning logs outside global handler use safe error summaries", () => {
+  const sources = [
+    "../src/background/frame-router.ts",
+    "../src/background/command-actions.ts",
+    "../src/background/context-menus.ts"
+  ].map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
+
+  for (const source of sources) {
+    assert.match(source, /buildSafeErrorLog/)
+    assert.doesNotMatch(
+      source,
+      /err instanceof Error \? err\.message : String\(err\)/
+    )
+    assert.doesNotMatch(source, /String\(err\)/)
+    assert.doesNotMatch(source, /error:\s*error\.message/)
+    assert.doesNotMatch(
+      source,
+      /console\.(warn|error)\([\s\S]*?(err\.message|String\(err\))/
+    )
+  }
 })
 
 test("normalizeError 隐藏无效 image_url 底层错误", () => {
@@ -1264,6 +1451,31 @@ test("parseIntentLocally 识别搜索和导航命令", () => {
   assert.deepEqual(parseIntentLocally("search plasmo extension"), {
     action: "search",
     target: "plasmo extension",
+    params: {}
+  })
+})
+
+test("parseIntentLocally 识别 command palette 本地意图", () => {
+  assert.deepEqual(parseIntentLocally("history aviso"), {
+    action: "history_search",
+    target: "aviso",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("书签 react"), {
+    action: "bookmark_search",
+    target: "react",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("对话 provider"), {
+    action: "conversation_search",
+    target: "provider",
+    params: {}
+  })
+  assert.equal(parseIntentLocally("翻译当前页面").action, "translate_page")
+  assert.equal(parseIntentLocally("summarize current page").action, "summarize_page")
+  assert.deepEqual(parseIntentLocally("ask ai what is TTFT"), {
+    action: "ask_ai",
+    target: "what is TTFT",
     params: {}
   })
 })
@@ -1464,11 +1676,16 @@ test("formatCurrentContext 缺失字段使用可读兜底且不输出空选区",
   assert.doesNotMatch(out, /## 选中文本/)
 })
 
-test("model registry 仅覆盖当前批准的三类 provider", () => {
+test("model registry 覆盖当前批准 provider 与 v0.2 first-batch presets", () => {
   assert.deepEqual(Object.keys(PROVIDER_REGISTRY).sort(), [
     "anthropic",
+    "deepseek",
     "doubao",
-    "openai"
+    "gemini",
+    "hunyuan",
+    "moonshot",
+    "openai",
+    "openrouter"
   ])
   assert.deepEqual(Object.keys(MODEL_REGISTRY).sort(), [
     "claude-haiku-4-5-20251001",
@@ -1489,6 +1706,50 @@ test("model registry 仅覆盖当前批准的三类 provider", () => {
     PROVIDER_REGISTRY.doubao.hostPermission,
     "https://ark.cn-beijing.volces.com/*"
   )
+  assert.equal(
+    PROVIDER_REGISTRY.deepseek.hostPermission,
+    "https://api.deepseek.com/*"
+  )
+  assert.equal(
+    PROVIDER_REGISTRY.moonshot.hostPermission,
+    "https://api.moonshot.cn/*"
+  )
+  assert.equal(
+    PROVIDER_REGISTRY.openrouter.hostPermission,
+    "https://openrouter.ai/*"
+  )
+  assert.equal(
+    PROVIDER_REGISTRY.gemini.hostPermission,
+    "https://generativelanguage.googleapis.com/*"
+  )
+  assert.equal(
+    PROVIDER_REGISTRY.hunyuan.hostPermission,
+    "https://api.hunyuan.cloud.tencent.com/*"
+  )
+  assert.equal(PROVIDER_REGISTRY.deepseek.baseURL, DEEPSEEK_BASE_URL)
+  assert.equal(PROVIDER_REGISTRY.moonshot.baseURL, MOONSHOT_BASE_URL)
+  assert.equal(PROVIDER_REGISTRY.openrouter.baseURL, OPENROUTER_BASE_URL)
+  assert.equal(PROVIDER_REGISTRY.gemini.baseURL, GEMINI_BASE_URL)
+  assert.equal(PROVIDER_REGISTRY.hunyuan.baseURL, HUNYUAN_BASE_URL)
+  assert.equal(PROVIDER_REGISTRY.deepseek.sdk, "openai-compatible")
+  assert.equal(PROVIDER_REGISTRY.moonshot.sdk, "openai-compatible")
+  assert.equal(PROVIDER_REGISTRY.openrouter.sdk, "openai-compatible")
+  assert.equal(PROVIDER_REGISTRY.gemini.sdk, "openai-compatible")
+  assert.equal(PROVIDER_REGISTRY.hunyuan.sdk, "openai-compatible")
+  assert.equal(PROVIDER_PRIMARY_MODEL.deepseek, "")
+  assert.equal(PROVIDER_PRIMARY_MODEL.moonshot, "")
+  assert.equal(PROVIDER_PRIMARY_MODEL.openrouter, "")
+  assert.equal(PROVIDER_PRIMARY_MODEL.gemini, "")
+  assert.equal(PROVIDER_PRIMARY_MODEL.hunyuan, "")
+  assert.equal(PROVIDER_REGISTRY.openai.reasoningControl, "model-dependent")
+  assert.equal(PROVIDER_REGISTRY.anthropic.reasoningControl, "unsupported")
+  assert.equal(PROVIDER_REGISTRY.doubao.reasoningControl, "unsupported")
+  assert.equal(PROVIDER_REGISTRY.deepseek.reasoningControl, "model-dependent")
+  assert.equal(PROVIDER_REGISTRY.moonshot.reasoningControl, "model-dependent")
+  assert.equal(PROVIDER_REGISTRY.openrouter.reasoningControl, "model-dependent")
+  assert.equal(PROVIDER_REGISTRY.gemini.reasoningControl, "model-dependent")
+  assert.equal(PROVIDER_REGISTRY.hunyuan.reasoningControl, "model-dependent")
+  assert.equal(MODEL_REGISTRY["gpt-4o-mini"].supportsReasoningControl, false)
 })
 
 test("resolveModelRoute 默认回到 gpt-4o-mini / OpenAI", () => {
@@ -1556,6 +1817,183 @@ test("provider config route supports multiple configs and default selection", ()
   assert.equal(route.requestModel, "ep-personal")
 })
 
+test("fast model strategy uses configured fast provider only for short operations", () => {
+  const defaultConfig = {
+    id: "cfg-openai-default",
+    provider: "openai",
+    displayName: "OpenAI Default",
+    model: "gpt-4o-mini",
+    createdAt: 100,
+    updatedAt: 100
+  } as const
+  const fastConfig = {
+    id: "cfg-deepseek-fast",
+    provider: "deepseek",
+    displayName: "DeepSeek Fast",
+    model: "deepseek-chat",
+    createdAt: 200,
+    updatedAt: 200
+  } as const
+  const settings = {
+    defaultModel: "gpt-4o-mini",
+    defaultProviderConfigId: defaultConfig.id,
+    fastProviderConfigId: fastConfig.id,
+    providerConfigs: [defaultConfig, fastConfig],
+    doubaoModel: ""
+  }
+
+  const defaultRoute = resolveModelRoute(undefined, settings)
+  const fastRoute = resolveFastModelRouteForOperation(
+    { operation: "translate", context: "selection" },
+    settings,
+    settings.providerConfigs
+  )
+
+  assert.equal(defaultRoute.providerConfigId, defaultConfig.id)
+  assert.equal(defaultRoute.provider.id, "openai")
+  assert.equal(fastRoute?.providerConfigId, fastConfig.id)
+  assert.equal(fastRoute?.provider.id, "deepseek")
+  assert.equal(fastRoute?.requestModel, "deepseek-chat")
+
+  assert.equal(
+    resolveFastModelRouteForOperation(
+      { operation: "explain", context: "selection" },
+      { ...settings, fastProviderConfigId: "" },
+      settings.providerConfigs
+    ),
+    undefined
+  )
+  assert.equal(
+    resolveFastModelRouteForOperation(
+      { operation: "translate", context: "page" },
+      settings,
+      settings.providerConfigs
+    ),
+    undefined
+  )
+  assert.equal(
+    resolveFastModelRouteForOperation(
+      { operation: "summarize", context: "page", pageContent: "long page" },
+      settings,
+      settings.providerConfigs
+    ),
+    undefined
+  )
+  assert.equal(
+    resolveFastModelRouteForOperation(
+      {
+        operation: "image_explain",
+        context: "image",
+        imageSource: "remote-image",
+        srcUrl: "https://example.com/a.png"
+      },
+      settings,
+      settings.providerConfigs
+    ),
+    undefined
+  )
+  assert.equal(
+    resolveFastModelRouteForOperation(
+      { operation: "custom", context: "selection" },
+      settings,
+      settings.providerConfigs
+    ),
+    undefined
+  )
+})
+
+test("fast model strategy preserves missing-model guard for configured short tasks", () => {
+  const missingFastConfig = {
+    id: "cfg-openrouter-fast",
+    provider: "openrouter",
+    displayName: "OpenRouter Fast",
+    model: "",
+    createdAt: 100,
+    updatedAt: 100
+  } as const
+  const route = resolveFastModelRouteForOperation(
+    { operation: "polish", context: "selection" },
+    {
+      fastProviderConfigId: missingFastConfig.id,
+      providerConfigs: [missingFastConfig]
+    },
+    [missingFastConfig]
+  )
+  const aiClientSource = readFileSync(
+    new URL("../src/background/ai-client.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.equal(route?.provider.id, "openrouter")
+  assert.equal(route?.requestModel, "")
+  assert.equal(route?.missingConfig, "model")
+  assert.match(aiClientSource, /resolveFastModelRouteForOperation/)
+  assert.match(aiClientSource, /resolveRuntimeModelRoute\(payload\.model, settings\)/)
+  assert.match(aiClientSource, /if \(route\.missingConfig\) \{[\s\S]*?throw new Error\("模型 ID 或接入点未配置/)
+})
+
+test("OpenAI-compatible provider configs require manual model before provider call", () => {
+  const sampleModels = {
+    deepseek: "deepseek-chat",
+    moonshot: "moonshot-v1-8k",
+    openrouter: "openai/gpt-4o-mini",
+    gemini: "gemini-2.5-flash",
+    hunyuan: "hunyuan-lite"
+  } as const
+
+  for (const provider of [
+    "deepseek",
+    "moonshot",
+    "openrouter",
+    "gemini",
+    "hunyuan"
+  ] as const) {
+    const baseConfig = {
+      id: `cfg-${provider}`,
+      provider,
+      displayName: PROVIDER_REGISTRY[provider].displayName,
+      model: "",
+      createdAt: 100,
+      updatedAt: 100
+    } as const
+    const missing = buildProviderConfigRoute(baseConfig)
+    const configured = buildProviderConfigRoute({
+      ...baseConfig,
+      model: sampleModels[provider]
+    })
+
+    assert.equal(missing.provider.id, provider)
+    assert.equal(missing.provider.sdk, "openai-compatible")
+    assert.equal(missing.requestModel, "")
+    assert.equal(missing.missingConfig, "model")
+    assert.equal(configured.missingConfig, undefined)
+    assert.equal(configured.requestModel, sampleModels[provider])
+  }
+})
+
+test("reasoning controls stay disabled unless provider and model both declare support", () => {
+  assert.match(
+    getReasoningControlBlockReason(resolveModelRoute("gpt-4o-mini", {})) ?? "",
+    /当前模型未声明支持/
+  )
+
+  const deepseekRoute = buildProviderConfigRoute({
+    id: "cfg-deepseek",
+    provider: "deepseek",
+    displayName: "DeepSeek",
+    model: "deepseek-chat",
+    createdAt: 100,
+    updatedAt: 100
+  })
+
+  assert.equal(deepseekRoute.provider.reasoningControl, "model-dependent")
+  assert.equal(deepseekRoute.model.supportsReasoningControl, false)
+  assert.match(
+    getReasoningControlBlockReason(deepseekRoute) ?? "",
+    /不会自动发送思考\/推理控制参数/
+  )
+})
+
 test("legacy provider keys map to provider configs without changing storage keys", () => {
   const providerConfigSource = readFileSync(
     new URL("../src/utils/provider-configs.ts", import.meta.url),
@@ -1572,6 +2010,39 @@ test("legacy provider keys map to provider configs without changing storage keys
   assert.match(providerConfigSource, /apiKeys\.providerConfigKeys\[config\.id\]/)
   assert.match(storageSource, /providerConfigKeys/)
   assert.match(storageSource, /contextai_api_keys/)
+  assert.equal(LEGACY_PROVIDER_CONFIG_IDS.openai, "legacy-openai")
+  assert.equal(LEGACY_PROVIDER_CONFIG_IDS.anthropic, "legacy-anthropic")
+  assert.equal(LEGACY_PROVIDER_CONFIG_IDS.doubao, "legacy-doubao")
+  assert.equal("deepseek" in LEGACY_PROVIDER_CONFIG_IDS, false)
+  assert.equal("moonshot" in LEGACY_PROVIDER_CONFIG_IDS, false)
+  assert.equal("openrouter" in LEGACY_PROVIDER_CONFIG_IDS, false)
+  assert.equal("gemini" in LEGACY_PROVIDER_CONFIG_IDS, false)
+  assert.equal("hunyuan" in LEGACY_PROVIDER_CONFIG_IDS, false)
+})
+
+test("popup provider config save allows incomplete drafts and clears stale test state", () => {
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+  const saveBlock =
+    popupSource.match(
+      /const saveProviderConfigInstance = async \(config: ProviderConfig\) => \{[\s\S]*?\n  \}\n\n  const cancelProviderConfigEdit/
+    )?.[0] ?? ""
+  const testBlock =
+    popupSource.match(
+      /const testProviderConfigInstance = async \(config: ProviderConfig\) => \{[\s\S]*?\n  \}\n\n  const clearConnectivityResult/
+    )?.[0] ?? ""
+
+  assert.match(saveBlock, /await saveProviderConfigApiKey\(config\.id, keyInput\)/)
+  assert.match(saveBlock, /delete next\[config\.id\]/)
+  assert.match(saveBlock, /clearProviderConfigTestResult\(normalizedConfig\)/)
+  assert.doesNotMatch(saveBlock, /buildConnectivityPreflightSummary/)
+  assert.doesNotMatch(saveBlock, /popup\.provider\.apiKeyMissing/)
+  assert.doesNotMatch(saveBlock, /popup\.provider\.endpointMissing/)
+  assert.match(testBlock, /buildConnectivityPreflightSummary/)
+  assert.match(testBlock, /popup\.provider\.apiKeyMissing/)
+  assert.match(testBlock, /popup\.provider\.endpointMissing/)
 })
 
 test("provider config stores last connectivity result by provider and model", () => {
@@ -1887,6 +2358,22 @@ test("package host_permissions 精确匹配批准 provider 边界", () => {
 
   assert.deepEqual(
     [...pkg.manifest.host_permissions].sort(),
+    [...APPROVED_PROVIDER_HOST_PERMISSIONS].sort()
+  )
+})
+
+test("WXT host_permissions 与批准 provider 边界保持一致", () => {
+  const wxtConfigSource = readFileSync(
+    new URL("../wxt.config.ts", import.meta.url),
+    "utf8"
+  )
+  const hostPermissions = Array.from(
+    wxtConfigSource.matchAll(/"https:\/\/[^"]+\*"/g),
+    (match) => match[0].slice(1, -1)
+  )
+
+  assert.deepEqual(
+    [...hostPermissions].sort(),
     [...APPROVED_PROVIDER_HOST_PERMISSIONS].sort()
   )
 })
@@ -2551,14 +3038,124 @@ test("short translation memory cache is service-worker only and hashed", () => {
   assert.match(translationCacheSource, /TRANSLATION_CACHE_MAX_SOURCE_CHARS/)
   assert.match(translationCacheSource, /hashCacheValue\(sourceText\)/)
   assert.match(translationCacheSource, /hashCacheValue\(pageKey\)/)
+  assert.match(translationCacheSource, /hashCacheValue\(routeKey\)/)
+  assert.match(translationCacheSource, /input\.route\.provider\.id/)
+  assert.match(translationCacheSource, /input\.route\.providerConfigId/)
+  assert.match(translationCacheSource, /input\.route\.requestModel/)
   assert.doesNotMatch(translationCacheSource, /chrome\.storage/)
   assert.match(runtimeCacheSource, /clearTranslationMemoryCache/)
   assert.match(aiClientSource, /getCachedTranslation\(translationCacheKey\)/)
   assert.match(aiClientSource, /setCachedTranslation\(translationCacheKey, translationOutput\)/)
+  assert.match(aiClientSource, /const route =[\s\S]*resolveFastModelRouteForOperation/)
+  assert.match(aiClientSource, /getTranslationCacheKey\(\{[\s\S]*route,/)
   assert.match(
     backgroundSource,
     /pageUrl: request\.payload\.pageUrl \?\? sender\.tab\?\.url \?\? sender\.url/
   )
+})
+
+test("short translation cache key separates fast routes and hides raw inputs", async () => {
+  const { getTranslationCacheKey } = await import(
+    "../src/background/translation-cache.ts"
+  )
+  const sourceText = "Cache key sample text for short translation."
+  const pageUrl = "https://example.com/private/path?q=secret#section"
+  const payload = {
+    operation: "translate",
+    context: "selection",
+    selectionText: sourceText,
+    pageUrl
+  } as const
+  const defaultConfig = {
+    id: "cfg-openai-default-cache",
+    provider: "openai",
+    displayName: "OpenAI Default Cache",
+    model: "gpt-4o-mini",
+    createdAt: 100,
+    updatedAt: 100
+  } as const
+  const fastConfig = {
+    id: "cfg-deepseek-fast-cache",
+    provider: "deepseek",
+    displayName: "DeepSeek Fast Cache",
+    model: "deepseek-chat",
+    createdAt: 200,
+    updatedAt: 200
+  } as const
+  const otherFastConfig = {
+    ...fastConfig,
+    id: "cfg-deepseek-fast-cache-alt",
+    displayName: "DeepSeek Fast Cache Alt"
+  } as const
+  const sameConfigDifferentModel = {
+    ...fastConfig,
+    model: "deepseek-reasoner"
+  } as const
+  const settings = {
+    inlineTranslationTargetLanguage: "zh-CN",
+    defaultModel: "gpt-4o-mini",
+    defaultProviderConfigId: defaultConfig.id,
+    fastProviderConfigId: fastConfig.id,
+    providerConfigs: [defaultConfig, fastConfig],
+    doubaoModel: ""
+  } as const
+  const defaultRoute = resolveModelRoute(undefined, settings)
+  const fastRoute = resolveFastModelRouteForOperation(
+    payload,
+    settings,
+    settings.providerConfigs
+  )
+  const otherFastRoute = buildProviderConfigRoute(otherFastConfig)
+  const differentModelRoute = buildProviderConfigRoute(sameConfigDifferentModel)
+
+  assert.ok(fastRoute)
+
+  const cacheInput = {
+    payload,
+    settings: {
+      inlineTranslationTargetLanguage: settings.inlineTranslationTargetLanguage
+    },
+    pageUrl
+  }
+  const defaultKey = getTranslationCacheKey({
+    ...cacheInput,
+    route: defaultRoute
+  })
+  const defaultKeyAgain = getTranslationCacheKey({
+    ...cacheInput,
+    route: defaultRoute
+  })
+  const fastKey = getTranslationCacheKey({
+    ...cacheInput,
+    route: fastRoute
+  })
+  const otherFastKey = getTranslationCacheKey({
+    ...cacheInput,
+    route: otherFastRoute
+  })
+  const differentModelKey = getTranslationCacheKey({
+    ...cacheInput,
+    route: differentModelRoute
+  })
+
+  assert.equal(defaultKey, defaultKeyAgain)
+  assert.notEqual(defaultKey, fastKey)
+  assert.notEqual(fastKey, otherFastKey)
+  assert.notEqual(fastKey, differentModelKey)
+
+  for (const key of [
+    defaultKey,
+    fastKey,
+    otherFastKey,
+    differentModelKey
+  ]) {
+    assert.equal(typeof key, "string")
+    assert.equal(key.includes(sourceText), false)
+    assert.equal(key.includes(pageUrl), false)
+    assert.equal(key.includes("gpt-4o-mini"), false)
+    assert.equal(key.includes("deepseek-chat"), false)
+    assert.equal(key.includes("deepseek-reasoner"), false)
+  }
 })
 
 test("connectivity route 每次只解析当前 provider", () => {
@@ -2574,6 +3171,8 @@ test("connectivity route 每次只解析当前 provider", () => {
   assert.equal(anthropic.requestModel, "claude-haiku-4-5-20251001")
   assert.equal(doubao.provider.id, "doubao")
   assert.equal(doubao.requestModel, "ep-test")
+  assert.equal(getConnectivityModelId("gemini"), "")
+  assert.equal(getConnectivityModelId("hunyuan"), "")
 })
 
 test("connectivity host permission 检查只匹配 provider registry 元数据", () => {
@@ -2808,6 +3407,87 @@ test("perf summary 脱敏兜底不输出 URL、base64 或未知 provider", () =>
   assert.equal(JSON.stringify(summary).includes("secret"), false)
 })
 
+test("perf summary accepts approved v0.2 provider ids without payload details", () => {
+  for (const [provider, modelOrEndpoint] of [
+    ["deepseek", "deepseek-chat"],
+    ["gemini", "gemini-2.5-flash"],
+    ["hunyuan", "hunyuan-lite"]
+  ] as const) {
+    const summary = buildPerfSummary({
+      trigger: "toolbar",
+      provider,
+      modelOrEndpoint,
+      inputChars: 123,
+      contextType: "selection",
+      timing: {
+        triggerAt: 1000,
+        floatingShownAt: 1005,
+        providerRequestStartedAt: 1100,
+        firstChunkAt: 1450,
+        doneAt: 1800
+      },
+      errorCategory: "none"
+    })
+
+    assert.equal(summary.provider, provider)
+    assert.equal(summary.model_or_endpoint, modelOrEndpoint)
+    assert.equal(summary.input_size_bucket, "0-500")
+    assert.equal(JSON.stringify(summary).includes("selectionText"), false)
+    assert.equal(JSON.stringify(summary).includes("rawPrompt"), false)
+    assert.equal(JSON.stringify(summary).includes("rawResponse"), false)
+  }
+})
+
+test("perf summary accepts OpenRouter provider id without payload details", () => {
+  const summary = buildPerfSummary({
+    trigger: "toolbar",
+    provider: "openrouter",
+    modelOrEndpoint: "openai/gpt-4o-mini",
+    inputChars: 123,
+    contextType: "selection",
+    timing: {
+      triggerAt: 1000,
+      floatingShownAt: 1005,
+      providerRequestStartedAt: 1100,
+      firstChunkAt: 1450,
+      doneAt: 1800
+    },
+    errorCategory: "none"
+  })
+
+  assert.equal(summary.provider, "openrouter")
+  assert.equal(summary.model_or_endpoint, "openai/gpt-4o-mini")
+  assert.equal(JSON.stringify(summary).includes("selectionText"), false)
+  assert.equal(JSON.stringify(summary).includes("rawPrompt"), false)
+  assert.equal(JSON.stringify(summary).includes("rawResponse"), false)
+})
+
+test("perf summary accepts Gemini and Hunyuan provider ids without payload details", () => {
+  for (const provider of ["gemini", "hunyuan"] as const) {
+    const summary = buildPerfSummary({
+      trigger: "toolbar",
+      provider,
+      modelOrEndpoint:
+        provider === "gemini" ? "gemini-2.5-flash" : "hunyuan-lite",
+      inputChars: 123,
+      contextType: "selection",
+      timing: {
+        triggerAt: 1000,
+        floatingShownAt: 1005,
+        providerRequestStartedAt: 1100,
+        firstChunkAt: 1450,
+        doneAt: 1800
+      },
+      errorCategory: "none"
+    })
+
+    assert.equal(summary.provider, provider)
+    assert.equal(JSON.stringify(summary).includes("selectionText"), false)
+    assert.equal(JSON.stringify(summary).includes("rawPrompt"), false)
+    assert.equal(JSON.stringify(summary).includes("rawResponse"), false)
+  }
+})
+
 test("perf 错误分类覆盖 key、限流、网络、超时和 provider 错误", () => {
   assert.equal(
     categorizePerfError(new Error("OpenAI API Key 未配置")),
@@ -2921,6 +3601,48 @@ test("screenshot vision gate 拦截 model-dependent 豆包截图路线", () => {
     getScreenshotVisionBlockReason(doubaoRoute) ?? "",
     /尚未验证截图理解/
   )
+})
+
+test("model-dependent providers block remote image explain before provider calls", () => {
+  const openaiRoute = resolveModelRoute("gpt-4o-mini", {})
+  const payload = {
+    operation: "image_explain",
+    imageSource: "remote-image",
+    srcUrl: "https://example.com/image.png"
+  } as const
+
+  assert.equal(getImageInputBlockReason(payload, openaiRoute), null)
+
+  for (const provider of [
+    "deepseek",
+    "moonshot",
+    "openrouter",
+    "gemini",
+    "hunyuan"
+  ] as const) {
+    const route = buildProviderConfigRoute({
+      id: `cfg-${provider}`,
+      provider,
+      displayName: PROVIDER_REGISTRY[provider].displayName,
+      model:
+        provider === "deepseek"
+          ? "deepseek-chat"
+          : provider === "moonshot"
+            ? "moonshot-v1-8k"
+            : provider === "openrouter"
+              ? "openai/gpt-4o-mini"
+              : provider === "gemini"
+                ? "gemini-2.5-flash"
+                : "hunyuan-lite",
+      createdAt: 100,
+      updatedAt: 100
+    })
+
+    assert.match(
+      getImageInputBlockReason(payload, route) ?? "",
+      /尚未验证图片理解/
+    )
+  }
 })
 
 test("perf summary 允许 screenshot trigger 且支持图片输入错误分类", () => {

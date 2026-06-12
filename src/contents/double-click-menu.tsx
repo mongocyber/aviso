@@ -26,7 +26,7 @@ export const config: PlasmoCSConfig = {
 }
 
 export const getShadowHostId: PlasmoGetShadowHostId = () =>
-  "contextai-double-click-menu-host"
+  "aviso-double-click-menu-host"
 
 type MenuState = {
   visible: boolean
@@ -55,11 +55,11 @@ const INITIAL_MENU: MenuState = {
 }
 
 const HOST_IDS = [
-  "contextai-toolbar-host",
-  "contextai-floating-host",
-  "contextai-command-host",
-  "contextai-clipboard-host",
-  "contextai-double-click-menu-host"
+  "aviso-toolbar-host",
+  "aviso-floating-host",
+  "aviso-command-host",
+  "aviso-clipboard-host",
+  "aviso-double-click-menu-host"
 ]
 
 const CODE_EDITOR_SELECTOR = [

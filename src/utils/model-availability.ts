@@ -97,7 +97,7 @@ export function getModelAvailability(input: {
     }
   }
 
-  if (route.missingConfig === "doubaoModel") {
+  if (route.missingConfig) {
     return {
       disabled: true,
       status: copy.endpointMissing,

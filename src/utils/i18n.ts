@@ -271,6 +271,26 @@ const MESSAGES = {
     "zh-CN": "豆包 / 火山引擎",
     en: "Doubao / Volcano Engine"
   },
+  "popup.provider.deepseek": {
+    "zh-CN": "DeepSeek",
+    en: "DeepSeek"
+  },
+  "popup.provider.moonshot": {
+    "zh-CN": "Kimi / Moonshot",
+    en: "Kimi / Moonshot"
+  },
+  "popup.provider.openrouter": {
+    "zh-CN": "OpenRouter",
+    en: "OpenRouter"
+  },
+  "popup.provider.gemini": {
+    "zh-CN": "Gemini",
+    en: "Gemini"
+  },
+  "popup.provider.hunyuan": {
+    "zh-CN": "腾讯混元",
+    en: "Tencent Hunyuan"
+  },
   "popup.provider.openaiKey": {
     "zh-CN": "OpenAI API Key",
     en: "OpenAI API key"
@@ -283,6 +303,26 @@ const MESSAGES = {
     "zh-CN": "豆包 / 火山引擎 API Key",
     en: "Doubao / Volcano Engine API key"
   },
+  "popup.provider.deepseekKey": {
+    "zh-CN": "DeepSeek API Key",
+    en: "DeepSeek API key"
+  },
+  "popup.provider.moonshotKey": {
+    "zh-CN": "Moonshot API Key",
+    en: "Moonshot API key"
+  },
+  "popup.provider.openrouterKey": {
+    "zh-CN": "OpenRouter API Key",
+    en: "OpenRouter API key"
+  },
+  "popup.provider.geminiKey": {
+    "zh-CN": "Gemini API Key",
+    en: "Gemini API key"
+  },
+  "popup.provider.hunyuanKey": {
+    "zh-CN": "腾讯混元 API Key",
+    en: "Tencent Hunyuan API key"
+  },
   "popup.provider.openaiKeyPlaceholder": {
     "zh-CN": "sk-...",
     en: "sk-..."
@@ -294,6 +334,26 @@ const MESSAGES = {
   "popup.provider.doubaoKeyPlaceholder": {
     "zh-CN": "火山方舟控制台获取",
     en: "From the Volcano Ark console"
+  },
+  "popup.provider.deepseekKeyPlaceholder": {
+    "zh-CN": "DeepSeek 控制台获取",
+    en: "From the DeepSeek console"
+  },
+  "popup.provider.moonshotKeyPlaceholder": {
+    "zh-CN": "Moonshot 控制台获取",
+    en: "From the Moonshot console"
+  },
+  "popup.provider.openrouterKeyPlaceholder": {
+    "zh-CN": "OpenRouter 控制台获取",
+    en: "From the OpenRouter console"
+  },
+  "popup.provider.geminiKeyPlaceholder": {
+    "zh-CN": "Google AI Studio 获取",
+    en: "From Google AI Studio"
+  },
+  "popup.provider.hunyuanKeyPlaceholder": {
+    "zh-CN": "腾讯混元控制台获取",
+    en: "From the Tencent Hunyuan console"
   },
   "popup.provider.modelLabel": {
     "zh-CN": "模型名称",
@@ -314,6 +374,26 @@ const MESSAGES = {
   "popup.provider.doubaoEndpointPlaceholder": {
     "zh-CN": "ep-... 或 doubao-seed-2-0-lite",
     en: "ep-... or doubao-seed-2-0-lite"
+  },
+  "popup.provider.deepseekModelPlaceholder": {
+    "zh-CN": "如：deepseek-chat",
+    en: "e.g. deepseek-chat"
+  },
+  "popup.provider.moonshotModelPlaceholder": {
+    "zh-CN": "如：moonshot-v1-8k",
+    en: "e.g. moonshot-v1-8k"
+  },
+  "popup.provider.openrouterModelPlaceholder": {
+    "zh-CN": "如：openai/gpt-4o-mini",
+    en: "e.g. openai/gpt-4o-mini"
+  },
+  "popup.provider.geminiModelPlaceholder": {
+    "zh-CN": "如：gemini-2.5-flash",
+    en: "e.g. gemini-2.5-flash"
+  },
+  "popup.provider.hunyuanModelPlaceholder": {
+    "zh-CN": "如：hunyuan-lite",
+    en: "e.g. hunyuan-lite"
   },
   "popup.hint.historyRestricted": {
     "zh-CN": "请切换到普通网页后再打开历史",
@@ -348,8 +428,8 @@ const MESSAGES = {
     en: "Editing "
   },
   "popup.provider.saved": {
-    "zh-CN": "配置已保存，可测试连接。",
-    en: "Configuration saved. You can test the connection."
+    "zh-CN": "配置草稿已保存，可继续编辑或测试连接。",
+    en: "Configuration draft saved. You can keep editing or test the connection."
   },
   "popup.provider.restored": {
     "zh-CN": "已恢复到保存状态。",
@@ -384,8 +464,8 @@ const MESSAGES = {
     en: "Enter and save the API key for this AI service first."
   },
   "popup.provider.endpointMissing": {
-    "zh-CN": "请填写豆包 / 火山方舟接入点 ID 后再保存或测试。",
-    en: "Enter the Doubao / Ark endpoint ID before saving or testing."
+    "zh-CN": "请填写模型 ID 或接入点后再测试。",
+    en: "Enter the model ID or endpoint before testing."
   },
   "popup.provider.testTimeout": {
     "zh-CN": "连接测试超时，请稍后重试。",
@@ -459,6 +539,10 @@ const MESSAGES = {
     "zh-CN": "Key 已保存 · 模型已填写",
     en: "Key saved · model filled"
   },
+  "popup.provider.config.draftSaved": {
+    "zh-CN": "草稿已保存 · 仍需配置",
+    en: "Draft saved · configuration needed"
+  },
   "popup.provider.config.savedEndpointMissing": {
     "zh-CN": "Key 已保存 · 接入点未填写",
     en: "Key saved · endpoint missing"
@@ -476,8 +560,24 @@ const MESSAGES = {
     en: "Configuration and connection test"
   },
   "popup.service.helper": {
-    "zh-CN": "在这里连接自己的 AI 服务。配置并通过测试的服务会进入“设置”页模型下拉。API Key 只保存在本地浏览器，非密钥设置保存在同步设置中。",
-    en: "Connect your own AI services here. Configured and tested services appear in the Settings model dropdown. API keys stay in local browser storage; non-secret settings use sync storage."
+    "zh-CN": "在这里配置自己的 AI 服务。保存草稿不等于连接测试通过；API Key 只保存在本地浏览器，非密钥设置保存在同步设置中。",
+    en: "Configure your own AI services here. Saving a draft does not mean the connection test passed. API keys stay in local browser storage; non-secret settings use sync storage."
+  },
+  "popup.service.fastTitle": {
+    "zh-CN": "快速任务服务",
+    en: "Fast task service"
+  },
+  "popup.service.fastAria": {
+    "zh-CN": "快速任务服务选择",
+    en: "Fast task service selection"
+  },
+  "popup.service.fastDisabled": {
+    "zh-CN": "不启用",
+    en: "Off"
+  },
+  "popup.service.fastHelper": {
+    "zh-CN": "仅用于短文本的翻译、解释、润色；未选择时不会自动切换模型。",
+    en: "Used only for short translate, explain, and polish tasks. When off, Aviso will not switch models automatically."
   },
   "popup.service.configs": {
     "zh-CN": "服务配置",
@@ -492,8 +592,8 @@ const MESSAGES = {
     en: "Choose an AI service to add"
   },
   "popup.service.empty": {
-    "zh-CN": "暂无 AI 服务配置。点击“添加”后创建 OpenAI、Anthropic 或豆包配置。",
-    en: "No AI service configured. Click Add to create an OpenAI, Anthropic, or Doubao configuration."
+    "zh-CN": "暂无 AI 服务配置。点击“添加”后创建 provider 配置。",
+    en: "No AI service configured. Click Add to create a provider configuration."
   },
   "popup.service.ready": {
     "zh-CN": "AI 服务可以使用",
@@ -592,8 +692,8 @@ const MESSAGES = {
     en: "Aviso has no project-owned server. When you start an AI request, the browser sends content directly to the model provider you choose."
   },
   "popup.privacy.full": {
-    "zh-CN": "Aviso 不设项目方服务器，不收集或保存你的数据。API Key 经 AES-256 加密后仅存于本机；当你主动发起 AI 请求时，内容会由浏览器直连所选模型厂商（OpenAI / Anthropic / 豆包·火山方舟），不经过 Aviso 中间服务器。历史记录与设置保存在浏览器本地存储中。",
-    en: "Aviso has no project-owned server and does not collect or store your data. API keys are AES-256 encrypted and stored only on this device. When you start an AI request, the browser connects directly to the selected provider (OpenAI / Anthropic / Doubao Ark), without an Aviso middle server. History and settings are stored in your browser."
+    "zh-CN": "Aviso 不设项目方服务器，不收集或保存你的数据。API Key 经 AES-256 加密后仅存于本机；当你主动发起 AI 请求时，内容会由浏览器直连你选择的模型厂商，不经过 Aviso 中间服务器。历史记录与设置保存在浏览器本地存储中。",
+    en: "Aviso has no project-owned server and does not collect or store your data. API keys are AES-256 encrypted and stored only on this device. When you start an AI request, the browser connects directly to the provider you choose, without an Aviso middle server. History and settings are stored in your browser."
   },
   "popup.footer.saved": {
     "zh-CN": "✓ 已保存",
@@ -766,6 +866,50 @@ const MESSAGES = {
   "command.unsafeUrlBlockedDetail": {
     "zh-CN": "Aviso 只会打开 http 或 https 链接。",
     en: "Aviso only opens http or https links."
+  },
+  "command.openUrl": {
+    "zh-CN": "打开链接",
+    en: "Open URL"
+  },
+  "command.pageAction": {
+    "zh-CN": "当前页面",
+    en: "Current page"
+  },
+  "command.askAi": {
+    "zh-CN": "问 AI",
+    en: "Ask AI"
+  },
+  "command.confirm": {
+    "zh-CN": "确认",
+    en: "Confirm"
+  },
+  "command.confirmOpenUrl": {
+    "zh-CN": "点击后打开这个 http/https 链接",
+    en: "Click to open this http/https link"
+  },
+  "command.confirmPageAction": {
+    "zh-CN": "点击后读取当前页面并在结果面板处理",
+    en: "Click to read the current page and handle it in the result panel"
+  },
+  "command.translateCurrentPage": {
+    "zh-CN": "翻译当前页面",
+    en: "Translate current page"
+  },
+  "command.summarizeCurrentPage": {
+    "zh-CN": "总结当前页面",
+    en: "Summarize current page"
+  },
+  "command.pageActionFailed": {
+    "zh-CN": "页面动作未完成",
+    en: "Page action did not finish"
+  },
+  "command.selectLocalCandidate": {
+    "zh-CN": "请选择本地候选",
+    en: "Choose a local candidate"
+  },
+  "command.selectLocalCandidateDetail": {
+    "zh-CN": "打开链接、历史、书签和页面动作需要先在候选列表中确认。",
+    en: "Opening URLs, history, bookmarks, and page actions must be confirmed from the candidate list first."
   },
   "command.history": {
     "zh-CN": "浏览历史",

@@ -9,10 +9,14 @@ import { assertSupportedImageSrc } from "~utils/image-src"
 import { parseIntentLocally } from "~utils/intent"
 import {
   getProviderConfigById,
+  resolveFastModelRouteForOperation,
   type ModelRoute,
   type ProviderId
 } from "~utils/model-registry"
-import { getLegacyProviderFromConfigId } from "~utils/provider-configs"
+import {
+  getLegacyProviderFromConfigId,
+  getProviderConfigsWithLegacy
+} from "~utils/provider-configs"
 import {
   buildConnectivityTestPayload,
   buildConnectivityValidationSummary,
@@ -22,7 +26,7 @@ import {
   isProviderHostPermissionPresent,
   type ConnectivityValidationSummary
 } from "~utils/provider-connectivity"
-import { getScreenshotVisionBlockReason } from "~utils/screenshot"
+import { getImageInputBlockReason } from "~utils/screenshot"
 import { getTemplates } from "~utils/storage"
 import { expandTemplate } from "~utils/template"
 import {
@@ -106,13 +110,13 @@ export async function handleProviderConnectivityTest(
     })
   }
 
-  if (route.missingConfig === "doubaoModel") {
+  if (route.missingConfig) {
     return buildConnectivityValidationSummary({
       ...base,
       result: "failure",
-      latencyNote: "未发起：豆包接入点 ID / 模型名未配置。",
+      latencyNote: "未发起：模型或接入点未配置。",
       errorCategory: "endpoint_or_model_missing",
-      notes: "豆包测试需要火山方舟接入点 ID / 模型名。"
+      notes: "请先保存当前 provider 的模型 ID 或接入点，再手动测试连接。"
     })
   }
 
@@ -200,9 +204,15 @@ export async function handleAIRequest(
     throw new Error(TRANSLATION_EMPTY_INPUT_ERROR)
   }
 
+  const providerConfigs = getProviderConfigsWithLegacy(settings, apiKeys)
+  const route =
+    resolveFastModelRouteForOperation(payload, settings, providerConfigs) ??
+    resolveRuntimeModelRoute(payload.model, settings)
+
   const translationCacheKey = getTranslationCacheKey({
     payload,
     settings,
+    route,
     pageUrl: options.pageUrl
   })
   const cachedTranslation = getCachedTranslation(translationCacheKey)
@@ -219,7 +229,6 @@ export async function handleAIRequest(
     return
   }
 
-  const route = resolveRuntimeModelRoute(payload.model, settings)
   const imageInputBlockReason = getImageInputBlockReason(payload, route)
   let translationOutput = ""
   const forwardChunk = (chunk: StreamChunk) => {
@@ -250,10 +259,10 @@ export async function handleAIRequest(
           logPerf: true
         }
       )
-    } else if (route.provider.id === "doubao") {
-      if (route.missingConfig === "doubaoModel") {
+    } else {
+      if (route.missingConfig) {
         logPreProviderPerf(payload, route.provider.id, route.requestModel)
-        throw new Error("豆包接入点 ID 未配置，请在设置的 AI 页填写")
+        throw new Error("模型 ID 或接入点未配置，请在设置的 AI 服务页填写")
       }
       await callOpenAI(
         route.requestModel,
@@ -262,21 +271,6 @@ export async function handleAIRequest(
         forwardChunk,
         {
           baseURL: route.provider.baseURL,
-          keyLabel: "豆包",
-          requestId: options.requestId,
-          signal: options.signal,
-          clientCacheKey: getProviderClientCacheKey(route),
-          providerId: route.provider.id,
-          logPerf: true
-        }
-      )
-    } else {
-      await callOpenAI(
-        route.requestModel,
-        payload,
-        getRouteApiKey(route, apiKeys),
-        forwardChunk,
-        {
           keyLabel: route.provider.displayName,
           requestId: options.requestId,
           signal: options.signal,
@@ -600,20 +594,6 @@ function logPreProviderPerf(
     timing: payload.timing,
     errorCategory
   })
-}
-
-function getImageInputBlockReason(
-  payload: AIRequestPayload,
-  route: ModelRoute
-): string | null {
-  if (
-    payload.operation !== "image_explain" ||
-    payload.imageSource !== "screenshot-region"
-  ) {
-    return null
-  }
-
-  return getScreenshotVisionBlockReason(route)
 }
 
 function buildImageMessages(

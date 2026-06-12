@@ -6,8 +6,15 @@
   "author": "Aviso",
   "scripts": {
     "dev": "plasmo dev",
+    "dev:plasmo": "plasmo dev",
+    "dev:wxt": "wxt --mv3",
     "build": "plasmo build",
+    "build:plasmo": "plasmo build",
+    "build:wxt": "wxt build --mv3",
     "package": "plasmo package",
+    "package:plasmo": "plasmo package",
+    "zip:wxt": "wxt zip --mv3",
+    "postinstall": "wxt prepare",
     "test": "node --experimental-strip-types --test \"tests/**/*.test.ts\""
   },
   "engines": {
@@ -34,7 +41,8 @@
     "@types/react": "18.2.48",
     "@types/react-dom": "18.2.18",
     "prettier": "3.2.4",
-    "typescript": "5.3.3"
+    "typescript": "5.3.3",
+    "wxt": "^0.20.26"
   },
   "manifest": {
     "name": "Aviso",
@@ -43,7 +51,12 @@
     "host_permissions": [
       "https://api.openai.com/*",
       "https://api.anthropic.com/*",
-      "https://ark.cn-beijing.volces.com/*"
+      "https://ark.cn-beijing.volces.com/*",
+      "https://api.deepseek.com/*",
+      "https://api.moonshot.cn/*",
+      "https://openrouter.ai/*",
+      "https://generativelanguage.googleapis.com/*",
+      "https://api.hunyuan.cloud.tencent.com/*"
     ],
     "permissions": [
       "contextMenus",

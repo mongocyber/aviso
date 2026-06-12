@@ -36,7 +36,7 @@ export const config: PlasmoCSConfig = {
 }
 
 export const getShadowHostId: PlasmoGetShadowHostId = () =>
-  "contextai-floating-host"
+  "aviso-floating-host"
 
 type ChatMsg = ConversationMessage
 

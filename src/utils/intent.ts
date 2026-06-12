@@ -1,5 +1,18 @@
 export type ParsedIntent = {
-  action: "explain" | "translate" | "polish" | "summarize" | "search" | "navigate" | "custom"
+  action:
+    | "explain"
+    | "translate"
+    | "polish"
+    | "summarize"
+    | "search"
+    | "navigate"
+    | "history_search"
+    | "bookmark_search"
+    | "conversation_search"
+    | "translate_page"
+    | "summarize_page"
+    | "ask_ai"
+    | "custom"
   target: string
   params: Record<string, unknown>
 }
@@ -11,6 +24,46 @@ type IntentRule = {
 }
 
 const INTENT_RULES: IntentRule[] = [
+  {
+    action: "translate_page",
+    match: [
+      /^(翻译|翻译一下|translate)\s*(当前)?(页面|网页|this page|current page)\s*$/i
+    ],
+    strip: [/[\s\S]*/]
+  },
+  {
+    action: "summarize_page",
+    match: [
+      /^(总结|摘要|概括|summarize|summarise|summary)\s*(当前)?(页面|网页|this page|current page)\s*$/i
+    ],
+    strip: [/[\s\S]*/]
+  },
+  {
+    action: "history_search",
+    match: [/^(历史|浏览历史|history)\s+/, /^\s*search\s+history\s+/i],
+    strip: [/^(历史|浏览历史|history)\s+/i, /^\s*search\s+history\s+/i]
+  },
+  {
+    action: "bookmark_search",
+    match: [/^(书签|收藏|bookmark|bookmarks)\s+/, /^\s*search\s+(bookmark|bookmarks)\s+/i],
+    strip: [/^(书签|收藏|bookmark|bookmarks)\s+/i, /^\s*search\s+(bookmark|bookmarks)\s+/i]
+  },
+  {
+    action: "conversation_search",
+    match: [
+      /^(对话|AI 对话|AI记录|AI 记录|conversation|chat)\s+/i,
+      /^\s*search\s+(conversation|chat|ai chat|ai chats)\s+/i
+    ],
+    strip: [
+      /^(对话|AI 对话|AI记录|AI 记录|conversation|chat)\s+/i,
+      /^\s*search\s+(conversation|chat|ai chat|ai chats)\s+/i
+    ]
+  },
+  {
+    action: "ask_ai",
+    match: [/^(问 AI|问AI|问一下 AI|ask ai)\s+/i],
+    strip: [/^(问 AI|问AI|问一下 AI|ask ai)\s*[:：]?\s*/i]
+  },
   {
     action: "translate",
     match: [/^(请)?(帮我)?翻译/, /译成|翻成/, /^\s*translate\b/i],

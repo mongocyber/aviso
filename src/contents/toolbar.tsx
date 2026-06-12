@@ -39,7 +39,7 @@ export const config: PlasmoCSConfig = {
 }
 
 export const getShadowHostId: PlasmoGetShadowHostId = () =>
-  "contextai-toolbar-host"
+  "aviso-toolbar-host"
 
 type ToolbarPlacement = "above" | "below"
 type ToolbarPosition = {
@@ -118,11 +118,11 @@ const INITIAL_INLINE_CARD: InlineTranslationCardState = {
 }
 
 const HOST_IDS = [
-  "contextai-toolbar-host",
-  "contextai-floating-host",
-  "contextai-command-host",
-  "contextai-clipboard-host",
-  "contextai-double-click-menu-host"
+  "aviso-toolbar-host",
+  "aviso-floating-host",
+  "aviso-command-host",
+  "aviso-clipboard-host",
+  "aviso-double-click-menu-host"
 ]
 
 const CODE_EDITOR_SELECTOR = [

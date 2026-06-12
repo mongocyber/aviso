@@ -1,0 +1,8 @@
+{
+  "app_description": {
+    "message": "An AI browser assistant for explaining, translating, polishing, and summarizing content in place."
+  },
+  "open_command_palette_description": {
+    "message": "Open command palette"
+  }
+}
