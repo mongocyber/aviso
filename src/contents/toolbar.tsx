@@ -1,12 +1,14 @@
 import type { PlasmoCSConfig, PlasmoGetShadowHostId } from "plasmo"
 import { useEffect, useRef, useState } from "react"
 
+import { AvisoButton, AvisoIconButton } from "~components"
 import {
   aviso,
   AvisoIcon,
   AvisoMark,
   useSyncedAvisoTheme,
-  visuallyStable
+  visuallyStable,
+  type AvisoIconName
 } from "~styles/aviso"
 import type { MessageRequest, MessageResponse } from "~types/messages"
 import {
@@ -987,25 +989,13 @@ function InlineTranslationCard({
             {title}
           </span>
         </span>
-        <button
-          type="button"
+        <AvisoIconButton
+          icon="close"
           aria-label={t("translation.closeCard")}
           className="aviso-inline-translation-icon-button"
           onClick={onClose}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 28,
-            height: 28,
-            border: "none",
-            borderRadius: aviso.radiusSm,
-            background: "transparent",
-            color: ui.text3,
-            cursor: "pointer"
-          }}>
-          <AvisoIcon name="close" size={15} />
-        </button>
+          style={{ flex: "0 0 auto" }}
+        />
       </div>
 
       <div
@@ -1098,38 +1088,20 @@ function InlineCardButton({
   label,
   onClick
 }: {
-  icon: Parameters<typeof AvisoIcon>[0]["name"]
+  icon: AvisoIconName
   label: string
   onClick: () => void
 }) {
-  const { tokens: ui } = useSyncedAvisoTheme()
-
   return (
-    <button
-      type="button"
+    <AvisoButton
+      variant="ghost"
+      size="sm"
+      icon={icon}
       className="aviso-inline-translation-button"
       onClick={onClick}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 6,
-        minHeight: 30,
-        border: `1px solid ${ui.line}`,
-        borderRadius: aviso.radiusSm,
-        background: "transparent",
-        color: ui.text2,
-        fontFamily: aviso.font,
-        fontSize: 12,
-        fontWeight: 600,
-        padding: "6px 9px",
-        cursor: "pointer",
-        whiteSpace: "nowrap",
-        transition: `.15s ${aviso.ease}`
-      }}>
-      <AvisoIcon name={icon} size={14} style={{ color: ui.accent }} />
+      style={{ minHeight: 30, padding: "6px 9px", fontSize: 12 }}>
       {label}
-    </button>
+    </AvisoButton>
   )
 }
 
