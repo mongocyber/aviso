@@ -10,6 +10,7 @@ This folder holds future-version planning and active execution records. It is no
 - `v0.2-next-development-queue.md`: post-v0.2 development queue after manual validation is deferred.
 - `v0.2-wxt-migration-plan.md`: WXT migration issue track and dependency impact.
 - `v0.2-provider-architecture-preflight.md`: V02-001 provider matrix, adapter contract, permission review, and stop lines.
+- `v0.2-provider-deferred-decision-pack.md`: owner decision pack for deferred Qwen / DashScope and Zhipu GLM provider work.
 - `v0.2-wxt-migration-preflight.md`: V02-WXT-001 migration map, manifest parity checklist, and loaded-extension QA plan.
 - `v0.2-provider-config-contract.md`: V02-003 provider config schema, UI state, routing, storage, and connectivity-test contract.
 - `v0.2-wxt-migration-closeout.md`: V02-WXT-003 runtime build evidence and V02-WXT-004 automated package / manifest parity record.
