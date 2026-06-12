@@ -7,6 +7,7 @@ This folder holds future-version planning and active execution records. It is no
 - `v0.2-fast-open-provider-spec.md`: v0.2 requirements and scope.
 - `v0.2-issue-plan.md`: v0.2 issue map and execution order.
 - `v0.2-status.md`: v0.2 progress, evidence, and open decisions.
+- `v0.2-next-development-queue.md`: post-v0.2 development queue after manual validation is deferred.
 - `v0.2-wxt-migration-plan.md`: WXT migration issue track and dependency impact.
 - `v0.2-provider-architecture-preflight.md`: V02-001 provider matrix, adapter contract, permission review, and stop lines.
 - `v0.2-wxt-migration-preflight.md`: V02-WXT-001 migration map, manifest parity checklist, and loaded-extension QA plan.
