@@ -406,8 +406,8 @@ const byokPoints = [
     icon: "model",
     zhTitle: "模型 ID 手动可填",
     enTitle: "Model IDs are editable",
-    zhText: "OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter 的模型 ID,以及豆包 / Volcengine Ark 的接入点,都能自己填。",
-    enText: "Type in model IDs for OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, and OpenRouter, plus endpoints for Doubao / Volcengine Ark."
+    zhText: "OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini、Tencent Hunyuan 的模型 ID,以及豆包 / Volcengine Ark 的接入点,都能自己填。",
+    enText: "Type in model IDs for OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan, plus endpoints for Doubao / Volcengine Ark."
   },
   {
     icon: "check",
@@ -501,8 +501,8 @@ const faqs = [
   {
     zhQ: "必须自己准备 API Key 吗?",
     enQ: "Do I need my own API key?",
-    zhA: "是的。Aviso 是 BYOK(自备 Key)直连:你在设置里填入自己的模型 API Key,浏览器直接连你选的厂商。内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用;OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter 支持配置,实际可用性取决于你的 Key、模型权限和 provider 状态。OpenRouter 是 OpenAI-compatible 配置支持,模型 ID 需要手动填写;DeepSeek、Kimi / Moonshot 与 OpenRouter 未做真实 provider live validation。",
-    enA: "Yes. Aviso is BYOK (bring your own key) and direct: you enter your own model API key in settings, and the browser connects straight to your chosen provider. Internal testing and user feedback confirm the Doubao / Volcengine Ark path works; OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, and OpenRouter are configurable, with availability depending on your key, model access, and provider status. OpenRouter is OpenAI-compatible configuration support with manual model IDs; DeepSeek, Kimi / Moonshot, and OpenRouter have not been live-provider validated."
+    zhA: "是的。Aviso 是 BYOK(自备 Key)直连:你在设置里填入自己的模型 API Key,浏览器直接连你选的厂商。内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用;OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持配置,实际可用性取决于你的 Key、模型权限和 provider 状态。DeepSeek 已有一次 owner 手动 connectivity pass;Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 仍不能写成 live validated。",
+    enA: "Yes. Aviso is BYOK (bring your own key) and direct: you enter your own model API key in settings, and the browser connects straight to your chosen provider. Internal testing and user feedback confirm the Doubao / Volcengine Ark path works; OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan are configurable, with availability depending on your key, model access, and provider status. DeepSeek has one owner-manual connectivity pass; Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan should not be described as live-provider validated."
   },
   {
     zhQ: "Aviso 会收集我的浏览数据吗?",
@@ -519,8 +519,8 @@ const faqs = [
   {
     zhQ: "当前版本的边界是什么?",
     enQ: "What are the current limits?",
-    zhA: "核心功能已经实现、可以日常使用,并经过内部手动验收;同时我们对当前的可用边界保持坦白 —— 比如内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用,OpenAI/Anthropic/DeepSeek/Kimi-Moonshot/OpenRouter 支持配置但仍取决于你的 Key 和模型权限。OpenRouter 模型 ID 需要手动填写,Aviso 不自动读取模型列表。首段返回速度会受网络、模型、输入长度和 provider 状态影响,当前不宣称 p50/p95 已达标。",
-    enA: "The core features are built, usable day-to-day, and internally manually verified — while we stay candid about the current edges, like internal testing and user feedback confirming the Doubao / Volcengine Ark path works, and OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter being configurable depending on your key and model access. OpenRouter model IDs must be entered manually; Aviso does not automatically read model lists. First-token latency depends on network, model, input length, and provider status; we do not claim p50/p95 targets have been met."
+    zhA: "核心功能已经实现、可以日常使用,并经过内部手动验收;同时我们对当前的可用边界保持坦白 —— 比如内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用,OpenAI/Anthropic/DeepSeek/Kimi-Moonshot/OpenRouter/Gemini/Tencent Hunyuan 支持配置但仍取决于你的 Key 和模型权限。OpenRouter、Gemini 和 Tencent Hunyuan 模型 ID 需要手动填写,Aviso 不自动读取模型列表。首段返回速度会受网络、模型、输入长度和 provider 状态影响,当前不宣称 p50/p95 已达标。",
+    enA: "The core features are built, usable day-to-day, and internally manually verified — while we stay candid about the current edges, like internal testing and user feedback confirming the Doubao / Volcengine Ark path works, and OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan being configurable depending on your key and model access. OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually; Aviso does not automatically read model lists. First-token latency depends on network, model, input length, and provider status; we do not claim p50/p95 targets have been met."
   }
 ] as const;
 

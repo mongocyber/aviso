@@ -60,7 +60,7 @@ Current records:
 - Internal testing and user feedback confirm the Doubao / Volcengine Ark path works.
 - OpenAI can be configured with API key and model ID; actual availability depends on your key, model access, and provider status.
 - Anthropic can be configured with API key and model ID; actual availability depends on your key, model access, and provider status.
-- DeepSeek can be configured with API key and model ID; it has not been live-provider validated.
+- DeepSeek can be configured with API key and model ID; it has one owner-manual connectivity pass, and actual availability still depends on your key, model access, and provider status.
 - Kimi / Moonshot can be configured with API key and model ID; it has not been live-provider validated.
 - OpenRouter can be configured with API key and manual model ID; provider id is `openrouter`, base URL is `https://openrouter.ai/api/v1`, host permission is `https://openrouter.ai/*`; it has not been live-provider validated, and Aviso does not automatically read model lists.
 - Gemini can be configured with API key and manual model ID; provider id is `gemini`, base URL is `https://generativelanguage.googleapis.com/v1beta/openai/`, host permission is `https://generativelanguage.googleapis.com/*`; V02-018 completed non-live validation, but it has not been live-provider validated, and Aviso does not automatically read model lists.
