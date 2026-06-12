@@ -8,6 +8,8 @@
   "include": [
     ".wxt/wxt.d.ts",
     "src/background/**/*.ts",
+    "src/components/**/*.ts",
+    "src/components/**/*.tsx",
     "src/contents/**/*.ts",
     "src/contents/**/*.tsx",
     "src/entrypoints/**/*.ts",
@@ -29,6 +31,12 @@
       ],
       "~styles/*": [
         "./src/styles/*"
+      ],
+      "~components": [
+        "./src/components"
+      ],
+      "~components/*": [
+        "./src/components/*"
       ],
       "~types": [
         "./src/types"

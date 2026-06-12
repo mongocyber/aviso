@@ -11,6 +11,7 @@ export default defineConfig({
   }),
   alias: {
     "~styles": resolve("src/styles"),
+    "~components": resolve("src/components"),
     "~types": resolve("src/types"),
     "~utils": resolve("src/utils")
   },

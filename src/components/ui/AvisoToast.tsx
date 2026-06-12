@@ -18,6 +18,7 @@ type AvisoToastProps = HTMLAttributes<HTMLDivElement> & {
   detail?: ReactNode
   action?: ReactNode
   showProgress?: boolean
+  progressDurationMs?: number
 }
 
 export function AvisoToast({
@@ -27,6 +28,7 @@ export function AvisoToast({
   detail,
   action,
   showProgress = false,
+  progressDurationMs,
   style,
   ...props
 }: AvisoToastProps) {
@@ -52,7 +54,10 @@ export function AvisoToast({
   }
 
   return (
-    <div role={tone === "danger" ? "alert" : "status"} {...props} style={toastStyle}>
+    <div
+      role={tone === "danger" ? "alert" : "status"}
+      {...props}
+      style={toastStyle}>
       {icon ? (
         <AvisoIcon name={icon} size={20} style={{ color: toneColor }} />
       ) : (
@@ -97,9 +102,19 @@ export function AvisoToast({
             width: "100%",
             height: 2,
             background: toneColor,
-            transformOrigin: "left"
+            transformOrigin: "left",
+            animation: progressDurationMs
+              ? `aviso-toast-timer ${progressDurationMs}ms linear forwards`
+              : undefined
           }}
         />
+      )}
+      {showProgress && progressDurationMs && (
+        <style>{`
+          @keyframes aviso-toast-timer {
+            to { transform: scaleX(0); }
+          }
+        `}</style>
       )}
     </div>
   )
