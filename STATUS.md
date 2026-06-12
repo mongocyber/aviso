@@ -21,7 +21,7 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 | 结果面板 | 已实现流式结果、复制、保存、继续追问和本地对话历史。 |
 | Popup 设置 | 已实现界面语言、外观主题、默认模型、功能开关、AI 服务配置、手动连接测试、历史和自定义指令。 |
 | 多 AI 服务配置 | 已实现；支持同 provider 多配置、默认配置切换、模型 ID 手动编辑。 |
-| v0.2 provider 配置扩展 | DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 已支持配置；仅代表 BYOK direct-provider 配置支持，未做真实 provider live validation。 |
+| v0.2 provider 配置扩展 | DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 已支持配置；DeepSeek 已有 owner 手动 live connectivity pass 记录；Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 仍不能写成 live validated。 |
 | v0.2 命令面板本地意图 | 已实现本地确定性候选、危险 URL 拦截、打开/页面动作 confirm-first、本地对话恢复；不包含自主浏览、联网搜索或远端链接正文抓取。 |
 | v0.2 等待态、快任务路由与本地计时 | 已实现更明确的等待状态、summary-only 本地 TTFT 方法，以及短文本 translate / explain / polish 在用户显式选择 fast provider config 时的 operation-level route override；当前 v0.2 只承认感知等待优化和 summary-only 方法，不做真实 provider 采样，也不宣称 p50 / p95 达标。 |
 | WXT 并行构建路径 | 已实现 WXT 并行构建和 manifest checks；V02-WXT-005 已记录 bounded loaded-extension smoke；owner 已决定当前 v0.2 默认构建仍为 Plasmo，WXT default-build migration/default-build release 移到独立 `v0.2.1` slice，部分 loaded-extension surfaces 仍需 manual evidence。 |
@@ -36,7 +36,7 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 | --- | --- |
 | `v0.2.0` WXT 迁移 / 构建链清理 | `partial / V02-WXT-005 accepted_with_pending_manual`：并行构建、manifest checks 和 bounded loaded-extension smoke 已有证据；pending_manual surfaces 仍是 release gates；当前 v0.2 默认构建保持 Plasmo，WXT default-build migration 移到独立 `v0.2.1`。 |
 | 早期 historical `v0.2.1` 速度基线 + thinking/reasoning 控制 + 快模型策略 | `label superseded / current speed scope implemented`：等待态、summary-only TTFT 方法和 operation-level fast-model strategy 已实现；当前 v0.2 不做真实 TTFT sampling / p50 / p95 release wording；reasoning/thinking request-parameter control 已从当前 v0.2 scope 移除。 |
-| `v0.2.2` OpenRouter / OpenAI-compatible provider | `partial`：DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 只有配置支持；V02-010 OpenRouter closeout 和 V02-011 宽松保存 acceptance 已显性关闭；provider live validation 仍未开始。 |
+| `v0.2.2` OpenRouter / OpenAI-compatible provider | `partial`：DeepSeek 已有 owner 手动 live connectivity pass；Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 仍为配置支持或非 live 验证；V02-010 OpenRouter closeout 和 V02-011 宽松保存 acceptance 已显性关闭。 |
 | `v0.2.3` 命令面板本地意图增强 | `completed_for_implementation / pending_loaded_extension_validation`。 |
 
 当前 owner 确认的 v0.2 要求边界还包括：
@@ -47,7 +47,7 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 - 不把 provider configuration support 写成 live validation。
 - 不把 v0.2 implementation 写成 release ready。
 
-剩余 delivery issues 以 `docs/planning/v0.2-issue-plan.md` 为准：`V02-WXT-005` closeout 已记录/接受但仍有 pending_manual release gates；`V02-009` 已选择 OpenRouter 作为 optional owner-gated live validation provider，但执行仍需确认具体 OpenRouter 配置/模型和手动触发路径，不是当前 v0.2 wording 的必要条件，也不能写成已 live validated；`V02-013` reasoning/thinking request-parameter control 已从当前 v0.2 scope 移除，不再作为延期或待办。`V02-WXT-006`、`V02-014`、`V02-015` 已按 owner 决策关闭当前 v0.2 口径，不能被写成 release ready。
+剩余 delivery issues 以 `docs/planning/v0.2-issue-plan.md` 为准：`V02-WXT-005` closeout 已记录/接受但仍有 pending_manual release gates；`V02-009` 已记录 DeepSeek owner 手动 live connectivity pass，OpenRouter 仍未通过且最近失败类别为 `unauthorized`，provider live validation 仍不是当前 v0.2 wording 的必要条件；`V02-013` reasoning/thinking request-parameter control 已从当前 v0.2 scope 移除，不再作为延期或待办。`V02-WXT-006`、`V02-014`、`V02-015` 已按 owner 决策关闭当前 v0.2 口径，不能被写成 release ready。
 
 ## 发布候选状态
 
@@ -71,7 +71,7 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 | 豆包 / 火山方舟 | 用户确认可用。 |
 | OpenAI | 支持在设置中配置 API Key 和模型 ID；请求由浏览器直连该 provider。 |
 | Anthropic | 支持在设置中配置 API Key 和模型 ID；请求由浏览器直连该 provider。 |
-| DeepSeek | 支持在设置中配置 API Key 和模型 ID；provider id 为 `deepseek`，base URL 为 `https://api.deepseek.com`；未做真实 provider live validation。 |
+| DeepSeek | 支持在设置中配置 API Key 和模型 ID；provider id 为 `deepseek`，base URL 为 `https://api.deepseek.com`；2026-06-12 owner 手动重新配置后确认可用，记录为 summary-only live connectivity pass，不记录 API Key、raw prompt 或 raw response。 |
 | Kimi / Moonshot | 支持在设置中配置 API Key 和模型 ID；provider id 为 `moonshot`，base URL 为 `https://api.moonshot.cn/v1`；未做真实 provider live validation。 |
 | OpenRouter | 支持在设置中配置 API Key 和模型 ID；provider id 为 `openrouter`，base URL 为 `https://openrouter.ai/api/v1`；模型 ID 需用户手动填写；未做真实 provider live validation。 |
 | Gemini | 支持在设置中配置 API Key 和模型 ID；provider id 为 `gemini`，base URL 为 `https://generativelanguage.googleapis.com/v1beta/openai/`；模型 ID 需用户手动填写；V02-018 已完成非 live 验证，未做真实 provider live validation。 |
@@ -91,7 +91,7 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 - 不自动读取 provider 账号里的模型列表。
 - OpenRouter、Gemini 和 Tencent Hunyuan 模型 ID 仍需手动填写。
 - 不把 API Key、raw prompt、raw response、私人网页正文、截图/base64 或完整 URL 写入文档、日志或远端服务。
-- 不把 provider 配置支持写成真实 provider live validation。
+- 不把 provider 配置支持写成真实 provider live validation；DeepSeek 的 owner 手动 connectivity pass 只覆盖该次配置/模型可用性，不扩大成所有 DeepSeek 模型或 release-ready 证明。
 - 不把 v0.2 实现证据写成公开发布批准、Chrome Web Store 审核通过或正式商店链接。
 - 不把 `docs/planning/v0.2-owner-gated-decision-pack.md` 中的推荐项写成 owner approval。
 

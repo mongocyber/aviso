@@ -44,7 +44,7 @@ Aviso 帮用户在当前网页内快速调用 AI。用户不需要离开页面�
 - 用户可以切换界面语言：自动、中文、English。
 - 用户可以切换外观主题：浅色、深色、跟随系统。
 - 用户可以管理多个 AI 服务配置，设置默认服务，手动编辑模型 ID。
-- 用户可以配置 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini、Tencent Hunyuan；DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 当前只代表 BYOK direct-provider 配置支持，未做真实 provider live validation。OpenRouter、Gemini 和 Tencent Hunyuan 模型 ID 需要手动填写，Aviso 不自动读取模型列表。
+- 用户可以配置 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini、Tencent Hunyuan；DeepSeek 已有一次 owner 手动 connectivity pass，Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 当前只代表 BYOK direct-provider 配置支持或非 live 验证，不能写成 live validated。OpenRouter、Gemini 和 Tencent Hunyuan 模型 ID 需要手动填写，Aviso 不自动读取模型列表。
 - 用户可以手动测试单个 provider 连接，测试结果只显示脱敏摘要。
 - 用户可以管理本地历史和自定义指令。
 

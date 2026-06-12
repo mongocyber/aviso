@@ -17,7 +17,7 @@ The current code includes these provider paths:
 | Doubao / Volcengine Ark | Internal testing and user feedback confirm the path works. |
 | OpenAI | API key and model ID can be configured; actual availability depends on your key, model access, and provider status. |
 | Anthropic | API key and model ID can be configured; actual availability depends on your key, model access, and provider status. |
-| DeepSeek | API key and model ID can be configured; not live-provider validated. |
+| DeepSeek | API key and model ID can be configured; has one owner-manual connectivity pass. Actual availability still depends on your key, model access, and provider status. |
 | Kimi / Moonshot | API key and model ID can be configured; not live-provider validated. |
 | OpenRouter | Provider id is `openrouter`, base URL is `https://openrouter.ai/api/v1`; API key and manual model ID can be configured; host permission is `https://openrouter.ai/*`; not live-provider validated. |
 | Gemini | Provider id is `gemini`, base URL is `https://generativelanguage.googleapis.com/v1beta/openai/`; API key and manual model ID can be configured; host permission is `https://generativelanguage.googleapis.com/*`; V02-018 completed non-live validation, but it is not live-provider validated. |

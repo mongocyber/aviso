@@ -56,7 +56,7 @@ Copy current context writes page title, URL, optional selected text, and truncat
 
 ### Connection Tests and Performance Summary
 
-Provider connection tests can only be triggered manually by the user and test one provider at a time. The test uses a fixed public short phrase and does not include page body, selected text, link, image, screenshot, clipboard content, API key, raw prompt, or raw response. DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan are configuration support only and have not been live-provider validated.
+Provider connection tests can only be triggered manually by the user and test one provider at a time. The test uses a fixed public short phrase and does not include page body, selected text, link, image, screenshot, clipboard content, API key, raw prompt, or raw response. DeepSeek has one owner-manual connectivity pass; Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan should not be described as live-provider validated.
 
 Aviso’s performance summary is only written to the local extension console for internal latency debugging. It contains fixed stages and bucketed fields. It does not include original text, full URLs, images/base64, screenshots, API keys, raw prompts, or raw responses, and it is not sent to remote telemetry.
 
@@ -129,4 +129,4 @@ If you uninstall Aviso, Chrome clears the extension’s local storage. You can a
 
 Aviso supports configurable OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan paths. Users can enter their own API key, model ID, or endpoint in settings; requests are sent directly from the browser extension to the selected provider. OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually, and Aviso does not automatically read model lists.
 
-Current internal testing and user feedback confirm the Doubao / Volcengine Ark path works. OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan are configurable, but actual availability depends on the user's own key, model access, and provider status. This site does not describe them as having completed real availability acceptance. DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan have not been live-provider validated.
+Current internal testing and user feedback confirm the Doubao / Volcengine Ark path works. OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan are configurable, but actual availability depends on the user's own key, model access, and provider status. DeepSeek has one owner-manual connectivity pass; this site does not expand it into proof that every DeepSeek model or account has completed real availability acceptance. Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan should not be described as live-provider validated.

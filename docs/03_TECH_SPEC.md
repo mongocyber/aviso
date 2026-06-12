@@ -89,7 +89,7 @@ Updated: 2026-06-12
 - Gemini OpenAI-compatible endpoint
 - Tencent Hunyuan OpenAI-compatible endpoint
 
-OpenAI / Anthropic 新配置会提供默认模型 ID，但输入框允许用户手动修改。DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持配置 API Key 和模型 ID；provider ids 为 `deepseek`、`moonshot`、`openrouter`、`gemini` 和 `hunyuan`，OpenAI SDK base URLs 为 `https://api.deepseek.com`、`https://api.moonshot.cn/v1`、`https://openrouter.ai/api/v1`、`https://generativelanguage.googleapis.com/v1beta/openai/` 和 `https://api.hunyuan.cloud.tencent.com/v1`。OpenRouter、Gemini 和 Tencent Hunyuan 模型 ID 需用户手动填写，Aviso 不自动读取模型列表。这只代表配置支持和实现支持，未做真实 provider live validation。
+OpenAI / Anthropic 新配置会提供默认模型 ID，但输入框允许用户手动修改。DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持配置 API Key 和模型 ID；provider ids 为 `deepseek`、`moonshot`、`openrouter`、`gemini` 和 `hunyuan`，OpenAI SDK base URLs 为 `https://api.deepseek.com`、`https://api.moonshot.cn/v1`、`https://openrouter.ai/api/v1`、`https://generativelanguage.googleapis.com/v1beta/openai/` 和 `https://api.hunyuan.cloud.tencent.com/v1`。OpenRouter、Gemini 和 Tencent Hunyuan 模型 ID 需用户手动填写，Aviso 不自动读取模型列表。DeepSeek 已有一次 owner 手动 connectivity pass；其他新增 provider 仍只能写为配置支持、实现支持或非 live 验证，不能写成 live validated。
 
 Aviso 不自动调用 provider 的 list-models API，也不自动读取用户账号可用模型列表。
 

@@ -12,7 +12,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它在当前网页内提供右键�
 
 - 当前代码和 `0.1.0` 上传包已提交 Chrome Web Store 审核；还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
 - 主要功能已经实现，并已有用户 A-G 手动验收“基本通过”的内部记录。
-- 豆包 / 火山方舟已由用户确认可用；OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID，请求由浏览器直连用户选择的 provider。DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 当前仅代表 BYOK direct-provider 配置支持，未做真实 provider live validation。
+- 豆包 / 火山方舟已由用户确认可用；OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID，请求由浏览器直连用户选择的 provider。DeepSeek 已有一次 owner 手动 connectivity pass；Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 当前仍不能写成 live validated。
 - UI 支持中文和英文：默认跟随 Chrome 界面语言，Popup 设置里可以手动切换。
 - Aviso 没有项目方后端、账号系统、订阅支付、匿名额度、遥测、分析 SDK、远端链接正文抓取或联网搜索。
 - v0.2 的命令面板本地意图、等待态和 WXT 并行构建路径已有实现证据；v0.2 仍未公开发布，WXT 也未切换为默认构建。

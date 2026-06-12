@@ -17,7 +17,7 @@ Aviso 使用你自己的模型 provider API Key 发起请求。请求会从浏�
 | 豆包 / Volcengine Ark | 内部测试和用户反馈确认路径可用。 |
 | OpenAI | 支持配置 API Key 和模型 ID；实际可用性取决于你的 Key、模型权限和 provider 状态。 |
 | Anthropic | 支持配置 API Key 和模型 ID；实际可用性取决于你的 Key、模型权限和 provider 状态。 |
-| DeepSeek | 支持配置 API Key 和模型 ID；未做真实 provider live validation。 |
+| DeepSeek | 支持配置 API Key 和模型 ID；已有一次 owner 手动 connectivity pass，实际可用性仍取决于你的 Key、模型权限和 provider 状态。 |
 | Kimi / Moonshot | 支持配置 API Key 和模型 ID；未做真实 provider live validation。 |
 | OpenRouter | provider id 为 `openrouter`，base URL 为 `https://openrouter.ai/api/v1`；支持配置 API Key 和手动模型 ID；host permission 为 `https://openrouter.ai/*`；未做真实 provider live validation。 |
 | Gemini | provider id 为 `gemini`，base URL 为 `https://generativelanguage.googleapis.com/v1beta/openai/`；支持配置 API Key 和手动模型 ID；host permission 为 `https://generativelanguage.googleapis.com/*`；V02-018 已完成非 live 验证，未做真实 provider live validation。 |
