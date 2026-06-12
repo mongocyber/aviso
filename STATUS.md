@@ -59,7 +59,7 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 - package zip 真实形态密钥扫描未发现 OpenAI、Anthropic、GitHub、AWS、Google、Slack 或私钥格式凭证。
 - `@mozilla/readability` 已升级到 `0.6.0`，直接运行时 DoS 审计项已移除。
 - 仍有发布前风险：Plasmo `0.90.5` 是 npm 当前最新版本，但官方 `npm audit` 仍报告其 Parcel 构建链存在 high 级审计项；`npm audit fix --force` 会降级 Plasmo，不能自动执行。
-- v0.2 loaded-extension 可见 smoke 已有局部证据：历史 Popup smoke 曾显示 AI 服务、设置、记录、指令和功能开关；V02-WXT-005 本轮复核通过了 WXT 内容脚本注入、划词工具栏、命令面板打开、双击菜单无截图入口、iframe 划词工具栏、iframe 快捷键桥接和控制台隐私摘要。Popup 本轮未刷新；clipboard toast、native right-click screenshot/context-menu、readability extraction 和 provider-safe floating action open 仍为 pending_manual。
+- v0.2 loaded-extension 可见 smoke 已有局部证据：历史 Popup smoke 曾显示 AI 服务、设置、记录、指令和功能开关；V02-WXT-005 复核通过了 WXT 内容脚本注入、划词工具栏、命令面板打开、双击菜单无截图入口、iframe 划词工具栏、iframe 快捷键桥接和控制台隐私摘要。Owner-assisted Chrome refresh 进一步确认 Popup Settings 主界面、功能开关、命令面板本地历史搜索和双击快捷菜单可见；Popup AI 服务/记录/指令二级页、clipboard toast、native right-click screenshot/context-menu、readability extraction 和 provider-safe floating action open 仍为 pending_manual。
 
 截图能力仅保留在用户主动触发的右键内部路径中。命令面板和双击快捷菜单不展示截图入口；当前文档不把截图作为普通用户主入口或公开卖点。
 
@@ -79,7 +79,7 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 | 英文界面 | 用户 smoke check 未发现明显问题。 |
 | 模型 ID 编辑 | 用户确认可以编辑。 |
 | 权限边界 | 当前普通权限为 `contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`clipboardWrite`；host permissions 仅限已批准 provider host。 |
-| v0.2 loaded-extension smoke | V02-WXT-005 closeout accepted_with_pending_manual：WXT 内容脚本注入、划词工具栏、命令面板打开、双击菜单无截图入口、iframe 划词工具栏、iframe 快捷键桥接和控制台隐私摘要通过；Popup 本轮未刷新，clipboard toast、native right-click screenshot/context-menu、readability extraction 和 provider-safe floating action open 仍为 pending_manual / release gate。 |
+| v0.2 loaded-extension smoke | V02-WXT-005 closeout accepted_with_pending_manual：WXT 内容脚本注入、划词工具栏、命令面板打开、双击菜单无截图入口、iframe 划词工具栏、iframe 快捷键桥接和控制台隐私摘要通过；Owner-assisted Chrome refresh 进一步确认 Popup Settings 主界面、功能开关、命令面板本地历史搜索和双击快捷菜单可见。Popup AI 服务/记录/指令二级页、clipboard toast、native right-click screenshot/context-menu、readability extraction 和 provider-safe floating action open 仍为 pending_manual / release gate。 |
 
 ## 当前边界
 
