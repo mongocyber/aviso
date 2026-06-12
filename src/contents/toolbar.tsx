@@ -4,7 +4,6 @@ import { useEffect, useRef, useState } from "react"
 import { AvisoButton, AvisoIconButton } from "~components"
 import {
   aviso,
-  AvisoIcon,
   AvisoMark,
   useSyncedAvisoTheme,
   visuallyStable,
@@ -83,10 +82,7 @@ const OPERATION_MAP: Record<Operation, string> = {
   send: "custom"
 }
 
-const OPERATION_ICON: Record<
-  Operation,
-  "explain" | "translate" | "refine" | "summarize" | "send"
-> = {
+const OPERATION_ICON: Record<Operation, AvisoIconName> = {
   explain: "explain",
   translate: "translate",
   polish: "refine",
@@ -800,8 +796,11 @@ function SelectionToolbar() {
           }}
         />
         {TOOLBAR_BUTTONS.map(({ op, labelKey }) => (
-          <button
+          <AvisoButton
             key={op}
+            variant={op === "send" ? "secondary" : "ghost"}
+            size="md"
+            icon={OPERATION_ICON[op]}
             className="aviso-toolbar-button"
             data-primary={op === "send" ? "true" : "false"}
             onClick={() => handleOperation(op)}
@@ -809,8 +808,7 @@ function SelectionToolbar() {
               display: "inline-flex",
               alignItems: "center",
               gap: 7,
-              background:
-                op === "send" ? ui.accentSoft : "transparent",
+              background: op === "send" ? ui.accentSoft : "transparent",
               border: "none",
               color: op === "send" ? ui.accent : ui.text,
               fontFamily: aviso.font,
@@ -833,13 +831,8 @@ function SelectionToolbar() {
               ((e.currentTarget as HTMLButtonElement).style.background =
                 op === "send" ? ui.accentSoft : "transparent")
             }>
-            <AvisoIcon
-              name={OPERATION_ICON[op]}
-              size={16}
-              style={{ opacity: op === "send" ? 1 : 0.85 }}
-            />
             {t(labelKey)}
-          </button>
+          </AvisoButton>
         ))}
       </div>
       <span
