@@ -2100,6 +2100,24 @@ test("provider config connectivity result invalidates on key or model changes", 
   assert.match(popupSource, /markProviderConfigTestResult\(savedConfig/)
 })
 
+test("provider connectivity handler refreshes runtime cache before validation", () => {
+  const backgroundSource = readFileSync(
+    new URL("../src/background/index.ts", import.meta.url),
+    "utf8"
+  )
+  const validationBlock =
+    backgroundSource.match(
+      /case "VALIDATE_PROVIDER_CONNECTIVITY":[\s\S]*?break/
+    )?.[0] ?? ""
+
+  assert.match(validationBlock, /clearAIRuntimeCaches\(\)/)
+  assert.match(validationBlock, /handleProviderConnectivityTest/)
+  assert.ok(
+    validationBlock.indexOf("clearAIRuntimeCaches()") <
+      validationBlock.indexOf("handleProviderConnectivityTest")
+  )
+})
+
 test("AI runtime cache keeps BYOK direct-provider boundaries", () => {
   const aiClientSource = readFileSync(
     new URL("../src/background/ai-client.ts", import.meta.url),
@@ -2471,7 +2489,7 @@ test("OpenAI / Anthropic mock-only connectivity gate covers route and sanitized 
   }
 })
 
-test("OpenAI / Anthropic connectivity implementation stays manual and uses fixed payload", () => {
+test("OpenAI-compatible connectivity implementation uses fixed payload and non-streaming request", () => {
   const aiClientSource = readFileSync(
     new URL("../src/background/ai-client.ts", import.meta.url),
     "utf8"
@@ -2485,9 +2503,23 @@ test("OpenAI / Anthropic connectivity implementation stays manual and uses fixed
   assert.match(connectivityBlock, /hasPrivateContextPayload\(testPayload\)/)
   assert.match(connectivityBlock, /route\.provider\.id === "anthropic"/)
   assert.match(connectivityBlock, /await callAnthropic/)
-  assert.match(connectivityBlock, /await callOpenAI/)
+  assert.match(connectivityBlock, /await callOpenAIConnectivity/)
   assert.match(connectivityBlock, /requestId: `connectivity-\$\{route\.provider\.id\}`/)
   assert.match(connectivityBlock, /raw prompt、raw response、网页正文、截图或 API Key/)
+
+  const connectivityRequestBlock =
+    aiClientSource.match(
+      /async function callOpenAIConnectivity[\s\S]*?\nasync function callAnthropic/
+    )?.[0] ?? ""
+  const streamingRequestBlock =
+    aiClientSource.match(
+      /async function callOpenAI\([\s\S]*?\nasync function callOpenAIConnectivity/
+    )?.[0] ?? ""
+
+  assert.match(connectivityRequestBlock, /stream: false/)
+  assert.match(connectivityRequestBlock, /max_tokens: 64/)
+  assert.doesNotMatch(connectivityRequestBlock, /for await/)
+  assert.match(streamingRequestBlock, /stream: true/)
 })
 
 test("connectivity 私有上下文检查覆盖追问 priorContext", () => {

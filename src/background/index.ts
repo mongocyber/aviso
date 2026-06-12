@@ -294,6 +294,7 @@ async function handleMessage(
       }
 
       case "VALIDATE_PROVIDER_CONNECTIVITY": {
+        clearAIRuntimeCaches()
         const summary = await handleProviderConnectivityTest(request.payload)
         sendResponse({ success: true, data: summary })
         break

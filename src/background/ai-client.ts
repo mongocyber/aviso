@@ -139,7 +139,7 @@ export async function handleProviderConnectivityTest(
         clientCacheKey: getProviderClientCacheKey(route)
       })
     } else {
-      await callOpenAI(route.requestModel, testPayload, apiKey, () => {}, {
+      await callOpenAIConnectivity(route.requestModel, testPayload, apiKey, {
         baseURL: route.provider.baseURL,
         keyLabel: route.provider.displayName,
         requestId: `connectivity-${route.provider.id}`,
@@ -409,6 +409,54 @@ async function callOpenAI(
       })
     }
   }
+}
+
+async function callOpenAIConnectivity(
+  model: string,
+  payload: AIRequestPayload,
+  apiKey: string,
+  opts?: {
+    baseURL?: string
+    keyLabel?: string
+    requestId?: string
+    signal?: AbortSignal
+    clientCacheKey?: string
+    providerId?: ProviderId
+  }
+): Promise<void> {
+  const requestId = opts?.requestId ?? "unknown"
+
+  if (!apiKey) throw new Error(`${opts?.keyLabel ?? "OpenAI"} API Key 未配置`)
+  throwIfAborted(opts?.signal)
+
+  const client = getRuntimeOpenAIClient({
+    apiKey,
+    baseURL: opts?.baseURL,
+    cacheKey: opts?.clientCacheKey ?? `${opts?.providerId ?? "openai"}:default`
+  })
+  const messages =
+    payload.operation === "image_explain" && payload.srcUrl
+      ? buildImageMessages(payload, "openai")
+      : buildMessages(payload)
+
+  logTiming("provider_request_start", requestId, payload.timing, {
+    provider: opts?.keyLabel ?? "OpenAI",
+    model,
+    maxTokens: 64,
+    inputChars: estimatePayloadChars(payload)
+  })
+
+  await client.chat.completions.create(
+    {
+      model,
+      messages: messages as Parameters<
+        typeof client.chat.completions.create
+      >[0]["messages"],
+      stream: false,
+      max_tokens: 64
+    },
+    opts?.signal ? { signal: opts.signal } : undefined
+  )
 }
 
 async function callAnthropic(
