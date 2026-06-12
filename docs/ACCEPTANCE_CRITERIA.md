@@ -77,7 +77,7 @@ Updated: 2026-06-12
 
 - `V02-WXT-005`：WXT loaded-extension QA 是否覆盖 Popup、floating trigger、command palette、clipboard toast、double-click menu、screenshot right-click internal path、readability 和 iframe surfaces。
 - `V02-WXT-006`：Closed，当前 v0.2 保持 Plasmo 默认构建；WXT default-build migration 移到单独 `v0.2.1`，自动 parity 不等于默认切换。
-- `V02-009`：Provider live validation 当前未授权，且不是当前 v0.2 configuration-support wording 的必要条件；只有 owner 选择 provider 后才能执行，记录必须 summary-only。
+- `V02-009`：OpenRouter 已被 owner 选择为 optional provider live validation provider，但执行仍需确认 OpenRouter 配置/模型和手动触发路径；它不是当前 v0.2 configuration-support wording 的必要条件，记录必须 summary-only，且在执行完成前不能写成 live validated。
 - `V02-010`：Closed，OpenRouter 只能写为 configuration support，不能写成 live validated。
 - `V02-011`：Closed / accepted，宽松保存只表示配置可保存；缺 Key、缺模型/endpoint 或未测试状态不能升级为 provider 可用证明。
 - `V02-012`：Fast-model strategy 已有 operation-level 行为；loaded-extension behavior 仍需 release-gate 复核。

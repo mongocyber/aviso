@@ -47,7 +47,7 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 - 不把 provider configuration support 写成 live validation。
 - 不把 v0.2 implementation 写成 release ready。
 
-剩余 delivery issues 以 `docs/planning/v0.2-issue-plan.md` 为准：`V02-WXT-005` closeout 已记录/接受但仍有 pending_manual release gates；`V02-009` provider live validation 仍未授权且只是 optional owner-gated，不是当前 v0.2 wording 的必要条件；`V02-013` reasoning/thinking request-parameter control 已从当前 v0.2 scope 移除，不再作为延期或待办。`V02-WXT-006`、`V02-014`、`V02-015` 已按 owner 决策关闭当前 v0.2 口径，不能被写成 release ready。
+剩余 delivery issues 以 `docs/planning/v0.2-issue-plan.md` 为准：`V02-WXT-005` closeout 已记录/接受但仍有 pending_manual release gates；`V02-009` 已选择 OpenRouter 作为 optional owner-gated live validation provider，但执行仍需确认具体 OpenRouter 配置/模型和手动触发路径，不是当前 v0.2 wording 的必要条件，也不能写成已 live validated；`V02-013` reasoning/thinking request-parameter control 已从当前 v0.2 scope 移除，不再作为延期或待办。`V02-WXT-006`、`V02-014`、`V02-015` 已按 owner 决策关闭当前 v0.2 口径，不能被写成 release ready。
 
 ## 发布候选状态
 
