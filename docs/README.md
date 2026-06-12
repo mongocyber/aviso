@@ -1,10 +1,11 @@
 # Aviso Project Docs
 
-当前 `docs/` 分成三层：
+当前 `docs/` 分成四层：
 
 1. **当前事实文档**：只描述已经实现、正在维护和需要验收的真实产品状态。
 2. **版本规划文档**：描述尚未实现或正在推进的下一个版本。
 3. **历史归档文档**：保存已完成版本的规格、执行记录、发布总结和关键决策。
+4. **设计系统文档**：沉淀 Aviso 当前可复用的品牌、视觉 token、基础组件和迁移规则。
 
 当前事实文档不能混入未来版本功能；未来版本应先进入 `planning/`，完成后再更新当前事实文档并归档旧版本记录。
 
@@ -22,6 +23,7 @@
 ### 版本规划
 
 - [planning/README.md](./planning/README.md)：版本规划、执行进度和归档规则。
+- [planning/design-system-migration-preview.html](./planning/design-system-migration-preview.html)：设计系统迁移预览记录。
 - [planning/v0.2-fast-open-provider-spec.md](./planning/v0.2-fast-open-provider-spec.md)：v0.2 需求规格草案。
 - [planning/v0.2-issue-plan.md](./planning/v0.2-issue-plan.md)：v0.2 issue 拆分和执行顺序。
 - [planning/v0.2-status.md](./planning/v0.2-status.md)：v0.2 当前进度和证据记录。
@@ -37,6 +39,13 @@
 
 - [archive/README.md](./archive/README.md)：历史版本归档规则。
 - [decisions/README.md](./decisions/README.md)：跨版本技术、隐私、权限和商业化决策记录规则。
+
+### 设计系统
+
+- [design-system/README.md](./design-system/README.md)：设计系统入口、目录分工和当前边界。
+- [design-system/design-system.md](./design-system/design-system.md)：颜色、字体、字号、间距、圆角、阴影、动效、图标、Logo 和语气规则。
+- [design-system/components.md](./design-system/components.md)：基础组件、适用场景、未来替换位置和暂不抽象范围。
+- [design-system/assets/](./design-system/assets/)：已确认可用的 Logo / brand 源资产。
 
 根目录还保留：
 
@@ -54,5 +63,6 @@
 - 只描述当前已经实现、正在维护和需要验收的功能。
 - 需求文档只记录当前版本对应的用户需求、数据需求和验收入口。
 - 技术、隐私和工作规则文档用于记录实现边界与维护要求。
+- 设计系统文档只记录当前已确认的品牌和组件基础，不代表公开发布、商店上架或 loaded-extension QA 完成。
 - 新版本需求、任务计划和执行进度先写入 `planning/`。
 - 版本完成后，将对应 planning/status/release summary 归档到 `archive/`，再更新当前事实文档。

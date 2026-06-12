@@ -1083,7 +1083,7 @@
     <div class="top">
       <div class="wrap top-row">
         <span class="brand"><span class="mark" data-mark></span>Aviso</span>
-        <span class="tag">migration preview · docs-only</span>
+        <span class="tag">migration preview · migrated baseline</span>
         <nav class="nav" aria-label="页面导航">
           <a href="#assets">迁入清单</a>
           <a href="#ignore">忽略清单</a>
@@ -1100,20 +1100,20 @@
       <p class="kicker">Aviso design system migration preview</p>
       <h1><span class="mark" data-mark></span>Aviso 设计系统迁移预览</h1>
       <p class="lede">
-        这是一份迁移前确认预览。它把外部设计包
+        这是一份迁移前确认预览的保留记录。Owner 确认方向后，已将正式设计系统文档、核心 Mark 源资产和最小基础组件迁入项目。它把外部设计包
         <code>/Users/jonyliu/Downloads/Aviso 官网1.0</code>
         中适合进入项目的设计系统、组件、Logo 和素材候选整理成可浏览页面，
-        同时说明哪些历史/过程材料默认忽略。此文件不代表真实迁移完成，
+        同时说明哪些历史/过程材料默认忽略。此文件保留预览价值，
         也不改变 Aviso 当前内部试用和 release-candidate review 状态。
       </p>
       <div class="notice">
         <span class="icon" data-icon="shield"></span>
         <div>
-          <b>边界：</b>本预览只新增 planning HTML，不创建
-          <code>docs/design-system/</code>，不迁移素材到
+          <b>迁移状态：</b>正式设计系统入口已迁入
+          <code>docs/design-system/</code>，基础组件已新增到
+          <code>src/components/</code>。本轮仍未迁移素材到
           <code>public/</code>、<code>website/static/</code> 或
-          <code>store-assets/</code>，不修改 <code>src/styles/aviso.tsx</code>
-          或任何运行时代码。
+          <code>store-assets/</code>，也未批量替换现有业务 UI。
         </div>
       </div>
     </header>
@@ -1126,29 +1126,28 @@
         </div>
         <h2>建议迁入清单</h2>
         <p class="desc">
-          这些是后续可迁入项目的候选，不是本轮已迁入结果。建议先做 docs-only
-          归档，再进入 token 对齐和组件抽象。
+          以下清单中，设计系统文档、组件基础和三枚 Mark 源资产已完成最小迁入；官网、商店素材和更完整品牌 lockup 仍是候选。
         </p>
         <div class="grid cols-2">
           <div class="card">
             <h3>设计系统</h3>
             <div class="asset-line">
-              <code>tokens.css</code><span>核心 token 真源候选</span>
+              <code>tokens.css</code><span>已吸收到正式文档；运行态真源仍是 src/styles/aviso.tsx</span>
             </div>
             <div class="asset-line">
-              <code>Aviso Design System.html</code><span>规范展示与说明候选</span>
+              <code>Aviso Design System.html</code><span>已整理为 docs/design-system/design-system.md</span>
             </div>
             <div class="asset-line">
-              <code>components/aviso-system.css</code><span>设计系统页面样式候选</span>
+              <code>components/aviso-system.css</code><span>只作为视觉参考，未复制为运行时真源</span>
             </div>
           </div>
           <div class="card">
             <h3>组件</h3>
             <div class="asset-line">
-              <code>Aviso Components.html</code><span>组件视觉样例候选</span>
+              <code>Aviso Components.html</code><span>已整理为 docs/design-system/components.md</span>
             </div>
             <div class="asset-line">
-              <code>components/aviso-components.css</code><span>组件样式候选</span>
+              <code>components/aviso-components.css</code><span>只作为视觉参考，未复制为运行时真源</span>
             </div>
             <div class="asset-line">
               <code>selection toolbar / result window / command palette</code
@@ -1158,16 +1157,16 @@
           <div class="card">
             <h3>Logo / 品牌</h3>
             <div class="asset-line">
-              <code>Aviso Logo Final.html</code><span>Aperture mark 定稿说明候选</span>
+              <code>Aviso Logo Final.html</code><span>Aperture mark 核心规则已进入设计系统文档</span>
             </div>
             <div class="asset-line">
-              <code>assets/aviso-mark-ink.svg</code><span>浅底 ink 版</span>
+              <code>assets/aviso-mark-ink.svg</code><span>已迁入 docs/design-system/assets/</span>
             </div>
             <div class="asset-line">
-              <code>assets/aviso-mark-sage.svg</code><span>品牌 sage 版</span>
+              <code>assets/aviso-mark-sage.svg</code><span>已迁入 docs/design-system/assets/</span>
             </div>
             <div class="asset-line">
-              <code>assets/aviso-mark-white.svg</code><span>深底 white 版</span>
+              <code>assets/aviso-mark-white.svg</code><span>已迁入 docs/design-system/assets/</span>
             </div>
           </div>
           <div class="card">
@@ -1185,7 +1184,7 @@
           <div class="card">
             <h3>商店素材候选</h3>
             <div class="asset-line">
-              <code>store-assets/delivery/icon-128.png</code><span>图标候选</span>
+              <code>store-assets/delivery/icon-128.png</code><span>仍为候选，未迁入</span>
             </div>
             <div class="asset-line">
               <code>store-assets/delivery/promo-*.png</code><span>推广图候选</span>
