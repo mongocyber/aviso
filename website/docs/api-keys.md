@@ -17,8 +17,13 @@ Aviso 使用你自己的模型 provider API Key 发起请求。请求会从浏�
 | 豆包 / Volcengine Ark | 内部测试和用户反馈确认路径可用。 |
 | OpenAI | 支持配置 API Key 和模型 ID；实际可用性取决于你的 Key、模型权限和 provider 状态。 |
 | Anthropic | 支持配置 API Key 和模型 ID；实际可用性取决于你的 Key、模型权限和 provider 状态。 |
+| DeepSeek | 支持配置 API Key 和模型 ID；未做真实 provider live validation。 |
+| Kimi / Moonshot | 支持配置 API Key 和模型 ID；未做真实 provider live validation。 |
+| OpenRouter | provider id 为 `openrouter`，base URL 为 `https://openrouter.ai/api/v1`；支持配置 API Key 和手动模型 ID；host permission 为 `https://openrouter.ai/*`；未做真实 provider live validation。 |
+| Gemini | provider id 为 `gemini`，base URL 为 `https://generativelanguage.googleapis.com/v1beta/openai/`；支持配置 API Key 和手动模型 ID；host permission 为 `https://generativelanguage.googleapis.com/*`；V02-018 已完成非 live 验证，未做真实 provider live validation。 |
+| Tencent Hunyuan | provider id 为 `hunyuan`，base URL 为 `https://api.hunyuan.cloud.tencent.com/v1`；支持配置 API Key 和手动模型 ID；host permission 为 `https://api.hunyuan.cloud.tencent.com/*`；V02-018 已完成非 live 验证，未做真实 provider live validation。 |
 
-OpenAI 和 Anthropic 不作为当前版本的主卖点；需要由用户填写自己的可用 API Key，并在 Popup 中手动触发连接测试。
+OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 不作为当前版本的可用性保证；需要由用户填写自己的可用 API Key，并在 Popup 中手动触发连接测试。OpenRouter、Gemini 和 Tencent Hunyuan 作为 BYOK OpenAI-compatible preset，不自动读取模型列表。
 
 ## AI 服务配置
 
@@ -26,7 +31,7 @@ Popup 支持多 AI 服务配置。你可以：
 
 - 为同一个 provider 保存多个配置。
 - 设置当前默认服务。
-- 手动编辑 OpenAI / Anthropic 的模型 ID。
+- 手动编辑 OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 的模型 ID。
 - 为豆包 / Volcengine Ark 填写接入点和模型字段。
 - 手动触发连接测试；测试一次只针对当前 provider，并只展示脱敏摘要。
 

@@ -40,12 +40,15 @@ The command palette is for keyboard users:
 - Search Chrome bookmarks.
 - Search Chrome browsing history.
 - Search local Aviso AI conversations.
-- Send input to AI when there is no local match.
+- Send input to AI when there is no local match, or generate local intent candidates.
+- Require candidate selection before opening URLs, opening history/bookmark results, translating the current page, or summarizing the current page.
 - Continue from history items using the original action.
 
 Mac uses `Command+Shift+Space`; Windows/Linux uses `Ctrl+Shift+Space`.
 
 The command palette does not show a screenshot entry.
+
+The command palette does not perform autonomous browsing, web search, or remote link-body fetching. Browsing history, bookmarks, and local AI conversations are local candidates only.
 
 ## Double-Click Quick Menu
 
@@ -76,7 +79,7 @@ The Popup manages:
 - Default model and default AI service.
 - Multiple AI service configs.
 - API keys.
-- OpenAI / Anthropic model IDs.
+- OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan model IDs.
 - Doubao / Volcengine Ark endpoint and model fields.
 - Feature switches.
 - Custom templates.

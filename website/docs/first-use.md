@@ -43,7 +43,9 @@ sidebar_position: 4
 - Mac：`Command+Shift+Space`
 - Windows/Linux：`Ctrl+Shift+Space`
 
-命令面板可以搜索 Chrome 浏览历史、Chrome 书签和 Aviso 本地 AI 对话。没有搜索结果时，你也可以直接把输入内容发给 AI。
+命令面板可以搜索 Chrome 浏览历史、Chrome 书签和 Aviso 本地 AI 对话。没有搜索结果时，你也可以直接把输入内容发给 AI，或按本地意图生成候选。
+
+打开 URL、打开历史/书签候选、翻译当前页面和总结当前页面都需要你先选择候选确认；命令面板不做自主浏览、联网搜索或远端链接正文抓取。
 
 命令面板不展示截图入口。
 

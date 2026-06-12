@@ -56,7 +56,7 @@ Aviso 会在浏览器扩展存储中保存必要数据：
 
 ### 连接测试与性能摘要
 
-Provider 连接测试只能由用户手动触发，一次只测试一个 provider。测试使用固定公开短句，不包含网页正文、选中文本、链接、图片、截图、剪贴板内容、API Key、raw prompt 或 raw response。
+Provider 连接测试只能由用户手动触发，一次只测试一个 provider。测试使用固定公开短句，不包含网页正文、选中文本、链接、图片、截图、剪贴板内容、API Key、raw prompt 或 raw response。DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 当前仅代表配置支持，未做真实 provider live validation。
 
 Aviso 的性能摘要只输出到本地扩展 console，用于内部排查等待时间；摘要只包含固定阶段和分桶字段，不包含原文、完整 URL、图片/base64、截图、API Key、raw prompt 或 raw response，也不会发送到远端 telemetry。
 
@@ -101,6 +101,11 @@ Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页�
 https://api.openai.com/*
 https://api.anthropic.com/*
 https://ark.cn-beijing.volces.com/*
+https://api.deepseek.com/*
+https://api.moonshot.cn/*
+https://openrouter.ai/*
+https://generativelanguage.googleapis.com/*
+https://api.hunyuan.cloud.tencent.com/*
 ```
 
 Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文。
@@ -122,6 +127,6 @@ Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文�
 
 ## Provider 验收状态
 
-Aviso 支持配置 OpenAI、Anthropic 和豆包 / Volcengine Ark。用户可以在设置中填写自己的 API Key、模型 ID 或接入点；请求由浏览器扩展直连用户选择的 provider。
+Aviso 支持配置 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan。用户可以在设置中填写自己的 API Key、模型 ID 或接入点；请求由浏览器扩展直连用户选择的 provider。OpenRouter、Gemini 和 Tencent Hunyuan 的模型 ID 需要用户手动填写，Aviso 不自动读取模型列表。
 
-当前内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用。OpenAI 和 Anthropic 支持配置，但实际可用性取决于用户自己的 Key、模型权限和 provider 状态；本站不把它们写成已经完成真实可用验收。
+当前内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持配置，但实际可用性取决于用户自己的 Key、模型权限和 provider 状态；本站不把它们写成已经完成真实可用验收。DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 也未做真实 provider live validation。

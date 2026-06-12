@@ -1,6 +1,6 @@
 # Aviso Acceptance Criteria
 
-Updated: 2026-06-10
+Updated: 2026-06-12
 
 ## 验收标准
 
@@ -25,7 +25,8 @@ Updated: 2026-06-10
 - 双击快捷菜单默认关闭；开启后避开输入框、可编辑区域、常见代码编辑器和 Aviso 自身 UI。
 - 结果面板支持流式展示、复制、保存、继续追问和本地历史。
 - Popup 可管理界面语言、外观主题、功能开关、AI 服务配置、默认服务、本地历史和自定义指令。
-- OpenAI / Anthropic / 豆包配置的模型 ID 或接入点可以手动编辑。
+- OpenAI / Anthropic / 豆包 / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 配置的模型 ID 或接入点可以手动编辑。
+- 命令面板本地候选、打开/页面动作 confirm-first、危险 URL 拦截和本地 AI 对话恢复需要通过功能验证与 loaded-extension 复核。
 
 ## 本地化验收
 
@@ -39,7 +40,7 @@ Updated: 2026-06-10
 ## 权限与隐私验收
 
 - 普通权限仍为 `contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`clipboardWrite`。
-- Host permissions 仍为 OpenAI、Anthropic、火山方舟北京网关。
+- Host permissions 仍限于已批准 provider host：OpenAI、Anthropic、火山方舟北京网关、DeepSeek、Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan。
 - API Key 仍不明文保存，并保存在 `chrome.storage.local/contextai_api_keys`。
 - 当前 API Key 保护边界已写明：由扩展 ID 派生口令提供本地加密 / 混淆级保护，不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。
 - 非敏感设置仍保存在 `chrome.storage.sync/contextai_settings`。
@@ -54,10 +55,37 @@ Updated: 2026-06-10
 - 豆包 / 火山方舟：用户确认可用。
 - OpenAI：支持配置 API Key 和模型 ID。
 - Anthropic：支持配置 API Key 和模型 ID。
+- DeepSeek：支持配置 API Key 和模型 ID；未做真实 provider live validation。
+- Kimi / Moonshot：支持配置 API Key 和模型 ID；未做真实 provider live validation。
+- OpenRouter：provider id 为 `openrouter`，base URL 为 `https://openrouter.ai/api/v1`，host permission 为 `https://openrouter.ai/*`；支持配置 API Key 和手动模型 ID；未做真实 provider live validation，不自动读取模型列表。
+- Gemini：provider id 为 `gemini`，base URL 为 `https://generativelanguage.googleapis.com/v1beta/openai/`，host permission 为 `https://generativelanguage.googleapis.com/*`；支持配置 API Key 和手动模型 ID；V02-018 已完成非 live 验证，未做真实 provider live validation，不自动读取模型列表。
+- Tencent Hunyuan：provider id 为 `hunyuan`，base URL 为 `https://api.hunyuan.cloud.tencent.com/v1`，host permission 为 `https://api.hunyuan.cloud.tencent.com/*`；支持配置 API Key 和手动模型 ID；V02-018 已完成非 live 验证，未做真实 provider live validation，不自动读取模型列表。
+- v0.2 命令面板本地意图：功能验证已通过；loaded-extension/manual QA 仍需复核。
+- v0.2 速度体验：等待态和 summary-only 本地 TTFT 方法已实现；未做真实 provider live sampling，不宣称 p50 / p95 达标。
+- WXT：自动构建和 manifest parity 已通过；默认构建未切换，部分 loaded-extension QA 仍未完成。
+- Reasoning / thinking request-parameter control：已从当前 v0.2 scope 移除；不作为实现项、延期项或发布口径前置条件。
+- Custom OpenAI-compatible base URL：当前 v0.2 明确不做；不是当前待办或延期项。
 - 英文界面：用户 smoke check 未发现明显问题。
 - 模型 ID 编辑：用户确认可以编辑。
 - Chrome 版本、操作系统、截图和录屏证据尚未补录；当前记录不能写成完整发布验收通过。
 
 截图能力仅按右键主动触发的内部路径保留，不作为普通用户主入口或公开卖点。
 
-这些记录只代表当前内部试用 / basic-launch hardening 状态，不代表公开发布批准、Chrome Web Store 审核通过、正式商店链接或 GitHub Release。
+## v0.2 验证线程复核清单
+
+验证线程需要逐项确认。Closed rows 只用于追溯当前边界，不代表 active remaining delivery：
+
+- `V02-WXT-005`：WXT loaded-extension QA 是否覆盖 Popup、floating trigger、command palette、clipboard toast、double-click menu、screenshot right-click internal path、readability 和 iframe surfaces。
+- `V02-WXT-006`：Closed，当前 v0.2 保持 Plasmo 默认构建；WXT default-build migration 移到单独 `v0.2.1`，自动 parity 不等于默认切换。
+- `V02-009`：Provider live validation 当前未授权，且不是当前 v0.2 configuration-support wording 的必要条件；只有 owner 选择 provider 后才能执行，记录必须 summary-only。
+- `V02-010`：Closed，OpenRouter 只能写为 configuration support，不能写成 live validated。
+- `V02-011`：Closed / accepted，宽松保存只表示配置可保存；缺 Key、缺模型/endpoint 或未测试状态不能升级为 provider 可用证明。
+- `V02-012`：Fast-model strategy 已有 operation-level 行为；loaded-extension behavior 仍需 release-gate 复核。
+- `V02-013`：Closed / removed，Reasoning / thinking 请求参数不做；不需要实现证明，也不能写成当前 v0.2 能力。
+- `V02-014`：Closed，当前 v0.2 只承认感知等待优化和 summary-only TTFT 方法；不要求 live sampling，不写 p50 / p95 达标声明。
+- `V02-015`：Closed / not doing，Custom OpenAI-compatible base URL 不属于当前 v0.2；未来如需恢复，必须新开 owner-approved issue。
+- `V02-016`：Batch 2 preflight 已完成；Gemini 与 Tencent Hunyuan 进入配置支持实现线，Qwen / DashScope 仍 deferred，智谱 GLM 仍 deferred / unresolved。
+- `V02-017`：CTO accepted as non-live configuration support for Gemini / Tencent Hunyuan；继续保持 fixed preset / fixed base URL / fixed host permission。
+- `V02-018`：CTO accepted as non-live validation evidence for Gemini / Tencent Hunyuan；没有真实 API 调用授权时不能写成 live validation。
+
+这些记录只代表当前内部试用 / basic-launch hardening / v0.2 实现证据状态，不代表公开发布批准、Chrome Web Store 审核通过、正式商店链接、GitHub Release、真实 provider live validation 或 WXT 默认构建切换批准。

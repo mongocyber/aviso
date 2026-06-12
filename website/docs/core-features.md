@@ -40,12 +40,15 @@ Aviso v0.1 的重点是把常见网页对象接入 AI，并把结果留在当前
 - 搜索 Chrome 书签。
 - 搜索 Chrome 浏览历史。
 - 搜索 Aviso 本地 AI 对话。
-- 没有结果时把输入内容发送给 AI。
+- 没有结果时把输入内容发送给 AI，或按本地意图生成候选。
+- 打开 URL、打开历史/书签候选、翻译当前页面和总结当前页面时，必须先选择候选确认。
 - 从历史项继续使用原始操作。
 
 Mac 使用 `Command+Shift+Space`，Windows/Linux 使用 `Ctrl+Shift+Space`。
 
 命令面板不展示截图入口。
+
+命令面板不做自主浏览、联网搜索或远端链接正文抓取；浏览历史、书签和本地 AI 对话只作为本地候选。
 
 ## 双击快捷菜单
 
@@ -76,7 +79,7 @@ Popup 用于管理：
 - 默认模型和默认 AI 服务。
 - 多 AI 服务配置。
 - API Key。
-- OpenAI / Anthropic 模型 ID。
+- OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 模型 ID。
 - 豆包 / Volcengine Ark 接入点和模型字段。
 - 功能开关。
 - 自定义模板。

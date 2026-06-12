@@ -19,7 +19,7 @@ Aviso tries to show the floating panel and waiting state immediately after an ac
 - Input length.
 - Page text complexity.
 
-Aviso v0.1 does not promise instant model responses.
+Aviso v0.1 does not promise instant model responses. v0.2 adds clearer waiting states and a local summary-only TTFT method, but no live provider sampling was run and no p50 / p95 target is claimed as achieved.
 
 ## Page Summary Length
 
@@ -38,6 +38,8 @@ Aviso does not fetch arbitrary remote link content and does not request broad ho
 The command palette can search Chrome browsing history, Chrome bookmarks, and local Aviso AI conversations. Browsing history and bookmarks are only used for local keyword search. They do not enter AI requests and are not sent to Aviso servers.
 
 Browser permissions, page focus, or the user environment may affect search results.
+
+Opening URLs, opening history/bookmark candidates, translating the current page, and summarizing the current page require the user to select a candidate first. The command palette does not perform autonomous browsing, web search, or remote link-body fetching.
 
 ## Image Explanation
 
@@ -58,5 +60,10 @@ Current records:
 - Internal testing and user feedback confirm the Doubao / Volcengine Ark path works.
 - OpenAI can be configured with API key and model ID; actual availability depends on your key, model access, and provider status.
 - Anthropic can be configured with API key and model ID; actual availability depends on your key, model access, and provider status.
+- DeepSeek can be configured with API key and model ID; it has not been live-provider validated.
+- Kimi / Moonshot can be configured with API key and model ID; it has not been live-provider validated.
+- OpenRouter can be configured with API key and manual model ID; provider id is `openrouter`, base URL is `https://openrouter.ai/api/v1`, host permission is `https://openrouter.ai/*`; it has not been live-provider validated, and Aviso does not automatically read model lists.
+- Gemini can be configured with API key and manual model ID; provider id is `gemini`, base URL is `https://generativelanguage.googleapis.com/v1beta/openai/`, host permission is `https://generativelanguage.googleapis.com/*`; V02-018 completed non-live validation, but it has not been live-provider validated, and Aviso does not automatically read model lists.
+- Tencent Hunyuan can be configured with API key and manual model ID; provider id is `hunyuan`, base URL is `https://api.hunyuan.cloud.tencent.com/v1`, host permission is `https://api.hunyuan.cloud.tencent.com/*`; V02-018 completed non-live validation, but it has not been live-provider validated, and Aviso does not automatically read model lists.
 
-OpenAI and Anthropic are not the main selling point of the current version. Users need to enter their own valid API keys and manually trigger connection tests in the Popup.
+OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan are not availability guarantees in the current version. Users need to enter their own valid API keys and manually trigger connection tests in the Popup.

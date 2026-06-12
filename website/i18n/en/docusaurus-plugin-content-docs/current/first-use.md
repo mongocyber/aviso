@@ -51,7 +51,9 @@ The command palette can search:
 - Chrome bookmarks.
 - Chrome browsing history.
 
-If there are no matching local results, pressing Enter can send your input to the configured AI provider.
+If there are no matching local results, pressing Enter can send your input to the configured AI provider or generate local intent candidates.
+
+Opening URLs, opening history/bookmark candidates, translating the current page, and summarizing the current page require you to select a candidate first. The command palette does not perform autonomous browsing, web search, or remote link-body fetching.
 
 The command palette does not show a screenshot entry.
 

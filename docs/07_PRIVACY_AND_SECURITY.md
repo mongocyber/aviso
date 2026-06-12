@@ -1,6 +1,6 @@
 # Aviso Privacy and Security
 
-Updated: 2026-06-08
+Updated: 2026-06-11
 
 ## 核心原则
 
@@ -31,6 +31,11 @@ Host permissions：
 - `https://api.openai.com/*`
 - `https://api.anthropic.com/*`
 - `https://ark.cn-beijing.volces.com/*`
+- `https://api.deepseek.com/*`
+- `https://api.moonshot.cn/*`
+- `https://openrouter.ai/*`
+- `https://generativelanguage.googleapis.com/*`
+- `https://api.hunyuan.cloud.tencent.com/*`
 
 ## 数据流
 
@@ -44,7 +49,17 @@ Host permissions：
 
 ### 本地搜索
 
-命令面板可搜索 Chrome 浏览历史、书签和 Aviso 本地 AI 对话。浏览历史和书签只用于本地关键词匹配和打开结果，不进入 AI 请求，不写入 Aviso 远端服务，也不发送给 provider。
+命令面板可搜索 Chrome 浏览历史、书签和 Aviso 本地 AI 对话。浏览历史、书签和本地对话只用于本地候选展示，不进入 AI 请求，不写入 Aviso 远端服务，也不发送给 provider。
+
+命令面板打开 URL、浏览历史和书签结果时，只展示可安全打开的 `http` / `https` 候选。用户必须选择候选后才会打开页面；`javascript:`、`data:`、`file:`、`chrome:`、`chrome-extension:`、`about:`、`blob:` 等内部或危险 scheme 不作为可打开候选。
+
+选择 Aviso 本地 AI 对话只恢复本地保存的对话，不重新发送给 provider。
+
+### 命令面板页面动作
+
+命令面板的当前页面总结和当前页面翻译需要用户明确选择候选后才读取页面正文，并通过既有 BYOK direct-provider 路径处理。搜索候选、浏览历史、书签或本地对话不会自动触发页面正文读取，也不会自动发送给 provider。
+
+命令面板不做联网搜索、远端链接正文抓取、自主多步浏览或自动打开危险 URL scheme。
 
 ### 复制当前上下文
 
@@ -71,6 +86,7 @@ Aviso 当前不收集、不远端保存：
 - 截图或图片 base64。
 - 剪贴板内容日志。
 - 远端 telemetry 或 analytics。
+- 联网搜索或远端链接正文抓取结果。
 
 ## API Key 保护边界
 
@@ -81,3 +97,4 @@ API Key 不明文保存，位置是 `chrome.storage.local/contextai_api_keys`，
 - 修改权限、host permissions、API Key 存储、provider route 或真实 provider 调用前必须单独确认。
 - 新增用户数据流时必须同步更新 `docs/03_TECH_SPEC.md`、本文档和 `RELEASE_CHECKLIST.md`。
 - 不把当前内部试用记录写成公开发布批准。
+- 不把 DeepSeek、Kimi / Moonshot、OpenRouter、Gemini、Tencent Hunyuan 等配置支持写成真实 provider live validation。
