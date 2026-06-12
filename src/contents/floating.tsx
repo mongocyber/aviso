@@ -1,12 +1,14 @@
 import type { PlasmoCSConfig, PlasmoGetShadowHostId } from "plasmo"
 import { useEffect, useRef, useState } from "react"
 
+import { AvisoButton, AvisoIconButton } from "~components"
 import {
   aviso,
   AvisoIcon,
   AvisoMark,
   useSyncedAvisoTheme,
-  visuallyStable
+  visuallyStable,
+  type AvisoIconName
 } from "~styles/aviso"
 import type { ConversationMessage } from "~types/history"
 import type {
@@ -716,26 +718,13 @@ function FloatingWindow() {
             {operationLabel(state.operation, t)}
           </span>
         </span>
-        <button
+        <AvisoIconButton
+          icon="close"
           onClick={handleClose}
           className="aviso-icon-button"
           aria-label={t("common.close")}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 28,
-            height: 28,
-            background: "transparent",
-            border: "none",
-            borderRadius: aviso.radiusSm,
-            color: ui.text3,
-            cursor: "pointer",
-            padding: 0,
-            transition: `.15s ${aviso.ease}`
-          }}>
-          <AvisoIcon name="close" size={16} />
-        </button>
+          style={{ flex: "0 0 auto" }}
+        />
       </div>
 
       {/* 对话区 */}
@@ -843,7 +832,7 @@ function FloatingWindow() {
               copiedId === state.requestId && state.requestId
                 ? t("common.copied")
                 : t("common.copy"),
-            icon: "copy" as const,
+            icon: "copy" as AvisoIconName,
             onClick: handleCopy,
             active: copiedId === state.requestId && !!state.requestId
           },
@@ -852,7 +841,7 @@ function FloatingWindow() {
               savedId === state.sessionId && state.sessionId
                 ? t("common.saved")
                 : t("common.save"),
-            icon: "save" as const,
+            icon: "save" as AvisoIconName,
             onClick: handleSave,
             active: savedId === state.sessionId && !!state.sessionId
           },
@@ -860,15 +849,18 @@ function FloatingWindow() {
             ? [
                 {
                   label: t("common.stop"),
-                  icon: "stop" as const,
+                  icon: "stop" as AvisoIconName,
                   onClick: handleStopWaiting,
                   active: false
                 }
               ]
             : [])
         ].map(({ label, icon, onClick, active }) => (
-          <button
+          <AvisoButton
             key={icon}
+            variant="ghost"
+            size="sm"
+            icon={icon}
             onClick={onClick}
             className="aviso-result-action"
             data-active={active ? "true" : "false"}
@@ -887,9 +879,8 @@ function FloatingWindow() {
               cursor: "pointer",
               whiteSpace: "nowrap"
             }}>
-            <AvisoIcon name={icon} size={15} style={{ opacity: 0.8 }} />
             {label}
-          </button>
+          </AvisoButton>
         ))}
       </div>
 
@@ -938,7 +929,10 @@ function FloatingWindow() {
             overflowWrap: "anywhere"
           }}
         />
-        <button
+        <AvisoButton
+          variant="primary"
+          size="md"
+          icon="send"
           onClick={handleFollowUp}
           className="aviso-send-button"
           style={{
@@ -953,13 +947,13 @@ function FloatingWindow() {
             fontFamily: aviso.font,
             fontSize: "13px",
             fontWeight: 600,
+            minHeight: 34,
             cursor: "pointer",
             flex: "0 0 auto",
             whiteSpace: "nowrap"
           }}>
-          <AvisoIcon name="send" size={15} />
           {t("common.send")}
-        </button>
+        </AvisoButton>
       </div>
 
       <style>{`
