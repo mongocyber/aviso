@@ -907,17 +907,18 @@ function Popup() {
 
   const saveProviderConfigInstance = async (config: ProviderConfig) => {
     const keyInput = providerConfigKeyInputs[config.id] ?? ""
+    const normalizedKeyInput = keyInput.trim()
     const legacyProvider = getLegacyProviderFromConfigId(config.id)
     const apiKeyChanged = !keyInput.startsWith("••")
     if (apiKeyChanged) {
       if (legacyProvider) {
-        await saveApiKey(legacyProvider, keyInput)
+        await saveApiKey(legacyProvider, normalizedKeyInput)
       } else {
-        await saveProviderConfigApiKey(config.id, keyInput)
+        await saveProviderConfigApiKey(config.id, normalizedKeyInput)
         setProviderConfigKeys((prev) => {
           const next = { ...prev }
-          if (keyInput.trim()) {
-            next[config.id] = keyInput
+          if (normalizedKeyInput) {
+            next[config.id] = normalizedKeyInput
           } else {
             delete next[config.id]
           }
@@ -926,7 +927,9 @@ function Popup() {
       }
       setProviderConfigKeyInputs((prev) => ({
         ...prev,
-        [config.id]: keyInput.trim() ? `••••••••${keyInput.slice(-4)}` : ""
+        [config.id]: normalizedKeyInput
+          ? `••••••••${normalizedKeyInput.slice(-4)}`
+          : ""
       }))
     }
 
@@ -1041,6 +1044,7 @@ function Popup() {
   const testProviderConfigInstance = async (config: ProviderConfig) => {
     if (testingProviderConfigId) return
     const keyInput = providerConfigKeyInputs[config.id] ?? ""
+    const normalizedKeyInput = keyInput.trim()
     if (!keyInput.trim()) {
       setProviderConfigConnectivityResults((prev) => ({
         ...prev,
@@ -1079,14 +1083,17 @@ function Popup() {
     const apiKeyChanged = !keyInput.startsWith("••")
     if (apiKeyChanged) {
       if (legacyProvider) {
-        await saveApiKey(legacyProvider, keyInput)
+        await saveApiKey(legacyProvider, normalizedKeyInput)
       } else {
-        await saveProviderConfigApiKey(config.id, keyInput)
-        setProviderConfigKeys((prev) => ({ ...prev, [config.id]: keyInput }))
+        await saveProviderConfigApiKey(config.id, normalizedKeyInput)
+        setProviderConfigKeys((prev) => ({
+          ...prev,
+          [config.id]: normalizedKeyInput
+        }))
       }
       setProviderConfigKeyInputs((prev) => ({
         ...prev,
-        [config.id]: `••••••••${keyInput.slice(-4)}`
+        [config.id]: `••••••••${normalizedKeyInput.slice(-4)}`
       }))
     }
     const savedConfig = normalizeProviderConfigDraftUpdate(

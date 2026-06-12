@@ -20,6 +20,10 @@ export function decryptApiKey(ciphertext: string): string {
   }
 }
 
+function normalizeApiKeyInput(value: string): string {
+  return value.trim()
+}
+
 // ── Settings ────────────────────────────────────────────────────────────────
 
 const DEFAULT_SETTINGS: Settings = {
@@ -71,9 +75,11 @@ export async function getApiKeys(): Promise<ApiKeys> {
   const raw = result.contextai_api_keys ?? {}
   const providerConfigKeys = raw.providerConfigKeys ?? {}
   return {
-    openai: raw.openai ? decryptApiKey(raw.openai) : "",
-    anthropic: raw.anthropic ? decryptApiKey(raw.anthropic) : "",
-    doubao: raw.doubao ? decryptApiKey(raw.doubao) : "",
+    openai: raw.openai ? normalizeApiKeyInput(decryptApiKey(raw.openai)) : "",
+    anthropic: raw.anthropic
+      ? normalizeApiKeyInput(decryptApiKey(raw.anthropic))
+      : "",
+    doubao: raw.doubao ? normalizeApiKeyInput(decryptApiKey(raw.doubao)) : "",
     deepseek: "",
     moonshot: "",
     openrouter: "",
@@ -82,7 +88,9 @@ export async function getApiKeys(): Promise<ApiKeys> {
     providerConfigKeys: Object.fromEntries(
       Object.entries(providerConfigKeys).map(([configId, encrypted]) => [
         configId,
-        typeof encrypted === "string" ? decryptApiKey(encrypted) : ""
+        typeof encrypted === "string"
+          ? normalizeApiKeyInput(decryptApiKey(encrypted))
+          : ""
       ])
     )
   }
@@ -94,7 +102,8 @@ export async function saveApiKey(
 ): Promise<void> {
   const result = await chrome.storage.local.get("contextai_api_keys")
   const current = result.contextai_api_keys ?? {}
-  if (!plainKey.trim()) {
+  const normalizedKey = normalizeApiKeyInput(plainKey)
+  if (!normalizedKey) {
     const next = { ...current }
     delete next[provider]
     await chrome.storage.local.set({ contextai_api_keys: next })
@@ -104,7 +113,7 @@ export async function saveApiKey(
   await chrome.storage.local.set({
     contextai_api_keys: {
       ...current,
-      [provider]: encryptApiKey(plainKey)
+      [provider]: encryptApiKey(normalizedKey)
     }
   })
 }
@@ -116,11 +125,12 @@ export async function saveProviderConfigApiKey(
   const result = await chrome.storage.local.get("contextai_api_keys")
   const current = result.contextai_api_keys ?? {}
   const providerConfigKeys = { ...(current.providerConfigKeys ?? {}) }
+  const normalizedKey = normalizeApiKeyInput(plainKey)
 
-  if (!plainKey.trim()) {
+  if (!normalizedKey) {
     delete providerConfigKeys[configId]
   } else {
-    providerConfigKeys[configId] = encryptApiKey(plainKey)
+    providerConfigKeys[configId] = encryptApiKey(normalizedKey)
   }
 
   await chrome.storage.local.set({

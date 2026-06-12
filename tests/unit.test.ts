@@ -2034,7 +2034,12 @@ test("popup provider config save allows incomplete drafts and clears stale test 
       /const testProviderConfigInstance = async \(config: ProviderConfig\) => \{[\s\S]*?\n  \}\n\n  const clearConnectivityResult/
     )?.[0] ?? ""
 
-  assert.match(saveBlock, /await saveProviderConfigApiKey\(config\.id, keyInput\)/)
+  assert.match(saveBlock, /const normalizedKeyInput = keyInput\.trim\(\)/)
+  assert.match(
+    saveBlock,
+    /await saveProviderConfigApiKey\(config\.id, normalizedKeyInput\)/
+  )
+  assert.doesNotMatch(saveBlock, /saveProviderConfigApiKey\(config\.id, keyInput\)/)
   assert.match(saveBlock, /delete next\[config\.id\]/)
   assert.match(saveBlock, /clearProviderConfigTestResult\(normalizedConfig\)/)
   assert.doesNotMatch(saveBlock, /buildConnectivityPreflightSummary/)
@@ -2043,6 +2048,32 @@ test("popup provider config save allows incomplete drafts and clears stale test 
   assert.match(testBlock, /buildConnectivityPreflightSummary/)
   assert.match(testBlock, /popup\.provider\.apiKeyMissing/)
   assert.match(testBlock, /popup\.provider\.endpointMissing/)
+  assert.match(
+    testBlock,
+    /await saveProviderConfigApiKey\(config\.id, normalizedKeyInput\)/
+  )
+  assert.doesNotMatch(testBlock, /saveProviderConfigApiKey\(config\.id, keyInput\)/)
+})
+
+test("API key storage normalizes hidden whitespace before saving and reading", () => {
+  const storageSource = readFileSync(
+    new URL("../src/utils/storage.ts", import.meta.url),
+    "utf8"
+  )
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(storageSource, /function normalizeApiKeyInput/)
+  assert.match(storageSource, /return value\.trim\(\)/)
+  assert.match(storageSource, /normalizeApiKeyInput\(decryptApiKey\(raw\.openai\)\)/)
+  assert.match(storageSource, /const normalizedKey = normalizeApiKeyInput\(plainKey\)/)
+  assert.match(storageSource, /encryptApiKey\(normalizedKey\)/)
+  assert.doesNotMatch(storageSource, /encryptApiKey\(plainKey\)/)
+  assert.match(popupSource, /const normalizedKeyInput = keyInput\.trim\(\)/)
+  assert.match(popupSource, /normalizedKeyInput\.slice\(-4\)/)
+  assert.doesNotMatch(popupSource, /keyInput\.slice\(-4\)/)
 })
 
 test("provider config stores last connectivity result by provider and model", () => {
