@@ -676,7 +676,11 @@ function CommandPalette() {
       return
     }
 
-    if (e.key === "ArrowDown") {
+    if (e.key === "Escape") {
+      e.preventDefault()
+      e.stopPropagation()
+      setVisible(false)
+    } else if (e.key === "ArrowDown") {
       e.preventDefault()
       if (results.length === 0) return
       setSelectedIndex((i) => Math.min(i + 1, results.length - 1))

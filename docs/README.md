@@ -27,6 +27,7 @@
 - [planning/v0.2-fast-open-provider-spec.md](./planning/v0.2-fast-open-provider-spec.md)：v0.2 需求规格草案。
 - [planning/v0.2-issue-plan.md](./planning/v0.2-issue-plan.md)：v0.2 issue 拆分和执行顺序。
 - [planning/v0.2-status.md](./planning/v0.2-status.md)：v0.2 当前进度和证据记录。
+- [planning/v0.2-manual-acceptance.html](./planning/v0.2-manual-acceptance.html)：v0.2 owner 人工验收表。
 - [planning/v0.2-wxt-migration-plan.md](./planning/v0.2-wxt-migration-plan.md)：v0.2 WXT 迁移计划和依赖安排。
 - [planning/v0.2-provider-architecture-preflight.md](./planning/v0.2-provider-architecture-preflight.md)：V02-001 provider 架构预检草案、权限矩阵和停线条件。
 - [planning/v0.2-wxt-migration-preflight.md](./planning/v0.2-wxt-migration-preflight.md)：V02-WXT-001 WXT 迁移预检草案、manifest parity 和 loaded-extension QA 计划。

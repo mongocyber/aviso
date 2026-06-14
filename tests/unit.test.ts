@@ -317,6 +317,21 @@ test("command palette local candidates are confirm-first and local-only", () => 
   )
 })
 
+test("command palette Escape closes from the focused input handler", () => {
+  const commandSource = readFileSync(
+    new URL("../src/contents/command.tsx", import.meta.url),
+    "utf8"
+  )
+  const handleKeyDownBlock =
+    commandSource.match(
+      /const handleKeyDown = \(e: React\.KeyboardEvent\) => \{[\s\S]*?\n  \}\n\n  const isDirectTranslateIntent/
+    )?.[0] ?? ""
+
+  assert.match(handleKeyDownBlock, /e\.key === "Escape"/)
+  assert.match(handleKeyDownBlock, /setVisible\(false\)/)
+  assert.match(handleKeyDownBlock, /e\.stopPropagation\(\)/)
+})
+
 test("URL-bearing warning logs use presence fields instead of raw URLs", () => {
   const sources = [
     "../src/background/frame-router.ts",
