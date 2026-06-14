@@ -15,6 +15,7 @@ This folder holds future-version planning and active execution records. It is no
 - `v0.2-wxt-migration-preflight.md`: V02-WXT-001 migration map, manifest parity checklist, and loaded-extension QA plan.
 - `v0.2-provider-config-contract.md`: V02-003 provider config schema, UI state, routing, storage, and connectivity-test contract.
 - `v0.2-wxt-migration-closeout.md`: V02-WXT-003 runtime build evidence and V02-WXT-004 automated package / manifest parity record.
+- `v0.2.1-wxt-default-build-closeout.md`: v0.2.1 WXT default-build script switch, Plasmo rollback, manifest parity, extension validation, and website build pass record.
 
 ## Rules
 

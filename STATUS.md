@@ -1,10 +1,10 @@
 # Aviso Status
 
-Updated: 2026-06-12
+Updated: 2026-06-14
 
 ## 结论
 
-Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Chrome Web Store 审核，正在等待审核结果。它是一个 Chrome MV3 扩展，使用 Plasmo、React 18 和 TypeScript 构建，在网页当前上下文里通过右键菜单、划词工具栏、命令面板、剪贴板提示和页面内结果面板触发 AI 操作。
+Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Chrome Web Store 审核，正在等待审核结果。它是一个 Chrome MV3 扩展，使用 WXT 默认构建、保留 Plasmo rollback，并使用 React 18 和 TypeScript，在网页当前上下文里通过右键菜单、划词工具栏、命令面板、剪贴板提示和页面内结果面板触发 AI 操作。
 
 当前版本还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
 
@@ -24,9 +24,9 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 | v0.2 provider 配置扩展 | DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 已支持配置；DeepSeek 已有 owner 手动 live connectivity pass 记录；Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 仍不能写成 live validated。 |
 | v0.2 命令面板本地意图 | 已实现本地确定性候选、危险 URL 拦截、打开/页面动作 confirm-first、本地对话恢复；不包含自主浏览、联网搜索或远端链接正文抓取。 |
 | v0.2 等待态、快任务路由与本地计时 | 已实现更明确的等待状态、summary-only 本地 TTFT 方法，以及短文本 translate / explain / polish 在用户显式选择 fast provider config 时的 operation-level route override；当前 v0.2 只承认感知等待优化和 summary-only 方法，不做真实 provider 采样，也不宣称 p50 / p95 达标。 |
-| WXT 并行构建路径 | 已实现 WXT 并行构建和 manifest checks；V02-WXT-005 已记录 bounded loaded-extension smoke；owner 已决定当前 v0.2 默认构建仍为 Plasmo，WXT default-build migration/default-build release 移到独立 `v0.2.1` slice，部分 loaded-extension surfaces 仍需 manual evidence。 |
+| WXT 默认构建路径 | v0.2.1 default-build migration 将默认 `dev`、`build` 和 `package` 切到 WXT；Plasmo rollback 仍保留为 `dev:plasmo`、`build:plasmo` 和 `package:plasmo`。这不回写为 current v0.2 已切默认，也不代表公开发布批准。 |
 | UI 语言 | 已实现中文 / English，默认跟随 Chrome UI language，支持设置 override。 |
-| Manifest 本地化 | 已实现；源码位于 `locales/zh_CN` 和 `locales/en`，Plasmo 构建后映射为 Chrome `_locales`。 |
+| Manifest 本地化 | 已实现；源码位于 `locales/zh_CN` 和 `locales/en`，WXT 和 Plasmo rollback 构建后都应映射为 Chrome `_locales`。 |
 
 ## v0.2 需求基线
 
@@ -34,10 +34,11 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 
 | Slice | 当前基线 |
 | --- | --- |
-| `v0.2.0` WXT 迁移 / 构建链清理 | `partial / V02-WXT-005 accepted_with_pending_manual`：并行构建、manifest checks 和 bounded loaded-extension smoke 已有证据；pending_manual surfaces 仍是 release gates；当前 v0.2 默认构建保持 Plasmo，WXT default-build migration 移到独立 `v0.2.1`。 |
+| `v0.2.0` WXT 迁移 / 构建链清理 | `accepted_closeout / refreshed_smoke_and_owner_manual_pass_recorded`：并行构建、manifest checks、refreshed loaded-extension smoke 和 owner manual pass evidence 已记录；这不等于 release approval。当前 v0.2 默认构建保持 Plasmo，WXT default-build migration 移到独立 `v0.2.1`。 |
+| `v0.2.1` WXT default-build migration | `implemented_in_branch / extension_validation_passed / website_build_passed_after_lockfile_deps`：默认 `dev`、`build`、`package` 切到 WXT，Plasmo rollback 脚本保留且 `build:plasmo` / `package:plasmo` 验证通过；extension checks 已通过，website dependencies 通过 `website/package-lock.json` 安装后 website build 已通过；验证结果记录在 `docs/planning/v0.2.1-wxt-default-build-closeout.md`。 |
 | 早期 historical `v0.2.1` 速度基线 + thinking/reasoning 控制 + 快模型策略 | `label superseded / current speed scope implemented`：等待态、summary-only TTFT 方法和 operation-level fast-model strategy 已实现；当前 v0.2 不做真实 TTFT sampling / p50 / p95 release wording；reasoning/thinking request-parameter control 已从当前 v0.2 scope 移除。 |
 | `v0.2.2` OpenRouter / OpenAI-compatible provider | `partial`：DeepSeek 已有 owner 手动 live connectivity pass；Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 仍为配置支持或非 live 验证；V02-010 OpenRouter closeout 和 V02-011 宽松保存 acceptance 已显性关闭。 |
-| `v0.2.3` 命令面板本地意图增强 | `completed_for_implementation / pending_loaded_extension_validation`。 |
+| `v0.2.3` 命令面板本地意图增强 | `completed_for_implementation / loaded_extension_validation_passed`。 |
 
 当前 owner 确认的 v0.2 要求边界还包括：
 
@@ -47,7 +48,7 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 - 不把 provider configuration support 写成 live validation。
 - 不把 v0.2 implementation 写成 release ready。
 
-剩余 delivery issues 以 `docs/planning/v0.2-issue-plan.md` 为准：`V02-WXT-005` closeout 已记录/接受但仍有 pending_manual release gates；`V02-009` 已记录 DeepSeek owner 手动 live connectivity pass，OpenRouter 仍未通过且最近失败类别为 `unauthorized`，provider live validation 仍不是当前 v0.2 wording 的必要条件；`V02-013` reasoning/thinking request-parameter control 已从当前 v0.2 scope 移除，不再作为延期或待办。`V02-WXT-006`、`V02-014`、`V02-015` 已按 owner 决策关闭当前 v0.2 口径，不能被写成 release ready。
+剩余 delivery issues 以 `docs/planning/v0.2-issue-plan.md` 为准：`V02-WXT-005` closeout 已记录/接受，refreshed smoke 和 owner manual pass evidence 已记录，但不等于 release approval；`V02-009` 已记录 DeepSeek owner 手动 live connectivity pass，OpenRouter 仍未通过且最近失败类别为 `unauthorized`，provider live validation 仍不是当前 v0.2 wording 的必要条件；`V02-013` reasoning/thinking request-parameter control 已从当前 v0.2 scope 移除，不再作为延期或待办。`V02-WXT-006`、`V02-014`、`V02-015` 已按 owner 决策关闭当前 v0.2 口径，不能被写成 release ready。
 
 ## 发布候选状态
 
@@ -59,7 +60,8 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 - package zip 真实形态密钥扫描未发现 OpenAI、Anthropic、GitHub、AWS、Google、Slack 或私钥格式凭证。
 - `@mozilla/readability` 已升级到 `0.6.0`，直接运行时 DoS 审计项已移除。
 - 仍有发布前风险：Plasmo `0.90.5` 是 npm 当前最新版本，但官方 `npm audit` 仍报告其 Parcel 构建链存在 high 级审计项；`npm audit fix --force` 会降级 Plasmo，不能自动执行。
-- v0.2 loaded-extension 可见 smoke 已有局部证据：历史 Popup smoke 曾显示 AI 服务、设置、记录、指令和功能开关；V02-WXT-005 复核通过了 WXT 内容脚本注入、划词工具栏、命令面板打开、双击菜单无截图入口、iframe 划词工具栏、iframe 快捷键桥接和控制台隐私摘要。Owner-assisted Chrome refresh 进一步确认 Popup Settings 主界面、功能开关、命令面板本地历史搜索和双击快捷菜单可见；Popup AI 服务/记录/指令二级页、clipboard toast、native right-click screenshot/context-menu、readability extraction 和 provider-safe floating action open 仍为 pending_manual。
+- v0.2 loaded-extension 可见 smoke 已记录 refreshed evidence：V02-WXT-005 复核通过 WXT 内容脚本注入、划词工具栏、命令面板打开和 Esc 关闭、危险 URL 拦截、安全 URL confirm-first、无截图普通入口、iframe 划词工具栏、iframe 快捷键桥接和控制台隐私摘要；Popup、clipboard toast、native right-click screenshot/context-menu、readability extraction 和 provider-safe floating action open 记录为 owner manual pass。这不等于 release approval、CWS approval 或 provider live validation。
+- v0.2.1 default-build migration 只改变默认构建/打包脚本语义和对应文档；不新增 provider、权限、host permission、后台服务、遥测、登录、订阅、支付或 custom base URL。
 
 截图能力仅保留在用户主动触发的右键内部路径中。命令面板和双击快捷菜单不展示截图入口；当前文档不把截图作为普通用户主入口或公开卖点。
 
@@ -79,7 +81,7 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 | 英文界面 | 用户 smoke check 未发现明显问题。 |
 | 模型 ID 编辑 | 用户确认可以编辑。 |
 | 权限边界 | 当前普通权限为 `contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`clipboardWrite`；host permissions 仅限已批准 provider host。 |
-| v0.2 loaded-extension smoke | V02-WXT-005 closeout accepted_with_pending_manual：WXT 内容脚本注入、划词工具栏、命令面板打开、双击菜单无截图入口、iframe 划词工具栏、iframe 快捷键桥接和控制台隐私摘要通过；Owner-assisted Chrome refresh 进一步确认 Popup Settings 主界面、功能开关、命令面板本地历史搜索和双击快捷菜单可见。Popup AI 服务/记录/指令二级页、clipboard toast、native right-click screenshot/context-menu、readability extraction 和 provider-safe floating action open 仍为 pending_manual / release gate。 |
+| v0.2 loaded-extension smoke | V02-WXT-005 closeout accepted：refreshed browser smoke 和 owner manual pass evidence 已记录；这关闭 loaded-extension manual evidence gap，但不等于 release approval、CWS approval 或 provider live validation。 |
 
 ## 当前边界
 

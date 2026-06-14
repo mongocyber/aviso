@@ -6,7 +6,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它在当前网页内提供右键�
 
 当前状态：`v0.1 internal dogfood / 内部试用版`，已提交 Chrome Web Store 审核，等待审核结果
 
-技术栈：Plasmo、React 18、TypeScript、Chrome MV3
+技术栈：WXT（默认构建）、Plasmo rollback、React 18、TypeScript、Chrome MV3
 
 ## 当前状态
 
@@ -15,7 +15,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它在当前网页内提供右键�
 - 豆包 / 火山方舟已由用户确认可用；OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID，请求由浏览器直连用户选择的 provider。DeepSeek 已有一次 owner 手动 connectivity pass；Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 当前仍不能写成 live validated。
 - UI 支持中文和英文：默认跟随 Chrome 界面语言，Popup 设置里可以手动切换。
 - Aviso 没有项目方后端、账号系统、订阅支付、匿名额度、遥测、分析 SDK、远端链接正文抓取或联网搜索。
-- v0.2 的命令面板本地意图、等待态和 WXT 并行构建路径已有实现证据；v0.2 仍未公开发布，WXT 也未切换为默认构建。
+- v0.2 的命令面板本地意图、等待态和 WXT 构建路径已有实现证据；v0.2 仍未公开发布。v0.2.1 构建链默认走 WXT，但这不代表 Chrome Web Store 审核通过或公开发布。
 
 更细状态见 [STATUS.md](./STATUS.md) 和 [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)。
 
@@ -59,7 +59,7 @@ npm run dev
 Chrome 加载开发构建目录：
 
 ```text
-build/chrome-mv3-dev
+.output/chrome-mv3
 ```
 
 生产构建：
@@ -71,13 +71,27 @@ npm run build
 Chrome 加载生产构建目录：
 
 ```text
-build/chrome-mv3-prod
+.output/chrome-mv3
 ```
 
 打包 zip：
 
 ```bash
 npm run package
+```
+
+WXT 默认 zip 输出：
+
+```text
+.output/aviso-0.1.0-chrome.zip
+```
+
+Plasmo rollback 命令：
+
+```bash
+npm run dev:plasmo
+npm run build:plasmo
+npm run package:plasmo
 ```
 
 ## 检查
@@ -95,7 +109,7 @@ npm run build
 ## 手动验收
 
 1. 运行 `npm run build`。
-2. 在 Chrome 扩展管理页加载 `build/chrome-mv3-prod`。
+2. 在 Chrome 扩展管理页加载 `.output/chrome-mv3`。如需验证 Plasmo rollback，先运行 `npm run build:plasmo`，再加载 `build/chrome-mv3-prod`。
 3. 打开 `tests/manual-test.html`。
 4. 按 A-G 清单验证右键菜单、划词工具栏、命令面板、剪贴板提示、自定义指令、结果面板和 iframe 场景。
 5. 把结论记录到 [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)。

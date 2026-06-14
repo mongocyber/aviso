@@ -34,12 +34,12 @@ const expectedContentScripts = [
 
 const manifests = [
   {
-    label: "Plasmo",
-    path: "build/chrome-mv3-prod/manifest.json"
+    label: "WXT default",
+    path: ".output/chrome-mv3/manifest.json"
   },
   {
-    label: "WXT",
-    path: ".output/chrome-mv3/manifest.json"
+    label: "Plasmo rollback",
+    path: "build/chrome-mv3-prod/manifest.json"
   }
 ]
 
@@ -57,11 +57,13 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("Manifest checks passed for Plasmo and WXT outputs.")
+console.log("Manifest checks passed for WXT default and Plasmo rollback outputs.")
 
 function checkManifest({ label, path }) {
   if (!existsSync(path)) {
-    failures.push(`${label}: missing ${path}; run both build paths first`)
+    failures.push(
+      `${label}: missing ${path}; run npm run build and npm run build:plasmo first`
+    )
     return
   }
 

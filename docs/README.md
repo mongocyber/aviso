@@ -33,6 +33,7 @@
 - [planning/v0.2-wxt-migration-preflight.md](./planning/v0.2-wxt-migration-preflight.md)：V02-WXT-001 WXT 迁移预检草案、manifest parity 和 loaded-extension QA 计划。
 - [planning/v0.2-provider-config-contract.md](./planning/v0.2-provider-config-contract.md)：V02-003 provider config schema、UI 状态、路由、存储和连接测试合同。
 - [planning/v0.2-wxt-migration-closeout.md](./planning/v0.2-wxt-migration-closeout.md)：V02-WXT-003 runtime build 证据和 V02-WXT-004 自动 package / manifest parity 记录。
+- [planning/v0.2.1-wxt-default-build-closeout.md](./planning/v0.2.1-wxt-default-build-closeout.md)：v0.2.1 WXT default-build migration 的默认脚本、rollback、extension validation 和 website build pass 记录。
 - [planning/v0.2-speed-baseline.md](./planning/v0.2-speed-baseline.md)：V02-006 等待态、本地 summary-only TTFT 方法和 reasoning-control gate。
 - [planning/v0.2-command-palette-local-intent.md](./planning/v0.2-command-palette-local-intent.md)：V02-007 本地确定性候选、confirm-first 行为和 unsafe URL blocking 记录。
 

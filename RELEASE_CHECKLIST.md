@@ -4,7 +4,7 @@
 
 状态：`v0.1 internal dogfood / 内部试用版`，Chrome Web Store 已提交审核 / 待审核
 
-日期：2026-06-13
+日期：2026-06-14
 
 ## 当前结论
 
@@ -69,9 +69,12 @@ npx tsc --noEmit
 npm run build
 cd website && npm run build
 npm run package
+npx tsc --noEmit -p tsconfig.wxt.json
+npm run build:plasmo
+npm run check:manifests
 ```
 
-检查通过只说明代码和构建基线可用；真实 Chrome 加载体验和真实 provider 调用仍以手动验收为准。
+v0.2.1 中，`npm run build` 和 `npm run package` 默认走 WXT；`cd website && npm run build` 仍是 release checklist 的既有检查；Plasmo rollback 通过 `npm run build:plasmo` 和 `npm run package:plasmo` 验证。检查通过只说明代码和构建基线可用；真实 Chrome 加载体验和真实 provider 调用仍以手动验收为准。
 
 2026-06-13 CTO 自动门禁复跑通过：`git diff --check`、`npm test`（159 passed）、`npx tsc --noEmit`、`npx tsc --noEmit -p tsconfig.wxt.json`、`npm run build`、`npm run build:wxt`、`npm run check:manifests`。其中 `npm run build` 在沙箱内会遇到 `Operation not permitted`，非沙箱复跑通过；这不关闭任何 loaded-extension manual release gate。
 
@@ -94,7 +97,7 @@ npm run package
 - Provider：DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 已实现 BYOK direct-provider 配置支持；provider ids 为 `deepseek`、`moonshot`、`openrouter`、`gemini`、`hunyuan`，base URLs 为 `https://api.deepseek.com`、`https://api.moonshot.cn/v1`、`https://openrouter.ai/api/v1`、`https://generativelanguage.googleapis.com/v1beta/openai/`、`https://api.hunyuan.cloud.tencent.com/v1`。OpenRouter、Gemini 和 Tencent Hunyuan 模型 ID 需用户手动填写，Aviso 不自动读取模型列表。除 DeepSeek 的一次 owner 手动 connectivity pass 外，这些配置支持不能写成 live provider validation。
 - 速度体验：已实现更明确的等待状态、summary-only 本地 TTFT 方法，以及短文本 translate / explain / polish 在用户显式选择 fast provider config 时的 operation-level route override；当前 v0.2 只承认感知等待优化和 summary-only 方法，未执行真实 provider 采样，不宣称 p50 / p95 达标。
 - 命令面板：本地确定性候选、confirm-first 打开/页面动作、危险 URL 拦截和本地对话恢复已实现；不包含自主浏览、联网搜索或远端链接正文抓取。
-- WXT：并行构建、自动构建和 manifest checks 已通过；V02-WXT-005 已记录 refreshed loaded-extension smoke 和 owner manual pass evidence；owner 已决定当前 v0.2 默认构建不切换，继续使用 Plasmo；WXT default-build migration/default-build release 移到独立 `v0.2.1`。
+- WXT：并行构建、自动构建和 manifest checks 已通过；V02-WXT-005 已记录 refreshed loaded-extension smoke 和 owner manual pass evidence；owner 已决定 current v0.2 默认构建不切换，继续使用 Plasmo；v0.2.1 default-build migration/default-build release 将默认 `dev`、`build` 和 `package` 切到 WXT，并保留 Plasmo rollback。
 - Loaded-extension 可见 smoke：历史 Popup smoke 曾显示 AI 服务、设置、记录、指令和功能开关；V02-WXT-005 最新复核通过了 WXT 内容脚本注入、划词工具栏、命令面板打开和 Esc 关闭、危险 URL 拦截、安全 URL confirm-first、无截图普通入口、iframe 划词工具栏、iframe 快捷键桥接和控制台隐私摘要。Popup AI 服务/历史/指令页、provider-safe floating action open、clipboard toast、native right-click screenshot/context-menu、readability extraction 和 iframe native context-menu 记录为 owner manual pass，不是自动化证据或 release approval。
 - 公开发布：v0.2 未公开发布，未通过 Chrome Web Store 公开上架，没有正式商店 URL。
 - Owner decisions / gates：`docs/planning/v0.2-owner-gated-decision-pack.md` 已记录 owner 对 WXT default、reasoning/thinking request-parameter control、TTFT sampling 和 custom base URL 的当前 v0.2 决策；V02-009 已记录 DeepSeek owner 手动 connectivity pass 和 OpenRouter `unauthorized`，进一步 provider live validation 仍需单独 owner 选择和 summary-only evidence 批准，且不是当前 v0.2 wording 的必要条件。
@@ -123,7 +126,8 @@ npm run package
 构建路径：
 
 ```text
-build/chrome-mv3-prod
+WXT default: .output/chrome-mv3
+Plasmo rollback / historical v0.1 CWS package path: build/chrome-mv3-prod
 ```
 
 测试页面：

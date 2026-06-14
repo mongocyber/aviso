@@ -1,6 +1,6 @@
 # Aviso Acceptance Criteria
 
-Updated: 2026-06-12
+Updated: 2026-06-14
 
 ## 验收标准
 
@@ -10,7 +10,9 @@ Updated: 2026-06-12
 - `npm test` 应通过。
 - `npx tsc --noEmit` 应通过。
 - `npm run build` 应通过。
-- Chrome 应能加载 `build/chrome-mv3-prod`。
+- `npm run package` 应通过。
+- Chrome 应能加载 WXT 默认产物 `.output/chrome-mv3`。
+- Plasmo rollback 应能通过 `npm run build:plasmo` 生成 `build/chrome-mv3-prod`，用于 rollback/parity 验证。
 - `tests/manual-test.html` 的 A-G 清单应完成记录。
 
 检查命令需要 Node 22+ 的本地环境；当前 `package.json` 已通过 `engines.node` 声明 `>=22.6.0`。
@@ -62,7 +64,7 @@ Updated: 2026-06-12
 - Tencent Hunyuan：provider id 为 `hunyuan`，base URL 为 `https://api.hunyuan.cloud.tencent.com/v1`，host permission 为 `https://api.hunyuan.cloud.tencent.com/*`；支持配置 API Key 和手动模型 ID；V02-018 已完成非 live 验证，未做真实 provider live validation，不自动读取模型列表。
 - v0.2 命令面板本地意图：功能验证已通过；loaded-extension/manual QA 仍需复核。
 - v0.2 速度体验：等待态和 summary-only 本地 TTFT 方法已实现；未做真实 provider live sampling，不宣称 p50 / p95 达标。
-- WXT：自动构建和 manifest parity 已通过；默认构建未切换，部分 loaded-extension QA 仍未完成。
+- WXT：v0.2.1 default-build migration 将默认 `dev`、`build` 和 `package` 切到 WXT；Plasmo rollback 脚本保留。current v0.2 的历史口径仍是默认构建不在 v0.2 中切换。
 - Reasoning / thinking request-parameter control：已从当前 v0.2 scope 移除；不作为实现项、延期项或发布口径前置条件。
 - Custom OpenAI-compatible base URL：当前 v0.2 明确不做；不是当前待办或延期项。
 - 英文界面：用户 smoke check 未发现明显问题。
@@ -76,7 +78,7 @@ Updated: 2026-06-12
 验证线程需要逐项确认。Closed rows 只用于追溯当前边界，不代表 active remaining delivery：
 
 - `V02-WXT-005`：WXT loaded-extension QA 是否覆盖 Popup、floating trigger、command palette、clipboard toast、double-click menu、screenshot right-click internal path、readability 和 iframe surfaces。
-- `V02-WXT-006`：Closed，当前 v0.2 保持 Plasmo 默认构建；WXT default-build migration 移到单独 `v0.2.1`，自动 parity 不等于默认切换。
+- `V02-WXT-006`：Closed，当前 v0.2 保持 Plasmo 默认构建；WXT default-build migration 移到单独 `v0.2.1`。v0.2.1 的默认切换不应回写成 v0.2 已切默认。
 - `V02-009`：DeepSeek 已记录 owner 手动 live connectivity pass；OpenRouter 最近手动测试失败类别为 `unauthorized`，不能写成 live validated；provider live validation 不是当前 v0.2 configuration-support wording 的必要条件，记录必须 summary-only。
 - `V02-010`：Closed，OpenRouter 只能写为 configuration support，不能写成 live validated。
 - `V02-011`：Closed / accepted，宽松保存只表示配置可保存；缺 Key、缺模型/endpoint 或未测试状态不能升级为 provider 可用证明。

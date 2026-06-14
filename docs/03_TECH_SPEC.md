@@ -1,12 +1,12 @@
 # Aviso Tech Spec
 
-Updated: 2026-06-12
+Updated: 2026-06-14
 
 ## 技术栈
 
 - Chrome MV3 extension
-- Plasmo `0.90.5`
-- WXT parallel build path
+- WXT default build path
+- Plasmo `0.90.5` rollback path
 - React 18
 - TypeScript
 - Node test runner
@@ -124,15 +124,15 @@ Aviso 不自动调用 provider 的 list-models API，也不自动读取用户账
 - 复制当前上下文只写用户剪贴板，不调用 provider。
 - 截图只在用户通过右键内部路径主动确认后用于当次图片说明请求；base64 不写入 storage、history、docs 或日志。当前不把截图作为普通用户主入口或公开卖点。
 
-## WXT 并行构建
+## WXT 默认构建与 Plasmo rollback
 
-WXT 已作为并行构建路径存在，产物位于 `.output/chrome-mv3`。当前默认 `dev`、`build` 和 `package` 仍保留 Plasmo 路径，未切换到 WXT。
+v0.2.1 default-build migration 后，默认 `dev`、`build` 和 `package` 走 WXT，产物位于 `.output/chrome-mv3`，zip 位于 `.output/aviso-0.1.0-chrome.zip`。Plasmo rollback 仍通过 `dev:plasmo`、`build:plasmo` 和 `package:plasmo` 保留。
 
 当前 WXT 状态：
 
 - 自动构建和 manifest parity 已通过。
 - WXT manifest host permissions 与 Plasmo 构建一致，包含 OpenAI、Anthropic、火山方舟、DeepSeek、Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan。
-- 部分 loaded-extension QA 已完成；Popup、floating panel、clipboard toast、double-click enabled state、screenshot right-click internal path、readability 和 iframe bridge 仍需要最终手动 QA。
+- V02-WXT-005 已记录 refreshed browser smoke 和 owner manual pass evidence；这不代表 Chrome Web Store 审核通过、公开发布或真实 provider live validation。
 - `.output/aviso-0.1.0-chrome.zip` 是内部迁移 artifact，不是 Chrome Web Store 提交包。
 
 ## 本地性能摘要
@@ -145,7 +145,7 @@ V02-006 已实现 summary-only 本地 TTFT 方法和等待态改善。性能摘�
 
 - 运行时 UI 文案由 `src/utils/i18n.ts` 提供。
 - `contextai_settings.uiLanguage` 是非敏感设置，可选自动、中文、English。
-- Chrome manifest 文案源码位于 `locales/zh_CN/messages.json` 和 `locales/en/messages.json`；Plasmo 构建时映射到 Chrome 扩展要求的 `_locales/zh_CN/messages.json` 和 `_locales/en/messages.json`。
+- Chrome manifest 文案源码位于 `locales/zh_CN/messages.json` 和 `locales/en/messages.json`；WXT 默认构建和 Plasmo rollback 构建都应映射到 Chrome 扩展要求的 `_locales/zh_CN/messages.json` 和 `_locales/en/messages.json`。
 - 翻译目标语言与 UI 语言互相独立。
 
 ## 检查命令
@@ -155,6 +155,9 @@ git diff --check
 npm test
 npx tsc --noEmit
 npm run build
+npm run package
+npm run build:plasmo
+npm run check:manifests
 ```
 
 这些命令不执行真实 provider API 调用。
