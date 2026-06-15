@@ -2316,11 +2316,13 @@ pre {
   }
 
   .navbar-sidebar {
+    --ifm-navbar-sidebar-width: 100vw;
     background: var(--paper);
     box-shadow: none;
     height: 100dvh;
     max-width: none;
-    width: 100vw;
+    overflow-x: hidden;
+    width: var(--ifm-navbar-sidebar-width);
   }
 
   .navbar-sidebar__brand {
@@ -2329,7 +2331,9 @@ pre {
     display: flex;
     height: 72px;
     min-height: 72px;
+    overflow: hidden;
     padding: 0 22px;
+    width: 100%;
   }
 
   .navbar-sidebar__brand .navbar__brand {
@@ -2343,10 +2347,19 @@ pre {
 
   .navbar-sidebar__items {
     background: var(--paper);
-    display: block;
+    display: flex;
     height: calc(100dvh - 72px);
+    overflow: hidden;
+    padding: 0;
+  }
+
+  .navbar-sidebar__item {
+    flex: 0 0 var(--ifm-navbar-sidebar-width);
+    height: 100%;
+    overflow-x: hidden;
     overflow-y: auto;
     padding: 16px 22px 28px;
+    width: var(--ifm-navbar-sidebar-width);
   }
 
   .navbar-sidebar .menu {
