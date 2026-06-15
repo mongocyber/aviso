@@ -3476,6 +3476,7 @@ function ConnectivitySummaryView({
       <button
         type="button"
         className="aviso-popup-button"
+        aria-label={`${t("popup.connectivity.detailsTitle")}: ${titleLabel}`}
         aria-expanded={expanded}
         onClick={() => setExpanded((open) => !open)}
         style={{ ...styles.connectivityResultToggle, color: ui.text }}>
@@ -3486,7 +3487,7 @@ function ConnectivitySummaryView({
               background: ok ? ui.accent : ui.danger
             }}
           />
-          {titleLabel}
+          {t("popup.connectivity.detailsTitle")}
         </span>
         <span style={{ ...styles.connectivityToggleText, color: ui.text3 }}>
           {expanded
@@ -4638,10 +4639,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   connectivityResult: {
     marginTop: 10,
-    padding: "10px 11px",
+    padding: 0,
     border: `1px solid var(--aviso-line)`,
     borderRadius: 10,
-    background: aviso.darkBg
+    background: aviso.darkBg,
+    overflow: "hidden"
   },
   connectivityResultToggle: {
     width: "100%",
@@ -4649,7 +4651,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "space-between",
     gap: 10,
-    padding: 0,
+    minHeight: 38,
+    padding: "10px 11px",
     border: 0,
     background: "transparent",
     fontFamily: aviso.font,

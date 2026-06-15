@@ -835,6 +835,10 @@ const MESSAGES = {
     "zh-CN": "连接测试未通过",
     en: "Connection test failed"
   },
+  "popup.connectivity.detailsTitle": {
+    "zh-CN": "连接详情",
+    en: "Connection details"
+  },
   "popup.connectivity.showDetails": {
     "zh-CN": "展开详情",
     en: "Show details"
