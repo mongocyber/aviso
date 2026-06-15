@@ -3438,10 +3438,18 @@ function ConnectivitySummaryView({
   theme: ResolvedAvisoTheme
   t: (key: I18nKey) => string
 }) {
+  const [expanded, setExpanded] = useState(false)
   if (!summary) return null
   const ui = getAvisoThemeTokens(theme)
   const ok = summary.result === "success"
   const isLastResult = /^上次|^Last/i.test(summary.latency_note)
+  const titleLabel = isLastResult
+    ? ok
+      ? t("popup.connectivity.lastPassed")
+      : t("popup.connectivity.lastFailed")
+    : ok
+      ? t("popup.connectivity.passed")
+      : t("popup.connectivity.failed")
   const rows = [
     ["provider", summary.provider],
     ["model_or_endpoint", summary.model_or_endpoint],
@@ -3465,29 +3473,41 @@ function ConnectivitySummaryView({
         background: ui.surface,
         borderColor: ok ? ui.accentBorder : ui.dangerBorder
       }}>
-      <div style={{ ...styles.connectivityResultTitle, color: ui.text }}>
-        <span
-          style={{
-            ...styles.connectivityStatusDot,
-            background: ok ? ui.accent : ui.danger
-          }}
-        />
-        {isLastResult
-          ? ok
-            ? t("popup.connectivity.lastPassed")
-            : t("popup.connectivity.lastFailed")
-          : ok
-            ? t("popup.connectivity.passed")
-            : t("popup.connectivity.failed")}
-      </div>
-      {rows.map(([key, value]) => (
-        <div key={key} style={styles.summaryRow}>
-          <span style={{ ...styles.summaryKey, color: ui.text3 }}>{key}</span>
-          <span style={{ ...styles.summaryValue, color: ui.text2 }}>
-            {value}
-          </span>
-        </div>
-      ))}
+      <button
+        type="button"
+        className="aviso-popup-button"
+        aria-expanded={expanded}
+        onClick={() => setExpanded((open) => !open)}
+        style={{ ...styles.connectivityResultToggle, color: ui.text }}>
+        <span style={styles.connectivityResultTitle}>
+          <span
+            style={{
+              ...styles.connectivityStatusDot,
+              background: ok ? ui.accent : ui.danger
+            }}
+          />
+          {titleLabel}
+        </span>
+        <span style={{ ...styles.connectivityToggleText, color: ui.text3 }}>
+          {expanded
+            ? t("popup.connectivity.hideDetails")
+            : t("popup.connectivity.showDetails")}
+          <AvisoIcon
+            name="chevdown"
+            size={13}
+            style={{ transform: expanded ? "rotate(180deg)" : "none" }}
+          />
+        </span>
+      </button>
+      {expanded &&
+        rows.map(([key, value]) => (
+          <div key={key} style={styles.summaryRow}>
+            <span style={{ ...styles.summaryKey, color: ui.text3 }}>{key}</span>
+            <span style={{ ...styles.summaryValue, color: ui.text2 }}>
+              {value}
+            </span>
+          </div>
+        ))}
     </div>
   )
 }
@@ -4623,14 +4643,35 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 10,
     background: aviso.darkBg
   },
+  connectivityResultToggle: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+    padding: 0,
+    border: 0,
+    background: "transparent",
+    fontFamily: aviso.font,
+    cursor: "pointer",
+    textAlign: "left"
+  },
   connectivityResultTitle: {
     display: "flex",
     alignItems: "center",
     gap: 7,
-    marginBottom: 8,
+    minWidth: 0,
     color: aviso.darkText,
     fontSize: 12.5,
     fontWeight: 700
+  },
+  connectivityToggleText: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 4,
+    flex: "0 0 auto",
+    fontSize: 11.5,
+    fontWeight: 600
   },
   connectivityStatusDot: {
     width: 7,
