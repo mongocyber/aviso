@@ -106,7 +106,10 @@ import {
   normalizeUiLanguageSetting,
   resolveUiLanguage
 } from "../src/utils/i18n.ts"
-import { expandTemplate } from "../src/utils/template.ts"
+import {
+  expandTemplate,
+  hasSelectionPlaceholder
+} from "../src/utils/template.ts"
 import {
   bucketInputSize,
   buildPerfSummary,
@@ -1164,6 +1167,25 @@ test("expandTemplate 缺失变量替换为空串且大小写/空格不敏感", (
   assert.equal(out, "XY")
 })
 
+test("template selection placeholder detection is explicit", () => {
+  assert.equal(hasSelectionPlaceholder("翻译：{{selection}}"), true)
+  assert.equal(hasSelectionPlaceholder("翻译：{{ SELECTION }}"), true)
+  assert.equal(hasSelectionPlaceholder("把选中的文字翻译成英文"), false)
+})
+
+test("template AI request preserves selection unless template explicitly consumes it", () => {
+  const aiClientSource = readFileSync(
+    new URL("../src/background/ai-client.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(aiClientSource, /hasSelectionPlaceholder\(tpl\.prompt\)/)
+  assert.match(
+    aiClientSource,
+    /selectionText: resolved\.consumesSelection\s+\?\s+undefined\s+:\s+payload\.selectionText/
+  )
+})
+
 test("popup template edit replaces the current card instead of adding a second form", () => {
   const popupSource = readFileSync(
     new URL("../src/popup/index.tsx", import.meta.url),
@@ -2124,10 +2146,13 @@ test("provider config stores last connectivity result by provider and model", ()
   assert.match(popupSource, /popup\.connectivity\.detailsTitle/)
   assert.match(popupSource, /aria-label=\{`\$\{t\("popup\.connectivity\.detailsTitle"\)\}: \$\{titleLabel\}`\}/)
   assert.match(popupSource, /aria-expanded=\{expanded\}/)
-  assert.match(popupSource, /expanded &&\s*rows\.map/)
+  assert.match(popupSource, /expanded &&\s*\(/)
+  assert.match(popupSource, /style=\{\{ \.\.\.styles\.connectivityResultTitle, color: ui\.text \}\}/)
+  assert.match(popupSource, /connectivityResultRows/)
   assert.match(popupSource, /connectivityResult:[\s\S]*overflow: "hidden"/)
   assert.match(popupSource, /connectivityResultToggle:[\s\S]*minHeight: 38/)
   assert.match(popupSource, /connectivityResultToggle:[\s\S]*padding: "10px 11px"/)
+  assert.match(popupSource, /connectivityResultRows:[\s\S]*padding: "0 11px 10px"/)
   assert.equal(getI18nMessage("popup.connectivity.detailsTitle", "zh-CN"), "连接详情")
   assert.equal(getI18nMessage("popup.connectivity.showDetails", "zh-CN"), "展开详情")
   assert.equal(getI18nMessage("popup.connectivity.hideDetails", "en"), "Hide details")

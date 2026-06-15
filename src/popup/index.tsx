@@ -3480,7 +3480,7 @@ function ConnectivitySummaryView({
         aria-expanded={expanded}
         onClick={() => setExpanded((open) => !open)}
         style={{ ...styles.connectivityResultToggle, color: ui.text }}>
-        <span style={styles.connectivityResultTitle}>
+        <span style={{ ...styles.connectivityResultTitle, color: ui.text }}>
           <span
             style={{
               ...styles.connectivityStatusDot,
@@ -3500,15 +3500,18 @@ function ConnectivitySummaryView({
           />
         </span>
       </button>
-      {expanded &&
-        rows.map(([key, value]) => (
-          <div key={key} style={styles.summaryRow}>
-            <span style={{ ...styles.summaryKey, color: ui.text3 }}>{key}</span>
-            <span style={{ ...styles.summaryValue, color: ui.text2 }}>
-              {value}
-            </span>
-          </div>
-        ))}
+      {expanded && (
+        <div style={styles.connectivityResultRows}>
+          {rows.map(([key, value]) => (
+            <div key={key} style={styles.summaryRow}>
+              <span style={{ ...styles.summaryKey, color: ui.text3 }}>{key}</span>
+              <span style={{ ...styles.summaryValue, color: ui.text2 }}>
+                {value}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }
@@ -4675,6 +4678,9 @@ const styles: Record<string, React.CSSProperties> = {
     flex: "0 0 auto",
     fontSize: 11.5,
     fontWeight: 600
+  },
+  connectivityResultRows: {
+    padding: "0 11px 10px"
   },
   connectivityStatusDot: {
     width: 7,

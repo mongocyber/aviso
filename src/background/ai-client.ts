@@ -28,7 +28,7 @@ import {
 } from "~utils/provider-connectivity"
 import { getImageInputBlockReason } from "~utils/screenshot"
 import { getTemplates } from "~utils/storage"
-import { expandTemplate } from "~utils/template"
+import { expandTemplate, hasSelectionPlaceholder } from "~utils/template"
 import {
   categorizePerfError,
   logPerfSummary,
@@ -173,19 +173,21 @@ export async function handleAIRequest(
 ): Promise<void> {
   const { settings, apiKeys } = await getRuntimeConfigSnapshot()
 
-  // 自定义模板：展开占位符后作为 systemPrompt，避免选中文本被重复拼接
+  // 自定义模板：展开占位符后作为 systemPrompt；未显式使用 {{selection}} 时保留选区正文。
   if (payload.operation === "template" && payload.templateId) {
-    const expanded = resolveTemplatePromptFromTemplates(
+    const resolved = resolveTemplatePromptFromTemplates(
       settings.templates ?? [],
       payload.templateId,
       payload
     )
-    if (expanded) {
+    if (resolved) {
       payload = {
         ...payload,
         operation: "custom",
-        systemPrompt: expanded,
-        selectionText: undefined
+        systemPrompt: resolved.prompt,
+        selectionText: resolved.consumesSelection
+          ? undefined
+          : payload.selectionText
       }
     }
   }
@@ -575,22 +577,28 @@ export async function resolveTemplatePrompt(
   payload: AIRequestPayload
 ): Promise<string | null> {
   const templates = await getTemplates()
-  return resolveTemplatePromptFromTemplates(templates, templateId, payload)
+  return (
+    resolveTemplatePromptFromTemplates(templates, templateId, payload)?.prompt ??
+    null
+  )
 }
 
 function resolveTemplatePromptFromTemplates(
   templates: PromptTemplate[],
   templateId: string,
   payload: AIRequestPayload
-): string | null {
+): { prompt: string; consumesSelection: boolean } | null {
   const tpl = templates.find((t) => t.id === templateId)
   if (!tpl) return null
 
-  return expandTemplate(tpl.prompt, {
-    selection: payload.selectionText,
-    url: payload.pageUrl ?? payload.linkUrl,
-    page: payload.pageContent
-  })
+  return {
+    prompt: expandTemplate(tpl.prompt, {
+      selection: payload.selectionText,
+      url: payload.pageUrl ?? payload.linkUrl,
+      page: payload.pageContent
+    }),
+    consumesSelection: hasSelectionPlaceholder(tpl.prompt)
+  }
 }
 
 export function getMaxOutputTokens(payload: AIRequestPayload): number {
@@ -754,9 +762,7 @@ function buildUserContent(payload: AIRequestPayload): string {
   if (payload.pageContent) {
     parts.push(`页面内容：\n${payload.pageContent}`)
   }
-  // templateId：V1 阶段模板内容由 background 在后续版本展开；
-  // 此处仅透传 ID，避免模型收到无意义字符串
-  // （当模板展开逻辑实现后在此替换为实际 prompt）
+  // templateId 已在请求预处理阶段展开为 systemPrompt；这里保留用户正文。
 
   return parts.join("\n\n")
 }

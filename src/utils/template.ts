@@ -11,3 +11,7 @@ export function expandTemplate(prompt: string, ctx: TemplateContext): string {
     .replace(/\{\{\s*url\s*\}\}/gi, ctx.url ?? "")
     .replace(/\{\{\s*page\s*\}\}/gi, ctx.page ?? "")
 }
+
+export function hasSelectionPlaceholder(prompt: string): boolean {
+  return /\{\{\s*selection\s*\}\}/i.test(prompt)
+}
