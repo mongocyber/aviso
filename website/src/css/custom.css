@@ -2319,7 +2319,11 @@ pre {
     --ifm-navbar-height: 72px;
     --ifm-navbar-sidebar-width: 83vw;
     background: var(--paper);
+    height: 100dvh;
+    max-height: 100dvh;
+    overflow: hidden;
     width: var(--ifm-navbar-sidebar-width);
+    z-index: calc(var(--ifm-z-index-fixed) + 1);
   }
 
   .navbar-sidebar__brand {
@@ -2342,8 +2346,23 @@ pre {
     margin-left: auto;
   }
 
+  .navbar-sidebar__items {
+    background: var(--paper);
+    display: flex;
+    height: calc(100dvh - 72px);
+    overflow: hidden;
+    transform: translateZ(0);
+  }
+
+  .navbar-sidebar__items--show-secondary {
+    transform: translate3d(calc(var(--ifm-navbar-sidebar-width) * -1), 0, 0);
+  }
+
   .navbar-sidebar__item.menu {
+    background: var(--paper);
     flex-shrink: 0;
+    height: 100%;
+    overflow-y: auto;
     padding: 0.5rem;
     width: calc(var(--ifm-navbar-sidebar-width));
   }
