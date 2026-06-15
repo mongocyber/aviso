@@ -56,7 +56,8 @@ const config: Config = {
         {
           to: "/?section=features",
           position: "left",
-          label: "功能"
+          label: "功能",
+          activeBaseRegex: "^(/en)?/$"
         },
         {
           to: "/docs/intro/",
