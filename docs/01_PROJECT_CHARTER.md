@@ -1,6 +1,6 @@
 # Aviso Project Charter
 
-Updated: 2026-06-10
+Updated: 2026-06-12
 
 ## 定位
 
@@ -38,6 +38,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它把用户在网页上的当前�
 - A-G 手动验收：用户已验证基本通过。
 - 豆包 / 火山方舟：用户确认可用。
 - OpenAI / Anthropic：支持在设置中配置 API Key 和模型 ID，请求由浏览器直连对应 provider。
+- DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan：支持在设置中配置 API Key 和模型 ID；除 DeepSeek 的一次 owner 手动 connectivity pass 外，这是 BYOK direct-provider 配置支持，不代表真实 provider live validation。
 - 英文界面：用户 smoke check 未发现明显问题。
 - 自动检查：以 `git diff --check`、`npm test`、`npx tsc --noEmit`、`npm run build` 为当前基础检查。
 

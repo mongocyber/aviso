@@ -1,12 +1,13 @@
 import type { PlasmoCSConfig, PlasmoGetShadowHostId } from "plasmo"
 import { useEffect, useRef, useState } from "react"
 
+import { AvisoButton, AvisoIconButton } from "~components"
 import {
   aviso,
-  AvisoIcon,
   AvisoMark,
   useSyncedAvisoTheme,
-  visuallyStable
+  visuallyStable,
+  type AvisoIconName
 } from "~styles/aviso"
 import type { MessageRequest, MessageResponse } from "~types/messages"
 import {
@@ -39,7 +40,7 @@ export const config: PlasmoCSConfig = {
 }
 
 export const getShadowHostId: PlasmoGetShadowHostId = () =>
-  "contextai-toolbar-host"
+  "aviso-toolbar-host"
 
 type ToolbarPlacement = "above" | "below"
 type ToolbarPosition = {
@@ -81,10 +82,7 @@ const OPERATION_MAP: Record<Operation, string> = {
   send: "custom"
 }
 
-const OPERATION_ICON: Record<
-  Operation,
-  "explain" | "translate" | "refine" | "summarize" | "send"
-> = {
+const OPERATION_ICON: Record<Operation, AvisoIconName> = {
   explain: "explain",
   translate: "translate",
   polish: "refine",
@@ -118,11 +116,11 @@ const INITIAL_INLINE_CARD: InlineTranslationCardState = {
 }
 
 const HOST_IDS = [
-  "contextai-toolbar-host",
-  "contextai-floating-host",
-  "contextai-command-host",
-  "contextai-clipboard-host",
-  "contextai-double-click-menu-host"
+  "aviso-toolbar-host",
+  "aviso-floating-host",
+  "aviso-command-host",
+  "aviso-clipboard-host",
+  "aviso-double-click-menu-host"
 ]
 
 const CODE_EDITOR_SELECTOR = [
@@ -798,8 +796,11 @@ function SelectionToolbar() {
           }}
         />
         {TOOLBAR_BUTTONS.map(({ op, labelKey }) => (
-          <button
+          <AvisoButton
             key={op}
+            variant={op === "send" ? "secondary" : "ghost"}
+            size="md"
+            icon={OPERATION_ICON[op]}
             className="aviso-toolbar-button"
             data-primary={op === "send" ? "true" : "false"}
             onClick={() => handleOperation(op)}
@@ -807,8 +808,7 @@ function SelectionToolbar() {
               display: "inline-flex",
               alignItems: "center",
               gap: 7,
-              background:
-                op === "send" ? ui.accentSoft : "transparent",
+              background: op === "send" ? ui.accentSoft : "transparent",
               border: "none",
               color: op === "send" ? ui.accent : ui.text,
               fontFamily: aviso.font,
@@ -831,13 +831,8 @@ function SelectionToolbar() {
               ((e.currentTarget as HTMLButtonElement).style.background =
                 op === "send" ? ui.accentSoft : "transparent")
             }>
-            <AvisoIcon
-              name={OPERATION_ICON[op]}
-              size={16}
-              style={{ opacity: op === "send" ? 1 : 0.85 }}
-            />
             {t(labelKey)}
-          </button>
+          </AvisoButton>
         ))}
       </div>
       <span
@@ -987,25 +982,13 @@ function InlineTranslationCard({
             {title}
           </span>
         </span>
-        <button
-          type="button"
+        <AvisoIconButton
+          icon="close"
           aria-label={t("translation.closeCard")}
           className="aviso-inline-translation-icon-button"
           onClick={onClose}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            justifyContent: "center",
-            width: 28,
-            height: 28,
-            border: "none",
-            borderRadius: aviso.radiusSm,
-            background: "transparent",
-            color: ui.text3,
-            cursor: "pointer"
-          }}>
-          <AvisoIcon name="close" size={15} />
-        </button>
+          style={{ flex: "0 0 auto" }}
+        />
       </div>
 
       <div
@@ -1098,38 +1081,20 @@ function InlineCardButton({
   label,
   onClick
 }: {
-  icon: Parameters<typeof AvisoIcon>[0]["name"]
+  icon: AvisoIconName
   label: string
   onClick: () => void
 }) {
-  const { tokens: ui } = useSyncedAvisoTheme()
-
   return (
-    <button
-      type="button"
+    <AvisoButton
+      variant="ghost"
+      size="sm"
+      icon={icon}
       className="aviso-inline-translation-button"
       onClick={onClick}
-      style={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        gap: 6,
-        minHeight: 30,
-        border: `1px solid ${ui.line}`,
-        borderRadius: aviso.radiusSm,
-        background: "transparent",
-        color: ui.text2,
-        fontFamily: aviso.font,
-        fontSize: 12,
-        fontWeight: 600,
-        padding: "6px 9px",
-        cursor: "pointer",
-        whiteSpace: "nowrap",
-        transition: `.15s ${aviso.ease}`
-      }}>
-      <AvisoIcon name={icon} size={14} style={{ color: ui.accent }} />
+      style={{ minHeight: 30, padding: "6px 9px", fontSize: 12 }}>
       {label}
-    </button>
+    </AvisoButton>
   )
 }
 

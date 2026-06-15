@@ -1,6 +1,7 @@
-import type { MessageResponse } from "~types/messages"
+import type { AIRequestPayload, MessageResponse } from "~types/messages"
 import { AI_CONTEXT_LIMITS } from "~utils/ai-context"
 import type { CommandQuickActionId } from "~utils/command-access"
+import { buildSafeErrorLog } from "~utils/errors"
 import { formatCurrentContext, truncatePageContent } from "~utils/page-content"
 import { WAITING_MODEL_RESPONSE_TEXT } from "~utils/response-guard"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
@@ -45,6 +46,10 @@ export async function handleCommandQuickAction(
 
   if (actionId === "page_summary") {
     return summarizePageQuickAction(tabId, sourceFrameId, sourceFrameUrl, pageUrl)
+  }
+
+  if (actionId === "page_translate") {
+    return translatePageQuickAction(tabId, sourceFrameId, sourceFrameUrl, pageUrl)
   }
 
   return {
@@ -96,52 +101,113 @@ async function summarizePageQuickAction(
   sourceFrameUrl: string | undefined,
   pageUrl: string
 ): Promise<MessageResponse> {
+  return runPageAiQuickAction({
+    tabId,
+    sourceFrameId,
+    sourceFrameUrl,
+    pageUrl,
+    operation: "summarize",
+    showLabel: "command-palette-show-page-summary",
+    startLabel: "command-palette-start-page-summary",
+    contentLabel: "command-palette-extract-page-content",
+    aiPayload: (pageContent, timing) => ({
+      trigger: "command-palette",
+      operation: "summarize",
+      context: "page",
+      pageUrl,
+      pageContent,
+      timing
+    })
+  })
+}
+
+async function translatePageQuickAction(
+  tabId: number,
+  sourceFrameId: number,
+  sourceFrameUrl: string | undefined,
+  pageUrl: string
+): Promise<MessageResponse> {
+  return runPageAiQuickAction({
+    tabId,
+    sourceFrameId,
+    sourceFrameUrl,
+    pageUrl,
+    operation: "translate",
+    showLabel: "command-palette-show-page-translate",
+    startLabel: "command-palette-start-page-translate",
+    contentLabel: "command-palette-extract-page-translate",
+    aiPayload: (pageContent, timing) => ({
+      trigger: "command-palette",
+      operation: "translate",
+      context: "page",
+      pageUrl,
+      selectionText: pageContent,
+      timing
+    })
+  })
+}
+
+async function runPageAiQuickAction(input: {
+  tabId: number
+  sourceFrameId: number
+  sourceFrameUrl: string | undefined
+  pageUrl: string
+  operation: "summarize" | "translate"
+  showLabel: string
+  startLabel: string
+  contentLabel: string
+  aiPayload: (
+    pageContent: string,
+    timing: ReturnType<typeof startTiming>
+  ) => AIRequestPayload
+}): Promise<MessageResponse> {
   const requestId = `req-${Date.now()}`
   const timing = startTiming()
   logTiming("trigger", requestId, timing, {
     trigger: "command-palette",
-    operation: "summarize",
+    operation: input.operation,
     context: "page",
-    frameId: sourceFrameId,
-    frameUrl: sourceFrameUrl
+    frameId: input.sourceFrameId,
+    frameUrl: input.sourceFrameUrl
   })
 
   const runtimeWarmup = getRuntimeConfigSnapshot().catch((err) => {
     console.warn("[Aviso] Runtime config warmup failed", {
       requestId,
-      error: err instanceof Error ? err.message : String(err)
+      error: buildSafeErrorLog(err)
     })
   })
 
   const displayPromise = sendMessageToDisplayFrame(
-    tabId,
+    input.tabId,
     {
       action: "SHOW_FLOATING_WINDOW",
       payload: {
         requestId,
         trigger: "command-palette",
-        operation: "summarize",
+        operation: input.operation,
         context: "page",
-        pageUrl,
+        pageUrl: input.pageUrl,
         timing,
         deferAiRequest: true,
         statusText: "正在读取页面内容…"
       }
     },
     {
-      fallbackFrameId: sourceFrameId,
-      fallbackFrameUrl: sourceFrameUrl,
-      label: "command-palette-show-page-summary"
+      fallbackFrameId: input.sourceFrameId,
+      fallbackFrameUrl: input.sourceFrameUrl,
+      label: input.showLabel
     }
   )
 
   const contentPromise = requestPageContentForCommandSummary(
-    tabId,
+    input.tabId,
     requestId,
     timing,
-    sourceFrameId,
-    sourceFrameUrl,
-    pageUrl
+    input.sourceFrameId,
+    input.sourceFrameUrl,
+    input.pageUrl,
+    input.contentLabel
   )
   const [displayResult, { pageContent, timing: contentTiming }] =
     await Promise.all([displayPromise, contentPromise])
@@ -152,26 +218,19 @@ async function summarizePageQuickAction(
   }
 
   const startResult = await sendMessageToFrame<MessageResponse>(
-    tabId,
+    input.tabId,
     {
       action: "START_FLOATING_AI_REQUEST",
       payload: {
         requestId,
         timing: contentTiming,
         statusText: WAITING_MODEL_RESPONSE_TEXT,
-        aiPayload: {
-          trigger: "command-palette",
-          operation: "summarize",
-          context: "page",
-          pageUrl,
-          pageContent,
-          timing: contentTiming
-        }
+        aiPayload: input.aiPayload(pageContent, contentTiming)
       }
     },
     {
       frameId: displayResult.frameId,
-      label: "command-palette-start-page-summary"
+      label: input.startLabel
     }
   )
 
@@ -188,7 +247,8 @@ async function requestPageContentForCommandSummary(
   timing: ReturnType<typeof startTiming>,
   frameId: number,
   frameUrl?: string,
-  pageUrl?: string
+  pageUrl?: string,
+  label = "command-palette-extract-page-content"
 ): Promise<{ pageContent: string; timing: ReturnType<typeof startTiming> }> {
   let nextTiming = markTiming(timing, "pageContentRequestStartedAt")
   logTiming("page_content_request_start", requestId, nextTiming, {
@@ -220,7 +280,7 @@ async function requestPageContentForCommandSummary(
     {
       frameId,
       frameUrl,
-      label: "command-palette-extract-page-content"
+      label
     }
   )
 

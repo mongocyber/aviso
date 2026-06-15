@@ -8,15 +8,22 @@ import {
   useSyncedAvisoTheme,
   visuallyStable
 } from "~styles/aviso"
-import type { Settings } from "~types/history"
+import type { ConversationMessage, Settings } from "~types/history"
 import type { MessageRequest, MessageResponse } from "~types/messages"
 import { parseIntentLocally, type ParsedIntent } from "~utils/intent"
 import { useSyncedAvisoLanguage, type I18nKey } from "~utils/i18n"
-import { resolveModelRoute, type ModelRoute } from "~utils/model-registry"
+import {
+  resolveModelRoute,
+  type ModelRoute,
+  type ProviderId
+} from "~utils/model-registry"
 import { getLegacyProviderFromConfigId } from "~utils/provider-configs"
 import { getSettings } from "~utils/storage"
 import { logTiming, startTiming } from "~utils/timing"
-import { isSafeBrowserOpenUrl } from "~utils/url-safety"
+import {
+  isSafeBrowserOpenUrl,
+  normalizeSafeBrowserOpenUrl
+} from "~utils/url-safety"
 
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"],
@@ -24,7 +31,7 @@ export const config: PlasmoCSConfig = {
 }
 
 export const getShadowHostId: PlasmoGetShadowHostId = () =>
-  "contextai-command-host"
+  "aviso-command-host"
 
 type ResultItem = {
   id: string
@@ -32,7 +39,23 @@ type ResultItem = {
   subtitle?: string
   url?: string
   operation?: string
-  type: "ai-history" | "browser-history" | "bookmark"
+  actionId?: "page_translate" | "page_summary"
+  userMessage?: string
+  restore?: {
+    input: string
+    output: string
+    messages?: ConversationMessage[]
+    createdAt?: number
+    pinned?: boolean
+  }
+  requiresConfirmation?: boolean
+  type:
+    | "ai-history"
+    | "ask-ai"
+    | "bookmark"
+    | "browser-history"
+    | "open-url"
+    | "page-action"
 }
 
 type SearchNotice = {
@@ -62,9 +85,19 @@ function getResultTypeLabel(
   type: ResultItem["type"],
   t: (key: I18nKey) => string
 ): string {
+  if (type === "open-url") return t("command.openUrl")
+  if (type === "page-action") return t("command.pageAction")
+  if (type === "ask-ai") return t("command.askAi")
   if (type === "browser-history") return t("command.history")
   if (type === "bookmark") return t("command.bookmark")
   return t("command.aiHistory")
+}
+
+function getResultIcon(type: ResultItem["type"]) {
+  if (type === "bookmark") return "bookmark"
+  if (type === "ask-ai" || type === "page-action") return "explain"
+  if (type === "open-url") return "search"
+  return "history"
 }
 
 function readSelectionSuggestion(): string {
@@ -74,7 +107,7 @@ function readSelectionSuggestion(): string {
 }
 
 async function getStoredApiKeyPresence(): Promise<
-  Partial<Record<"openai" | "anthropic" | "doubao", boolean>> & {
+  Partial<Record<ProviderId, boolean>> & {
     providerConfigKeys: Record<string, boolean>
   }
 > {
@@ -93,7 +126,7 @@ async function getStoredApiKeyPresence(): Promise<
 
 function getAiConnectionFromSettings(
   settings: Settings,
-  keyPresence: Partial<Record<"openai" | "anthropic" | "doubao", boolean>> & {
+  keyPresence: Partial<Record<ProviderId, boolean>> & {
     providerConfigKeys: Record<string, boolean>
   }
 ): AiConnection {
@@ -107,8 +140,7 @@ function getAiConnectionFromSettings(
       ? Boolean(keyPresence[legacyProvider])
       : Boolean(keyPresence.providerConfigKeys[route.providerConfigId])
     : Boolean(keyPresence[providerId])
-  const hasEndpoint =
-    providerId !== "doubao" || route.missingConfig !== "doubaoModel"
+  const hasEndpoint = !route.missingConfig
 
   return {
     connected: hasKey && hasEndpoint,
@@ -276,16 +308,31 @@ function CommandPalette() {
     setSelectedIndex(0)
 
     try {
+      const intent = parseIntentLocally(q)
+      const searchTarget = intent.target.trim() || q
+      const intentResults = buildIntentResults(intent, q)
+      const shouldSearchBrowserHistory =
+        intent.action === "search" || intent.action === "history_search"
+      const shouldSearchBookmarks =
+        intent.action === "search" || intent.action === "bookmark_search"
+      const shouldSearchAiHistory =
+        intent.action === "search" || intent.action === "conversation_search"
+
       const [browserHistoryResults, bookmarkResults, aiHistoryResults] =
         await Promise.all([
-          searchBrowserHistory(q),
-          searchChromeBookmarks(q),
-          searchAvisoHistory(q)
+          shouldSearchBrowserHistory
+            ? searchBrowserHistory(searchTarget)
+            : Promise.resolve({ items: [], failed: false }),
+          shouldSearchBookmarks
+            ? searchChromeBookmarks(searchTarget)
+            : Promise.resolve({ items: [], failed: false }),
+          shouldSearchAiHistory ? searchAvisoHistory(searchTarget) : Promise.resolve([])
         ])
 
       if (runId !== searchRunId.current) return
 
       const nextResults = [
+        ...intentResults,
         ...browserHistoryResults.items,
         ...bookmarkResults.items,
         ...aiHistoryResults
@@ -308,6 +355,103 @@ function CommandPalette() {
     }
   }
 
+  function buildIntentResults(intent: ParsedIntent, rawQuery: string): ResultItem[] {
+    const target = intent.target.trim()
+    if (intent.action === "navigate") {
+      const normalizedUrl = normalizeSafeBrowserOpenUrl(target)
+      return normalizedUrl
+        ? [
+            {
+              id: `open-url-${normalizedUrl}`,
+              title: normalizedUrl,
+              subtitle: t("command.confirmOpenUrl"),
+              url: normalizedUrl,
+              requiresConfirmation: true,
+              type: "open-url"
+            }
+          ]
+        : []
+    }
+
+    if (intent.action === "translate_page") {
+      return [
+        {
+          id: "page-translate-current",
+          title: t("command.translateCurrentPage"),
+          subtitle: t("command.confirmPageAction"),
+          actionId: "page_translate",
+          requiresConfirmation: true,
+          type: "page-action"
+        }
+      ]
+    }
+
+    if (intent.action === "summarize_page") {
+      return [
+        {
+          id: "page-summarize-current",
+          title: t("command.summarizeCurrentPage"),
+          subtitle: t("command.confirmPageAction"),
+          actionId: "page_summary",
+          requiresConfirmation: true,
+          type: "page-action"
+        }
+      ]
+    }
+
+    if (intent.action === "ask_ai" && target) {
+      return [
+        {
+          id: `ask-ai-${target}`,
+          title: t("command.askAi"),
+          subtitle: target,
+          userMessage: target,
+          operation: "custom",
+          type: "ask-ai"
+        }
+      ]
+    }
+
+    if (
+      ["explain", "translate", "polish", "summarize"].includes(intent.action) &&
+      target
+    ) {
+      return [
+        {
+          id: `ai-intent-${intent.action}-${target}`,
+          title: getAiIntentTitle(intent.action),
+          subtitle: target,
+          userMessage: target,
+          operation: intent.action,
+          type: "ask-ai"
+        }
+      ]
+    }
+
+    const normalizedUrl = normalizeSafeBrowserOpenUrl(rawQuery)
+    if (normalizedUrl) {
+      return [
+        {
+          id: `open-url-${normalizedUrl}`,
+          title: normalizedUrl,
+          subtitle: t("command.confirmOpenUrl"),
+          url: normalizedUrl,
+          requiresConfirmation: true,
+          type: "open-url"
+        }
+      ]
+    }
+
+    return []
+  }
+
+  function getAiIntentTitle(action: ParsedIntent["action"]): string {
+    if (action === "translate") return t("operation.translate")
+    if (action === "summarize") return t("operation.summarize")
+    if (action === "polish") return t("operation.polish")
+    return t("operation.explain")
+  }
+
   async function searchAvisoHistory(query: string): Promise<ResultItem[]> {
     const response = await sendRuntimeMessage({
       action: "SEARCH_HISTORY",
@@ -321,6 +465,13 @@ function CommandPalette() {
       title: e.input,
       subtitle: e.output?.slice(0, 60) + "…",
       operation: e.operation,
+      restore: {
+        input: e.input,
+        output: e.output,
+        messages: e.messages,
+        createdAt: e.timestamp,
+        pinned: e.pinned
+      },
       type: "ai-history" as const
     }))
   }
@@ -338,13 +489,16 @@ function CommandPalette() {
     }
 
     return {
-      items: (response.data as chrome.history.HistoryItem[]).map((item) => ({
-        id: item.id,
-        title: item.title || item.url || "浏览历史",
-        subtitle: item.url,
-        url: item.url,
-        type: "browser-history" as const
-      })),
+      items: (response.data as chrome.history.HistoryItem[])
+        .filter((item) => Boolean(item.url && isSafeBrowserOpenUrl(item.url)))
+        .map((item) => ({
+          id: item.id,
+          title: item.title || item.url || "浏览历史",
+          subtitle: item.url,
+          url: normalizeSafeBrowserOpenUrl(item.url ?? "") ?? undefined,
+          requiresConfirmation: true,
+          type: "browser-history" as const
+        })),
       failed: false
     }
   }
@@ -363,20 +517,21 @@ function CommandPalette() {
     }
 
     return {
-      items: (response.data as chrome.bookmarks.BookmarkTreeNode[]).map(
-        (b) => ({
+      items: (response.data as chrome.bookmarks.BookmarkTreeNode[])
+        .filter((b) => Boolean(b.url && isSafeBrowserOpenUrl(b.url)))
+        .map((b) => ({
           id: b.id,
           title: b.title || b.url || "书签",
           subtitle: b.url,
-          url: b.url,
+          url: normalizeSafeBrowserOpenUrl(b.url ?? "") ?? undefined,
+          requiresConfirmation: true,
           type: "bookmark" as const
-        })
-      ),
+        })),
       failed: false
     }
   }
 
-  const handleSelect = (item: ResultItem) => {
+  const handleSelect = async (item: ResultItem) => {
     if (item.url) {
       if (!isSafeBrowserOpenUrl(item.url)) {
         setAiNotice({
@@ -387,24 +542,53 @@ function CommandPalette() {
         return
       }
       window.open(item.url, "_blank")
-    } else if (item.type === "ai-history") {
-      // 复用历史项原始操作重新执行；缺失时回退到解释
-      const requestId = `req-${Date.now()}`
-      const timing = startTiming()
-      logTiming("trigger", requestId, timing, {
-        trigger: "command-palette-history",
-        operation: item.operation || "explain",
-        selectionChars: item.title.length
-      })
+    } else if (item.actionId) {
+      if (!aiConnection.connected) {
+        setAiNotice({
+          title: t("command.aiDisconnected"),
+          detail: t("command.aiDisconnectedDetail"),
+          type: "error"
+        })
+        return
+      }
 
+      const response = await sendRuntimeMessage({
+        action: "RUN_COMMAND_QUICK_ACTION",
+        payload: { actionId: item.actionId }
+      })
+      if (!response.success) {
+        setAiNotice({
+          title: t("command.pageActionFailed"),
+          detail: response.error || t("command.searchError"),
+          type: "error"
+        })
+        return
+      }
+    } else if (item.userMessage) {
+      handleSendToAI(
+        {
+          action:
+            item.operation === "translate" ||
+            item.operation === "summarize" ||
+            item.operation === "polish" ||
+            item.operation === "explain"
+              ? item.operation
+              : "custom",
+          target: item.userMessage,
+          params: {}
+        },
+        item.userMessage
+      )
+      return
+    } else if (item.type === "ai-history" && item.restore) {
+      const requestId = item.id || `req-${Date.now()}`
       chrome.runtime.sendMessage({
         action: "SHOW_FLOATING_WINDOW",
         payload: {
           requestId,
           trigger: "command-palette",
           operation: item.operation || "explain",
-          selectionText: item.title,
-          timing
+          restore: item.restore
         }
       })
     }
@@ -412,8 +596,9 @@ function CommandPalette() {
     setQuery("")
   }
 
-  const handleSendToAI = (parsedIntent?: ParsedIntent) => {
-    if (!query.trim()) return
+  const handleSendToAI = (parsedIntent?: ParsedIntent, overrideInput?: string) => {
+    const rawInput = overrideInput ?? query
+    if (!rawInput.trim()) return
     if (!aiConnection.connected) {
       setAiNotice({
         title: t("command.aiDisconnected"),
@@ -426,13 +611,23 @@ function CommandPalette() {
     const requestId = `req-${Date.now()}`
     const timing = startTiming()
     setVisible(false)
-    const intent = parsedIntent ?? parseIntentLocally(query)
+    const intent = parsedIntent ?? parseIntentLocally(rawInput)
+    const operation = getProviderOperation(intent)
+    if (!operation) {
+      setVisible(true)
+      setAiNotice({
+        title: t("command.selectLocalCandidate"),
+        detail: t("command.selectLocalCandidateDetail"),
+        type: "info"
+      })
+      return
+    }
     const userMessage =
-      intent.action === "translate" ? intent.target.trim() : query
+      operation === "translate" ? intent.target.trim() : rawInput
     logTiming("trigger", requestId, timing, {
       trigger: "command-palette",
-      operation: intent.action,
-      userMessageChars: query.length
+      operation,
+      userMessageChars: rawInput.length
     })
 
     chrome.runtime.sendMessage({
@@ -440,10 +635,10 @@ function CommandPalette() {
       payload: {
         requestId,
         trigger: "command-palette",
-        operation: intent.action,
+        operation,
         userMessage,
         timing,
-        ...(intent.action === "translate"
+        ...(operation === "translate"
           ? { pageUrl: window.location.href }
           : {})
       }
@@ -453,6 +648,21 @@ function CommandPalette() {
 
   const getActiveRoute = (): ModelRoute | null =>
     settingsSnapshot ? resolveModelRoute(undefined, settingsSnapshot) : null
+
+  function getProviderOperation(intent: ParsedIntent): string | null {
+    if (
+      intent.action === "explain" ||
+      intent.action === "translate" ||
+      intent.action === "polish" ||
+      intent.action === "summarize" ||
+      intent.action === "search" ||
+      intent.action === "custom"
+    ) {
+      return intent.action
+    }
+    if (intent.action === "ask_ai") return "custom"
+    return null
+  }
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     const nativeEvent = e.nativeEvent as KeyboardEvent & {
@@ -466,7 +676,11 @@ function CommandPalette() {
       return
     }
 
-    if (e.key === "ArrowDown") {
+    if (e.key === "Escape") {
+      e.preventDefault()
+      e.stopPropagation()
+      setVisible(false)
+    } else if (e.key === "ArrowDown") {
       e.preventDefault()
       if (results.length === 0) return
       setSelectedIndex((i) => Math.min(i + 1, results.length - 1))
@@ -775,7 +989,7 @@ function CommandPalette() {
                 }}
                 onMouseEnter={() => setSelectedIndex(idx)}>
                 <AvisoIcon
-                  name={item.type === "bookmark" ? "bookmark" : "history"}
+                  name={getResultIcon(item.type)}
                   size={18}
                   style={{
                     color:
@@ -818,7 +1032,9 @@ function CommandPalette() {
                     border: `1px solid ${ui.line}`,
                     color: ui.text3
                   }}>
-                  {getResultTypeLabel(item.type, t)}
+                  {item.requiresConfirmation
+                    ? t("command.confirm")
+                    : getResultTypeLabel(item.type, t)}
                 </span>
               </div>
             ))}

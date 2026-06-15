@@ -1,5 +1,6 @@
 import type { Settings } from "~types/history"
 import type { AIRequestPayload } from "~types/messages"
+import type { ModelRoute } from "~utils/model-registry"
 import {
   getTranslationSourceText,
   normalizeTranslationTargetLanguage
@@ -22,6 +23,10 @@ export function getTranslationCacheKey(input: {
   payload: AIRequestPayload
   settings: Pick<Settings, "inlineTranslationTargetLanguage">
   pageUrl?: string
+  route?: Pick<
+    ModelRoute,
+    "provider" | "providerConfigId" | "requestModel" | "selectedModel"
+  >
 }): string | null {
   if (input.payload.operation !== "translate") return null
 
@@ -39,9 +44,19 @@ export function getTranslationCacheKey(input: {
   const pageKey = normalizePageForCache(
     input.pageUrl ?? input.payload.pageUrl ?? ""
   )
+  const routeKey = input.route
+    ? [
+        input.route.provider.id,
+        input.route.providerConfigId ?? "no-config",
+        input.route.selectedModel,
+        input.route.requestModel,
+        input.route.provider.baseURL ?? "default"
+      ].join("|")
+    : "unknown-route"
 
   return [
     "translation",
+    hashCacheValue(routeKey),
     hashCacheValue(pageKey),
     targetLanguage,
     sourceText.length,

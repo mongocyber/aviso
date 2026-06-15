@@ -17,8 +17,13 @@ The current code includes these provider paths:
 | Doubao / Volcengine Ark | Internal testing and user feedback confirm the path works. |
 | OpenAI | API key and model ID can be configured; actual availability depends on your key, model access, and provider status. |
 | Anthropic | API key and model ID can be configured; actual availability depends on your key, model access, and provider status. |
+| DeepSeek | API key and model ID can be configured; has one owner-manual connectivity pass. Actual availability still depends on your key, model access, and provider status. |
+| Kimi / Moonshot | API key and model ID can be configured; not live-provider validated. |
+| OpenRouter | Provider id is `openrouter`, base URL is `https://openrouter.ai/api/v1`; API key and manual model ID can be configured; host permission is `https://openrouter.ai/*`; not live-provider validated. |
+| Gemini | Provider id is `gemini`, base URL is `https://generativelanguage.googleapis.com/v1beta/openai/`; API key and manual model ID can be configured; host permission is `https://generativelanguage.googleapis.com/*`; V02-018 completed non-live validation, but it is not live-provider validated. |
+| Tencent Hunyuan | Provider id is `hunyuan`, base URL is `https://api.hunyuan.cloud.tencent.com/v1`; API key and manual model ID can be configured; host permission is `https://api.hunyuan.cloud.tencent.com/*`; V02-018 completed non-live validation, but it is not live-provider validated. |
 
-OpenAI and Anthropic are not the main selling point of the current version. Users need to enter their own valid API keys and manually trigger connection tests in the Popup.
+OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan are not availability guarantees in the current version. Users need to enter their own valid API keys and manually trigger connection tests in the Popup. OpenRouter, Gemini, and Tencent Hunyuan are BYOK OpenAI-compatible presets and Aviso does not automatically read model lists.
 
 ## AI Service Configs
 
@@ -26,7 +31,7 @@ The Popup supports multiple AI service configs. You can:
 
 - Save multiple configs for the same provider.
 - Set the current default service.
-- Manually edit OpenAI / Anthropic model IDs.
+- Manually edit OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan model IDs.
 - Fill in Doubao / Volcengine Ark endpoint and model fields.
 - Manually trigger a connection test. Each test targets one provider and only shows a redacted summary.
 

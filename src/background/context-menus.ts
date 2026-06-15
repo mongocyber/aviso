@@ -12,8 +12,10 @@ import {
   getModelForProviderConfig,
   getProviderConfigsWithLegacy,
   hasProviderConfigKey,
+  requiresProviderConfigModel,
   resolveDefaultProviderConfigId
 } from "~utils/provider-configs"
+import { buildSafeErrorLog } from "~utils/errors"
 import {
   isSupportedImageSrc,
   UNSUPPORTED_IMAGE_SRC_MESSAGE
@@ -35,21 +37,21 @@ import {
   setCachedPageContent
 } from "./page-content-cache"
 
-const MENU_ID_ROOT = "contextai-root"
-const MENU_ID_EXPLAIN = "contextai-explain"
-const MENU_ID_TRANSLATE = "contextai-translate"
-const MENU_ID_POLISH = "contextai-polish"
-const MENU_ID_POLISH_EDITABLE = "contextai-polish-editable"
-const MENU_ID_SUMMARIZE = "contextai-summarize"
-const MENU_ID_SUMMARIZE_VIDEO = "contextai-summarize-video"
-const MENU_ID_SUMMARIZE_LINK = "contextai-summarize-link"
-const MENU_ID_SUMMARIZE_PAGE = "contextai-summarize-page"
-const MENU_ID_IMAGE_EXPLAIN = "contextai-image-explain"
-const MENU_ID_SCREENSHOT_ASK = "contextai-screenshot-ask"
-const MENU_ID_COPY_CONTEXT = "contextai-copy-context"
-const MENU_ID_TEMPLATES = "contextai-templates"
-const MENU_ID_MODEL_SEPARATOR = "contextai-model-sep"
-const MENU_ID_MODEL_PREFIX = "contextai-model-"
+const MENU_ID_ROOT = "aviso-root"
+const MENU_ID_EXPLAIN = "aviso-explain"
+const MENU_ID_TRANSLATE = "aviso-translate"
+const MENU_ID_POLISH = "aviso-polish"
+const MENU_ID_POLISH_EDITABLE = "aviso-polish-editable"
+const MENU_ID_SUMMARIZE = "aviso-summarize"
+const MENU_ID_SUMMARIZE_VIDEO = "aviso-summarize-video"
+const MENU_ID_SUMMARIZE_LINK = "aviso-summarize-link"
+const MENU_ID_SUMMARIZE_PAGE = "aviso-summarize-page"
+const MENU_ID_IMAGE_EXPLAIN = "aviso-image-explain"
+const MENU_ID_SCREENSHOT_ASK = "aviso-screenshot-ask"
+const MENU_ID_COPY_CONTEXT = "aviso-copy-context"
+const MENU_ID_TEMPLATES = "aviso-templates"
+const MENU_ID_MODEL_SEPARATOR = "aviso-model-sep"
+const MENU_ID_MODEL_PREFIX = "aviso-model-"
 
 const ALL_CONTEXTS: chrome.contextMenus.ContextType[] = [
   "selection",
@@ -187,7 +189,7 @@ async function registerContextMenusNow() {
     templates.forEach((tpl) => {
       const contexts = normalizeTemplateMenuContexts(tpl.contexts)
       chrome.contextMenus.create({
-        id: `contextai-template-${tpl.id}`,
+        id: `aviso-template-${tpl.id}`,
         parentId: MENU_ID_TEMPLATES,
         title: tpl.name,
         contexts
@@ -224,7 +226,7 @@ function registerModelMenuItems(
   providerConfigs.forEach((config) => {
     const disabled =
       !hasProviderConfigKey(config, apiKeys) ||
-      (config.provider === "doubao" && !config.model.trim())
+      (requiresProviderConfigModel(config.provider) && !config.model.trim())
     chrome.contextMenus.create({
       id: `${MENU_ID_MODEL_PREFIX}${config.id}`,
       parentId: MENU_ID_ROOT,
@@ -244,7 +246,7 @@ function getProviderConfigMenuTitle(
   const modelId =
     config.provider === "doubao"
       ? config.model.trim() || t("model.unconfiguredEndpoint")
-      : config.model || PROVIDER_PRIMARY_MODEL[config.provider]
+      : config.model || PROVIDER_PRIMARY_MODEL[config.provider] || t("model.unconfiguredEndpoint")
   const modelLabel = getModelMetadata(modelId)?.displayName ?? modelId
   return `${config.displayName} · ${modelLabel}`
 }
@@ -268,7 +270,7 @@ export async function syncModelMenuSelection(providerConfigId: string) {
         console.warn("[Aviso] Failed to sync context menu model selection", {
           providerConfigId,
           menuId: `${MENU_ID_MODEL_PREFIX}${id}`,
-          error: error.message
+          error: buildSafeErrorLog(error)
         })
       }
     )
@@ -365,6 +367,10 @@ export async function handleContextMenuClick(
       trigger: "context-menu",
       operation: builtinAction,
       context: ctx,
+      imageSource:
+        menuItemId === MENU_ID_IMAGE_EXPLAIN
+          ? ("remote-image" as const)
+          : undefined,
       selectionText: info.selectionText ?? "",
       linkUrl: info.linkUrl ?? "",
       srcUrl: info.srcUrl ?? "",
@@ -415,7 +421,7 @@ export async function handleContextMenuClick(
     void getRuntimeConfigSnapshot().catch((err) => {
       console.warn("[Aviso] Runtime config warmup failed", {
         requestId,
-        error: err instanceof Error ? err.message : String(err)
+        error: buildSafeErrorLog(err)
       })
     })
 
@@ -437,9 +443,9 @@ export async function handleContextMenuClick(
     return
   }
 
-  // 自定义模板（以 contextai-template- 开头）
-  if (menuItemId.startsWith("contextai-template-")) {
-    const templateId = menuItemId.replace("contextai-template-", "")
+  // 自定义模板（以 aviso-template- 开头）
+  if (menuItemId.startsWith("aviso-template-")) {
+    const templateId = menuItemId.replace("aviso-template-", "")
     const requestId = `req-${Date.now()}`
     const timing = startTiming()
     logTiming("trigger", requestId, timing, {
@@ -452,7 +458,7 @@ export async function handleContextMenuClick(
     void getRuntimeConfigSnapshot().catch((err) => {
       console.warn("[Aviso] Runtime config warmup failed", {
         requestId,
-        error: err instanceof Error ? err.message : String(err)
+        error: buildSafeErrorLog(err)
       })
     })
 
@@ -616,7 +622,7 @@ export async function summarizePageFromFrame({
   const runtimeWarmup = getRuntimeConfigSnapshot().catch((err) => {
     console.warn("[Aviso] Runtime config warmup failed", {
       requestId,
-      error: err instanceof Error ? err.message : String(err)
+      error: buildSafeErrorLog(err)
     })
   })
 

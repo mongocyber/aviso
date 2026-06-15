@@ -10,7 +10,12 @@ import type { ApiKeys } from "./storage"
 const PROVIDER_DISPLAY_NAME: Record<ProviderId, string> = {
   openai: "OpenAI",
   anthropic: "Anthropic",
-  doubao: "豆包 / 火山方舟"
+  doubao: "豆包 / 火山方舟",
+  deepseek: "DeepSeek",
+  moonshot: "Kimi / Moonshot",
+  openrouter: "OpenRouter",
+  gemini: "Gemini",
+  hunyuan: "Tencent Hunyuan"
 }
 
 export function createProviderConfigId(provider: ProviderId): string {
@@ -52,7 +57,14 @@ export function defaultProviderConfigName(
 }
 
 export function defaultProviderModel(provider: ProviderId): string {
-  return provider === "doubao" ? "" : PROVIDER_PRIMARY_MODEL[provider]
+  return provider === "doubao" ||
+    provider === "deepseek" ||
+    provider === "moonshot" ||
+    provider === "openrouter" ||
+    provider === "gemini" ||
+    provider === "hunyuan"
+    ? ""
+    : PROVIDER_PRIMARY_MODEL[provider]
 }
 
 export function getProviderConfigsWithLegacy(
@@ -117,9 +129,9 @@ export function isLegacyProviderConfigId(configId: string): boolean {
 
 export function getLegacyProviderFromConfigId(
   configId: string
-): ProviderId | undefined {
+): Extract<ProviderId, "openai" | "anthropic" | "doubao"> | undefined {
   return (Object.entries(LEGACY_PROVIDER_CONFIG_IDS) as Array<
-    [ProviderId, string]
+    [Extract<ProviderId, "openai" | "anthropic" | "doubao">, string]
   >).find(([, legacyId]) => legacyId === configId)?.[0]
 }
 
@@ -173,9 +185,20 @@ export function getModelForProviderConfig(config: ProviderConfig): string {
 }
 
 export function getProviderConfigTestModel(config: ProviderConfig): string {
-  return config.provider === "doubao"
+  return requiresProviderConfigModel(config.provider)
     ? config.model.trim()
     : getModelForProviderConfig(config)
+}
+
+export function requiresProviderConfigModel(provider: ProviderId): boolean {
+  return (
+    provider === "doubao" ||
+    provider === "deepseek" ||
+    provider === "moonshot" ||
+    provider === "openrouter" ||
+    provider === "gemini" ||
+    provider === "hunyuan"
+  )
 }
 
 export function isProviderConfigTestCurrent(config: ProviderConfig): boolean {
@@ -239,5 +262,14 @@ export function shouldClearProviderConfigTestResult(
 }
 
 function isProviderId(value: string): value is ProviderId {
-  return value === "openai" || value === "anthropic" || value === "doubao"
+  return (
+    value === "openai" ||
+    value === "anthropic" ||
+    value === "doubao" ||
+    value === "deepseek" ||
+    value === "moonshot" ||
+    value === "openrouter" ||
+    value === "gemini" ||
+    value === "hunyuan"
+  )
 }

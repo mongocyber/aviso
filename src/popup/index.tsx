@@ -22,7 +22,11 @@ import type {
 import type { ModelAvailability } from "~utils/model-availability"
 import { getModelAvailability } from "~utils/model-availability"
 import type { ProviderId } from "~utils/model-registry"
-import { buildProviderConfigRoute, resolveModelRoute } from "~utils/model-registry"
+import {
+  buildProviderConfigRoute,
+  PROVIDER_PRIMARY_MODEL,
+  resolveModelRoute
+} from "~utils/model-registry"
 import {
   buildProviderConfig,
   clearProviderConfigTestResult,
@@ -33,9 +37,9 @@ import {
   getModelForProviderConfig,
   getProviderConfigKey,
   getProviderConfigsWithLegacy,
-  isProviderConfigTestCurrent,
   isLegacyProviderConfigId,
   markProviderConfigTestResult,
+  requiresProviderConfigModel,
   resolveDefaultProviderConfigId,
   shouldClearProviderConfigTestResult
 } from "~utils/provider-configs"
@@ -72,6 +76,9 @@ const TEMPLATE_CONTEXTS: { value: string; labelKey: I18nKey }[] = [
 
 const DEFAULT_SETTINGS: Settings = {
   defaultModel: "gpt-4o-mini",
+  defaultProviderConfigId: "",
+  fastProviderConfigId: "",
+  providerConfigs: [],
   appearanceTheme: "system",
   uiLanguage: "auto",
   enableClipboardSense: true,
@@ -98,7 +105,16 @@ const POPUP_FRAME = {
 
 const CONNECTIVITY_TEST_TIMEOUT_MS = 45_000
 
-const PROVIDER_ORDER: ProviderId[] = ["doubao", "openai", "anthropic"]
+const PROVIDER_ORDER: ProviderId[] = [
+  "doubao",
+  "openai",
+  "anthropic",
+  "deepseek",
+  "moonshot",
+  "openrouter",
+  "gemini",
+  "hunyuan"
+]
 
 function resolvePopupRuntimeHeight() {
   if (typeof window === "undefined") return POPUP_FRAME.safeMaxHeight
@@ -140,6 +156,7 @@ function resolveMiniDropdownDirection(trigger: HTMLElement | null) {
 const settingsSignature = (value: Settings) =>
   JSON.stringify({
     defaultModel: value.defaultModel,
+    fastProviderConfigId: value.fastProviderConfigId ?? "",
     doubaoModel: value.doubaoModel ?? "",
     appearanceTheme: value.appearanceTheme,
     uiLanguage: value.uiLanguage,
@@ -191,12 +208,6 @@ const UI_LANGUAGE_OPTIONS: {
   { value: "en", labelKey: "settings.language.en" }
 ]
 
-const PROVIDER_PRIMARY_MODEL: Record<ProviderId, string> = {
-  openai: "gpt-4o-mini",
-  anthropic: "claude-haiku-4-5-20251001",
-  doubao: "doubao"
-}
-
 const PROVIDER_COPY: Record<
   ProviderId,
   {
@@ -231,6 +242,46 @@ const PROVIDER_COPY: Record<
     modelLabelKey: "popup.provider.doubaoEndpointLabel",
     modelPlaceholderKey: "popup.provider.doubaoEndpointPlaceholder",
     addLabelKey: "popup.provider.doubao"
+  },
+  deepseek: {
+    titleKey: "popup.provider.deepseek",
+    keyLabelKey: "popup.provider.deepseekKey",
+    keyPlaceholderKey: "popup.provider.deepseekKeyPlaceholder",
+    modelLabelKey: "popup.provider.modelLabel",
+    modelPlaceholderKey: "popup.provider.deepseekModelPlaceholder",
+    addLabelKey: "popup.provider.deepseek"
+  },
+  moonshot: {
+    titleKey: "popup.provider.moonshot",
+    keyLabelKey: "popup.provider.moonshotKey",
+    keyPlaceholderKey: "popup.provider.moonshotKeyPlaceholder",
+    modelLabelKey: "popup.provider.modelLabel",
+    modelPlaceholderKey: "popup.provider.moonshotModelPlaceholder",
+    addLabelKey: "popup.provider.moonshot"
+  },
+  openrouter: {
+    titleKey: "popup.provider.openrouter",
+    keyLabelKey: "popup.provider.openrouterKey",
+    keyPlaceholderKey: "popup.provider.openrouterKeyPlaceholder",
+    modelLabelKey: "popup.provider.modelLabel",
+    modelPlaceholderKey: "popup.provider.openrouterModelPlaceholder",
+    addLabelKey: "popup.provider.openrouter"
+  },
+  gemini: {
+    titleKey: "popup.provider.gemini",
+    keyLabelKey: "popup.provider.geminiKey",
+    keyPlaceholderKey: "popup.provider.geminiKeyPlaceholder",
+    modelLabelKey: "popup.provider.modelLabel",
+    modelPlaceholderKey: "popup.provider.geminiModelPlaceholder",
+    addLabelKey: "popup.provider.gemini"
+  },
+  hunyuan: {
+    titleKey: "popup.provider.hunyuan",
+    keyLabelKey: "popup.provider.hunyuanKey",
+    keyPlaceholderKey: "popup.provider.hunyuanKeyPlaceholder",
+    modelLabelKey: "popup.provider.modelLabel",
+    modelPlaceholderKey: "popup.provider.hunyuanModelPlaceholder",
+    addLabelKey: "popup.provider.hunyuan"
   }
 }
 
@@ -266,6 +317,7 @@ type ProviderActionMessage = {
 }
 
 type ProviderCardMode = "view" | "edit" | "add"
+type LegacyProviderId = Extract<ProviderId, "openai" | "anthropic" | "doubao">
 
 const normalizeCommonFeatureSettings = (value: Settings): Settings =>
   value.enableToolbar && value.enableInlineTranslation
@@ -350,21 +402,36 @@ function Popup() {
   >({
     openai: "view",
     anthropic: "view",
-    doubao: "view"
+    doubao: "view",
+    deepseek: "view",
+    moonshot: "view",
+    openrouter: "view",
+    gemini: "view",
+    hunyuan: "view"
   })
   const [savedProviderKeys, setSavedProviderKeys] = useState<
     Record<ProviderId, boolean>
   >({
     openai: false,
     anthropic: false,
-    doubao: false
+    doubao: false,
+    deepseek: false,
+    moonshot: false,
+    openrouter: false,
+    gemini: false,
+    hunyuan: false
   })
   const [providerModelDrafts, setProviderModelDrafts] = useState<
     Record<ProviderId, string>
   >({
     openai: PROVIDER_PRIMARY_MODEL.openai,
     anthropic: PROVIDER_PRIMARY_MODEL.anthropic,
-    doubao: ""
+    doubao: "",
+    deepseek: "",
+    moonshot: "",
+    openrouter: "",
+    gemini: "",
+    hunyuan: ""
   })
   const [providerMessages, setProviderMessages] = useState<
     Partial<Record<ProviderId, ProviderActionMessage>>
@@ -582,12 +649,22 @@ function Popup() {
       setProviderModelDrafts({
         openai: PROVIDER_PRIMARY_MODEL.openai,
         anthropic: PROVIDER_PRIMARY_MODEL.anthropic,
-        doubao: normalizedSettings.doubaoModel ?? ""
+        doubao: normalizedSettings.doubaoModel ?? "",
+        deepseek: "",
+        moonshot: "",
+        openrouter: "",
+        gemini: "",
+        hunyuan: ""
       })
       setSavedProviderKeys({
         openai: Boolean(keys.openai),
         anthropic: Boolean(keys.anthropic),
-        doubao: Boolean(keys.doubao)
+        doubao: Boolean(keys.doubao),
+        deepseek: false,
+        moonshot: false,
+        openrouter: false,
+        gemini: false,
+        hunyuan: false
       })
       const configs = getProviderConfigsWithLegacy(normalizedSettings, keys)
       const nextDefaultProviderConfigId = resolveDefaultProviderConfigId(
@@ -652,7 +729,12 @@ function Popup() {
     const value = getProviderKeyValue(provider, {
       openai: openaiKey,
       anthropic: anthropicKey,
-      doubao: doubaoKey
+      doubao: doubaoKey,
+      deepseek: "",
+      moonshot: "",
+      openrouter: "",
+      gemini: "",
+      hunyuan: ""
     })
     const preflight = getProviderConfigPreflight(provider, value)
     if (preflight) {
@@ -665,7 +747,7 @@ function Popup() {
       return
     }
 
-    if (value && !value.startsWith("••")) {
+    if (value && !value.startsWith("••") && isLegacyProviderId(provider)) {
       await saveApiKey(provider, value)
       setProviderKeyInput(provider, `••••••••${value.slice(-4)}`)
       setSavedProviderKey(provider, true)
@@ -703,7 +785,9 @@ function Popup() {
   }
 
   const deleteProviderConfig = async (provider: ProviderId) => {
-    await saveApiKey(provider, "")
+    if (isLegacyProviderId(provider)) {
+      await saveApiKey(provider, "")
+    }
     setProviderKeyInput(provider, "")
     setSavedProviderKey(provider, false)
     if (provider === "doubao") {
@@ -737,10 +821,16 @@ function Popup() {
     const nextDefaultModel = defaultConfig
       ? getModelForProviderConfig(defaultConfig)
       : settings.defaultModel
+    const nextFastProviderConfigId =
+      settings.fastProviderConfigId &&
+      nextConfigs.some((config) => config.id === settings.fastProviderConfigId)
+        ? settings.fastProviderConfigId
+        : ""
 
     await saveSettings({
       providerConfigs: savedConfigs,
       defaultProviderConfigId,
+      fastProviderConfigId: nextFastProviderConfigId,
       defaultModel: nextDefaultModel,
       doubaoModel:
         defaultConfig?.provider === "doubao"
@@ -751,6 +841,7 @@ function Popup() {
       ...settings,
       providerConfigs: savedConfigs,
       defaultProviderConfigId,
+      fastProviderConfigId: nextFastProviderConfigId,
       defaultModel: nextDefaultModel,
       doubaoModel:
         defaultConfig?.provider === "doubao"
@@ -816,46 +907,29 @@ function Popup() {
 
   const saveProviderConfigInstance = async (config: ProviderConfig) => {
     const keyInput = providerConfigKeyInputs[config.id] ?? ""
-    if (!keyInput.trim()) {
-      setProviderConfigConnectivityResults((prev) => ({
-        ...prev,
-        [config.id]: buildConnectivityPreflightSummary({
-          provider: config.provider,
-          modelOrEndpoint:
-            config.provider === "doubao"
-              ? config.model || t("popup.provider.config.unconfigured")
-              : config.model,
-          errorCategory: "api_key_missing",
-          notes: t("popup.provider.apiKeyMissing")
-        })
-      }))
-      return
-    }
-    if (config.provider === "doubao" && !config.model.trim()) {
-      setProviderConfigConnectivityResults((prev) => ({
-        ...prev,
-        [config.id]: buildConnectivityPreflightSummary({
-          provider: config.provider,
-          modelOrEndpoint: t("popup.provider.config.unconfigured"),
-          errorCategory: "endpoint_or_model_missing",
-          notes: t("popup.provider.endpointMissing")
-        })
-      }))
-      return
-    }
-
+    const normalizedKeyInput = keyInput.trim()
     const legacyProvider = getLegacyProviderFromConfigId(config.id)
     const apiKeyChanged = !keyInput.startsWith("••")
     if (apiKeyChanged) {
       if (legacyProvider) {
-        await saveApiKey(legacyProvider, keyInput)
+        await saveApiKey(legacyProvider, normalizedKeyInput)
       } else {
-        await saveProviderConfigApiKey(config.id, keyInput)
-        setProviderConfigKeys((prev) => ({ ...prev, [config.id]: keyInput }))
+        await saveProviderConfigApiKey(config.id, normalizedKeyInput)
+        setProviderConfigKeys((prev) => {
+          const next = { ...prev }
+          if (normalizedKeyInput) {
+            next[config.id] = normalizedKeyInput
+          } else {
+            delete next[config.id]
+          }
+          return next
+        })
       }
       setProviderConfigKeyInputs((prev) => ({
         ...prev,
-        [config.id]: `••••••••${keyInput.slice(-4)}`
+        [config.id]: normalizedKeyInput
+          ? `••••••••${normalizedKeyInput.slice(-4)}`
+          : ""
       }))
     }
 
@@ -868,15 +942,19 @@ function Popup() {
       },
       { apiKeyChanged }
     )
-    const savedConfig = isProviderConfigTestCurrent(normalizedConfig)
-      ? normalizedConfig
-      : clearProviderConfigTestResult(normalizedConfig)
+    const savedConfig = clearProviderConfigTestResult(normalizedConfig)
     const nextConfigs = providerConfigs.map((item) =>
       item.id === config.id ? savedConfig : item
     )
     const defaultId = settings.defaultProviderConfigId || config.id
     setProviderConfigs(nextConfigs)
     setProviderConfigModes((prev) => ({ ...prev, [config.id]: "view" }))
+    setProviderConfigConnectivityResults((prev) => {
+      if (!prev[config.id]) return prev
+      const next = { ...prev }
+      delete next[config.id]
+      return next
+    })
     setFocusedProviderConfigField(null)
     setConfirmingDeleteProviderConfigId(null)
     await persistProviderConfigs(nextConfigs, defaultId)
@@ -966,15 +1044,14 @@ function Popup() {
   const testProviderConfigInstance = async (config: ProviderConfig) => {
     if (testingProviderConfigId) return
     const keyInput = providerConfigKeyInputs[config.id] ?? ""
+    const normalizedKeyInput = keyInput.trim()
     if (!keyInput.trim()) {
       setProviderConfigConnectivityResults((prev) => ({
         ...prev,
         [config.id]: buildConnectivityPreflightSummary({
           provider: config.provider,
           modelOrEndpoint:
-            config.provider === "doubao"
-              ? config.model || t("popup.provider.config.unconfigured")
-              : config.model,
+            config.model || t("popup.provider.config.unconfigured"),
           errorCategory: "api_key_missing",
           notes: t("popup.provider.apiKeyMissing")
         })
@@ -985,7 +1062,7 @@ function Popup() {
       }))
       return
     }
-    if (config.provider === "doubao" && !config.model.trim()) {
+    if (requiresProviderConfigModel(config.provider) && !config.model.trim()) {
       setProviderConfigConnectivityResults((prev) => ({
         ...prev,
         [config.id]: buildConnectivityPreflightSummary({
@@ -1006,14 +1083,17 @@ function Popup() {
     const apiKeyChanged = !keyInput.startsWith("••")
     if (apiKeyChanged) {
       if (legacyProvider) {
-        await saveApiKey(legacyProvider, keyInput)
+        await saveApiKey(legacyProvider, normalizedKeyInput)
       } else {
-        await saveProviderConfigApiKey(config.id, keyInput)
-        setProviderConfigKeys((prev) => ({ ...prev, [config.id]: keyInput }))
+        await saveProviderConfigApiKey(config.id, normalizedKeyInput)
+        setProviderConfigKeys((prev) => ({
+          ...prev,
+          [config.id]: normalizedKeyInput
+        }))
       }
       setProviderConfigKeyInputs((prev) => ({
         ...prev,
-        [config.id]: `••••••••${keyInput.slice(-4)}`
+        [config.id]: `••••••••${normalizedKeyInput.slice(-4)}`
       }))
     }
     const savedConfig = normalizeProviderConfigDraftUpdate(
@@ -1225,7 +1305,7 @@ function Popup() {
       })
     }
 
-    if (provider === "doubao" && !providerModelDrafts.doubao.trim()) {
+    if (requiresProviderConfigModel(provider) && !providerModelDrafts[provider].trim()) {
       return buildConnectivityPreflightSummary({
         provider,
         modelOrEndpoint: t("popup.provider.config.unconfigured"),
@@ -1256,7 +1336,11 @@ function Popup() {
       return
     }
 
-    if (currentKeyValue && !currentKeyValue.startsWith("••")) {
+    if (
+      currentKeyValue &&
+      !currentKeyValue.startsWith("••") &&
+      isLegacyProviderId(provider)
+    ) {
       await saveApiKey(provider, currentKeyValue)
       setProviderKeyInput(provider, `••••••••${currentKeyValue.slice(-4)}`)
       setSavedProviderKey(provider, true)
@@ -1404,7 +1488,12 @@ function Popup() {
   const providerConfigured = {
     openai: savedProviderKeys.openai,
     anthropic: savedProviderKeys.anthropic,
-    doubao: savedProviderKeys.doubao
+    doubao: savedProviderKeys.doubao,
+    deepseek: savedProviderKeys.deepseek,
+    moonshot: savedProviderKeys.moonshot,
+    openrouter: savedProviderKeys.openrouter,
+    gemini: savedProviderKeys.gemini,
+    hunyuan: savedProviderKeys.hunyuan
   }
   const firstProviderNeedingConfig =
     PROVIDER_ORDER.find(
@@ -1444,7 +1533,7 @@ function Popup() {
           } as const
         }
         if (
-          selectedProviderConfig.provider === "doubao" &&
+          requiresProviderConfigModel(selectedProviderConfig.provider) &&
           !selectedProviderConfig.model.trim()
         ) {
           return {
@@ -1491,6 +1580,9 @@ function Popup() {
   const configuredProviderConfigOptions = providerConfigs.filter(
     (config) => providerConfigModes[config.id] !== "add"
   )
+  const selectedFastProviderConfig = configuredProviderConfigOptions.find(
+    (config) => config.id === settings.fastProviderConfigId
+  )
   const selectedRoute = selectedProviderConfig
     ? buildProviderConfigRoute(selectedProviderConfig, settings)
     : resolveModelRoute(settings.defaultModel, settings)
@@ -1508,13 +1600,18 @@ function Popup() {
       : t("popup.service.connectFirst")
   const routeLabel = `${t("popup.service.routePrefix")}${selectedRoute.providerConfigName ?? selectedRoute.provider.displayName}`
   const routeModelLabel =
-    selectedRoute.provider.id === "doubao"
+    requiresProviderConfigModel(selectedRoute.provider.id)
       ? selectedRoute.requestModel || t("popup.provider.status.endpointMissing")
       : selectedRoute.model.displayName
   const selectedProviderKeyValue = getProviderKeyValue(selectedRoute.provider.id, {
     openai: openaiKey,
     anthropic: anthropicKey,
-    doubao: doubaoKey
+    doubao: doubaoKey,
+    deepseek: "",
+    moonshot: "",
+    openrouter: "",
+    gemini: "",
+    hunyuan: ""
   })
   const resolvedAppearance = resolveAvisoTheme(
     settings.appearanceTheme,
@@ -1954,7 +2051,8 @@ function Popup() {
                           ""
                         const disabled =
                           !keyValue.trim() ||
-                          (config.provider === "doubao" && !config.model.trim())
+                          (requiresProviderConfigModel(config.provider) &&
+                            !config.model.trim())
                         const availability = result
                           ? {
                               tone:
@@ -1969,7 +2067,8 @@ function Popup() {
                           : {
                               tone: disabled ? ("danger" as const) : ("muted" as const),
                               status: disabled
-                                ? config.provider === "doubao" && !config.model.trim()
+                                ? requiresProviderConfigModel(config.provider) &&
+                                  !config.model.trim()
                                   ? t("popup.provider.status.endpointRequired")
                                   : t("popup.provider.status.keyMissing")
                                 : t("popup.provider.status.untested")
@@ -2010,7 +2109,7 @@ function Popup() {
                               </span>
                               <span style={styles.dropdownSubText}>
                                 {route.provider.displayName} ·{" "}
-                                {config.provider === "doubao"
+                                {requiresProviderConfigModel(config.provider)
                                   ? config.model ||
                                     t("popup.provider.status.endpointMissing")
                                   : route.model.displayName}
@@ -2434,6 +2533,53 @@ function Popup() {
               </p>
             </div>
 
+            <div
+              style={{
+                ...styles.fastServiceCard,
+                background: ui.bg,
+                borderColor: ui.line
+              }}>
+              <label style={styles.fastServiceLabel}>
+                <span style={{ ...styles.panelTitle, color: ui.text }}>
+                  <AvisoIcon
+                    name="model"
+                    size={16}
+                    style={{ color: ui.accent }}
+                  />
+                  {t("popup.service.fastTitle")}
+                </span>
+                <select
+                  value={selectedFastProviderConfig?.id ?? ""}
+                  aria-label={t("popup.service.fastAria")}
+                  onChange={(event) =>
+                    void commitSettings({
+                      fastProviderConfigId: event.target.value
+                    })
+                  }
+                  style={{
+                    ...styles.fastServiceSelect,
+                    background: ui.surface,
+                    borderColor: ui.line,
+                    color: ui.text
+                  }}>
+                  <option value="">{t("popup.service.fastDisabled")}</option>
+                  {configuredProviderConfigOptions.map((config) => (
+                    <option key={config.id} value={config.id}>
+                      {config.displayName}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <p
+                style={{
+                  ...styles.helper,
+                  ...styles.fastServiceHelper,
+                  color: ui.text3
+                }}>
+                {t("popup.service.fastHelper")}
+              </p>
+            </div>
+
             <div style={styles.serviceToolbar}>
               <span style={{ ...styles.serviceToolbarTitle, color: ui.text3 }}>
                 {t("popup.service.configs")}
@@ -2503,7 +2649,8 @@ function Popup() {
               const connectivity = providerConfigConnectivityResults[config.id]
               const keyConfigured = Boolean(keyValue.trim())
               const missingEndpoint =
-                config.provider === "doubao" && !config.model.trim()
+                requiresProviderConfigModel(config.provider) &&
+                !config.model.trim()
               const connectionTone: ModelAvailability["tone"] =
                 connectivity?.result === "success"
                   ? "ok"
@@ -2765,7 +2912,7 @@ function Popup() {
                       </span>
                     ))}
                     {route.provider.displayName} ·{" "}
-                    {config.provider === "doubao"
+                    {requiresProviderConfigModel(config.provider)
                       ? config.model ||
                         t("popup.provider.status.endpointMissing")
                       : route.model.displayName}
@@ -3209,6 +3356,10 @@ function getProviderKeyValue(
   return keys[provider] ?? ""
 }
 
+function isLegacyProviderId(provider: ProviderId): provider is LegacyProviderId {
+  return provider === "openai" || provider === "anthropic" || provider === "doubao"
+}
+
 function getProviderModelValue(provider: ProviderId, settings: Settings) {
   if (provider === "doubao") return settings.doubaoModel ?? ""
   return PROVIDER_PRIMARY_MODEL[provider]
@@ -3220,7 +3371,9 @@ function getProviderModelInputValue(
   t: (key: I18nKey) => string
 ) {
   const value = drafts[provider]?.trim()
-  if (provider === "doubao") return value || t("popup.provider.config.unconfigured")
+  if (requiresProviderConfigModel(provider)) {
+    return value || t("popup.provider.config.unconfigured")
+  }
   return value || PROVIDER_PRIMARY_MODEL[provider]
 }
 
@@ -3567,6 +3720,28 @@ const styles: Record<string, React.CSSProperties> = {
     margin: "8px 0 0",
     fontSize: 11.5,
     lineHeight: 1.45
+  },
+  fastServiceCard: {
+    padding: "12px",
+    marginBottom: 12,
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: aviso.radiusMd
+  },
+  fastServiceLabel: {
+    display: "grid",
+    gap: 9
+  },
+  fastServiceSelect: {
+    width: "100%",
+    minHeight: 38,
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: aviso.radiusSm,
+    fontFamily: aviso.font,
+    fontSize: 13,
+    padding: "0 10px"
+  },
+  fastServiceHelper: {
+    marginTop: 8
   },
   iconBtn: {
     display: "inline-flex",

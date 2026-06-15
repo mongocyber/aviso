@@ -15,6 +15,8 @@ The public copy is adapted from the internal project source of truth in the repo
 
 The root project docs remain the internal source of truth and should not be overwritten by website edits.
 
+Current public copy must keep implementation support, live provider validation, Chrome Web Store approval, and public release status separate. DeepSeek, Kimi / Moonshot, and OpenRouter may be described as configurable provider support, but not as live-provider validated. The site must not invent a Chrome Web Store URL.
+
 ## Local commands
 
 ```bash

@@ -51,7 +51,12 @@ const CONNECTIVITY_ERROR_CATEGORIES: ConnectivityErrorCategory[] = [
 const CONNECTIVITY_MODEL_BY_PROVIDER: Record<ProviderId, string> = {
   openai: "gpt-4o-mini",
   anthropic: "claude-haiku-4-5-20251001",
-  doubao: "doubao"
+  doubao: "doubao",
+  deepseek: "",
+  moonshot: "",
+  openrouter: "",
+  gemini: "",
+  hunyuan: ""
 }
 
 export function getConnectivityModelId(providerId: ProviderId): string {
@@ -238,9 +243,20 @@ function isProviderConfigTestCurrent(config: ProviderConfig): boolean {
 }
 
 function getProviderConfigTestModel(config: ProviderConfig): string {
-  if (config.provider === "doubao") return config.model.trim()
+  if (
+    config.provider === "doubao" ||
+    config.provider === "deepseek" ||
+    config.provider === "moonshot" ||
+    config.provider === "openrouter" ||
+    config.provider === "gemini" ||
+    config.provider === "hunyuan"
+  ) {
+    return config.model.trim()
+  }
   if (config.model) return config.model
   return config.provider === "anthropic"
     ? "claude-haiku-4-5-20251001"
-    : "gpt-4o-mini"
+    : config.provider === "openai"
+      ? "gpt-4o-mini"
+      : ""
 }

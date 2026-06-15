@@ -57,6 +57,8 @@ Aviso content scripts match webpage URLs to display the selection toolbar, comma
 
 This access is not used to fetch arbitrary remote link bodies, advertising, telemetry, analytics, or project-owned remote logs. Only when the user actively triggers an AI action that needs page content is relevant content sent directly from the browser extension to the selected model provider.
 
+Command-palette browsing history, bookmark, and local AI conversation results are local candidates. Opening URLs, opening history/bookmark candidates, translating the current page, and summarizing the current page require user confirmation before execution.
+
 ## Host Permissions
 
 Current host permissions are limited to approved provider domains:
@@ -65,9 +67,14 @@ Current host permissions are limited to approved provider domains:
 https://api.openai.com/*
 https://api.anthropic.com/*
 https://ark.cn-beijing.volces.com/*
+https://api.deepseek.com/*
+https://api.moonshot.cn/*
+https://openrouter.ai/*
+https://generativelanguage.googleapis.com/*
+https://api.hunyuan.cloud.tencent.com/*
 ```
 
-They are used for OpenAI, Anthropic, and Doubao / Volcengine Ark OpenAI-compatible interfaces. OpenAI and Anthropic can be configured with API key and model ID; requests are sent directly from the browser extension to the provider selected by the user.
+They are used for OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan provider requests. OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan can be configured with API key and model ID; OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually, and Aviso does not automatically read model lists. DeepSeek has one owner-manual connectivity pass; Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan should not be described as live-provider validated.
 
 Host permissions remain limited to approved provider domains.
 

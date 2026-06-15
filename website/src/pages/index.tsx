@@ -129,6 +129,15 @@ function GlyphDoubao(): JSX.Element {
   );
 }
 
+function GlyphProvider(): JSX.Element {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.6} strokeLinejoin="round">
+      <path d="M12 3.5 19 7.5v8.9l-7 4.1-7-4.1V7.5l7-4z" />
+      <path d="M8 9.2h8M8 14.8h8M12 7v10" />
+    </svg>
+  );
+}
+
 const copy = {
   zh: {
     pageDescription: "Aviso 是一个在当前网页就地调用 AI 的 Chrome 扩展。使用你自己的 API Key,直连模型厂商,隐私优先。",
@@ -149,7 +158,7 @@ const copy = {
     cmdHint: "无结果时可发给 AI",
     cmdNoMatch: "无匹配结果 — 回车把输入交给",
     cmdNoMatchTail: "按意图处理",
-    providerLab: "使用自己的 Key,浏览器直连这些模型厂商",
+    providerLab: "使用自己的 Key,浏览器直连已批准的模型厂商",
     doubao: "豆包",
     ark: "Volcengine Ark",
     entriesTag: "01 — 触发入口",
@@ -180,7 +189,7 @@ const copy = {
     provDoubao: "豆包接入点",
     provDefault: "可配置",
     provConnected: "已配置",
-    provUnset: "待填入 API Key",
+    provUnset: "支持配置 · 待测试",
     provNotSet: "未配置",
     privacyTag: "04 — 隐私边界",
     privacyTitlePre: "别让扩展悄悄收走你的对话。",
@@ -229,7 +238,7 @@ const copy = {
     cmdHint: "Send to AI when no results",
     cmdNoMatch: "No match — press Enter to hand it to",
     cmdNoMatchTail: "",
-    providerLab: "Bring your key — your browser connects directly to",
+    providerLab: "Bring your key — your browser connects directly to approved providers",
     doubao: "Doubao",
     ark: "Volcengine Ark",
     entriesTag: "01 — Entry points",
@@ -263,7 +272,7 @@ const copy = {
     provDoubao: "Doubao endpoint",
     provDefault: "configurable",
     provConnected: "configured",
-    provUnset: "API key not set",
+    provUnset: "configurable · test needed",
     provNotSet: "not set",
     privacyTag: "04 — Privacy boundary",
     privacyTitlePre: "Don't let extensions quietly take your chats.",
@@ -397,8 +406,8 @@ const byokPoints = [
     icon: "model",
     zhTitle: "模型 ID 手动可填",
     enTitle: "Model IDs are editable",
-    zhText: "OpenAI、Anthropic 的模型 ID,以及豆包 / Volcengine Ark 的接入点,都能自己填。",
-    enText: "Type in model IDs for OpenAI and Anthropic, plus endpoints for Doubao / Volcengine Ark."
+    zhText: "OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini、Tencent Hunyuan 的模型 ID,以及豆包 / Volcengine Ark 的接入点,都能自己填。",
+    enText: "Type in model IDs for OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan, plus endpoints for Doubao / Volcengine Ark."
   },
   {
     icon: "check",
@@ -439,8 +448,8 @@ const compareRows = [
     enCrit: "What it asks for",
     zhThem: "常索取“读取并更改所有网站数据”",
     enThem: 'Often wants "read and change all your data on all sites"',
-    zhUs: "host 权限仅限你选的三个 provider 域名",
-    enUs: "Host permissions limited to your three provider domains"
+    zhUs: "host 权限仅限已批准的 provider 域名",
+    enUs: "Host permissions limited to approved provider domains"
   },
   {
     zhCrit: "什么时候在工作",
@@ -486,14 +495,14 @@ const faqs = [
   {
     zhQ: "Aviso 收费吗?",
     enQ: "Does Aviso cost money?",
-    zhA: "扩展本身不收费。你付的是自己模型厂商的 API 费用 —— 用 OpenAI、Anthropic 或豆包 / Volcengine Ark 自己的 Key,按量付给厂商。Aviso 不在中间加价,也没有订阅或信用点。",
-    enA: "The extension itself doesn't charge. You pay your own provider's API costs — using your OpenAI, Anthropic, or Doubao / Volcengine Ark key, billed by the provider. Aviso adds no markup, no subscription, no credits."
+    zhA: "扩展本身不收费。你付的是自己模型厂商的 API 费用 —— 用已配置 provider 的 Key,按量付给厂商。Aviso 不在中间加价,也没有订阅或信用点。",
+    enA: "The extension itself doesn't charge. You pay your own provider's API costs using your configured provider key, billed by the provider. Aviso adds no markup, no subscription, no credits."
   },
   {
     zhQ: "必须自己准备 API Key 吗?",
     enQ: "Do I need my own API key?",
-    zhA: "是的。Aviso 是 BYOK(自备 Key)直连:你在设置里填入自己的模型 API Key,浏览器直接连你选的厂商。内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用;OpenAI 与 Anthropic 支持配置,实际可用性取决于你的 Key、模型权限和 provider 状态。",
-    enA: "Yes. Aviso is BYOK (bring your own key) and direct: you enter your own model API key in settings, and the browser connects straight to your chosen provider. Internal testing and user feedback confirm the Doubao / Volcengine Ark path works; OpenAI and Anthropic are configurable, with availability depending on your key, model access, and provider status."
+    zhA: "是的。Aviso 是 BYOK(自备 Key)直连:你在设置里填入自己的模型 API Key,浏览器直接连你选的厂商。内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用;OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持配置,实际可用性取决于你的 Key、模型权限和 provider 状态。DeepSeek 已有一次 owner 手动 connectivity pass;Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 仍不能写成 live validated。",
+    enA: "Yes. Aviso is BYOK (bring your own key) and direct: you enter your own model API key in settings, and the browser connects straight to your chosen provider. Internal testing and user feedback confirm the Doubao / Volcengine Ark path works; OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan are configurable, with availability depending on your key, model access, and provider status. DeepSeek has one owner-manual connectivity pass; Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan should not be described as live-provider validated."
   },
   {
     zhQ: "Aviso 会收集我的浏览数据吗?",
@@ -510,8 +519,8 @@ const faqs = [
   {
     zhQ: "当前版本的边界是什么?",
     enQ: "What are the current limits?",
-    zhA: "核心功能已经实现、可以日常使用,并经过内部手动验收;同时我们对当前的可用边界保持坦白 —— 比如内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用,OpenAI/Anthropic 支持配置但仍取决于你的 Key 和模型权限。首段返回速度会受网络、模型、输入长度和 provider 状态影响,这一点我们不夸口。",
-    enA: "The core features are built, usable day-to-day, and internally manually verified — while we stay candid about the current edges, like internal testing and user feedback confirming the Doubao / Volcengine Ark path works, and OpenAI / Anthropic being configurable depending on your key and model access. First-token latency depends on network, model, input length, and provider status; we don't overpromise there."
+    zhA: "核心功能已经实现、可以日常使用,并经过内部手动验收;同时我们对当前的可用边界保持坦白 —— 比如内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用,OpenAI/Anthropic/DeepSeek/Kimi-Moonshot/OpenRouter/Gemini/Tencent Hunyuan 支持配置但仍取决于你的 Key 和模型权限。OpenRouter、Gemini 和 Tencent Hunyuan 模型 ID 需要手动填写,Aviso 不自动读取模型列表。首段返回速度会受网络、模型、输入长度和 provider 状态影响,当前不宣称 p50/p95 已达标。",
+    enA: "The core features are built, usable day-to-day, and internally manually verified — while we stay candid about the current edges, like internal testing and user feedback confirming the Doubao / Volcengine Ark path works, and OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan being configurable depending on your key and model access. OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually; Aviso does not automatically read model lists. First-token latency depends on network, model, input length, and provider status; we do not claim p50/p95 targets have been met."
   }
 ] as const;
 
@@ -687,6 +696,23 @@ export default function Home(): JSX.Element {
                 <span>
                   {t.doubao}
                   <small>{t.ark}</small>
+                </span>
+              </span>
+              <span className="sep" />
+              <span className="p">
+                <span className="glyph">
+                  <GlyphProvider />
+                </span>
+                DeepSeek
+              </span>
+              <span className="sep" />
+              <span className="p">
+                <span className="glyph">
+                  <GlyphProvider />
+                </span>
+                <span>
+                  Kimi
+                  <small>Moonshot</small>
                 </span>
               </span>
             </div>
@@ -868,6 +894,16 @@ export default function Home(): JSX.Element {
                     </span>
                     <span className="nm">
                       <b>OpenAI</b>
+                      <small>{t.provUnset}</small>
+                    </span>
+                    <span className="st idle">{t.provNotSet}</span>
+                  </div>
+                  <div className="provrow">
+                    <span className="glyph">
+                      <GlyphProvider />
+                    </span>
+                    <span className="nm">
+                      <b>DeepSeek / Kimi</b>
                       <small>{t.provUnset}</small>
                     </span>
                     <span className="st idle">{t.provNotSet}</span>

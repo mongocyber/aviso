@@ -1,12 +1,13 @@
 import type { PlasmoCSConfig, PlasmoGetShadowHostId } from "plasmo"
 import { useEffect, useMemo, useRef, useState } from "react"
 
+import { AvisoMenuItem } from "~components"
 import {
   aviso,
-  AvisoIcon,
   AvisoMark,
   useSyncedAvisoTheme,
-  visuallyStable
+  visuallyStable,
+  type AvisoIconName
 } from "~styles/aviso"
 import type { PromptTemplate } from "~types/history"
 import type { MessageResponse } from "~types/messages"
@@ -26,7 +27,7 @@ export const config: PlasmoCSConfig = {
 }
 
 export const getShadowHostId: PlasmoGetShadowHostId = () =>
-  "contextai-double-click-menu-host"
+  "aviso-double-click-menu-host"
 
 type MenuState = {
   visible: boolean
@@ -55,11 +56,11 @@ const INITIAL_MENU: MenuState = {
 }
 
 const HOST_IDS = [
-  "contextai-toolbar-host",
-  "contextai-floating-host",
-  "contextai-command-host",
-  "contextai-clipboard-host",
-  "contextai-double-click-menu-host"
+  "aviso-toolbar-host",
+  "aviso-floating-host",
+  "aviso-command-host",
+  "aviso-clipboard-host",
+  "aviso-double-click-menu-host"
 ]
 
 const CODE_EDITOR_SELECTOR = [
@@ -388,50 +389,21 @@ function MenuButton({
   disabled,
   onClick
 }: {
-  icon: Parameters<typeof AvisoIcon>[0]["name"]
+  icon: AvisoIconName
   label: string
   disabled?: boolean
   onClick?: () => void
 }) {
-  const { tokens: ui } = useSyncedAvisoTheme()
-
   return (
-    <button
-      type="button"
+    <AvisoMenuItem
+      icon={icon}
       role="menuitem"
       disabled={disabled}
       onClick={onClick}
       className="aviso-double-click-menu-button"
-      style={{
-        width: "100%",
-        minHeight: 34,
-        display: "flex",
-        alignItems: "center",
-        gap: 9,
-        border: "none",
-        background: "transparent",
-        color: disabled ? ui.text3 : ui.text2,
-        borderRadius: aviso.radiusSm,
-        padding: "8px 9px",
-        fontFamily: aviso.font,
-        fontSize: 13,
-        fontWeight: 500,
-        textAlign: "left",
-        cursor: disabled ? "default" : "pointer",
-        opacity: disabled ? 0.62 : 1,
-        transition: `.15s ${aviso.ease}`
-      }}>
-      <AvisoIcon name={icon} size={15} style={{ color: ui.accent }} />
-      <span
-        style={{
-          minWidth: 0,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap"
-        }}>
-        {label}
-      </span>
-    </button>
+      style={{ minHeight: 34 }}>
+      {label}
+    </AvisoMenuItem>
   )
 }
 

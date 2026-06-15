@@ -57,6 +57,8 @@ Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页�
 
 这类站点访问不用于抓取任意远端链接正文，不用于广告、遥测、分析或项目方远端日志。只有当用户主动触发需要页面内容的 AI 操作时，相关内容才会由浏览器扩展直接发送到用户选择的模型 provider。
 
+命令面板搜索浏览历史、书签和本地 AI 对话时只生成本地候选。打开 URL、打开历史/书签候选、翻译当前页面和总结当前页面都需要用户选择确认后才执行。
+
 ## Host permissions
 
 当前 host permissions 仅包含已经批准的 provider 域名：
@@ -65,9 +67,14 @@ Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页�
 https://api.openai.com/*
 https://api.anthropic.com/*
 https://ark.cn-beijing.volces.com/*
+https://api.deepseek.com/*
+https://api.moonshot.cn/*
+https://openrouter.ai/*
+https://generativelanguage.googleapis.com/*
+https://api.hunyuan.cloud.tencent.com/*
 ```
 
-它们分别用于 OpenAI、Anthropic 和豆包 / Volcengine Ark OpenAI 兼容接口。OpenAI 和 Anthropic 支持在设置中配置 API Key 和模型 ID，请求由浏览器扩展直连用户选择的 provider。
+它们分别用于 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 的 provider 请求。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID；OpenRouter、Gemini 和 Tencent Hunyuan 的模型 ID 需要用户手动填写，Aviso 不自动读取模型列表。DeepSeek 已有一次 owner 手动 connectivity pass；Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 仍不能写成 live validated。
 
 当前 host permissions 保持在已批准的 provider 域名范围内。
 

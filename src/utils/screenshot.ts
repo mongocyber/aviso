@@ -1,4 +1,4 @@
-import type { ScreenshotRegion } from "~types/messages"
+import type { AIRequestPayload, ScreenshotRegion } from "~types/messages"
 import type { ModelRoute } from "~utils/model-registry"
 
 export type ScreenshotImageSizeBucket =
@@ -62,6 +62,28 @@ export function getScreenshotVisionBlockReason(
 
   if (route.provider.visionSupport === "model-dependent") {
     return "当前豆包 / 火山方舟接入点尚未验证截图理解，请切换到已确认支持视觉输入的模型。"
+  }
+
+  return null
+}
+
+export function getImageInputBlockReason(
+  payload: Pick<AIRequestPayload, "operation" | "imageSource" | "srcUrl">,
+  route: ModelRoute
+): string | null {
+  const hasImageInput =
+    payload.operation === "image_explain" &&
+    (Boolean(payload.srcUrl) ||
+      payload.imageSource === "remote-image" ||
+      payload.imageSource === "screenshot-region")
+  if (!hasImageInput) return null
+
+  if (!route.provider.supportsVision || !route.model.supportsVision) {
+    return "当前模型不支持图片理解，请切换到支持视觉输入的模型。"
+  }
+
+  if (route.provider.visionSupport === "model-dependent") {
+    return `当前 ${route.provider.displayName} 模型尚未验证图片理解，请切换到已确认支持视觉输入的模型。`
   }
 
   return null

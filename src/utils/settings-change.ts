@@ -25,9 +25,8 @@ export function hasDefaultModelChanged(
   previous?: Partial<Settings>,
   next?: Partial<Settings>
 ) {
-  return (
-    Boolean(next?.defaultModel) && previous?.defaultModel !== next.defaultModel
-  )
+  const nextDefaultModel = next?.defaultModel
+  return Boolean(nextDefaultModel) && previous?.defaultModel !== nextDefaultModel
 }
 
 export function hasUiLanguageChanged(

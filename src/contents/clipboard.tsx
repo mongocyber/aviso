@@ -1,7 +1,8 @@
 import type { PlasmoCSConfig, PlasmoGetShadowHostId } from "plasmo"
 import { useCallback, useEffect, useState } from "react"
 
-import { aviso, AvisoIcon, AvisoMark, visuallyStable } from "~styles/aviso"
+import { AvisoButton, AvisoToast } from "~components"
+import { aviso } from "~styles/aviso"
 import type { MessageRequest, MessageResponse } from "~types/messages"
 import {
   detectType,
@@ -19,7 +20,7 @@ export const config: PlasmoCSConfig = {
 }
 
 export const getShadowHostId: PlasmoGetShadowHostId = () =>
-  "contextai-clipboard-host"
+  "aviso-clipboard-host"
 
 type ToastState = {
   visible: boolean
@@ -269,118 +270,55 @@ function ClipboardToast() {
 
   const isCopyContextToast = toast.mode === "copy-context"
   const typeLabel = getClipboardTypeLabel(toast.type, t)
-  const iconColor =
-    isCopyContextToast && toast.status === "failure"
-      ? aviso.danger
-      : aviso.sage400
+  const toastTone =
+    isCopyContextToast && toast.status === "failure" ? "danger" : "neutral"
+  const toastTitle = isCopyContextToast
+    ? toast.message
+    : `${t("toast.copiedPrefix")}${typeLabel}`
+  const toastDetail =
+    isCopyContextToast && toast.detail
+      ? toast.detail
+      : !isCopyContextToast && toast.text.length > 20
+        ? `"${toast.text.slice(0, 20)}..."`
+        : undefined
 
   return (
-    <div
-      style={{
-        position: "fixed",
-        bottom: "24px",
-        right: "24px",
-        background: aviso.darkSurface,
-        border: `1px solid ${
-          isCopyContextToast && toast.status === "failure"
-            ? aviso.danger
-            : aviso.darkLine
-        }`,
-        borderRadius: aviso.radiusMd,
-        padding: "11px 12px 11px 14px",
-        boxShadow: "0 12px 32px -12px oklch(0.2 0.02 155 / .45)",
-        fontFamily: aviso.font,
-        color: aviso.darkText,
-        fontSize: "13.5px",
-        zIndex: 2147483646,
-        display: "flex",
-        alignItems: "center",
-        gap: "11px",
-        maxWidth: "min(330px, calc(100vw - 32px))",
-        overflow: "hidden",
-        animation: "slide-in 0.2s ease-out",
-        ...visuallyStable
-      }}>
-      <AvisoMark size={20} style={{ color: iconColor }} />
-      <span style={{ flex: 1, minWidth: 0 }}>
-        <strong style={{ fontWeight: 600 }}>
-          {isCopyContextToast
-            ? toast.message
-            : `${t("toast.copiedPrefix")}${typeLabel}`}
-        </strong>
-        {isCopyContextToast && toast.detail && (
-          <span
-            style={{
-              color: aviso.darkText3,
-              display: "block",
-              fontSize: "11.5px",
-              marginTop: "2px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap"
-            }}>
-            {toast.detail}
-          </span>
-        )}
-        {!isCopyContextToast && toast.text.length > 20 && (
-          <span
-            style={{
-              color: aviso.darkText3,
-              display: "block",
-              fontSize: "11.5px",
-              marginTop: "2px",
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap"
-            }}>
-            "{toast.text.slice(0, 20)}…"
-          </span>
-        )}
-      </span>
-      {!isCopyContextToast && (
-        <button
-          className="aviso-toast-button"
-          onClick={handleSendToAI}
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: 6,
-            background: aviso.accentSurface,
-            border: "none",
-            borderRadius: aviso.radiusSm,
-            color: aviso.sage300,
-            padding: "5px 9px",
-            fontFamily: aviso.font,
-            fontSize: "12.5px",
-            fontWeight: 600,
-            cursor: "pointer",
-            whiteSpace: "nowrap"
-          }}>
-          <AvisoIcon name="send" size={14} />
-          {t("common.sendToAi")}
-        </button>
-      )}
-      <span
+    <>
+      <AvisoToast
+        tone={toastTone}
+        title={toastTitle}
+        detail={toastDetail}
+        showProgress
+        progressDurationMs={isCopyContextToast ? 2600 : 3000}
+        action={
+          !isCopyContextToast ? (
+            <AvisoButton
+              className="aviso-toast-button"
+              icon="send"
+              size="sm"
+              variant="secondary"
+              onClick={handleSendToAI}
+              style={{
+                background: aviso.accentSurface,
+                border: "none",
+                color: aviso.sage300
+              }}>
+              {t("common.sendToAi")}
+            </AvisoButton>
+          ) : undefined
+        }
         style={{
-          position: "absolute",
-          left: 0,
-          bottom: 0,
-          height: 2,
-          width: "100%",
-          background: iconColor,
-          transformOrigin: "left",
-          animation: `timer ${
-            isCopyContextToast ? "2.6s" : "3s"
-          } linear forwards`
+          position: "fixed",
+          bottom: "24px",
+          right: "24px",
+          zIndex: 2147483646,
+          animation: "slide-in 0.2s ease-out"
         }}
       />
       <style>{`
         @keyframes slide-in {
           from { transform: translateY(20px); opacity: 0; }
           to { transform: translateY(0); opacity: 1; }
-        }
-        @keyframes timer {
-          to { transform: scaleX(0); }
         }
         .aviso-toast-button {
           transition:
@@ -399,7 +337,7 @@ function ClipboardToast() {
           box-shadow: ${aviso.focusRing};
         }
       `}</style>
-    </div>
+    </>
   )
 }
 

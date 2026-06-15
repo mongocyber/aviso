@@ -1,4 +1,5 @@
 import type { MessageRequest } from "~types/messages"
+import { buildSafeErrorLog } from "~utils/errors"
 
 export const TOP_FRAME_ID = 0
 
@@ -33,17 +34,27 @@ export async function sendMessageToFrame<TResponse = unknown>(
 
     return { ok: true, frameId, response: response as TResponse }
   } catch (err) {
-    const error = err instanceof Error ? err.message : String(err)
+    const error = getSendMessageError(err)
     console.warn("[Aviso] Failed to send tab message", {
       label,
       action: message.action,
       tabId,
       frameId,
       frameUrlPresent: Boolean(frameUrl),
-      error
+      error: buildSafeErrorLog(err)
     })
     return { ok: false, frameId, error }
   }
+}
+
+function getSendMessageError(errorLike: unknown): string {
+  if (errorLike instanceof Error) return errorLike.message
+  if (typeof errorLike === "string") return errorLike
+  if (typeof errorLike === "object" && errorLike !== null) {
+    const message = (errorLike as { message?: unknown }).message
+    if (typeof message === "string") return message
+  }
+  return "Failed to send tab message"
 }
 
 export async function sendMessageToDisplayFrame<TResponse = unknown>(

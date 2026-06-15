@@ -1,6 +1,6 @@
 # Aviso Execution Plan
 
-Updated: 2026-06-08
+Updated: 2026-06-12
 
 ## 当前维护目标
 
@@ -41,7 +41,7 @@ git diff --check
 - 快捷键说明英文正常。
 - 权限没有变化。
 - 构建通过。
-- OpenAI / Anthropic 模型 ID 可以手动编辑。
+- OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 模型 ID 可以手动编辑；OpenRouter、Gemini 和 Tencent Hunyuan 不自动读取模型列表。
 - 当前文档不再引用已删除的 roadmap、issues、specs、store、design 或 brand 目录。
 
 ## 停线条件

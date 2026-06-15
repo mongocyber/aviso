@@ -1,5 +1,6 @@
 import type { Settings } from "~types/history"
 import type { MessageRequest, MessageResponse } from "~types/messages"
+import { buildSafeErrorLog, normalizeError } from "~utils/errors"
 import { createI18n, resolveSettingsUiLanguage } from "~utils/i18n"
 import { parseIntentLocally } from "~utils/intent"
 import {
@@ -65,10 +66,9 @@ function ensureContextMenusRegistered(reason: string) {
   contextMenusInitialized = true
   void registerContextMenus().catch((err) => {
     contextMenusInitialized = false
-    const error = err instanceof Error ? err.message : String(err)
     console.warn("[Aviso] Failed to register context menus", {
       reason,
-      error
+      error: buildSafeErrorLog(err)
     })
   })
 }
@@ -174,7 +174,7 @@ async function handleMessage(
             void getRuntimeConfigSnapshot().catch((err) => {
               console.warn("[Aviso] Runtime config warmup failed", {
                 requestId: request.payload.requestId,
-                error: err instanceof Error ? err.message : String(err)
+                error: buildSafeErrorLog(err)
               })
             })
           }
@@ -252,7 +252,7 @@ async function handleMessage(
           )
           sendResponse({ success: true })
         } catch (err) {
-          const error = err instanceof Error ? err.message : String(err)
+          const error = normalizeError(err)
           // 通知浮窗停止 loading 并显示错误
           if (tabId) {
             await sendMessageToFrame(
@@ -294,6 +294,7 @@ async function handleMessage(
       }
 
       case "VALIDATE_PROVIDER_CONNECTIVITY": {
+        clearAIRuntimeCaches()
         const summary = await handleProviderConnectivityTest(request.payload)
         sendResponse({ success: true, data: summary })
         break
@@ -552,13 +553,16 @@ async function handleMessage(
       default: {
         sendResponse({
           success: false,
-          error: `Unknown action: ${(request as any).action}`
+          error: "Unknown action"
         })
       }
     }
   } catch (err) {
-    const error = err instanceof Error ? err.message : String(err)
-    console.error("[Aviso] Unhandled error in message handler:", error)
+    const error = normalizeError(err)
+    console.error(
+      "[Aviso] Unhandled error in message handler:",
+      buildSafeErrorLog(err)
+    )
     sendResponse({ success: false, error })
   }
 }
@@ -590,7 +594,7 @@ async function searchBookmarks(query: string): Promise<{
   try {
     nativeResults = await searchBookmarksNatively(trimmedQuery)
   } catch (err) {
-    nativeError = err instanceof Error ? err.message : String(err)
+    nativeError = buildSafeErrorLog(err).category
   }
 
   const nativeBookmarks = onlyUrlBookmarks(nativeResults)

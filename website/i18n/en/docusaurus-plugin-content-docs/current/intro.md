@@ -21,7 +21,7 @@ Current facts:
 - Right-click menu, selection toolbar, selection translation card, command palette, double-click quick menu, clipboard prompt, in-page result panel, and Popup settings are implemented.
 - Multiple AI service configs, default service switching, editable model IDs, Chinese / English UI, and Manifest localization are implemented.
 - Internal testing and user feedback confirm the Doubao / Volcengine Ark path works.
-- OpenAI and Anthropic can be configured with an API key and model ID; actual availability depends on your key, model access, and provider status.
+- OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan can be configured with an API key and model ID. OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually, and Aviso does not automatically read model lists. DeepSeek has one owner-manual connectivity pass; Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan should not be described as live-provider validated. Actual availability depends on your key, model access, and provider status.
 - This site explains the current implemented capabilities and boundaries. The extension has been submitted for review, but it has not been approved by the Chrome Web Store yet.
 
 ## Who It Is For
@@ -43,7 +43,9 @@ This means:
 - You need to provide your own provider API key.
 - Provider billing, data handling, and terms are governed by your account relationship with that provider.
 - Aviso does not promise instant model responses. First-token latency depends on network, model, input length, provider status, and API key status.
+- Aviso has improved visible waiting states and a local summary-only timing method, but it does not claim live provider p50 / p95 targets have been achieved.
 - Aviso does not fetch arbitrary remote link bodies and does not request broad host permissions for that purpose.
+- Command-palette history, bookmark, and local AI conversation results are local candidates. Open/page actions require user selection and confirmation; there is no autonomous browsing or web search.
 - Screenshot capability is kept as an internal right-click path, not a main public entry point or promotional feature.
 
 ## Documentation Entry

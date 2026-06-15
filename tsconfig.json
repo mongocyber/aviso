@@ -2,7 +2,12 @@
   "extends": "plasmo/templates/tsconfig.base",
   "exclude": [
     "node_modules",
+    ".wxt",
+    ".output",
     "tests",
+    "src/entrypoints",
+    "src/wxt",
+    "wxt.config.ts",
     "website"
   ],
   "include": [

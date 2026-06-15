@@ -1,0 +1,55 @@
+{
+  "extends": "./.wxt/tsconfig.json",
+  "exclude": [
+    "node_modules",
+    "tests",
+    "website"
+  ],
+  "include": [
+    ".wxt/wxt.d.ts",
+    "src/background/**/*.ts",
+    "src/components/**/*.ts",
+    "src/components/**/*.tsx",
+    "src/contents/**/*.ts",
+    "src/contents/**/*.tsx",
+    "src/entrypoints/**/*.ts",
+    "src/entrypoints/**/*.tsx",
+    "src/popup/**/*.tsx",
+    "src/styles/**/*.tsx",
+    "src/types/**/*.ts",
+    "src/utils/**/*.ts",
+    "src/wxt/**/*.tsx",
+    "wxt.config.ts"
+  ],
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "baseUrl": ".",
+    "strict": false,
+    "paths": {
+      "~styles": [
+        "./src/styles"
+      ],
+      "~styles/*": [
+        "./src/styles/*"
+      ],
+      "~components": [
+        "./src/components"
+      ],
+      "~components/*": [
+        "./src/components/*"
+      ],
+      "~types": [
+        "./src/types"
+      ],
+      "~types/*": [
+        "./src/types/*"
+      ],
+      "~utils": [
+        "./src/utils"
+      ],
+      "~utils/*": [
+        "./src/utils/*"
+      ]
+    }
+  }
+}

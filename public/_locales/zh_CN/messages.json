@@ -1,0 +1,8 @@
+{
+  "app_description": {
+    "message": "智能浏览器助手，感知操作对象，就地调用 AI，浮窗展示结果。"
+  },
+  "open_command_palette_description": {
+    "message": "打开命令面板"
+  }
+}

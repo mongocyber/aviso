@@ -47,6 +47,10 @@ temp/
 # plasmo - https://www.plasmo.com
 .plasmo
 
+# WXT generated types/cache
+.wxt
+.output
+
 # bpp - http://bpp.browser.market/
 keys.json
 
