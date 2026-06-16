@@ -1,5 +1,9 @@
 import type { Settings } from "~types/history"
-import type { MessageRequest, MessageResponse } from "~types/messages"
+import type {
+  AIStreamChunk,
+  MessageRequest,
+  MessageResponse
+} from "~types/messages"
 import { buildSafeErrorLog, normalizeError } from "~utils/errors"
 import { createI18n, resolveSettingsUiLanguage } from "~utils/i18n"
 import { parseIntentLocally } from "~utils/intent"
@@ -41,6 +45,8 @@ import {
 
 const MAX_BOOKMARK_RESULTS = 12
 const MAX_BROWSER_HISTORY_RESULTS = 12
+const STREAM_CHUNK_BATCH_MS = 40
+const STREAM_CHUNK_BATCH_MAX_CHARS = 640
 const activeAIRequests = new Map<string, AbortController>()
 
 type BookmarkSearchSource = "native" | "tree-fallback"
@@ -55,6 +61,82 @@ type BookmarkSearchMeta = {
   source: BookmarkSearchSource
   fallbackUsed: boolean
   nativeError?: string
+}
+
+type StreamChunkDispatcher = {
+  push: (chunk: AIStreamChunk) => void
+  flush: () => Promise<void>
+}
+
+function createStreamChunkDispatcher(input: {
+  tabId?: number
+  requestId: string
+  frameId: number
+}): StreamChunkDispatcher {
+  let buffered: AIStreamChunk | undefined
+  let flushTimer: ReturnType<typeof setTimeout> | undefined
+  let sendQueue = Promise.resolve()
+
+  const enqueueChunk = (chunk: AIStreamChunk) => {
+    if (!input.tabId) return
+    sendQueue = sendQueue.then(() =>
+      sendMessageToFrame(
+        input.tabId!,
+        {
+          action: "AI_STREAM_CHUNK",
+          payload: { chunk, requestId: input.requestId }
+        },
+        {
+          frameId: input.frameId,
+          label: "ai-stream-chunk"
+        }
+      ).then(() => undefined)
+    )
+  }
+
+  const clearFlushTimer = () => {
+    if (!flushTimer) return
+    clearTimeout(flushTimer)
+    flushTimer = undefined
+  }
+
+  const flushBuffered = () => {
+    clearFlushTimer()
+    if (!buffered) return
+    const chunk = buffered
+    buffered = undefined
+    enqueueChunk(chunk)
+  }
+
+  return {
+    push: (chunk) => {
+      if (!input.tabId) return
+      if (chunk.done || chunk.perfSummary) {
+        flushBuffered()
+        enqueueChunk(chunk)
+        return
+      }
+
+      if (!chunk.text) return
+      if (buffered && buffered.kind !== chunk.kind) flushBuffered()
+      buffered = buffered
+        ? { ...buffered, text: buffered.text + chunk.text }
+        : { ...chunk }
+
+      if (buffered.text.length >= STREAM_CHUNK_BATCH_MAX_CHARS) {
+        flushBuffered()
+        return
+      }
+
+      if (!flushTimer) {
+        flushTimer = setTimeout(flushBuffered, STREAM_CHUNK_BATCH_MS)
+      }
+    },
+    flush: async () => {
+      flushBuffered()
+      await sendQueue
+    }
+  }
 }
 
 // ── 初始化 ──────────────────────────────────────────────────────────────────
@@ -201,10 +283,21 @@ async function handleMessage(
         break
       }
 
+      case "WARM_RUNTIME_CONFIG": {
+        await getRuntimeConfigSnapshot()
+        sendResponse({ success: true })
+        break
+      }
+
       // ── 流式 AI 请求：用 sender.tab.id 路由 chunk 回当前页面 ────────────
       case "AI_REQUEST": {
         const tabId = senderTabId
         const responseFrameId = sender.frameId ?? 0
+        const streamChunks = createStreamChunkDispatcher({
+          tabId,
+          requestId: request.requestId,
+          frameId: responseFrameId
+        })
         activeAIRequests.get(request.requestId)?.abort()
         const abortController = new AbortController()
         activeAIRequests.set(request.requestId, abortController)
@@ -232,19 +325,7 @@ async function handleMessage(
             { ...request.payload, timing },
             (chunk) => {
               if (chunk.perfSummary) perfSummary = chunk.perfSummary
-              if (tabId) {
-                void sendMessageToFrame(
-                  tabId,
-                  {
-                    action: "AI_STREAM_CHUNK",
-                    payload: { chunk, requestId: request.requestId }
-                  },
-                  {
-                    frameId: responseFrameId,
-                    label: "ai-stream-chunk"
-                  }
-                )
-              }
+              streamChunks.push(chunk)
             },
             {
               requestId: request.requestId,
@@ -258,6 +339,7 @@ async function handleMessage(
           if (!perfSummary && returnedPerfSummary) {
             perfSummary = returnedPerfSummary
           }
+          await streamChunks.flush()
           if (tabId && perfSummary) {
             await sendMessageToFrame(
               tabId,
@@ -297,6 +379,7 @@ async function handleMessage(
         } catch (err) {
           const error = normalizeError(err)
           // 通知浮窗停止 loading 并显示错误
+          await streamChunks.flush()
           if (tabId) {
             await sendMessageToFrame(
               tabId,

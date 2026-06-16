@@ -60,6 +60,10 @@ export type MessageRequest =
       action: "CANCEL_AI_REQUEST"
       payload: { requestId: string }
     }
+  | {
+      action: "WARM_RUNTIME_CONFIG"
+      payload?: { requestId?: string }
+    }
   | { action: "SAVE_HISTORY"; payload: import("~types/history").HistoryEntry }
   | { action: "GET_HISTORY" }
   | { action: "SEARCH_HISTORY"; payload: { query: string } }

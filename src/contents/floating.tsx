@@ -283,6 +283,14 @@ function FloatingWindow() {
   const copyTimer = useRef<ReturnType<typeof setTimeout>>()
   const slowTimer = useRef<ReturnType<typeof setTimeout>>()
   const conversationTimer = useRef<ReturnType<typeof setTimeout>>()
+  const conversationPersistenceKey = state.loading
+    ? ""
+    : state.messages
+        .map(
+          (message) =>
+            `${message.role}:${message.reqId ?? ""}:${message.content.length}`
+        )
+        .join("|")
 
   const sendAIRequest = (
     requestId: string,
@@ -588,21 +596,31 @@ function FloatingWindow() {
 
   useEffect(() => {
     clearTimeout(conversationTimer.current)
+    const currentState = stateRef.current
 
     if (
-      !state.visible ||
-      !state.sessionId ||
-      !state.messages.some((message) => message.content.trim())
+      !currentState.visible ||
+      currentState.loading ||
+      !currentState.sessionId ||
+      !currentState.messages.some((message) => message.content.trim())
     ) {
       return
     }
 
     conversationTimer.current = setTimeout(() => {
-      persistConversation(state)
+      persistConversation(stateRef.current)
     }, 250)
 
     return () => clearTimeout(conversationTimer.current)
-  }, [state])
+  }, [
+    state.visible,
+    state.loading,
+    state.sessionId,
+    state.createdAt,
+    state.trigger,
+    state.operation,
+    conversationPersistenceKey
+  ])
 
   // 内容增长 / 新消息时自动滚动到底部
   useEffect(() => {

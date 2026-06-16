@@ -50,6 +50,23 @@ function logPerfSummaryFromResponse(response?: MessageResponse): void {
   if (perfSummary) console.info(`[Aviso perf] ${JSON.stringify(perfSummary)}`)
 }
 
+function warmRuntimeConfig(requestId: string): void {
+  chrome.runtime.sendMessage(
+    {
+      action: "WARM_RUNTIME_CONFIG",
+      payload: { requestId }
+    },
+    () => {
+      const runtimeError = chrome.runtime.lastError
+      if (!runtimeError) return
+      console.warn("[Aviso] Runtime config warmup failed", {
+        requestId,
+        error: runtimeError.message
+      })
+    }
+  )
+}
+
 type ToolbarPlacement = "above" | "below"
 type ToolbarPosition = {
   top: number
@@ -463,6 +480,7 @@ function SelectionToolbar() {
       return
     }
 
+    warmRuntimeConfig(requestId)
     inlineRequestRef.current = requestId
     setInlineCard({
       visible: true,

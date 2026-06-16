@@ -3304,6 +3304,69 @@ test("page summary paths parallelize page extraction and runtime warmup", () => 
   assert.match(runtimeCacheSource, /clearPageContentMemoryCache/)
 })
 
+test("inline AI requests warm runtime config before provider calls", () => {
+  const messageTypesSource = readFileSync(
+    new URL("../src/types/messages.ts", import.meta.url),
+    "utf8"
+  )
+  const backgroundSource = readFileSync(
+    new URL("../src/background/index.ts", import.meta.url),
+    "utf8"
+  )
+  const toolbarSource = readFileSync(
+    new URL("../src/contents/toolbar.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(messageTypesSource, /action: "WARM_RUNTIME_CONFIG"/)
+  assert.match(backgroundSource, /case "WARM_RUNTIME_CONFIG"/)
+  assert.match(backgroundSource, /await getRuntimeConfigSnapshot\(\)/)
+  assert.match(toolbarSource, /function warmRuntimeConfig\(requestId: string\)/)
+  assert.match(toolbarSource, /action: "WARM_RUNTIME_CONFIG"/)
+  assert.match(toolbarSource, /warmRuntimeConfig\(requestId\)/)
+  assert.match(
+    toolbarSource,
+    /if \(route\.route === "result-panel"\)[\s\S]*return[\s\S]*warmRuntimeConfig\(requestId\)/
+  )
+})
+
+test("background batches stream chunks while flushing done and perf summaries", () => {
+  const backgroundSource = readFileSync(
+    new URL("../src/background/index.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(backgroundSource, /const STREAM_CHUNK_BATCH_MS = 40/)
+  assert.match(backgroundSource, /const STREAM_CHUNK_BATCH_MAX_CHARS = 640/)
+  assert.match(backgroundSource, /function createStreamChunkDispatcher/)
+  assert.match(backgroundSource, /if \(chunk\.done \|\| chunk\.perfSummary\)/)
+  assert.match(backgroundSource, /buffered\.kind !== chunk\.kind/)
+  assert.match(backgroundSource, /setTimeout\(flushBuffered, STREAM_CHUNK_BATCH_MS\)/)
+  assert.match(backgroundSource, /streamChunks\.push\(chunk\)/)
+  assert.match(backgroundSource, /await streamChunks\.flush\(\)/)
+  assert.doesNotMatch(
+    backgroundSource,
+    /void sendMessageToFrame\(\s*\n\s*tabId,\s*\n\s*\{\s*\n\s*action: "AI_STREAM_CHUNK"/
+  )
+})
+
+test("floating conversation persistence waits for stream completion", () => {
+  const floatingSource = readFileSync(
+    new URL("../src/contents/floating.tsx", import.meta.url),
+    "utf8"
+  )
+  const persistenceEffectBlock =
+    floatingSource.match(
+      /useEffect\(\(\) => \{\s*clearTimeout\(conversationTimer\.current\)[\s\S]*?\n  \}, \[[\s\S]*?\n  \]\)/
+    )?.[0] ?? ""
+
+  assert.match(floatingSource, /const conversationPersistenceKey = state\.loading/)
+  assert.match(persistenceEffectBlock, /currentState\.loading/)
+  assert.match(persistenceEffectBlock, /persistConversation\(stateRef\.current\)/)
+  assert.match(persistenceEffectBlock, /conversationPersistenceKey/)
+  assert.doesNotMatch(persistenceEffectBlock, /\}, \[state\]\)/)
+})
+
 test("short translation memory cache is service-worker only and hashed", () => {
   const aiClientSource = readFileSync(
     new URL("../src/background/ai-client.ts", import.meta.url),
