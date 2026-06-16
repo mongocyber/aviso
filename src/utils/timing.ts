@@ -23,6 +23,16 @@ export type PerfContextType =
   | "follow_up"
   | "unknown"
 
+export type PerfOperation =
+  | "translate"
+  | "explain"
+  | "polish"
+  | "summarize"
+  | "image_explain"
+  | "custom"
+  | "template"
+  | "unknown"
+
 export type PerfErrorCategory =
   | "none"
   | "missing_first_chunk"
@@ -41,6 +51,7 @@ export type PerfSummary = {
   trigger: string
   provider: string
   model_or_endpoint: string
+  operation: PerfOperation
   input_size_bucket: PerfInputSizeBucket
   context_type: PerfContextType
   t_ui_visible_ms: number | null
@@ -55,10 +66,35 @@ export type PerfSummaryInput = {
   trigger?: string
   provider?: string
   modelOrEndpoint?: string
+  operation?: string
   inputChars?: number
   contextType?: PerfContextType
   timing?: RequestTiming
   errorCategory?: PerfErrorCategory
+}
+
+export type SelectionTtftDogfoodOperation =
+  | "selection_translate"
+  | "selection_explain"
+
+export type SelectionTtftDogfoodRow = {
+  provider: string
+  model_or_endpoint: string
+  operation: SelectionTtftDogfoodOperation
+  input_size_bucket: PerfInputSizeBucket
+  t_ui_visible_ms: number | null
+  t_provider_start_ms: number | null
+  t_first_chunk_ms: number | null
+  t_done_ms: number | null
+  error_category: PerfErrorCategory
+}
+
+export type SelectionTtftAggregate = {
+  operation: SelectionTtftDogfoodOperation | "selection_all"
+  sample_count: number
+  p50_first_chunk_ms: number | null
+  p95_first_chunk_ms: number | null
+  excluded_count: number
 }
 
 export function nowMs(): number {
@@ -171,6 +207,7 @@ export function buildPerfSummary(input: PerfSummaryInput): PerfSummary {
     trigger: sanitizeTrigger(input.trigger),
     provider: sanitizeProvider(input.provider),
     model_or_endpoint: sanitizeModelOrEndpoint(input.modelOrEndpoint),
+    operation: sanitizeOperation(input.operation),
     input_size_bucket: bucketInputSize(input.inputChars),
     context_type: input.contextType ?? "unknown",
     t_ui_visible_ms: elapsedFromTrigger(timing, timing?.floatingShownAt),
@@ -188,8 +225,56 @@ export function buildPerfSummary(input: PerfSummaryInput): PerfSummary {
   }
 }
 
-export function logPerfSummary(input: PerfSummaryInput): void {
-  console.info("[Aviso perf]", buildPerfSummary(input))
+export function logPerfSummary(input: PerfSummaryInput): PerfSummary {
+  const summary = buildPerfSummary(input)
+  console.info(`[Aviso perf] ${JSON.stringify(summary)}`)
+  return summary
+}
+
+export function buildSelectionTtftDogfoodRow(
+  summary: PerfSummary
+): SelectionTtftDogfoodRow | null {
+  const operation = getSelectionTtftOperation(summary)
+  if (!operation) return null
+
+  return {
+    provider: summary.provider,
+    model_or_endpoint: summary.model_or_endpoint,
+    operation,
+    input_size_bucket: summary.input_size_bucket,
+    t_ui_visible_ms: summary.t_ui_visible_ms,
+    t_provider_start_ms: summary.t_provider_start_ms,
+    t_first_chunk_ms: summary.t_first_chunk_ms,
+    t_done_ms: summary.t_done_ms,
+    error_category: summary.error_category
+  }
+}
+
+export function buildSelectionTtftAggregate(
+  summaries: PerfSummary[],
+  operation: SelectionTtftDogfoodOperation | "selection_all" = "selection_all"
+): SelectionTtftAggregate {
+  const rows = summaries
+    .map(buildSelectionTtftDogfoodRow)
+    .filter((row): row is SelectionTtftDogfoodRow => {
+      if (!row) return false
+      return operation === "selection_all" || row.operation === operation
+    })
+  const eligible = rows.filter(
+    (row) =>
+      row.error_category === "none" &&
+      row.t_provider_start_ms != null &&
+      row.t_first_chunk_ms != null
+  )
+  const firstChunkTimes = eligible.map((row) => row.t_first_chunk_ms as number)
+
+  return {
+    operation,
+    sample_count: eligible.length,
+    p50_first_chunk_ms: percentileNearestRank(firstChunkTimes, 50),
+    p95_first_chunk_ms: percentileNearestRank(firstChunkTimes, 95),
+    excluded_count: rows.length - eligible.length
+  }
 }
 
 export function categorizePerfError(err: unknown): PerfErrorCategory {
@@ -247,6 +332,21 @@ function sanitizeTrigger(trigger: string | undefined): string {
   return trigger && allowed.has(trigger) ? trigger : "unknown"
 }
 
+function sanitizeOperation(operation: string | undefined): PerfOperation {
+  if (
+    operation === "translate" ||
+    operation === "explain" ||
+    operation === "polish" ||
+    operation === "summarize" ||
+    operation === "image_explain" ||
+    operation === "custom" ||
+    operation === "template"
+  ) {
+    return operation
+  }
+  return "unknown"
+}
+
 function sanitizeProvider(provider: string | undefined): string {
   if (
     provider === "openai" ||
@@ -270,6 +370,25 @@ function sanitizeModelOrEndpoint(modelOrEndpoint: string | undefined): string {
     return "redacted_endpoint"
   }
   return value
+}
+
+function getSelectionTtftOperation(
+  summary: PerfSummary
+): SelectionTtftDogfoodOperation | null {
+  if (summary.context_type !== "selection") return null
+  if (summary.operation === "translate") return "selection_translate"
+  if (summary.operation === "explain") return "selection_explain"
+  return null
+}
+
+function percentileNearestRank(
+  values: number[],
+  percentile: 50 | 95
+): number | null {
+  if (values.length === 0) return null
+  const sorted = [...values].sort((a, b) => a - b)
+  const index = Math.max(0, Math.ceil((percentile / 100) * sorted.length) - 1)
+  return sorted[index]
 }
 
 function getErrorStatus(err: unknown): number | undefined {

@@ -1,0 +1,1509 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Aviso v0.2 产品端到端测试现场</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f5f6f3;
+        --ink: #202723;
+        --muted: #66736b;
+        --line: #d9dfd6;
+        --panel: #ffffff;
+        --panel-soft: #eef2eb;
+        --ink-soft: #38443d;
+        --accent: #2f6b4f;
+        --accent-2: #365f8b;
+        --warn: #8a5a14;
+        --warn-bg: #fff8df;
+        --danger: #9e2f25;
+        --danger-bg: #fff0ed;
+        --pass: #2f6b4f;
+        --pass-bg: #eaf5ee;
+        --blocked: #6b5889;
+        --blocked-bg: #f3eefb;
+        --shadow: 0 14px 32px rgba(32, 39, 35, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      html {
+        scroll-behavior: smooth;
+      }
+
+      body {
+        margin: 0;
+        background:
+          linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0)),
+          var(--bg);
+        color: var(--ink);
+        font-family:
+          ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
+          "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+        font-size: 15px;
+        line-height: 1.62;
+      }
+
+      a {
+        color: var(--accent-2);
+        text-decoration-thickness: 1px;
+        text-underline-offset: 3px;
+      }
+
+      button,
+      input,
+      textarea {
+        font: inherit;
+      }
+
+      code {
+        border: 1px solid rgba(32, 39, 35, 0.08);
+        border-radius: 5px;
+        background: rgba(32, 39, 35, 0.06);
+        padding: 1px 5px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 0.92em;
+      }
+
+      .wrap {
+        width: min(1220px, calc(100vw - 32px));
+        margin: 0 auto;
+      }
+
+      header {
+        border-bottom: 1px solid #27372f;
+        background: #203328;
+        color: #f7fbf8;
+        padding: 26px 0 22px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin-top: 0;
+      }
+
+      h1 {
+        margin-bottom: 8px;
+        font-size: clamp(24px, 3vw, 34px);
+        line-height: 1.18;
+        letter-spacing: 0;
+      }
+
+      h2 {
+        font-size: 19px;
+        line-height: 1.25;
+      }
+
+      h3 {
+        font-size: 16px;
+        line-height: 1.3;
+      }
+
+      .subhead {
+        max-width: 960px;
+        margin-bottom: 16px;
+        color: #dbe6de;
+      }
+
+      .meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        min-height: 28px;
+        border: 1px solid rgba(255, 255, 255, 0.18);
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.1);
+        color: #f7fbf8;
+        padding: 3px 10px;
+        font-size: 13px;
+      }
+
+      .toolbar {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 1px solid var(--line);
+        background: rgba(245, 246, 243, 0.94);
+        backdrop-filter: blur(10px);
+      }
+
+      .toolbar-inner {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 12px 0;
+      }
+
+      .stats,
+      .actions,
+      .quick-nav {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .stat,
+      .nav-chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 30px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--panel);
+        padding: 4px 10px;
+        color: var(--ink-soft);
+        font-size: 13px;
+      }
+
+      .nav-chip {
+        text-decoration: none;
+      }
+
+      button {
+        min-height: 34px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: var(--panel);
+        color: var(--ink);
+        cursor: pointer;
+        padding: 5px 10px;
+        font-size: 13px;
+      }
+
+      button:hover {
+        border-color: #9caf9e;
+      }
+
+      button.primary {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+      }
+
+      main {
+        padding: 22px 0 56px;
+      }
+
+      .top-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(280px, 0.75fr);
+        gap: 14px;
+      }
+
+      .notice,
+      .panel,
+      .fixture,
+      .section {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--panel);
+        box-shadow: var(--shadow);
+      }
+
+      .notice {
+        padding: 16px;
+      }
+
+      .notice.warning {
+        border-color: #e2cf98;
+        background: var(--warn-bg);
+        color: #463818;
+      }
+
+      .notice h2,
+      .notice h3,
+      .panel h2,
+      .panel h3,
+      .fixture h3 {
+        margin-bottom: 8px;
+      }
+
+      .notice p:last-child,
+      .panel p:last-child,
+      .fixture p:last-child {
+        margin-bottom: 0;
+      }
+
+      .panel {
+        padding: 16px;
+      }
+
+      .summary-box {
+        width: 100%;
+        min-height: 220px;
+        margin-top: 8px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fbfcfa;
+        color: var(--ink);
+        padding: 10px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        font-size: 12px;
+        line-height: 1.5;
+        resize: vertical;
+        white-space: pre-wrap;
+      }
+
+      .quick-nav {
+        margin: 16px 0 18px;
+      }
+
+      .section {
+        margin-top: 14px;
+        overflow: hidden;
+      }
+
+      .section-head {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 12px;
+        border-bottom: 1px solid var(--line);
+        background: var(--panel-soft);
+        padding: 15px 16px;
+      }
+
+      .section-desc {
+        margin-top: 5px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .section-count {
+        color: var(--muted);
+        font-size: 13px;
+        white-space: nowrap;
+      }
+
+      .item {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 260px;
+        gap: 14px;
+        border-bottom: 1px solid var(--line);
+        padding: 14px 16px;
+      }
+
+      .item:last-child {
+        border-bottom: 0;
+      }
+
+      .item-title {
+        font-weight: 760;
+      }
+
+      .item-purpose {
+        margin-top: 4px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .item-steps {
+        margin: 9px 0 0;
+        padding-left: 20px;
+      }
+
+      .item-steps li {
+        margin: 4px 0;
+      }
+
+      .expected {
+        margin-top: 8px;
+        border-left: 3px solid var(--accent);
+        background: #f6faf7;
+        padding: 7px 9px;
+        color: #31473a;
+        font-size: 13px;
+      }
+
+      .status-row {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+      }
+
+      .status-btn {
+        min-height: 32px;
+        padding: 4px 6px;
+      }
+
+      .status-btn.active.pass {
+        border-color: var(--pass);
+        background: var(--pass-bg);
+        color: var(--pass);
+      }
+
+      .status-btn.active.fail {
+        border-color: var(--danger);
+        background: var(--danger-bg);
+        color: var(--danger);
+      }
+
+      .status-btn.active.blocked {
+        border-color: var(--blocked);
+        background: var(--blocked-bg);
+        color: var(--blocked);
+      }
+
+      textarea.note {
+        width: 100%;
+        min-height: 84px;
+        margin-top: 8px;
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #fff;
+        color: var(--ink);
+        padding: 8px;
+        font-size: 13px;
+        resize: vertical;
+      }
+
+      .fixtures {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+        margin-top: 14px;
+      }
+
+      .fixture {
+        padding: 16px;
+      }
+
+      .text-block,
+      .article {
+        border: 1px solid #e5dcc3;
+        border-radius: 8px;
+        background: #fbfaf4;
+        padding: 12px;
+      }
+
+      .text-block {
+        margin: 10px 0;
+      }
+
+      .sensitive-samples {
+        display: grid;
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .sample {
+        border: 1px dashed #d4c7a0;
+        border-radius: 7px;
+        background: #fffdf5;
+        padding: 8px 10px;
+      }
+
+      .image-fixture {
+        display: block;
+        width: 260px;
+        max-width: 100%;
+        height: 150px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #f9faf8;
+      }
+
+      iframe {
+        width: 100%;
+        min-height: 300px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: #fff;
+      }
+
+      .facts {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+        margin-top: 10px;
+      }
+
+      .fact {
+        border: 1px solid var(--line);
+        border-radius: 7px;
+        background: #fbfcfa;
+        padding: 9px 10px;
+        font-size: 13px;
+      }
+
+      .fact strong {
+        display: block;
+        margin-bottom: 3px;
+        color: var(--ink);
+      }
+
+      .ok {
+        color: var(--pass);
+        font-weight: 760;
+      }
+
+      .danger {
+        color: var(--danger);
+        font-weight: 760;
+      }
+
+      .muted {
+        color: var(--muted);
+      }
+
+      @media (max-width: 880px) {
+        .toolbar-inner,
+        .top-grid,
+        .section-head,
+        .item,
+        .fixtures,
+        .facts {
+          grid-template-columns: 1fr;
+        }
+
+        .toolbar-inner {
+          align-items: flex-start;
+        }
+
+        .item {
+          display: grid;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="wrap">
+        <h1>Aviso v0.2 产品端到端测试现场</h1>
+        <p class="subhead">
+          面向现场产品验收的高密度页面，覆盖命令面板、模板、选区、右键、剪贴板、iframe、readability、provider 边界和升级后本地数据保留。它是
+          implementation candidate 的测试工具，不代表 release ready。
+        </p>
+        <div class="meta">
+          <span class="pill">状态：implementation candidate</span>
+          <span class="pill">发布：owner release decision pending</span>
+          <span class="pill">构建：Plasmo 默认，WXT 并行</span>
+          <span class="pill">Provider：不做 live validation</span>
+          <span class="pill">记录：本页 localStorage</span>
+        </div>
+      </div>
+    </header>
+
+    <div class="toolbar">
+      <div class="wrap toolbar-inner">
+        <div class="stats" id="stats"></div>
+        <div class="actions">
+          <button type="button" id="showAllBtn">显示全部</button>
+          <button type="button" id="showOpenBtn">只看未通过</button>
+          <button type="button" id="copyBtn" class="primary">复制脱敏摘要</button>
+          <button type="button" id="resetBtn">重置本页记录</button>
+        </div>
+      </div>
+    </div>
+
+    <main>
+      <div class="wrap">
+        <div class="top-grid">
+          <section class="notice warning">
+            <h2>测试边界</h2>
+            <p>
+              推荐从仓库根目录启动本地 HTTP 服务后打开：
+              <code>http://127.0.0.1:8765/docs/planning/v0.2-product-e2e-playground.html</code>。直接
+              <code>file://</code> 打开时，Chrome 扩展需要允许访问文件 URL。
+            </p>
+            <p>
+              本页没有第三方脚本、遥测、网络请求或 provider 调用。现场测试也不要记录 API Key、raw prompt、raw provider response、私人页面正文、截图/base64、剪贴板原文或完整敏感 URL。
+            </p>
+            <p>
+              Provider 配置支持不等于 live validation；连接测试只能由 owner 明确手动触发，并且只做 summary-only 记录。
+            </p>
+          </section>
+
+          <section class="panel">
+            <h2>验收摘要</h2>
+            <p class="muted">
+              每项记录 pass / fail / blocked / note。本页会对摘要中的明显 Key、手机号、password 和完整 URL 做基础脱敏；默认摘要不包含测试正文或敏感样例原文。
+            </p>
+            <textarea id="summary" class="summary-box" readonly></textarea>
+          </section>
+        </div>
+
+        <nav class="quick-nav" aria-label="测试分组导航">
+          <a class="nav-chip" href="#section-command">命令面板</a>
+          <a class="nav-chip" href="#section-template">模板</a>
+          <a class="nav-chip" href="#section-selection">选区</a>
+          <a class="nav-chip" href="#section-context">右键</a>
+          <a class="nav-chip" href="#section-clipboard">剪贴板</a>
+          <a class="nav-chip" href="#section-iframe">iframe</a>
+          <a class="nav-chip" href="#section-readability">readability</a>
+          <a class="nav-chip" href="#section-provider">provider</a>
+          <a class="nav-chip" href="#section-upgrade">升级保留</a>
+        </nav>
+
+        <section class="panel">
+          <h2>现场素材</h2>
+          <div class="facts">
+            <div class="fact">
+              <strong>存储事实</strong>
+              非敏感设置位于 <code>chrome.storage.sync/contextai_settings</code>；模板和 providerConfigs 属于 settings。
+            </div>
+            <div class="fact">
+              <strong>API Key 边界</strong>
+              Key 位于 <code>chrome.storage.local/contextai_api_keys</code>，provider config key 在 <code>providerConfigKeys</code>；不要读取或打印值。
+            </div>
+            <div class="fact">
+              <strong>历史边界</strong>
+              本地对话历史位于 <code>chrome.storage.local/contextai_history</code>；不要把私人正文写进报告。
+            </div>
+            <div class="fact">
+              <strong>升级保留口径</strong>
+              同一扩展 ID 更新应保留本地数据；换成新扩展 ID 或 WXT unpacked 并行 ID 时，不应误判为同一扩展更新丢数据。
+            </div>
+          </div>
+        </section>
+
+        <div id="checklist"></div>
+
+        <section class="panel" id="fixtures">
+          <h2>可操作测试素材</h2>
+          <div class="fixtures">
+            <div class="fixture">
+              <h3>选区和划词工具栏</h3>
+              <p class="text-block">
+                选择这段普通文字，测试划词工具栏、短文本翻译、解释、润色、总结和发送给 AI。现场记录只写结果，不粘贴真实私人内容。
+              </p>
+              <p class="text-block">
+                Aviso should keep users in control: local search stays local, page actions require confirmation, and provider calls only happen after explicit user intent.
+              </p>
+              <input
+                type="text"
+                value="聚焦这里后测试命令面板快捷键不会被输入框误触发"
+                aria-label="top level shortcut input" />
+            </div>
+
+            <div class="fixture">
+              <h3>剪贴板敏感内容样例</h3>
+              <p>复制普通非敏感文本时应出现 toast；复制敏感样例时应跳过。</p>
+              <div class="sensitive-samples">
+                <div class="sample">普通文本样例：会议纪要只记录结论和下一步。</div>
+                <div class="sample">手机号样例：13800138000</div>
+                <div class="sample">password 样例：password: demo-only</div>
+              </div>
+            </div>
+
+            <div class="fixture">
+              <h3>链接、图片和右键菜单</h3>
+              <p>
+                右键内部链接：
+                <a href="#fixtures">跳转到本页素材区</a>
+                。命令面板 URL 测试可使用 <code>打开 https://example.com</code>。
+              </p>
+              <img
+                class="image-fixture"
+                alt="Aviso 图片右键测试图"
+                src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='520' height='300' viewBox='0 0 520 300'><rect width='520' height='300' fill='%23f9faf8'/><rect x='28' y='28' width='464' height='244' rx='18' fill='%23eef2eb' stroke='%23b9c8bd'/><circle cx='122' cy='114' r='46' fill='%232f6b4f'/><rect x='196' y='88' width='222' height='22' rx='6' fill='%23365f8b'/><rect x='196' y='132' width='266' height='18' rx='5' fill='%2366736b'/><rect x='196' y='166' width='206' height='18' rx='5' fill='%239caf9e'/><text x='42' y='260' fill='%2338443d' font-family='Arial,sans-serif' font-size='22'>image context menu fixture</text></svg>" />
+            </div>
+
+            <div class="fixture">
+              <h3>Readability / 页面总结素材</h3>
+              <article class="article">
+                <h2>Aviso v0.2 端到端验收短文</h2>
+                <p>
+                  Aviso v0.2 的当前目标是在不引入项目方后端、账号体系、订阅、遥测或 provider proxy 的前提下，让浏览器内的 AI 操作更可控。
+                </p>
+                <p>
+                  命令面板应保持 local-first：历史、书签和本地 AI 对话只用于本地候选；打开网页、页面总结和页面翻译都需要用户确认。
+                </p>
+                <p>
+                  Provider 扩展代表配置支持，不代表真实 live validation。当前默认构建仍是 Plasmo，WXT 只是并行路径。
+                </p>
+              </article>
+            </div>
+
+            <div class="fixture">
+              <h3>iframe fixture</h3>
+              <p>
+                本 iframe 引用仓库既有测试页，适合本地 HTTP 打开后验证 iframe 内划词、右键、快捷键桥接、剪贴板和单实例 UI。
+              </p>
+              <iframe
+                src="../../tests/iframe-fixture.html"
+                title="Aviso iframe 产品端到端 fixture"></iframe>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+
+    <script>
+      const STORAGE_KEY = "aviso-v02-product-e2e-playground-20260615"
+
+      const sections = [
+        {
+          id: "command",
+          title: "1. 命令面板",
+          desc:
+            "覆盖打开、直接问 AI、页面总结/翻译 confirm-first、本地历史/书签搜索、危险 URL 拦截、无截图入口和 iframe 快捷键桥接。",
+          items: [
+            {
+              id: "command-open",
+              title: "快捷键打开和关闭",
+              purpose: "确认命令面板能被用户显式打开，并可退出。",
+              steps: [
+                "点击本页空白处。",
+                "Mac 按 Command+Shift+Space；Windows/Linux 按 Ctrl+Shift+Space。",
+                "命令面板应居中出现并自动聚焦输入框；Esc 或点击遮罩可关闭。"
+              ],
+              expected: "打开和关闭都由用户动作触发；不应自动弹出。"
+            },
+            {
+              id: "command-ask-ai",
+              title: "直接问 AI 不自动发送",
+              purpose: "确认输入问题阶段不会触发 provider call。",
+              steps: [
+                "输入一个非敏感问题，例如“问 AI 如何总结这段测试文字”。",
+                "观察候选列表或无结果提示。",
+                "不按 Enter、不点击候选时，不应打开结果面板或发起 provider 请求。"
+              ],
+              expected: "只有用户选择 AI 候选或按 Enter 后，才可能进入 AI 请求路径。"
+            },
+            {
+              id: "command-page-summary",
+              title: "页面总结 confirm-first",
+              purpose: "确认页面总结不会在输入命令时自动读取或发送页面正文。",
+              steps: [
+                "输入“总结当前页面”。",
+                "应先出现页面动作候选。",
+                "只有选择候选后才进入页面读取和结果面板等待态。"
+              ],
+              expected: "记录只写动作是否受控，不写页面正文或 raw prompt。"
+            },
+            {
+              id: "command-page-translate",
+              title: "页面翻译 confirm-first",
+              purpose: "确认页面翻译与页面总结一样需要明确确认。",
+              steps: [
+                "输入“翻译当前页面”。",
+                "检查是否先出现页面翻译候选。",
+                "不选择候选时，不应读取页面或发起 provider 请求。"
+              ],
+              expected: "页面级动作必须 confirm-first。"
+            },
+            {
+              id: "command-local-history-bookmark",
+              title: "浏览历史和书签只做本地搜索",
+              purpose: "确认本地候选不会被自动交给 AI。",
+              steps: [
+                "输入一个本地历史或书签中可能存在的普通关键词。",
+                "结果可显示历史或书签候选。",
+                "不选择 AI 候选时，不应打开结果面板或发送 provider 请求。"
+              ],
+              expected: "历史和书签只用于本地候选，不进入远端服务。"
+            },
+            {
+              id: "command-local-ai-history",
+              title: "本地 AI 对话搜索和恢复",
+              purpose: "确认本地 AI 历史是恢复旧对话，不是重新发送。",
+              steps: [
+                "输入一个本地 AI 历史里可能出现的普通关键词。",
+                "选择本地 AI 对话候选。",
+                "应恢复旧对话；不应自动重新请求 provider。"
+              ],
+              expected: "不要在 note 中粘贴历史对话原文。"
+            },
+            {
+              id: "command-safe-url",
+              title: "打开安全 URL 需要确认",
+              purpose: "确认 open URL intent 不自动跳转。",
+              steps: [
+                "输入“打开 https://example.com”。",
+                "应先出现打开 URL 候选。",
+                "只有选择候选后才打开页面。"
+              ],
+              expected: "confirm-first；不要在记录里写真实敏感 URL。"
+            },
+            {
+              id: "command-danger-url",
+              title: "危险 URL 拦截",
+              purpose: "确认 javascript、chrome、file 等危险或内部 URL 不会执行。",
+              steps: [
+                "输入“打开 javascript:alert(1)”。",
+                "输入“打开 chrome://extensions”。",
+                "应被拦截、显示不可打开提示，或不提供可执行候选。"
+              ],
+              expected: "危险 URL 不应执行。"
+            },
+            {
+              id: "command-no-screenshot",
+              title: "命令面板没有截图入口",
+              purpose: "确认截图不是普通用户主入口。",
+              steps: [
+                "在命令面板输入“截图”或“screenshot”。",
+                "不应出现可执行截图候选。",
+                "截图只能保留在右键内部路径。"
+              ],
+              expected: "不要把截图写成 public selling point。"
+            },
+            {
+              id: "command-iframe-bridge",
+              title: "iframe 内快捷键桥接到顶层",
+              purpose: "确认 iframe 焦点内也只打开一个顶层命令面板。",
+              steps: [
+                "在底部 iframe 内点击输入框或正文。",
+                "按 Command+Shift+Space 或 Ctrl+Shift+Space。",
+                "应打开顶层命令面板，且只有一个实例。"
+              ],
+              expected: "不出现重复命令面板。"
+            }
+          ]
+        },
+        {
+          id: "template",
+          title: "2. 模板",
+          desc:
+            "覆盖新增、编辑、删除后右键菜单同步，模板占位符 {{selection}}，以及无模板状态。",
+          items: [
+            {
+              id: "template-empty",
+              title: "无模板状态不显示空子菜单",
+              purpose: "确认没有模板时右键菜单不出现空的自定义模板入口。",
+              steps: [
+                "在 Popup 模板或指令页确认当前没有自定义模板，或使用干净 profile。",
+                "选中本页普通文字后右键。",
+                "不应出现空的“自定义模板”子菜单。"
+              ],
+              expected: "无模板时 UI 不制造无效入口。"
+            },
+            {
+              id: "template-create-sync",
+              title: "新增模板后右键菜单同步",
+              purpose: "确认保存模板不需要重装扩展即可出现在右键菜单。",
+              steps: [
+                "新增一个测试模板，内容包含 {{selection}}，适用场景选择选中文字。",
+                "保存设置后回到本页，选中普通文字并右键。",
+                "右键菜单应出现刚新增的模板项。"
+              ],
+              expected: "只记录菜单同步结果，不记录模板展开后的完整文本。"
+            },
+            {
+              id: "template-placeholder-selection",
+              title: "模板占位符 {{selection}}",
+              purpose: "确认模板使用当前选区作为占位符素材。",
+              steps: [
+                "在不触发真实 provider call 的前提下测试，例如缺 Key 或临时阻断 provider。",
+                "选中本页普通文字后选择刚创建的模板。",
+                "浮窗应进入缺 Key/模型阻断或等待态；不要在记录中粘贴展开后的 prompt。"
+              ],
+              expected: "{{selection}} 应取当前选区；不能记录 raw prompt。"
+            },
+            {
+              id: "template-edit-sync",
+              title: "编辑模板后右键菜单同步",
+              purpose: "确认模板名称或适用场景变更能同步到右键菜单。",
+              steps: [
+                "编辑测试模板名称或适用场景并保存。",
+                "重新打开本页右键菜单。",
+                "菜单项应反映最新名称或适用状态。"
+              ],
+              expected: "不需要重载扩展才能看到模板变化。"
+            },
+            {
+              id: "template-delete-sync",
+              title: "删除模板后右键菜单同步",
+              purpose: "确认删除后菜单项消失。",
+              steps: [
+                "删除测试模板并保存。",
+                "选中普通文字后右键。",
+                "已删除模板不应继续出现在右键菜单；没有模板时不应显示空子菜单。"
+              ],
+              expected: "删除结果应即时反映在右键菜单。"
+            }
+          ]
+        },
+        {
+          id: "selection",
+          title: "3. 选区",
+          desc:
+            "覆盖划词工具栏、短文本翻译/解释/润色/总结，以及关闭开关后的行为。",
+          items: [
+            {
+              id: "selection-toolbar",
+              title: "划词工具栏出现",
+              purpose: "确认普通选区会显示工具栏。",
+              steps: [
+                "确认设置中的划词工具栏开关为开启。",
+                "选中本页普通中文或英文文本。",
+                "应出现解释、翻译、润色、总结、发给 AI 等入口。"
+              ],
+              expected: "输入框、可编辑区域和 Aviso 自身 UI 不应误触发。"
+            },
+            {
+              id: "selection-short-translate",
+              title: "短文本翻译",
+              purpose: "确认短选区翻译路径可打开，且不自动越过 provider 阻断。",
+              steps: [
+                "选中一小段英文或中文。",
+                "点击工具栏翻译。",
+                "若无可用 Key/模型，应显示配置阻断；不要为了本页验收触发真实 provider call。"
+              ],
+              expected: "短文本任务可以进入受控路径。"
+            },
+            {
+              id: "selection-explain-polish-summary",
+              title: "解释、润色、总结入口",
+              purpose: "确认短文本常用操作都可见。",
+              steps: [
+                "选中本页普通文本。",
+                "依次检查解释、润色、总结入口是否存在。",
+                "只验证入口和阻断/等待态，不记录 raw prompt 或 raw response。"
+              ],
+              expected: "入口完整，真实 provider 调用不属于本页要求。"
+            },
+            {
+              id: "selection-toolbar-off",
+              title: "关闭划词工具栏后不再出现",
+              purpose: "确认功能开关有效。",
+              steps: [
+                "在 Popup 关闭划词工具栏开关。",
+                "回到本页重新选中文本。",
+                "工具栏不应出现；右键菜单仍可按其自身路径测试。"
+              ],
+              expected: "关闭开关后行为明确。"
+            },
+            {
+              id: "selection-inline-translation-off",
+              title: "关闭划词翻译卡后的行为",
+              purpose: "确认 inline translation 独立开关有效。",
+              steps: [
+                "关闭划词翻译卡或确认其默认关闭。",
+                "选中短文本。",
+                "不应自动出现就地翻译卡；仍可通过工具栏或右键显式触发。"
+              ],
+              expected: "默认和关闭状态都不应自动发送文本。"
+            }
+          ]
+        },
+        {
+          id: "context",
+          title: "4. 右键",
+          desc:
+            "覆盖选区、页面、链接、图片，以及截图仅右键内部路径。",
+          items: [
+            {
+              id: "context-selection",
+              title: "选区右键",
+              purpose: "确认选中文本后右键菜单显示文本相关入口。",
+              steps: [
+                "选中本页普通文本。",
+                "右键打开 Chrome 原生菜单。",
+                "应出现 Aviso 的解释、翻译、润色、总结或自定义模板入口。"
+              ],
+              expected: "不要把选区原文粘贴到验收摘要。"
+            },
+            {
+              id: "context-page",
+              title: "页面右键",
+              purpose: "确认页面空白处有页面级动作。",
+              steps: [
+                "在本页空白处右键。",
+                "检查页面总结或复制当前上下文等页面级入口。",
+                "执行动作前确认不会触发真实 provider call，或只验证菜单存在。"
+              ],
+              expected: "页面动作由用户右键触发，不自动执行。"
+            },
+            {
+              id: "context-link",
+              title: "链接右键",
+              purpose: "确认链接上下文菜单识别 link 场景。",
+              steps: [
+                "右键素材区的内部锚点链接。",
+                "菜单应出现链接相关总结或上下文入口。",
+                "不要记录完整私人 URL；本页锚点链接可作为安全 fixture。"
+              ],
+              expected: "链接动作不应远端抓取链接正文。"
+            },
+            {
+              id: "context-image",
+              title: "图片右键",
+              purpose: "确认图片上下文菜单仍存在。",
+              steps: [
+                "右键素材区的测试图片。",
+                "应出现图片说明或图片相关入口。",
+                "不要把截图/base64 或图片原始数据写入记录。"
+              ],
+              expected: "图片动作由用户显式触发。"
+            },
+            {
+              id: "context-screenshot-only-right-click",
+              title: "截图仅右键内部路径",
+              purpose: "确认截图入口不外溢到命令面板或双击菜单。",
+              steps: [
+                "在右键菜单中检查截图相关入口是否只出现在内部路径。",
+                "命令面板输入截图时不应出现可执行入口。",
+                "开启双击菜单后也不应出现截图入口。"
+              ],
+              expected: "截图不是普通用户主入口或公开卖点。"
+            }
+          ]
+        },
+        {
+          id: "clipboard",
+          title: "5. 剪贴板",
+          desc:
+            "覆盖普通文本 toast、手机号/password 等敏感内容跳过，以及关闭开关后的行为。",
+          items: [
+            {
+              id: "clipboard-normal-toast",
+              title: "普通文本 toast",
+              purpose: "确认复制普通文本时有轻量提示。",
+              steps: [
+                "确认剪贴板感知开关为开启。",
+                "复制素材区的普通文本样例。",
+                "页面右下角应出现 toast，并在短时间后消失。"
+              ],
+              expected: "toast 不应包含大量原文。"
+            },
+            {
+              id: "clipboard-phone-skip",
+              title: "手机号样例跳过",
+              purpose: "确认疑似手机号不弹 toast。",
+              steps: [
+                "复制素材区的手机号样例。",
+                "不应出现剪贴板 toast。",
+                "不要把样例或真实手机号写进 note。"
+              ],
+              expected: "敏感内容被跳过。"
+            },
+            {
+              id: "clipboard-password-skip",
+              title: "password 样例跳过",
+              purpose: "确认 password 类文本不弹 toast。",
+              steps: [
+                "复制素材区的 password 样例。",
+                "不应出现剪贴板 toast。",
+                "不要把任何真实密码写进 note。"
+              ],
+              expected: "password 类文本被跳过。"
+            },
+            {
+              id: "clipboard-off",
+              title: "关闭剪贴板感知后无 toast",
+              purpose: "确认开关有效。",
+              steps: [
+                "在 Popup 关闭剪贴板感知。",
+                "再次复制普通文本样例。",
+                "不应出现剪贴板 toast。"
+              ],
+              expected: "关闭状态不监听或不提示。"
+            }
+          ]
+        },
+        {
+          id: "iframe",
+          title: "6. iframe",
+          desc:
+            "覆盖 iframe 内选区、右键、快捷键、剪贴板，以及单实例浮窗/命令面板。",
+          items: [
+            {
+              id: "iframe-selection",
+              title: "iframe 内选区工具栏",
+              purpose: "确认 all_frames 场景中选区可被处理。",
+              steps: [
+                "在底部 iframe 内选中普通文字。",
+                "应在 iframe 内或顶层可见位置出现划词工具栏。",
+                "点击前确认不会触发真实 provider call。"
+              ],
+              expected: "iframe 选区可用，不破坏顶层页面。"
+            },
+            {
+              id: "iframe-context-menu",
+              title: "iframe 内右键",
+              purpose: "确认 iframe 内 native context menu 路径可用。",
+              steps: [
+                "在 iframe 内选中文字后右键。",
+                "Aviso 菜单项应可见或符合当前权限状态。",
+                "点击后只应出现一个顶层结果浮窗。"
+              ],
+              expected: "不出现重复浮窗。"
+            },
+            {
+              id: "iframe-shortcut",
+              title: "iframe 快捷键",
+              purpose: "确认快捷键从 iframe 桥接到顶层命令面板。",
+              steps: [
+                "聚焦 iframe 内输入框。",
+                "按 Command+Shift+Space 或 Ctrl+Shift+Space。",
+                "顶层页面只出现一个命令面板。"
+              ],
+              expected: "不在 iframe 和顶层各开一个面板。"
+            },
+            {
+              id: "iframe-clipboard",
+              title: "iframe 内剪贴板",
+              purpose: "确认 iframe 内复制普通文本也能走受控 toast。",
+              steps: [
+                "在 iframe 内选中普通文本并复制。",
+                "剪贴板感知开启时，顶层右下角应出现 toast。",
+                "敏感内容仍应跳过。"
+              ],
+              expected: "toast 不记录完整剪贴板内容。"
+            },
+            {
+              id: "iframe-single-instance",
+              title: "单实例浮窗和命令面板",
+              purpose: "确认重复触发不会生成多个重叠 UI。",
+              steps: [
+                "连续在 iframe 内触发工具栏、右键或快捷键。",
+                "观察结果浮窗和命令面板数量。",
+                "应始终只有一个当前实例，或旧实例被复用/替换。"
+              ],
+              expected: "避免重复浮层干扰用户。"
+            }
+          ]
+        },
+        {
+          id: "readability",
+          title: "7. Readability / 页面正文",
+          desc:
+            "覆盖页面正文提取、页面总结素材，以及不记录私人正文的边界。",
+          items: [
+            {
+              id: "readability-public-article",
+              title: "本页文章素材可提取",
+              purpose: "确认页面总结基于正文而不是只基于 URL。",
+              steps: [
+                "使用本页 Readability 短文作为公开测试素材。",
+                "从命令面板或右键触发页面总结候选。",
+                "进入执行前确认不会触发真实 provider call，或只验证读取/等待态。"
+              ],
+              expected: "只记录是否能进入页面正文路径，不记录正文原文。"
+            },
+            {
+              id: "readability-private-boundary",
+              title: "私人页面正文不写入记录",
+              purpose: "确认现场 QA 不泄露用户页面内容。",
+              steps: [
+                "不要在私人邮箱、内部系统或含敏感数据页面做本项测试。",
+                "如必须在真实页面验证，只记录 pass/fail/blocked 和极短原因。",
+                "不要在 console、note、摘要或文档写入私人正文。"
+              ],
+              expected: "验收记录保持 summary-only。"
+            },
+            {
+              id: "readability-no-remote-fetch",
+              title: "不做远端链接正文抓取",
+              purpose: "确认页面总结只处理当前用户打开的页面上下文。",
+              steps: [
+                "右键或命令面板测试链接场景。",
+                "不应自动联网抓取链接正文。",
+                "打开 URL 和页面动作都应由用户确认。"
+              ],
+              expected: "没有 web search、自主浏览或远端链接-body fetching。"
+            }
+          ]
+        },
+        {
+          id: "provider",
+          title: "8. API / Provider 边界",
+          desc:
+            "覆盖配置支持不等于 live validation，连接测试必须手动，不自动 provider call。",
+          items: [
+            {
+              id: "provider-config-support-only",
+              title: "配置支持不等于 live validation",
+              purpose: "确认文案和记录不夸大 provider 可用性。",
+              steps: [
+                "检查 Popup AI 服务配置和本页记录口径。",
+                "DeepSeek 只能写 owner 手动 connectivity pass；Kimi/Moonshot、OpenRouter、Gemini、Tencent Hunyuan 不能写成 live validated。",
+                "OpenRouter 最近失败类别为 unauthorized 时，不能写成已验证可用。"
+              ],
+              expected: "配置支持、非 live 验证、live pass 三者分开记录。"
+            },
+            {
+              id: "provider-manual-test-only",
+              title: "连接测试必须手动",
+              purpose: "确认打开设置或保存配置不会自动测试 provider。",
+              steps: [
+                "打开 AI 服务配置页。",
+                "观察是否存在自动连接测试、自动模型列表读取或自动 provider 请求。",
+                "除非 owner 明确授权，不点击真实连接测试。"
+              ],
+              expected: "没有自动 provider call。"
+            },
+            {
+              id: "provider-missing-key-block",
+              title: "缺 Key 或缺模型时阻断调用",
+              purpose: "确认 loose-save 不等于可调用。",
+              steps: [
+                "使用缺 Key 或缺模型的配置草稿。",
+                "触发受控 AI 动作。",
+                "应显示配置阻断或错误提示，不应静默发送。"
+              ],
+              expected: "保存配置草稿不代表连接成功。"
+            },
+            {
+              id: "provider-no-model-list",
+              title: "不自动读取模型列表",
+              purpose: "确认当前 v0.2 仍要求模型 ID 手动输入。",
+              steps: [
+                "查看 OpenRouter、Gemini、Tencent Hunyuan 等配置。",
+                "模型 ID 应由用户手动填写。",
+                "不应自动读取 provider 账号中的模型列表。"
+              ],
+              expected: "不扩大权限和 provider 请求面。"
+            },
+            {
+              id: "provider-no-backend-proxy",
+              title: "无 Aviso 后端或 provider proxy",
+              purpose: "确认 BYOK direct-provider 边界没有变化。",
+              steps: [
+                "检查 visible UI 和验收记录。",
+                "不应出现 Aviso 托管 AI、登录、订阅、支付、匿名额度或 provider proxy。",
+                "如出现相关入口，应标记 fail 并停线。"
+              ],
+              expected: "当前产品仍是 BYOK direct-provider。"
+            }
+          ]
+        },
+        {
+          id: "upgrade",
+          title: "9. 升级后本地数据保留专项",
+          desc:
+            "融入 CTO 只读审计现场结论：同一扩展 ID 更新应保留；跨扩展 ID 不是自动升级；当前没有 storage namespace migration、onInstalled 数据迁移或升级清空 storage 逻辑。",
+          items: [
+            {
+              id: "upgrade-same-id-cws",
+              title: "同一扩展 ID / Chrome Web Store 同 listing 更新",
+              purpose: "确认真正的同 ID 更新应保留本地数据，API Key 可解密前提是 chrome.runtime.id 不变。",
+              steps: [
+                "在同一 Chrome Web Store listing 更新，或其他保持同一扩展 ID 的更新路径后打开 Popup。",
+                "按 present/missing 检查 settings、templates、providerConfigs、history、API keys 是否仍可通过 UI 看到对应状态。",
+                "API Key 只通过 UI 的已配置/需重配状态判断；不读取、不打印、不复制 Key 或 ciphertext。"
+              ],
+              expected:
+                "同一 chrome.runtime.id 下，contextai_settings、contextai_history、contextai_api_keys 应保留；API Key 解密依赖 runtime.id 不变。"
+            },
+            {
+              id: "upgrade-plasmo-unpacked-reload",
+              title: "Plasmo unpacked reload 同一个已加载扩展",
+              purpose: "确认同一个已加载的 Plasmo unpacked 扩展点击 reload 后应保留数据。",
+              steps: [
+                "保持同一个已加载扩展条目，不 remove，不换路径。",
+                "在 chrome://extensions 对该 Plasmo unpacked 扩展点击 reload。",
+                "打开 Popup 和本页右键菜单，按 present/missing 检查设置、模板、provider 配置、历史和 Key 配置状态。"
+              ],
+              expected: "同一个 unpacked 扩展条目 reload 不应清空 storage。"
+            },
+            {
+              id: "upgrade-plasmo-new-id",
+              title: "Plasmo unpacked 换路径 / 重装导致新 ID",
+              purpose: "确认新扩展 ID 场景不保证继承旧本地数据。",
+              steps: [
+                "如果 remove 旧扩展后从不同路径重新加载，先记录新旧扩展 ID 是否不同。",
+                "只通过 UI 检查数据是否 present/missing。",
+                "如果新 ID 下旧 settings/templates/providerConfigs/history/API keys 不出现，按预期记录，不写成同 ID 更新丢数据。"
+              ],
+              expected: "换路径或重装导致新 ID 时，不保证保留旧扩展 ID 下的 chrome.storage 数据。"
+            },
+            {
+              id: "upgrade-wxt-different-id",
+              title: "WXT unpacked 作为不同扩展 ID",
+              purpose: "确认 WXT 并行路径不是 Plasmo 同 ID 更新。",
+              steps: [
+                "加载 WXT unpacked 输出时，记录它是否是不同扩展 ID。",
+                "打开 WXT 扩展 Popup 检查旧 Plasmo 数据是否出现。",
+                "如果旧 Plasmo settings/templates/providerConfigs/history/API keys 没有自动出现，记录为预期隔离，不记录为更新丢数据。"
+              ],
+              expected: "WXT unpacked 若是不同扩展 ID，旧 Plasmo storage 不会自动出现在 WXT 扩展内。"
+            },
+            {
+              id: "upgrade-plasmo-to-wxt-no-migration",
+              title: "旧 Plasmo unpacked -> WXT unpacked 无跨 ID migration",
+              purpose: "确认当前没有从旧 Plasmo ID 到 WXT ID 的自动迁移方案。",
+              steps: [
+                "把旧 Plasmo unpacked 和 WXT unpacked 视为两个不同扩展 ID。",
+                "只记录 WXT 内数据 present/missing，不尝试手动复制 storage。",
+                "API Key 即使复制 ciphertext，也可能因 chrome.runtime.id 不同无法解密；需要重新输入，或未来单独授权迁移方案。"
+              ],
+              expected: "当前没有跨 ID migration；不要把 WXT 空数据误判为 Plasmo 更新丢数据。"
+            },
+            {
+              id: "upgrade-no-storage-migration-logic",
+              title: "当前无 storage namespace migration / onInstalled 数据迁移 / 升级清空逻辑",
+              purpose: "把只读审计现场结论作为测试口径，避免误判代码会自动迁移或清空。",
+              steps: [
+                "现场记录按当前已知结论执行：没有 storage namespace migration，没有 onInstalled 数据迁移，也没有升级时主动清空 storage 的逻辑。",
+                "如果观察到数据缺失，先核对是否是扩展 ID 变化、profile 变化、加载路径变化或手动清空导致。",
+                "只记录 pass/fail/blocked 与 present/missing，不读取 storage 原始值。"
+              ],
+              expected: "当前口径是同 ID 自然保留、跨 ID 不自动迁移、无升级清空。"
+            },
+            {
+              id: "upgrade-present-missing-matrix",
+              title: "数据项 present/missing 检查表",
+              purpose: "确保五类本地数据都被记录，但不暴露敏感值。",
+              steps: [
+                "settings：检查主题、语言、功能开关、默认 provider 是否 present/missing。",
+                "templates：检查模板列表和 {{selection}} 模板是否 present/missing；providerConfigs：检查 provider 配置、模型 ID、默认配置和 fast provider config 是否 present/missing。",
+                "API keys：只看 UI 已配置/需重配状态；history：只看历史列表是否 present/missing，不复制正文。"
+              ],
+              expected:
+                "settings/templates/providerConfigs 在 chrome.storage.sync/contextai_settings；API keys 在 chrome.storage.local/contextai_api_keys；history 在 chrome.storage.local/contextai_history。"
+            }
+          ]
+        }
+      ]
+
+      const checklistEl = document.getElementById("checklist")
+      const statsEl = document.getElementById("stats")
+      const summaryEl = document.getElementById("summary")
+      const state = loadState()
+      let showOpenOnly = false
+
+      function loadState() {
+        try {
+          return JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}")
+        } catch {
+          return {}
+        }
+      }
+
+      function saveState() {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(state))
+      }
+
+      function getItemState(id) {
+        if (!state[id]) state[id] = { status: "", note: "" }
+        return state[id]
+      }
+
+      function allItems() {
+        return sections.flatMap((section) =>
+          section.items.map((item) => ({ ...item, sectionTitle: section.title }))
+        )
+      }
+
+      function render() {
+        checklistEl.innerHTML = ""
+        for (const section of sections) {
+          const visibleItems = showOpenOnly
+            ? section.items.filter((item) => getItemState(item.id).status !== "pass")
+            : section.items
+
+          if (showOpenOnly && visibleItems.length === 0) continue
+
+          const sectionEl = document.createElement("section")
+          sectionEl.className = "section"
+          sectionEl.id = `section-${section.id}`
+          sectionEl.innerHTML = `
+            <div class="section-head">
+              <div>
+                <h2>${escapeHtml(section.title)}</h2>
+                <div class="section-desc">${escapeHtml(section.desc)}</div>
+              </div>
+              <div class="section-count">${countPassed(section)} / ${section.items.length} passed</div>
+            </div>
+          `
+
+          for (const item of visibleItems) {
+            sectionEl.appendChild(renderItem(item))
+          }
+          checklistEl.appendChild(sectionEl)
+        }
+
+        renderStats()
+        renderSummary()
+      }
+
+      function renderItem(item) {
+        const itemState = getItemState(item.id)
+        const itemEl = document.createElement("div")
+        itemEl.className = "item"
+        const steps = item.steps.map((step) => `<li>${escapeHtml(step)}</li>`).join("")
+        itemEl.innerHTML = `
+          <div>
+            <div class="item-title">${escapeHtml(item.title)}</div>
+            <div class="item-purpose">${escapeHtml(item.purpose)}</div>
+            <ol class="item-steps">${steps}</ol>
+            <div class="expected">${escapeHtml(item.expected)}</div>
+          </div>
+          <div>
+            <div class="status-row">
+              ${statusButton(item.id, "pass", "通过")}
+              ${statusButton(item.id, "fail", "失败")}
+              ${statusButton(item.id, "blocked", "阻塞")}
+            </div>
+            <textarea class="note" data-note="${escapeHtml(
+              item.id
+            )}" placeholder="只写脱敏结论：pass - 入口可见；fail - 无候选；blocked - 未加载扩展。不要写 Key、正文、URL、剪贴板原文。">${escapeTextarea(
+              itemState.note || ""
+            )}</textarea>
+          </div>
+        `
+        itemEl.querySelectorAll("button[data-status]").forEach((button) => {
+          button.addEventListener("click", () => {
+            const id = button.getAttribute("data-id")
+            const status = button.getAttribute("data-status")
+            const entry = getItemState(id)
+            entry.status = entry.status === status ? "" : status
+            saveState()
+            render()
+          })
+        })
+        itemEl.querySelector("textarea").addEventListener("input", (event) => {
+          const sanitized = sanitizeNote(event.target.value)
+          if (sanitized !== event.target.value) {
+            event.target.value = sanitized
+          }
+          getItemState(item.id).note = sanitized
+          saveState()
+          renderStats()
+          renderSummary()
+        })
+        return itemEl
+      }
+
+      function statusButton(id, status, label) {
+        const active = getItemState(id).status === status ? " active" : ""
+        return `<button type="button" class="status-btn ${status}${active}" data-id="${escapeHtml(
+          id
+        )}" data-status="${status}">${label}</button>`
+      }
+
+      function countPassed(section) {
+        return section.items.filter((item) => getItemState(item.id).status === "pass")
+          .length
+      }
+
+      function counts() {
+        const items = allItems()
+        return {
+          total: items.length,
+          pass: items.filter((item) => getItemState(item.id).status === "pass").length,
+          fail: items.filter((item) => getItemState(item.id).status === "fail").length,
+          blocked: items.filter((item) => getItemState(item.id).status === "blocked")
+            .length,
+          unset: items.filter((item) => !getItemState(item.id).status).length
+        }
+      }
+
+      function renderStats() {
+        const c = counts()
+        const verdict =
+          c.fail > 0
+            ? "结论：有失败项，先修复"
+            : c.blocked > 0
+              ? "结论：有阻塞项，不能写通过"
+              : c.unset > 0
+                ? "结论：验收未完成"
+                : "结论：可提交 owner 最终判断"
+        statsEl.innerHTML = `
+          <span class="stat">总项：${c.total}</span>
+          <span class="stat">通过：${c.pass}</span>
+          <span class="stat">失败：${c.fail}</span>
+          <span class="stat">阻塞：${c.blocked}</span>
+          <span class="stat">未填：${c.unset}</span>
+          <span class="stat">${verdict}</span>
+        `
+      }
+
+      function renderSummary() {
+        const c = counts()
+        const lines = []
+        lines.push("Aviso v0.2 product E2E playground - 2026-06-15")
+        lines.push("Status: implementation candidate / release decision pending")
+        lines.push("Build boundary: Plasmo default, WXT parallel path only")
+        lines.push("Provider boundary: no live validation in this playground")
+        lines.push("Sensitive data: summary-only, obvious secrets and URLs redacted")
+        lines.push("")
+        lines.push(`Total: ${c.total}`)
+        lines.push(`Pass: ${c.pass}`)
+        lines.push(`Fail: ${c.fail}`)
+        lines.push(`Blocked: ${c.blocked}`)
+        lines.push(`Unset: ${c.unset}`)
+        lines.push("")
+
+        for (const section of sections) {
+          lines.push(section.title)
+          for (const item of section.items) {
+            const itemState = getItemState(item.id)
+            const status = itemState.status || "unset"
+            const note = sanitizeNote(itemState.note || "")
+              .replace(/\s+/g, " ")
+              .trim()
+            lines.push(`- ${item.title}: ${status}${note ? ` - ${note}` : ""}`)
+          }
+          lines.push("")
+        }
+
+        if (c.fail > 0) {
+          lines.push("Overall: fail - keep v0.2 as candidate and open bugfix.")
+        } else if (c.blocked > 0 || c.unset > 0) {
+          lines.push("Overall: incomplete - do not mark release gate passed.")
+        } else {
+          lines.push("Overall: pass - ready for owner final release judgment, not automatic release.")
+        }
+        summaryEl.value = lines.join("\n")
+      }
+
+      function sanitizeNote(value) {
+        return String(value)
+          .replace(/sk-[A-Za-z0-9_-]{8,}/g, "[api-key-redacted]")
+          .replace(/AKIA[0-9A-Z]{12,}/g, "[secret-redacted]")
+          .replace(/\b1[3-9]\d{9}\b/g, "[phone-redacted]")
+          .replace(/(password|passwd|pwd|api[-_\s]?key|token)\s*[:=]\s*\S+/gi, "$1: [redacted]")
+          .replace(/https?:\/\/[^\s)]+/gi, "[url-redacted]")
+          .replace(/chrome:\/\/[^\s)]+/gi, "[chrome-url-redacted]")
+          .replace(/file:\/\/[^\s)]+/gi, "[file-url-redacted]")
+          .slice(0, 600)
+      }
+
+      function escapeHtml(value) {
+        return String(value)
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#039;")
+      }
+
+      function escapeTextarea(value) {
+        return escapeHtml(value)
+      }
+
+      document.getElementById("showAllBtn").addEventListener("click", () => {
+        showOpenOnly = false
+        render()
+      })
+
+      document.getElementById("showOpenBtn").addEventListener("click", () => {
+        showOpenOnly = true
+        render()
+      })
+
+      document.getElementById("resetBtn").addEventListener("click", () => {
+        if (!confirm("确定清空本页 localStorage 验收记录吗？")) return
+        localStorage.removeItem(STORAGE_KEY)
+        for (const key of Object.keys(state)) delete state[key]
+        render()
+      })
+
+      document.getElementById("copyBtn").addEventListener("click", async () => {
+        renderSummary()
+        summaryEl.select()
+        try {
+          await navigator.clipboard.writeText(summaryEl.value)
+        } catch {
+          document.execCommand("copy")
+        }
+      })
+
+      render()
+    </script>
+  </body>
+</html>

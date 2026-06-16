@@ -40,6 +40,14 @@ export const config: PlasmoCSConfig = {
 export const getShadowHostId: PlasmoGetShadowHostId = () =>
   "aviso-floating-host"
 
+function logPerfSummaryFromResponse(response?: MessageResponse): void {
+  const data = response?.data
+  if (!data || typeof data !== "object" || !("perfSummary" in data)) return
+
+  const perfSummary = (data as { perfSummary?: unknown }).perfSummary
+  if (perfSummary) console.info(`[Aviso perf] ${JSON.stringify(perfSummary)}`)
+}
+
 type ChatMsg = ConversationMessage
 
 type FloatingState = {
@@ -53,6 +61,8 @@ type FloatingState = {
   operation: string
   context?: AIRequestPayload["context"]
   statusText: string
+  reasoningText: string
+  reasoningExpanded: boolean
   messages: ChatMsg[]
 }
 
@@ -67,6 +77,8 @@ const INITIAL_STATE: FloatingState = {
   operation: "",
   context: undefined,
   statusText: "",
+  reasoningText: "",
+  reasoningExpanded: false,
   messages: []
 }
 
@@ -180,6 +192,81 @@ function LoadingMessage({ text }: { text: string }) {
   )
 }
 
+const MAX_REASONING_DISPLAY_CHARS = 4000
+
+function appendReasoningText(current: string, next: string): string {
+  return `${current}${next}`.slice(-MAX_REASONING_DISPLAY_CHARS)
+}
+
+function ReasoningMessage({
+  text,
+  expanded,
+  loading,
+  onToggle,
+  t
+}: {
+  text: string
+  expanded: boolean
+  loading: boolean
+  onToggle: () => void
+  t: (key: I18nKey) => string
+}) {
+  const { tokens: ui } = useSyncedAvisoTheme()
+  const label = loading ? t("model.thinking") : t("model.thinkingDone")
+
+  return (
+    <div
+      className="aviso-reasoning-message"
+      style={{
+        border: `1px solid ${ui.line}`,
+        borderRadius: aviso.radiusMd,
+        background: ui.surface2,
+        color: ui.text2,
+        overflow: "hidden",
+        marginBottom: 8
+      }}>
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 8,
+          padding: "8px 10px",
+          border: "none",
+          background: "transparent",
+          color: ui.text2,
+          cursor: "pointer",
+          fontFamily: aviso.font,
+          fontSize: "12.5px",
+          fontWeight: 650,
+          textAlign: "left"
+        }}>
+        <span>{label}</span>
+        <span aria-hidden="true">{expanded ? "⌃" : "⌄"}</span>
+      </button>
+      {expanded && (
+        <div
+          style={{
+            maxHeight: 160,
+            overflowY: "auto",
+            padding: "0 10px 10px",
+            fontFamily: aviso.mono,
+            fontSize: "12px",
+            lineHeight: 1.55,
+            whiteSpace: "pre-wrap",
+            overflowWrap: "anywhere"
+          }}>
+          {text}
+        </div>
+      )}
+    </div>
+  )
+}
+
 function FloatingWindow() {
   const { tokens: ui } = useSyncedAvisoTheme()
   const { language, t } = useSyncedAvisoLanguage()
@@ -233,6 +320,8 @@ function FloatingWindow() {
         }
       },
       (response) => {
+        logPerfSummaryFromResponse(response)
+
         // sendMessage 回调兜底：如 AI_STREAM_ERROR 消息未到达时仍能停止 loading
         if (response && !response.success && response.error) {
           setState((prev) =>
@@ -322,6 +411,8 @@ function FloatingWindow() {
             operation,
             context,
             statusText: "",
+            reasoningText: "",
+            reasoningExpanded: false,
             messages: restored
           })
           setSavedId(restore.pinned ? requestId : "")
@@ -371,6 +462,8 @@ function FloatingWindow() {
             operation,
             context,
             statusText: statusText ?? defaultStatusText(operation, t),
+            reasoningText: "",
+            reasoningExpanded: false,
             messages: appending
               ? appendConversationTurn(prev.messages, {
                   userContent: bubble,
@@ -421,12 +514,25 @@ function FloatingWindow() {
       if (message.action === "AI_STREAM_CHUNK") {
         handled = true
         const { chunk, requestId } = message.payload
+        if (chunk.perfSummary) {
+          console.info(`[Aviso perf] ${JSON.stringify(chunk.perfSummary)}`)
+        }
         setState((prev) => {
           if (
             prev.requestId !== requestId ||
             activeRequestRef.current !== requestId
           ) {
             return prev
+          }
+          if (chunk.kind === "reasoning") {
+            return {
+              ...prev,
+              reasoningText: appendReasoningText(
+                prev.reasoningText,
+                chunk.text
+              ),
+              statusText: chunk.text ? "" : prev.statusText
+            }
           }
           const messages = prev.messages.map((m) =>
             m.reqId === requestId
@@ -455,6 +561,11 @@ function FloatingWindow() {
               }
             : prev
         )
+      }
+
+      if (message.action === "AI_PERF_SUMMARY") {
+        handled = true
+        console.info(`[Aviso perf] ${JSON.stringify(message.payload.summary)}`)
       }
 
       if (handled) sendResponse({ success: true })
@@ -585,6 +696,8 @@ function FloatingWindow() {
       operation: "custom",
       context: undefined,
       statusText: t("model.waiting"),
+      reasoningText: "",
+      reasoningExpanded: false,
       messages: appendConversationTurn(prev.messages, {
         userContent: q,
         requestId,
@@ -748,6 +861,10 @@ function FloatingWindow() {
             m.reqId === state.requestId &&
             state.loading &&
             !state.error
+          const showReasoning =
+            !isUser &&
+            m.reqId === state.requestId &&
+            state.reasoningText.trim().length > 0
           return (
             <div
               key={idx}
@@ -762,6 +879,20 @@ function FloatingWindow() {
                 wordBreak: "break-word",
                 overflowWrap: "anywhere"
               }}>
+              {showReasoning && (
+                <ReasoningMessage
+                  text={state.reasoningText}
+                  expanded={state.reasoningExpanded}
+                  loading={state.loading}
+                  t={t}
+                  onToggle={() =>
+                    setState((prev) => ({
+                      ...prev,
+                      reasoningExpanded: !prev.reasoningExpanded
+                    }))
+                  }
+                />
+              )}
               {!isUser && !m.content && isStreaming ? (
                 <LoadingMessage
                   text={getDynamicLoadingStatusText({

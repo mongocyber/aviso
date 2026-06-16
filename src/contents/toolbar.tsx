@@ -42,6 +42,14 @@ export const config: PlasmoCSConfig = {
 export const getShadowHostId: PlasmoGetShadowHostId = () =>
   "aviso-toolbar-host"
 
+function logPerfSummaryFromResponse(response?: MessageResponse): void {
+  const data = response?.data
+  if (!data || typeof data !== "object" || !("perfSummary" in data)) return
+
+  const perfSummary = (data as { perfSummary?: unknown }).perfSummary
+  if (perfSummary) console.info(`[Aviso perf] ${JSON.stringify(perfSummary)}`)
+}
+
 type ToolbarPlacement = "above" | "below"
 type ToolbarPosition = {
   top: number
@@ -270,7 +278,18 @@ function SelectionToolbar() {
     const listener = (message: MessageRequest) => {
       if (message.action === "AI_STREAM_CHUNK") {
         const { chunk, requestId } = message.payload
+        if (chunk.perfSummary) {
+          console.info(`[Aviso perf] ${JSON.stringify(chunk.perfSummary)}`)
+        }
         if (requestId !== inlineRequestRef.current) return
+        if (chunk.kind === "reasoning") {
+          setInlineCard((prev) =>
+            prev.requestId === requestId
+              ? { ...prev, statusText: t("model.thinking") }
+              : prev
+          )
+          return
+        }
 
         setInlineCard((prev) => {
           if (prev.requestId !== requestId) return prev
@@ -309,6 +328,10 @@ function SelectionToolbar() {
             : prev
         )
       }
+
+      if (message.action === "AI_PERF_SUMMARY") {
+        console.info(`[Aviso perf] ${JSON.stringify(message.payload.summary)}`)
+      }
     }
 
     chrome.runtime.onMessage.addListener(listener)
@@ -341,6 +364,8 @@ function SelectionToolbar() {
         }
       },
       (response?: MessageResponse) => {
+        logPerfSummaryFromResponse(response)
+
         const runtimeError = chrome.runtime.lastError
         if (runtimeError) {
           clearTimeout(inlineSlowTimer.current)

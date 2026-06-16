@@ -1,6 +1,7 @@
 import type { PromptTemplate } from "~types/history"
 import type {
   AIRequestPayload,
+  AIStreamChunk,
   ProviderConnectivityPayload
 } from "~types/messages"
 import { applyAIContextBudget } from "~utils/ai-context"
@@ -26,16 +27,24 @@ import {
   isProviderHostPermissionPresent,
   type ConnectivityValidationSummary
 } from "~utils/provider-connectivity"
+import {
+  buildChatCompletionReasoningParams,
+  extractReasoningDeltaText,
+  shouldUseMaxCompletionTokens
+} from "~utils/reasoning"
 import { getImageInputBlockReason } from "~utils/screenshot"
 import { getTemplates } from "~utils/storage"
 import { expandTemplate } from "~utils/template"
 import {
+  buildPerfSummary,
   categorizePerfError,
   logPerfSummary,
   logTiming,
   markTiming,
+  type PerfSummary,
   type PerfContextType,
   type PerfErrorCategory,
+  type PerfSummaryInput,
   type RequestTiming
 } from "~utils/timing"
 import {
@@ -62,10 +71,7 @@ import {
   setCachedTranslation
 } from "./translation-cache"
 
-export type StreamChunk = {
-  text: string
-  done: boolean
-}
+export type StreamChunk = AIStreamChunk
 
 export async function handleProviderConnectivityTest(
   payload: ProviderConnectivityPayload
@@ -169,9 +175,19 @@ export async function handleProviderConnectivityTest(
 export async function handleAIRequest(
   payload: AIRequestPayload,
   onChunk: (chunk: StreamChunk) => void,
-  options: { requestId?: string; signal?: AbortSignal; pageUrl?: string } = {}
-): Promise<void> {
+  options: {
+    requestId?: string
+    signal?: AbortSignal
+    pageUrl?: string
+    onPerfSummary?: (summary: PerfSummary) => void
+  } = {}
+): Promise<PerfSummary | undefined> {
   const { settings, apiKeys } = await getRuntimeConfigSnapshot()
+  let finalPerfSummary: PerfSummary | undefined
+  const recordPerfSummary = (summary: PerfSummary) => {
+    finalPerfSummary = summary
+    options.onPerfSummary?.(summary)
+  }
 
   // 自定义模板：展开占位符后作为 systemPrompt，避免选中文本被重复拼接
   if (payload.operation === "template" && payload.templateId) {
@@ -232,6 +248,7 @@ export async function handleAIRequest(
   const imageInputBlockReason = getImageInputBlockReason(payload, route)
   let translationOutput = ""
   const forwardChunk = (chunk: StreamChunk) => {
+    if (chunk.perfSummary) finalPerfSummary = chunk.perfSummary
     if (translationCacheKey && chunk.text) translationOutput += chunk.text
     onChunk(chunk)
   }
@@ -256,7 +273,8 @@ export async function handleAIRequest(
           requestId: options.requestId,
           signal: options.signal,
           clientCacheKey: getProviderClientCacheKey(route),
-          logPerf: true
+          logPerf: true,
+          onPerfSummary: recordPerfSummary
         }
       )
     } else {
@@ -276,11 +294,13 @@ export async function handleAIRequest(
           signal: options.signal,
           clientCacheKey: getProviderClientCacheKey(route),
           providerId: route.provider.id,
-          logPerf: true
+          logPerf: true,
+          onPerfSummary: recordPerfSummary
         }
       )
     }
     setCachedTranslation(translationCacheKey, translationOutput)
+    return finalPerfSummary
   } catch (err) {
     throw new Error(normalizeError(err))
   }
@@ -312,6 +332,7 @@ async function callOpenAI(
     clientCacheKey?: string
     providerId?: ProviderId
     logPerf?: boolean
+    onPerfSummary?: (summary: PerfSummary) => void
   }
 ): Promise<void> {
   const requestId = opts?.requestId ?? "unknown"
@@ -335,6 +356,18 @@ async function callOpenAI(
         ? buildImageMessages(payload, "openai")
         : buildMessages(payload)
     const maxTokens = getMaxOutputTokens(payload)
+    const providerId = opts?.providerId ?? "openai"
+    const reasoningParams = buildChatCompletionReasoningParams({
+      providerId,
+      modelOrEndpoint: model,
+      payload
+    })
+    const tokenBudgetParams = shouldUseMaxCompletionTokens({
+      providerId,
+      modelOrEndpoint: model
+    })
+      ? { max_completion_tokens: maxTokens }
+      : { max_tokens: maxTokens }
     timing = markTiming(timing, "providerRequestStartedAt")
 
     logTiming("provider_request_start", requestId, timing, {
@@ -344,37 +377,67 @@ async function callOpenAI(
       inputChars: estimatePayloadChars(payload)
     })
 
-    const stream = await client.chat.completions.create(
+    const stream = (await client.chat.completions.create(
       {
         model,
         messages: messages as Parameters<
           typeof client.chat.completions.create
         >[0]["messages"],
         stream: true,
-        max_tokens: maxTokens
-      },
+        ...tokenBudgetParams,
+        ...reasoningParams
+      } as Parameters<typeof client.chat.completions.create>[0],
       opts?.signal ? { signal: opts.signal } : undefined
-    )
+    )) as AsyncIterable<{
+      choices: Array<{
+        delta?: { content?: string | null }
+        finish_reason?: unknown
+      }>
+    }>
 
     for await (const chunk of stream) {
       throwIfAborted(opts?.signal)
+      const reasoningText = extractReasoningDeltaText(chunk)
       const text = chunk.choices[0]?.delta?.content ?? ""
       const done = chunk.choices[0]?.finish_reason != null
-      if (text && !sawFirstChunk) {
+      if ((reasoningText || text) && !sawFirstChunk) {
         sawFirstChunk = true
         timing = markTiming(timing, "firstChunkAt")
         logTiming("provider_first_chunk", requestId, timing, {
           provider: opts?.keyLabel ?? "OpenAI",
-          model
+          model,
+          kind: reasoningText ? "reasoning" : "answer"
         })
       }
-      if (text || done) onChunk({ text, done })
+      if (reasoningText) {
+        onChunk({ text: reasoningText, done: false, kind: "reasoning" })
+      }
       if (done) {
         sawDone = true
         timing = markTiming(timing, "doneAt")
         logTiming("provider_done", requestId, timing, {
           provider: opts?.keyLabel ?? "OpenAI",
           model
+        })
+        if (!sawFirstChunk && errorCategory === "none") {
+          errorCategory = "missing_first_chunk"
+        }
+      }
+      if (text || done) {
+        onChunk({
+          text,
+          done,
+          kind: "answer",
+          perfSummary:
+            done && opts?.logPerf
+              ? buildAIRequestPerfSummary(
+                  payload,
+                  opts.providerId ?? "openai",
+                  model,
+                  timing,
+                  errorCategory
+                )
+              : undefined
         })
       }
     }
@@ -387,7 +450,20 @@ async function callOpenAI(
         model,
         reason: "stream-ended"
       })
-      onChunk({ text: "", done: true })
+      onChunk({
+        text: "",
+        done: true,
+        kind: "answer",
+        perfSummary: opts?.logPerf
+          ? buildAIRequestPerfSummary(
+              payload,
+              opts.providerId ?? "openai",
+              model,
+              timing,
+              errorCategory
+            )
+          : undefined
+      })
     }
 
     if (!sawFirstChunk && errorCategory === "none") {
@@ -398,15 +474,16 @@ async function callOpenAI(
     throw err
   } finally {
     if (opts?.logPerf) {
-      logPerfSummary({
-        trigger: payload.trigger,
-        provider: opts.providerId ?? "openai",
-        modelOrEndpoint: model,
-        inputChars: estimatePayloadChars(payload),
-        contextType: inferPerfContextType(payload),
-        timing,
-        errorCategory
-      })
+      const summary = logPerfSummary(
+        getAIRequestPerfSummaryInput(
+          payload,
+          opts.providerId ?? "openai",
+          model,
+          timing,
+          errorCategory
+        )
+      )
+      opts.onPerfSummary?.(summary)
     }
   }
 }
@@ -469,6 +546,7 @@ async function callAnthropic(
     signal?: AbortSignal
     clientCacheKey?: string
     logPerf?: boolean
+    onPerfSummary?: (summary: PerfSummary) => void
   } = {}
 ): Promise<void> {
   const requestId = opts.requestId ?? "unknown"
@@ -533,7 +611,22 @@ async function callAnthropic(
           provider: "Anthropic",
           model
         })
-        onChunk({ text: "", done: true })
+        if (!sawFirstChunk && errorCategory === "none") {
+          errorCategory = "missing_first_chunk"
+        }
+        onChunk({
+          text: "",
+          done: true,
+          perfSummary: opts.logPerf
+            ? buildAIRequestPerfSummary(
+                payload,
+                "anthropic",
+                model,
+                timing,
+                errorCategory
+              )
+            : undefined
+        })
       }
     }
 
@@ -545,7 +638,19 @@ async function callAnthropic(
         model,
         reason: "stream-ended"
       })
-      onChunk({ text: "", done: true })
+      onChunk({
+        text: "",
+        done: true,
+        perfSummary: opts.logPerf
+          ? buildAIRequestPerfSummary(
+              payload,
+              "anthropic",
+              model,
+              timing,
+              errorCategory
+            )
+          : undefined
+      })
     }
 
     if (!sawFirstChunk && errorCategory === "none") {
@@ -556,15 +661,16 @@ async function callAnthropic(
     throw err
   } finally {
     if (opts.logPerf) {
-      logPerfSummary({
-        trigger: payload.trigger,
-        provider: "anthropic",
-        modelOrEndpoint: model,
-        inputChars: estimatePayloadChars(payload),
-        contextType: inferPerfContextType(payload),
-        timing,
-        errorCategory
-      })
+      const summary = logPerfSummary(
+        getAIRequestPerfSummaryInput(
+          payload,
+          "anthropic",
+          model,
+          timing,
+          errorCategory
+        )
+      )
+      opts.onPerfSummary?.(summary)
     }
   }
 }
@@ -627,21 +733,58 @@ function inferPerfContextType(payload: AIRequestPayload): PerfContextType {
   return "unknown"
 }
 
+function getAIRequestPerfSummaryInput(
+  payload: AIRequestPayload,
+  provider: ProviderId,
+  modelOrEndpoint: string,
+  timing: RequestTiming | undefined,
+  errorCategory: PerfErrorCategory
+): PerfSummaryInput {
+  return {
+    trigger: payload.trigger,
+    provider,
+    modelOrEndpoint,
+    operation: payload.operation,
+    inputChars: estimatePayloadChars(payload),
+    contextType: inferPerfContextType(payload),
+    timing,
+    errorCategory
+  }
+}
+
+function buildAIRequestPerfSummary(
+  payload: AIRequestPayload,
+  provider: ProviderId,
+  modelOrEndpoint: string,
+  timing: RequestTiming | undefined,
+  errorCategory: PerfErrorCategory
+): PerfSummary {
+  return buildPerfSummary(
+    getAIRequestPerfSummaryInput(
+      payload,
+      provider,
+      modelOrEndpoint,
+      timing,
+      errorCategory
+    )
+  )
+}
+
 function logPreProviderPerf(
   payload: AIRequestPayload,
   provider: ProviderId,
   modelOrEndpoint: string,
   errorCategory: PerfErrorCategory = "unknown_error"
 ): void {
-  logPerfSummary({
-    trigger: payload.trigger,
-    provider,
-    modelOrEndpoint,
-    inputChars: estimatePayloadChars(payload),
-    contextType: inferPerfContextType(payload),
-    timing: payload.timing,
-    errorCategory
-  })
+  logPerfSummary(
+    getAIRequestPerfSummaryInput(
+      payload,
+      provider,
+      modelOrEndpoint,
+      payload.timing,
+      errorCategory
+    )
+  )
 }
 
 function buildImageMessages(

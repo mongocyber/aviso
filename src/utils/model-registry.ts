@@ -125,7 +125,7 @@ export const PROVIDER_REGISTRY: Record<ProviderId, ProviderMetadata> = {
     apiKeyStorageKey: "doubao",
     supportsVision: true,
     visionSupport: "model-dependent",
-    reasoningControl: "unsupported",
+    reasoningControl: "model-dependent",
     requiresEndpointConfig: true,
     endpointSettingKey: "doubaoModel",
     baseURL: DOUBAO_BASE_URL
@@ -293,20 +293,28 @@ export function buildProviderConfigRoute(
     config.provider === "doubao"
       ? "doubao"
       : configModel || PROVIDER_PRIMARY_MODEL[config.provider]
-  const model =
-    getModelMetadata(selectedModel) ?? {
-      id: selectedModel || config.provider,
-      displayName: selectedModel || provider.displayName,
-      providerId: config.provider,
-      supportsVision: provider.supportsVision,
-      supportsReasoningControl: false
-    }
   const requestModel =
     config.provider === "doubao"
       ? configModel || settings.doubaoModel?.trim() || ""
       : provider.requiresEndpointConfig
         ? configModel
       : selectedModel
+  const baseModel = getModelMetadata(selectedModel) ?? {
+    id: selectedModel || config.provider,
+    displayName: selectedModel || provider.displayName,
+    providerId: config.provider,
+    supportsVision: provider.supportsVision,
+    supportsReasoningControl: false
+  }
+  const model = {
+    ...baseModel,
+    supportsReasoningControl:
+      baseModel.supportsReasoningControl ||
+      supportsModelReasoningControl(
+        config.provider,
+        requestModel || selectedModel
+      )
+  }
 
   return {
     requestedModel: selectedModel,
@@ -373,13 +381,19 @@ function buildRegisteredModelRoute(
     provider.endpointSettingKey === "doubaoModel"
       ? settings.doubaoModel?.trim()
       : undefined
+  const requestModel = configuredModel || selectedModel
 
   return {
     requestedModel: selectedModel,
     selectedModel,
     provider,
-    model,
-    requestModel: configuredModel || selectedModel,
+    model: {
+      ...model,
+      supportsReasoningControl:
+        model.supportsReasoningControl ||
+        supportsModelReasoningControl(model.providerId, requestModel)
+    },
+    requestModel,
     isFallback: false,
     missingConfig:
       provider.requiresEndpointConfig && !configuredModel
@@ -402,18 +416,39 @@ function buildFallbackRoute(
       displayName: selectedModel,
       providerId,
       supportsVision: provider.supportsVision,
-      supportsReasoningControl: false
+      supportsReasoningControl: supportsModelReasoningControl(
+        providerId,
+        selectedModel
+      )
     },
     requestModel: selectedModel,
     isFallback: true
   }
 }
 
+function supportsModelReasoningControl(
+  providerId: ProviderId,
+  modelOrEndpoint: string
+): boolean {
+  if (providerId === "openai") {
+    return /^(?:o\d|o\d-|gpt-5(?:[.-]|$)|gpt-[\w.-]*reasoning)/i.test(
+      modelOrEndpoint.trim()
+    )
+  }
+  if (providerId === "doubao") {
+    return /(?:thinking|reasoning|deepseek-r1|\br1\b|doubao[\w.-]*seed[\w.-]*1[\w.-]*6)/i.test(
+      modelOrEndpoint.trim()
+    )
+  }
+  return false
+}
+
 export function getReasoningControlBlockReason(
   route: Pick<ModelRoute, "provider" | "model">
 ): string | null {
   if (
-    route.provider.reasoningControl === "supported" &&
+    (route.provider.reasoningControl === "supported" ||
+      route.provider.reasoningControl === "model-dependent") &&
     route.model.supportsReasoningControl
   ) {
     return null

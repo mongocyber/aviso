@@ -1091,6 +1091,14 @@ const MESSAGES = {
     "zh-CN": "请求已发出，模型还在响应。可继续等待、停止，或稍后重试。",
     en: "Request sent. The model is still responding. You can wait, stop, or try again later."
   },
+  "model.thinking": {
+    "zh-CN": "思考中",
+    en: "Thinking"
+  },
+  "model.thinkingDone": {
+    "zh-CN": "思考完成",
+    en: "Thinking done"
+  },
   "model.cancelled": {
     "zh-CN": "已停止等待。",
     en: "Stopped waiting."

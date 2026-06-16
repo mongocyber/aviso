@@ -2,7 +2,7 @@ import type { ClipboardType } from "~utils/clipboard-detect"
 import type { CommandQuickActionId } from "~utils/command-access"
 import type { ConversationMessage } from "~types/history"
 import type { ProviderId } from "~utils/model-registry"
-import type { RequestTiming } from "~utils/timing"
+import type { PerfSummary, RequestTiming } from "~utils/timing"
 
 export type ContextMenuContext =
   | "selection"
@@ -28,6 +28,13 @@ export type AIRequestPayload = {
   systemPrompt?: string
   templateId?: string
   timing?: RequestTiming
+}
+
+export type AIStreamChunk = {
+  text: string
+  done: boolean
+  kind?: "answer" | "reasoning"
+  perfSummary?: PerfSummary
 }
 
 export type ProviderConnectivityPayload = {
@@ -124,11 +131,15 @@ export type MessageRequest =
   | { action: "EXTRACT_PAGE_CONTENT" }
   | {
       action: "AI_STREAM_CHUNK"
-      payload: { chunk: { text: string; done: boolean }; requestId: string }
+      payload: { chunk: AIStreamChunk; requestId: string }
     }
   | {
       action: "AI_STREAM_ERROR"
       payload: { error: string; requestId: string }
+    }
+  | {
+      action: "AI_PERF_SUMMARY"
+      payload: { requestId: string; summary: PerfSummary }
     }
   | { action: "PARSE_INTENT"; payload: { input: string } }
   | { action: "SEARCH_BOOKMARKS"; payload: { query: string } }
@@ -172,9 +183,13 @@ export type MessageRequest =
     }
   | { action: "UPDATE_TEMPLATES" }
 
+export type MessageResponseData = {
+  perfSummary?: PerfSummary
+}
+
 export type MessageResponse = {
   success: boolean
-  data?: unknown
+  data?: MessageResponseData | unknown
   error?: string
   meta?: Record<string, unknown>
 }

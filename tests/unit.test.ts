@@ -81,6 +81,11 @@ import {
   isProviderHostPermissionPresent
 } from "../src/utils/provider-connectivity.ts"
 import {
+  buildChatCompletionReasoningParams,
+  extractReasoningDeltaText,
+  shouldUseMaxCompletionTokens
+} from "../src/utils/reasoning.ts"
+import {
   shouldShowSlowResponseHint,
   SLOW_FIRST_CHUNK_MS,
   SLOW_MODEL_RESPONSE_TEXT
@@ -110,6 +115,8 @@ import { expandTemplate } from "../src/utils/template.ts"
 import {
   bucketInputSize,
   buildPerfSummary,
+  buildSelectionTtftAggregate,
+  buildSelectionTtftDogfoodRow,
   categorizePerfError,
   sanitizeTimingDetails
 } from "../src/utils/timing.ts"
@@ -1758,7 +1765,7 @@ test("model registry 覆盖当前批准 provider 与 v0.2 first-batch presets", 
   assert.equal(PROVIDER_PRIMARY_MODEL.hunyuan, "")
   assert.equal(PROVIDER_REGISTRY.openai.reasoningControl, "model-dependent")
   assert.equal(PROVIDER_REGISTRY.anthropic.reasoningControl, "unsupported")
-  assert.equal(PROVIDER_REGISTRY.doubao.reasoningControl, "unsupported")
+  assert.equal(PROVIDER_REGISTRY.doubao.reasoningControl, "model-dependent")
   assert.equal(PROVIDER_REGISTRY.deepseek.reasoningControl, "model-dependent")
   assert.equal(PROVIDER_REGISTRY.moonshot.reasoningControl, "model-dependent")
   assert.equal(PROVIDER_REGISTRY.openrouter.reasoningControl, "model-dependent")
@@ -1992,6 +1999,11 @@ test("reasoning controls stay disabled unless provider and model both declare su
     /当前模型未声明支持/
   )
 
+  assert.equal(
+    getReasoningControlBlockReason(resolveModelRoute("o3-mini", {})),
+    null
+  )
+
   const deepseekRoute = buildProviderConfigRoute({
     id: "cfg-deepseek",
     provider: "deepseek",
@@ -2006,6 +2018,107 @@ test("reasoning controls stay disabled unless provider and model both declare su
   assert.match(
     getReasoningControlBlockReason(deepseekRoute) ?? "",
     /不会自动发送思考\/推理控制参数/
+  )
+
+  const doubaoThinkingRoute = buildProviderConfigRoute({
+    id: "cfg-doubao-thinking",
+    provider: "doubao",
+    displayName: "豆包 Thinking",
+    model: "doubao-seed-1-6-thinking",
+    createdAt: 100,
+    updatedAt: 100
+  })
+
+  assert.equal(doubaoThinkingRoute.provider.reasoningControl, "model-dependent")
+  assert.equal(doubaoThinkingRoute.model.supportsReasoningControl, true)
+  assert.equal(getReasoningControlBlockReason(doubaoThinkingRoute), null)
+})
+
+test("reasoning request params are gated by operation, provider, and model", () => {
+  const selectionTranslate = {
+    operation: "translate",
+    context: "selection",
+    selectionText: "Hello"
+  } as const
+
+  assert.deepEqual(
+    buildChatCompletionReasoningParams({
+      providerId: "openai",
+      modelOrEndpoint: "o3-mini",
+      payload: selectionTranslate
+    }),
+    { reasoning_effort: "low" }
+  )
+  assert.deepEqual(
+    buildChatCompletionReasoningParams({
+      providerId: "doubao",
+      modelOrEndpoint: "doubao-seed-1-6-thinking",
+      payload: { ...selectionTranslate, operation: "explain" }
+    }),
+    { thinking: { type: "enabled" } }
+  )
+  assert.deepEqual(
+    buildChatCompletionReasoningParams({
+      providerId: "openai",
+      modelOrEndpoint: "gpt-4o-mini",
+      payload: selectionTranslate
+    }),
+    {}
+  )
+  assert.deepEqual(
+    buildChatCompletionReasoningParams({
+      providerId: "openai",
+      modelOrEndpoint: "o3-mini",
+      payload: {
+        operation: "summarize",
+        context: "page",
+        pageContent: "Long page"
+      }
+    }),
+    {}
+  )
+  assert.deepEqual(
+    buildChatCompletionReasoningParams({
+      providerId: "doubao",
+      modelOrEndpoint: "ep-20260615-default",
+      payload: selectionTranslate
+    }),
+    {}
+  )
+  assert.equal(
+    shouldUseMaxCompletionTokens({
+      providerId: "openai",
+      modelOrEndpoint: "o3-mini"
+    }),
+    true
+  )
+  assert.equal(
+    shouldUseMaxCompletionTokens({
+      providerId: "doubao",
+      modelOrEndpoint: "doubao-seed-1-6-thinking"
+    }),
+    false
+  )
+})
+
+test("reasoning stream deltas parse separately from answer text", () => {
+  assert.equal(
+    extractReasoningDeltaText({
+      choices: [{ delta: { reasoning_content: "先判断语境。" } }]
+    }),
+    "先判断语境。"
+  )
+  assert.equal(
+    extractReasoningDeltaText({
+      delta: { reasoning: { text: "再输出译文。" } }
+    }),
+    "再输出译文。"
+  )
+  assert.equal(
+    extractReasoningDeltaText({
+      choices: [{ delta: { content: "Final answer" } }]
+    }),
+    ""
   )
 })
 
@@ -2891,6 +3004,69 @@ test("floating panel renders dynamic loading status while waiting", () => {
   assert.match(floatingSource, /setLoadingTick\(\(tick\) => tick \+ 1\)/)
 })
 
+test("reasoning stream renders as temporary UI state, not saved answer content", () => {
+  const floatingSource = readFileSync(
+    new URL("../src/contents/floating.tsx", import.meta.url),
+    "utf8"
+  )
+  const toolbarSource = readFileSync(
+    new URL("../src/contents/toolbar.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(floatingSource, /chunk\.kind === "reasoning"/)
+  assert.match(floatingSource, /reasoningText: appendReasoningText/)
+  assert.match(floatingSource, /<ReasoningMessage/)
+  assert.match(floatingSource, /messages: state.messages/)
+  assert.doesNotMatch(floatingSource, /content: .*reasoningText/)
+  assert.match(toolbarSource, /chunk\.kind === "reasoning"/)
+  assert.match(toolbarSource, /statusText: t\("model\.thinking"\)/)
+})
+
+test("perf summary reaches content scripts through final stream chunks as JSON", () => {
+  const aiClientSource = readFileSync(
+    new URL("../src/background/ai-client.ts", import.meta.url),
+    "utf8"
+  )
+  const backgroundSource = readFileSync(
+    new URL("../src/background/index.ts", import.meta.url),
+    "utf8"
+  )
+  const floatingSource = readFileSync(
+    new URL("../src/contents/floating.tsx", import.meta.url),
+    "utf8"
+  )
+  const toolbarSource = readFileSync(
+    new URL("../src/contents/toolbar.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(aiClientSource, /perfSummary:\s*\n\s*done && opts\?\.logPerf/)
+  assert.match(aiClientSource, /buildAIRequestPerfSummary/)
+  assert.match(aiClientSource, /Promise<PerfSummary \| undefined>/)
+  assert.match(aiClientSource, /if \(chunk\.perfSummary\) finalPerfSummary = chunk\.perfSummary/)
+  assert.match(aiClientSource, /return finalPerfSummary/)
+  assert.match(backgroundSource, /if \(chunk\.perfSummary\) perfSummary = chunk\.perfSummary/)
+  assert.match(backgroundSource, /returnedPerfSummary/)
+  assert.doesNotMatch(backgroundSource, /void sendMessageToFrame\(\s*\n\s*tabId,\s*\n\s*\{\s*\n\s*action: "AI_PERF_SUMMARY"/)
+  assert.match(backgroundSource, /await sendMessageToFrame\(\s*\n\s*tabId,\s*\n\s*\{\s*\n\s*action: "AI_PERF_SUMMARY"/)
+  assert.match(backgroundSource, /label: "ai-stream-perf-summary"/)
+  assert.match(backgroundSource, /chunk: \{\s*\n\s*text: ""/)
+  assert.match(backgroundSource, /perfSummary/)
+  assert.match(
+    toolbarSource,
+    /if \(chunk\.perfSummary\)[\s\S]*if \(requestId !== inlineRequestRef\.current\) return/
+  )
+  assert.match(floatingSource, /chunk\.perfSummary/)
+  assert.match(toolbarSource, /chunk\.perfSummary/)
+  assert.match(floatingSource, /`\[Aviso perf\] \$\{JSON\.stringify\(chunk\.perfSummary\)\}`/)
+  assert.match(toolbarSource, /`\[Aviso perf\] \$\{JSON\.stringify\(chunk\.perfSummary\)\}`/)
+  assert.match(
+    readFileSync(new URL("../src/utils/timing.ts", import.meta.url), "utf8"),
+    /`\[Aviso perf\] \$\{JSON\.stringify\(summary\)\}`/
+  )
+})
+
 test("inline translation uses shared two-second slow hint without fake output", () => {
   const toolbarSource = readFileSync(
     new URL("../src/contents/toolbar.tsx", import.meta.url),
@@ -3387,6 +3563,7 @@ test("perf summary 字段固定且按 trigger 计算阶段耗时", () => {
     trigger: "toolbar",
     provider: "openai",
     modelOrEndpoint: "gpt-4o-mini",
+    operation: "translate",
     inputChars: 1200,
     contextType: "selection",
     timing: {
@@ -3404,6 +3581,7 @@ test("perf summary 字段固定且按 trigger 计算阶段耗时", () => {
     "trigger",
     "provider",
     "model_or_endpoint",
+    "operation",
     "input_size_bucket",
     "context_type",
     "t_ui_visible_ms",
@@ -3417,6 +3595,7 @@ test("perf summary 字段固定且按 trigger 计算阶段耗时", () => {
     trigger: "toolbar",
     provider: "openai",
     model_or_endpoint: "gpt-4o-mini",
+    operation: "translate",
     input_size_bucket: "501-2000",
     context_type: "selection",
     t_ui_visible_ms: 40,
@@ -3425,6 +3604,141 @@ test("perf summary 字段固定且按 trigger 计算阶段耗时", () => {
     t_first_chunk_ms: 900,
     t_done_ms: 1600,
     error_category: "none"
+  })
+})
+
+test("selection TTFT dogfood rows only keep approved summary fields and aggregate cold provider samples", () => {
+  const summaries = [
+    buildPerfSummary({
+      trigger: "toolbar",
+      provider: "doubao",
+      modelOrEndpoint: "doubao-seed-1-6-thinking",
+      operation: "translate",
+      inputChars: 240,
+      contextType: "selection",
+      timing: {
+        triggerAt: 1000,
+        floatingShownAt: 1020,
+        providerRequestStartedAt: 1080,
+        firstChunkAt: 1800,
+        doneAt: 2300
+      },
+      errorCategory: "none"
+    }),
+    buildPerfSummary({
+      trigger: "toolbar",
+      provider: "doubao",
+      modelOrEndpoint: "doubao-seed-1-6-thinking",
+      operation: "translate",
+      inputChars: 260,
+      contextType: "selection",
+      timing: {
+        triggerAt: 2000,
+        floatingShownAt: 2020,
+        providerRequestStartedAt: 2070,
+        firstChunkAt: 3200,
+        doneAt: 3600
+      },
+      errorCategory: "none"
+    }),
+    buildPerfSummary({
+      trigger: "toolbar",
+      provider: "doubao",
+      modelOrEndpoint: "doubao-seed-1-6-thinking",
+      operation: "explain",
+      inputChars: 300,
+      contextType: "selection",
+      timing: {
+        triggerAt: 3000,
+        floatingShownAt: 3020,
+        providerRequestStartedAt: 3070,
+        firstChunkAt: 4700,
+        doneAt: 5000
+      },
+      errorCategory: "none"
+    }),
+    buildPerfSummary({
+      trigger: "toolbar",
+      provider: "doubao",
+      modelOrEndpoint: "doubao-seed-1-6-thinking",
+      operation: "translate",
+      inputChars: 220,
+      contextType: "selection",
+      timing: {
+        triggerAt: 4000,
+        floatingShownAt: 4010
+      },
+      errorCategory: "missing_first_chunk"
+    }),
+    buildPerfSummary({
+      trigger: "toolbar",
+      provider: "doubao",
+      modelOrEndpoint: "doubao-seed-1-6-thinking",
+      operation: "translate",
+      inputChars: 210,
+      contextType: "selection",
+      timing: {
+        triggerAt: 4500,
+        floatingShownAt: 4510,
+        firstChunkAt: 4520,
+        doneAt: 4530
+      },
+      errorCategory: "none"
+    }),
+    buildPerfSummary({
+      trigger: "toolbar",
+      provider: "doubao",
+      modelOrEndpoint: "doubao-seed-1-6-thinking",
+      operation: "summarize",
+      inputChars: 220,
+      contextType: "page_summary",
+      timing: {
+        triggerAt: 5000,
+        providerRequestStartedAt: 5020,
+        firstChunkAt: 5400
+      },
+      errorCategory: "none"
+    })
+  ]
+  const row = buildSelectionTtftDogfoodRow(summaries[0])
+
+  assert.deepEqual(Object.keys(row ?? {}), [
+    "provider",
+    "model_or_endpoint",
+    "operation",
+    "input_size_bucket",
+    "t_ui_visible_ms",
+    "t_provider_start_ms",
+    "t_first_chunk_ms",
+    "t_done_ms",
+    "error_category"
+  ])
+  assert.deepEqual(row, {
+    provider: "doubao",
+    model_or_endpoint: "doubao-seed-1-6-thinking",
+    operation: "selection_translate",
+    input_size_bucket: "0-500",
+    t_ui_visible_ms: 20,
+    t_provider_start_ms: 80,
+    t_first_chunk_ms: 800,
+    t_done_ms: 1300,
+    error_category: "none"
+  })
+  assert.equal(buildSelectionTtftDogfoodRow(summaries[5]), null)
+
+  assert.deepEqual(buildSelectionTtftAggregate(summaries), {
+    operation: "selection_all",
+    sample_count: 3,
+    p50_first_chunk_ms: 1200,
+    p95_first_chunk_ms: 1700,
+    excluded_count: 2
+  })
+  assert.deepEqual(buildSelectionTtftAggregate(summaries, "selection_translate"), {
+    operation: "selection_translate",
+    sample_count: 2,
+    p50_first_chunk_ms: 800,
+    p95_first_chunk_ms: 1200,
+    excluded_count: 2
   })
 })
 

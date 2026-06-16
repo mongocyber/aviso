@@ -14,7 +14,7 @@ import {
   haveTemplatesChanged
 } from "~utils/settings-change"
 import { getSettings } from "~utils/storage"
-import { logTiming, markTiming } from "~utils/timing"
+import { logTiming, markTiming, type PerfSummary } from "~utils/timing"
 
 import { handleAIRequest, handleProviderConnectivityTest } from "./ai-client"
 import {
@@ -208,6 +208,7 @@ async function handleMessage(
         activeAIRequests.get(request.requestId)?.abort()
         const abortController = new AbortController()
         activeAIRequests.set(request.requestId, abortController)
+        let perfSummary: PerfSummary | undefined
 
         try {
           const timing = markTiming(
@@ -227,9 +228,10 @@ async function handleMessage(
             }
           )
 
-          await handleAIRequest(
+          const returnedPerfSummary = await handleAIRequest(
             { ...request.payload, timing },
             (chunk) => {
+              if (chunk.perfSummary) perfSummary = chunk.perfSummary
               if (tabId) {
                 void sendMessageToFrame(
                   tabId,
@@ -247,10 +249,51 @@ async function handleMessage(
             {
               requestId: request.requestId,
               signal: abortController.signal,
-              pageUrl: request.payload.pageUrl ?? sender.tab?.url ?? sender.url
+              pageUrl: request.payload.pageUrl ?? sender.tab?.url ?? sender.url,
+              onPerfSummary: (summary) => {
+                perfSummary = summary
+              }
             }
           )
-          sendResponse({ success: true })
+          if (!perfSummary && returnedPerfSummary) {
+            perfSummary = returnedPerfSummary
+          }
+          if (tabId && perfSummary) {
+            await sendMessageToFrame(
+              tabId,
+              {
+                action: "AI_PERF_SUMMARY",
+                payload: { requestId: request.requestId, summary: perfSummary }
+              },
+              {
+                frameId: responseFrameId,
+                label: "ai-perf-summary"
+              }
+            )
+            await sendMessageToFrame(
+              tabId,
+              {
+                action: "AI_STREAM_CHUNK",
+                payload: {
+                  requestId: request.requestId,
+                  chunk: {
+                    text: "",
+                    done: true,
+                    kind: "answer",
+                    perfSummary
+                  }
+                }
+              },
+              {
+                frameId: responseFrameId,
+                label: "ai-stream-perf-summary"
+              }
+            )
+          }
+          sendResponse({
+            success: true,
+            data: perfSummary ? { perfSummary } : undefined
+          })
         } catch (err) {
           const error = normalizeError(err)
           // 通知浮窗停止 loading 并显示错误
