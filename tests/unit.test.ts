@@ -3350,6 +3350,28 @@ test("background batches stream chunks while flushing done and perf summaries", 
   )
 })
 
+test("floating toolbar requests run AI directly from background after display opens", () => {
+  const backgroundSource = readFileSync(
+    new URL("../src/background/index.ts", import.meta.url),
+    "utf8"
+  )
+  const showFloatingBlock =
+    backgroundSource.match(
+      /case "SHOW_FLOATING_WINDOW": \{[\s\S]*?case "WARM_RUNTIME_CONFIG"/
+    )?.[0] ?? ""
+
+  assert.match(backgroundSource, /async function runAIRequestToFrame/)
+  assert.match(
+    showFloatingBlock,
+    /const shouldRunAIInBackground =[\s\S]*!request\.payload\.deferAiRequest && !request\.payload\.restore/
+  )
+  assert.match(showFloatingBlock, /deferAiRequest: true/)
+  assert.match(showFloatingBlock, /await runtimeWarmup/)
+  assert.match(showFloatingBlock, /await runAIRequestToFrame\(/)
+  assert.match(showFloatingBlock, /responseFrameId: result\.frameId \?\? TOP_FRAME_ID/)
+  assert.match(showFloatingBlock, /sendResponse\(aiResponse\)/)
+})
+
 test("floating conversation persistence waits for stream completion", () => {
   const floatingSource = readFileSync(
     new URL("../src/contents/floating.tsx", import.meta.url),

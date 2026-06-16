@@ -1,5 +1,6 @@
 import type { Settings } from "~types/history"
 import type {
+  AIRequestPayload,
   AIStreamChunk,
   MessageRequest,
   MessageResponse
@@ -33,7 +34,11 @@ import {
   summarizePageFromFrame,
   syncModelMenuSelection
 } from "./context-menus"
-import { sendMessageToDisplayFrame, sendMessageToFrame } from "./frame-router"
+import {
+  sendMessageToDisplayFrame,
+  sendMessageToFrame,
+  TOP_FRAME_ID
+} from "./frame-router"
 import {
   addHistoryEntry,
   clearHistory,
@@ -135,6 +140,113 @@ function createStreamChunkDispatcher(input: {
     flush: async () => {
       flushBuffered()
       await sendQueue
+    }
+  }
+}
+
+async function runAIRequestToFrame(input: {
+  tabId?: number
+  responseFrameId: number
+  requestId: string
+  payload: AIRequestPayload
+  pageUrl?: string
+}): Promise<MessageResponse> {
+  const { tabId, responseFrameId, requestId, payload, pageUrl } = input
+  const streamChunks = createStreamChunkDispatcher({
+    tabId,
+    requestId,
+    frameId: responseFrameId
+  })
+  activeAIRequests.get(requestId)?.abort()
+  const abortController = new AbortController()
+  activeAIRequests.set(requestId, abortController)
+  let perfSummary: PerfSummary | undefined
+
+  try {
+    const timing = markTiming(payload.timing, "backgroundReceivedAt")
+    logTiming("background_ai_request_received", requestId, timing, {
+      operation: payload.operation,
+      pageContentChars: payload.pageContent?.length ?? 0,
+      priorContextChars: payload.priorContext?.length ?? 0,
+      selectionChars: payload.selectionText?.length ?? 0,
+      userMessageChars: payload.userMessage?.length ?? 0
+    })
+
+    const returnedPerfSummary = await handleAIRequest(
+      { ...payload, timing },
+      (chunk) => {
+        if (chunk.perfSummary) perfSummary = chunk.perfSummary
+        streamChunks.push(chunk)
+      },
+      {
+        requestId,
+        signal: abortController.signal,
+        pageUrl,
+        onPerfSummary: (summary) => {
+          perfSummary = summary
+        }
+      }
+    )
+    if (!perfSummary && returnedPerfSummary) {
+      perfSummary = returnedPerfSummary
+    }
+    await streamChunks.flush()
+    if (tabId && perfSummary) {
+      await sendMessageToFrame(
+        tabId,
+        {
+          action: "AI_PERF_SUMMARY",
+          payload: { requestId, summary: perfSummary }
+        },
+        {
+          frameId: responseFrameId,
+          label: "ai-perf-summary"
+        }
+      )
+      await sendMessageToFrame(
+        tabId,
+        {
+          action: "AI_STREAM_CHUNK",
+          payload: {
+            requestId,
+            chunk: {
+              text: "",
+              done: true,
+              kind: "answer",
+              perfSummary
+            }
+          }
+        },
+        {
+          frameId: responseFrameId,
+          label: "ai-stream-perf-summary"
+        }
+      )
+    }
+    return {
+      success: true,
+      data: perfSummary ? { perfSummary } : undefined
+    }
+  } catch (err) {
+    const error = normalizeError(err)
+    await streamChunks.flush()
+    if (tabId) {
+      await sendMessageToFrame(
+        tabId,
+        {
+          action: "AI_STREAM_ERROR",
+          payload: { error, requestId }
+        },
+        {
+          frameId: responseFrameId,
+          label: "ai-stream-error"
+        }
+      )
+    }
+    return { success: false, error }
+  } finally {
+    if (activeAIRequests.get(requestId) === abortController) {
+      activeAIRequests.delete(requestId)
     }
   }
 }
@@ -252,20 +364,30 @@ async function handleMessage(
       // ── toolbar / clipboard / command 触发浮窗：转发给同一 tab ────────────
       case "SHOW_FLOATING_WINDOW": {
         if (senderTabId) {
-          if (!request.payload.deferAiRequest && !request.payload.restore) {
-            void getRuntimeConfigSnapshot().catch((err) => {
-              console.warn("[Aviso] Runtime config warmup failed", {
-                requestId: request.payload.requestId,
-                error: buildSafeErrorLog(err)
+          const shouldRunAIInBackground =
+            !request.payload.deferAiRequest && !request.payload.restore
+          const requestId = request.payload.requestId ?? `req-${Date.now()}`
+          const runtimeWarmup = shouldRunAIInBackground
+            ? getRuntimeConfigSnapshot().catch((err) => {
+                console.warn("[Aviso] Runtime config warmup failed", {
+                  requestId,
+                  error: buildSafeErrorLog(err)
+                })
               })
-            })
-          }
+            : undefined
+          const displayPayload = shouldRunAIInBackground
+            ? {
+                ...request.payload,
+                requestId,
+                deferAiRequest: true
+              }
+            : request.payload
 
           const result = await sendMessageToDisplayFrame(
             senderTabId,
             {
               action: "SHOW_FLOATING_WINDOW",
-              payload: request.payload
+              payload: displayPayload
             },
             {
               fallbackFrameId: sender.frameId,
@@ -276,6 +398,26 @@ async function handleMessage(
 
           if (result.ok === false) {
             sendResponse({ success: false, error: result.error })
+            break
+          }
+
+          if (shouldRunAIInBackground) {
+            await runtimeWarmup
+            const {
+              requestId: _requestId,
+              deferAiRequest: _deferAiRequest,
+              restore: _restore,
+              statusText: _statusText,
+              ...aiPayload
+            } = displayPayload
+            const aiResponse = await runAIRequestToFrame({
+              tabId: senderTabId,
+              responseFrameId: result.frameId ?? TOP_FRAME_ID,
+              requestId,
+              payload: aiPayload,
+              pageUrl: request.payload.pageUrl ?? sender.tab?.url ?? sender.url
+            })
+            sendResponse(aiResponse)
             break
           }
         }
@@ -291,112 +433,14 @@ async function handleMessage(
 
       // ── 流式 AI 请求：用 sender.tab.id 路由 chunk 回当前页面 ────────────
       case "AI_REQUEST": {
-        const tabId = senderTabId
-        const responseFrameId = sender.frameId ?? 0
-        const streamChunks = createStreamChunkDispatcher({
-          tabId,
+        const response = await runAIRequestToFrame({
+          tabId: senderTabId,
+          responseFrameId: sender.frameId ?? TOP_FRAME_ID,
           requestId: request.requestId,
-          frameId: responseFrameId
+          payload: request.payload,
+          pageUrl: request.payload.pageUrl ?? sender.tab?.url ?? sender.url
         })
-        activeAIRequests.get(request.requestId)?.abort()
-        const abortController = new AbortController()
-        activeAIRequests.set(request.requestId, abortController)
-        let perfSummary: PerfSummary | undefined
-
-        try {
-          const timing = markTiming(
-            request.payload.timing,
-            "backgroundReceivedAt"
-          )
-          logTiming(
-            "background_ai_request_received",
-            request.requestId,
-            timing,
-            {
-              operation: request.payload.operation,
-              pageContentChars: request.payload.pageContent?.length ?? 0,
-              priorContextChars: request.payload.priorContext?.length ?? 0,
-              selectionChars: request.payload.selectionText?.length ?? 0,
-              userMessageChars: request.payload.userMessage?.length ?? 0
-            }
-          )
-
-          const returnedPerfSummary = await handleAIRequest(
-            { ...request.payload, timing },
-            (chunk) => {
-              if (chunk.perfSummary) perfSummary = chunk.perfSummary
-              streamChunks.push(chunk)
-            },
-            {
-              requestId: request.requestId,
-              signal: abortController.signal,
-              pageUrl: request.payload.pageUrl ?? sender.tab?.url ?? sender.url,
-              onPerfSummary: (summary) => {
-                perfSummary = summary
-              }
-            }
-          )
-          if (!perfSummary && returnedPerfSummary) {
-            perfSummary = returnedPerfSummary
-          }
-          await streamChunks.flush()
-          if (tabId && perfSummary) {
-            await sendMessageToFrame(
-              tabId,
-              {
-                action: "AI_PERF_SUMMARY",
-                payload: { requestId: request.requestId, summary: perfSummary }
-              },
-              {
-                frameId: responseFrameId,
-                label: "ai-perf-summary"
-              }
-            )
-            await sendMessageToFrame(
-              tabId,
-              {
-                action: "AI_STREAM_CHUNK",
-                payload: {
-                  requestId: request.requestId,
-                  chunk: {
-                    text: "",
-                    done: true,
-                    kind: "answer",
-                    perfSummary
-                  }
-                }
-              },
-              {
-                frameId: responseFrameId,
-                label: "ai-stream-perf-summary"
-              }
-            )
-          }
-          sendResponse({
-            success: true,
-            data: perfSummary ? { perfSummary } : undefined
-          })
-        } catch (err) {
-          const error = normalizeError(err)
-          // 通知浮窗停止 loading 并显示错误
-          await streamChunks.flush()
-          if (tabId) {
-            await sendMessageToFrame(
-              tabId,
-              {
-                action: "AI_STREAM_ERROR",
-                payload: { error, requestId: request.requestId }
-              },
-              {
-                frameId: responseFrameId,
-                label: "ai-stream-error"
-              }
-            )
-          }
-          sendResponse({ success: false, error })
-        } finally {
-          activeAIRequests.delete(request.requestId)
-        }
+        sendResponse(response)
         break
       }
 
