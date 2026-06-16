@@ -835,6 +835,14 @@ const MESSAGES = {
     "zh-CN": "连接测试未通过",
     en: "Connection test failed"
   },
+  "popup.connectivity.showDetails": {
+    "zh-CN": "展开详情",
+    en: "Show details"
+  },
+  "popup.connectivity.hideDetails": {
+    "zh-CN": "收起详情",
+    en: "Hide details"
+  },
   "popup.connectivity.fallbackLatency": {
     "zh-CN": "未发起或未收到 background 摘要。",
     en: "No background summary was started or received."
