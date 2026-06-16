@@ -3478,8 +3478,12 @@ function ConnectivitySummaryView({
         className="aviso-popup-button"
         aria-expanded={expanded}
         onClick={() => setExpanded((open) => !open)}
-        style={{ ...styles.connectivityResultToggle, color: ui.text }}>
-        <span style={styles.connectivityResultTitle}>
+        style={{
+          ...styles.connectivityResultToggle,
+          borderRadius: expanded ? "9px 9px 0 0" : 9,
+          color: ui.text
+        }}>
+        <span style={{ ...styles.connectivityResultTitle, color: ui.text }}>
           <span
             style={{
               ...styles.connectivityStatusDot,
@@ -4638,10 +4642,11 @@ const styles: Record<string, React.CSSProperties> = {
   },
   connectivityResult: {
     marginTop: 10,
-    padding: "10px 11px",
+    padding: 0,
     border: `1px solid var(--aviso-line)`,
     borderRadius: 10,
-    background: aviso.darkBg
+    background: aviso.darkBg,
+    overflow: "hidden"
   },
   connectivityResultToggle: {
     width: "100%",
@@ -4649,7 +4654,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "space-between",
     gap: 10,
-    padding: 0,
+    padding: "10px 11px",
     border: 0,
     background: "transparent",
     fontFamily: aviso.font,
@@ -4660,8 +4665,8 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: 7,
+    flex: "1 1 auto",
     minWidth: 0,
-    color: aviso.darkText,
     fontSize: 12.5,
     fontWeight: 700
   },
@@ -4683,7 +4688,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "grid",
     gridTemplateColumns: "112px minmax(0, 1fr)",
     gap: 8,
-    padding: "3px 0",
+    padding: "3px 11px",
     fontSize: 11,
     lineHeight: 1.45,
     minWidth: 0
