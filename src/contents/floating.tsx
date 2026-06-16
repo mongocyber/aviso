@@ -278,6 +278,7 @@ function FloatingWindow() {
   const contentRef = useRef<HTMLDivElement>(null)
   const followUpRef = useRef<HTMLTextAreaElement>(null)
   const stateRef = useRef<FloatingState>(INITIAL_STATE)
+  const tRef = useRef(t)
   const activeRequestRef = useRef("")
   const copyTimer = useRef<ReturnType<typeof setTimeout>>()
   const slowTimer = useRef<ReturnType<typeof setTimeout>>()
@@ -286,7 +287,7 @@ function FloatingWindow() {
   const sendAIRequest = (
     requestId: string,
     payload: AIRequestPayload,
-    statusText = defaultStatusText(payload.operation ?? "", t)
+    statusText = defaultStatusText(payload.operation ?? "", tRef.current)
   ) => {
     if (activeRequestRef.current !== requestId) {
       logTiming("ai_request_skipped", requestId, payload.timing, {
@@ -333,7 +334,7 @@ function FloatingWindow() {
                   error: visibleErrorText(
                     prev.operation,
                     response.error as string,
-                    t
+                    tRef.current
                   ),
                   statusText: ""
                 }
@@ -354,6 +355,10 @@ function FloatingWindow() {
   useEffect(() => {
     stateRef.current = state
   }, [state])
+
+  useEffect(() => {
+    tRef.current = t
+  }, [t])
 
   useEffect(() => {
     const listener = (
@@ -424,7 +429,12 @@ function FloatingWindow() {
         const inputText =
           selectionText || userMessage || linkUrl || srcUrl || pageUrl || ""
 
-        const bubble = userBubbleText(operation, inputText, imageSource, t)
+        const bubble = userBubbleText(
+          operation,
+          inputText,
+          imageSource,
+          tRef.current
+        )
         const messages: ChatMsg[] = appendConversationTurn([], {
           userContent: bubble,
           requestId,
@@ -461,7 +471,7 @@ function FloatingWindow() {
             trigger,
             operation,
             context,
-            statusText: statusText ?? defaultStatusText(operation, t),
+            statusText: statusText ?? defaultStatusText(operation, tRef.current),
             reasoningText: "",
             reasoningExpanded: false,
             messages: appending
@@ -493,7 +503,7 @@ function FloatingWindow() {
               templateId,
               timing
             },
-            statusText ?? defaultStatusText(operation, t)
+            statusText ?? defaultStatusText(operation, tRef.current)
           )
         }
       }
@@ -507,7 +517,8 @@ function FloatingWindow() {
             ...aiPayload,
             timing: timing ?? aiPayload.timing
           },
-          statusText ?? defaultStatusText(aiPayload.operation ?? "", t)
+          statusText ??
+            defaultStatusText(aiPayload.operation ?? "", tRef.current)
         )
       }
 
@@ -556,7 +567,7 @@ function FloatingWindow() {
             ? {
                 ...prev,
                 loading: false,
-                error: visibleErrorText(prev.operation, error, t),
+                error: visibleErrorText(prev.operation, error, tRef.current),
                 statusText: ""
               }
             : prev
@@ -652,7 +663,7 @@ function FloatingWindow() {
           return prev
         }
 
-        return { ...prev, statusText: t("model.slow") }
+        return { ...prev, statusText: tRef.current("model.slow") }
       })
     }, SLOW_FIRST_CHUNK_MS)
 
@@ -662,10 +673,17 @@ function FloatingWindow() {
   const handleCopy = async () => {
     const output = lastByRole(state.messages, "assistant")
     if (!output) return
-    await navigator.clipboard.writeText(output)
-    setCopiedId(state.requestId)
-    clearTimeout(copyTimer.current)
-    copyTimer.current = setTimeout(() => setCopiedId(""), 1200)
+    try {
+      await navigator.clipboard.writeText(output)
+      setCopiedId(state.requestId)
+      clearTimeout(copyTimer.current)
+      copyTimer.current = setTimeout(() => setCopiedId(""), 1200)
+    } catch {
+      setState((prev) => ({
+        ...prev,
+        error: tRef.current("translation.copyError")
+      }))
+    }
   }
 
   const handleSave = () => {

@@ -400,7 +400,33 @@ test("bookmark search meta does not expose raw query", () => {
   assert.match(backgroundSource, /hasQuery: boolean/)
   assert.match(backgroundSource, /queryLength: number/)
   assert.match(backgroundSource, /queryLength: trimmedQuery\.length/)
-  assert.match(backgroundSource, /console\.info\("\[Aviso\] Bookmark search:", meta\)/)
+  assert.doesNotMatch(
+    backgroundSource,
+    /console\.info\("\[Aviso\] Bookmark search:", meta\)/
+  )
+})
+
+test("content script async handlers use current language and catch copy errors", () => {
+  const floatingSource = readFileSync(
+    new URL("../src/contents/floating.tsx", import.meta.url),
+    "utf8"
+  )
+  const toolbarSource = readFileSync(
+    new URL("../src/contents/toolbar.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(floatingSource, /const tRef = useRef\(t\)/)
+  assert.match(floatingSource, /tRef\.current = t/)
+  assert.match(floatingSource, /try \{\s*await navigator\.clipboard\.writeText\(output\)/)
+  assert.match(floatingSource, /error: tRef\.current\("translation\.copyError"\)/)
+
+  assert.match(toolbarSource, /const languageRef = useRef\(language\)/)
+  assert.match(toolbarSource, /const tRef = useRef\(t\)/)
+  assert.match(toolbarSource, /languageRef\.current = language/)
+  assert.match(toolbarSource, /tRef\.current = t/)
+  assert.match(toolbarSource, /formatTranslationError\(error, languageRef\.current\)/)
+  assert.match(toolbarSource, /tRef\.current\("model\.thinking"\)/)
 })
 
 test("command palette is a search panel without mock access cards", () => {
@@ -878,14 +904,17 @@ test("inline translation error prefix follows English UI language", () => {
     "utf8"
   )
 
-  assert.match(toolbarSource, /formatTranslationError\(error,\s*language\)/)
   assert.match(
     toolbarSource,
-    /formatTranslationError\(runtimeError\.message,\s*language\)/
+    /formatTranslationError\(error,\s*languageRef\.current\)/
   )
   assert.match(
     toolbarSource,
-    /formatTranslationError\(response\.error as string,\s*language\)/
+    /formatTranslationError\(\s*runtimeError\.message,\s*languageRef\.current\s*\)/
+  )
+  assert.match(
+    toolbarSource,
+    /formatTranslationError\(\s*response\.error as string,\s*languageRef\.current\s*\)/
   )
 })
 
@@ -3025,7 +3054,7 @@ test("reasoning stream renders as temporary UI state, not saved answer content",
   assert.match(floatingSource, /messages: state.messages/)
   assert.doesNotMatch(floatingSource, /content: .*reasoningText/)
   assert.match(toolbarSource, /chunk\.kind === "reasoning"/)
-  assert.match(toolbarSource, /statusText: t\("model\.thinking"\)/)
+  assert.match(toolbarSource, /statusText: tRef\.current\("model\.thinking"\)/)
 })
 
 test("perf summary reaches content scripts through final stream chunks as JSON", () => {
@@ -3081,7 +3110,7 @@ test("inline translation uses shared two-second slow hint without fake output", 
   assert.match(toolbarSource, /const INLINE_TRANSLATION_DEBOUNCE_MS = 100/)
   assert.match(toolbarSource, /startInlineSlowHintTimer/)
   assert.match(toolbarSource, /shouldShowSlowResponseHint/)
-  assert.match(toolbarSource, /statusText: t\("model\.slow"\)/)
+  assert.match(toolbarSource, /statusText: tRef\.current\("model\.slow"\)/)
   assert.match(toolbarSource, /getDynamicLoadingStatusText/)
   assert.match(toolbarSource, /operation: "translate"/)
   assert.doesNotMatch(toolbarSource, /output: SLOW_MODEL_RESPONSE_TEXT/)

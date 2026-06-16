@@ -171,6 +171,8 @@ function SelectionToolbar() {
   const inlineEnabledRef = useRef(false)
   const inlineTargetLanguageRef = useRef<TranslationTargetLanguage>("auto")
   const inlineRequestRef = useRef("")
+  const languageRef = useRef(language)
+  const tRef = useRef(t)
   const hideTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const inlineTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const inlineCopyTimer = useRef<ReturnType<typeof setTimeout>>(null)
@@ -212,10 +214,15 @@ function SelectionToolbar() {
           return prev
         }
 
-        return { ...prev, statusText: t("model.slow") }
+        return { ...prev, statusText: tRef.current("model.slow") }
       })
     }, SLOW_FIRST_CHUNK_MS)
   }
+
+  useEffect(() => {
+    languageRef.current = language
+    tRef.current = t
+  }, [language, t])
 
   useEffect(() => {
     if (
@@ -285,7 +292,7 @@ function SelectionToolbar() {
         if (chunk.kind === "reasoning") {
           setInlineCard((prev) =>
             prev.requestId === requestId
-              ? { ...prev, statusText: t("model.thinking") }
+              ? { ...prev, statusText: tRef.current("model.thinking") }
               : prev
           )
           return
@@ -323,7 +330,7 @@ function SelectionToolbar() {
                 ...prev,
                 mode: "error",
                 statusText: "",
-                error: formatTranslationError(error, language)
+                error: formatTranslationError(error, languageRef.current)
               }
             : prev
         )
@@ -376,7 +383,10 @@ function SelectionToolbar() {
                   ...prev,
                   mode: "error",
                   statusText: "",
-                  error: formatTranslationError(runtimeError.message, language)
+                  error: formatTranslationError(
+                    runtimeError.message,
+                    languageRef.current
+                  )
                 }
               : prev
           )
@@ -393,7 +403,10 @@ function SelectionToolbar() {
                   ...prev,
                   mode: "error",
                   statusText: "",
-                  error: formatTranslationError(response.error as string, language)
+                  error: formatTranslationError(
+                    response.error as string,
+                    languageRef.current
+                  )
                 }
               : prev
           )

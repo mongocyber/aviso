@@ -383,7 +383,6 @@ async function handleMessage(
       // ── 书签搜索：chrome.bookmarks 仅在 background 可用 ──────────────────
       case "SEARCH_BOOKMARKS": {
         const { results, meta } = await searchBookmarks(request.payload.query)
-        console.info("[Aviso] Bookmark search:", meta)
         sendResponse({ success: true, data: results, meta })
         break
       }
