@@ -9,6 +9,8 @@ export type ParsedIntent = {
     | "history_search"
     | "bookmark_search"
     | "conversation_search"
+    | "open_bookmarks"
+    | "open_history"
     | "translate_page"
     | "summarize_page"
     | "ask_ai"
@@ -39,14 +41,52 @@ const INTENT_RULES: IntentRule[] = [
     strip: [/[\s\S]*/]
   },
   {
+    action: "open_bookmarks",
+    match: [
+      /^(打开|查看|显示)\s*(我的)?\s*(书签|收藏)\s*$/i,
+      /^\s*(open|show)\s+(my\s+)?bookmarks\s*$/i
+    ],
+    strip: [/[\s\S]*/]
+  },
+  {
+    action: "open_history",
+    match: [
+      /^(打开|查看|显示)?\s*(浏览历史|浏览历史记录|历史|历史记录)\s*$/i,
+      /^\s*(open|show)\s+(browser\s+)?history\s*$/i
+    ],
+    strip: [/[\s\S]*/]
+  },
+  {
     action: "history_search",
-    match: [/^(历史|浏览历史|history)\s+/, /^\s*search\s+history\s+/i],
-    strip: [/^(历史|浏览历史|history)\s+/i, /^\s*search\s+history\s+/i]
+    match: [
+      /^(历史|浏览历史|history)\s+/,
+      /^\s*search\s+history\s+/i,
+      /^(在|从)?\s*(历史|浏览历史|历史记录)\s*(里|中)?\s*(找|查找|搜索|打开)\s+/i,
+      /^\s*(find|search|open)\s+.+\s+(from|in)\s+history\s*$/i
+    ],
+    strip: [
+      /^(历史|浏览历史|history)\s+/i,
+      /^\s*search\s+history\s+/i,
+      /^(在|从)?\s*(历史|浏览历史|历史记录)\s*(里|中)?\s*(找|查找|搜索|打开)\s*/i,
+      /^\s*(find|search|open)\s+/i,
+      /\s+(from|in)\s+history\s*$/i
+    ]
   },
   {
     action: "bookmark_search",
-    match: [/^(书签|收藏|bookmark|bookmarks)\s+/, /^\s*search\s+(bookmark|bookmarks)\s+/i],
-    strip: [/^(书签|收藏|bookmark|bookmarks)\s+/i, /^\s*search\s+(bookmark|bookmarks)\s+/i]
+    match: [
+      /^(书签|收藏|bookmark|bookmarks)\s+/,
+      /^\s*search\s+(bookmark|bookmarks)\s+/i,
+      /^(在|从)?\s*(书签|收藏)\s*(里|中)?\s*(找|查找|搜索|打开)\s+/i,
+      /^\s*(find|search|open)\s+.+\s+(from|in)\s+(bookmark|bookmarks)\s*$/i
+    ],
+    strip: [
+      /^(书签|收藏|bookmark|bookmarks)\s+/i,
+      /^\s*search\s+(bookmark|bookmarks)\s+/i,
+      /^(在|从)?\s*(书签|收藏)\s*(里|中)?\s*(找|查找|搜索|打开)\s*/i,
+      /^\s*(find|search|open)\s+/i,
+      /\s+(from|in)\s+(bookmark|bookmarks)\s*$/i
+    ]
   },
   {
     action: "conversation_search",
@@ -86,8 +126,8 @@ const INTENT_RULES: IntentRule[] = [
   },
   {
     action: "navigate",
-    match: [/^(打开|访问|进入)\s+/, /^\s*(open|go to|navigate to)\b/i],
-    strip: [/^(打开|访问|进入)\s+/i, /^\s*(open|go to|navigate to)\s+[:：]?\s*/i]
+    match: [/^(请)?(帮我)?(打开|访问|进入)\s*/, /^\s*(open|go to|navigate to)\b/i],
+    strip: [/^(请)?(帮我)?(打开|访问|进入)(一下)?\s*/i, /^\s*(open|go to|navigate to)\s+[:：]?\s*/i]
   },
   {
     action: "search",

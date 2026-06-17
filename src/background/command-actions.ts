@@ -44,6 +44,14 @@ export async function handleCommandQuickAction(
     )
   }
 
+  if (actionId === "open_bookmarks") {
+    return openChromePageQuickAction("chrome://bookmarks/")
+  }
+
+  if (actionId === "open_history") {
+    return openChromePageQuickAction("chrome://history/")
+  }
+
   if (actionId === "page_summary") {
     return summarizePageQuickAction(tabId, sourceFrameId, sourceFrameUrl, pageUrl)
   }
@@ -56,6 +64,18 @@ export async function handleCommandQuickAction(
     success: false,
     error: `Unsupported command action: ${actionId}`
   }
+}
+
+async function openChromePageQuickAction(url: string): Promise<MessageResponse> {
+  if (!chrome.tabs?.create) {
+    return {
+      success: false,
+      error: "chrome.tabs.create is unavailable"
+    }
+  }
+
+  await chrome.tabs.create({ url })
+  return { success: true }
 }
 
 async function copyCurrentContextQuickAction(

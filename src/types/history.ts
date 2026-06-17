@@ -70,6 +70,9 @@ export type ProviderConfig = {
   testErrorCategory?: string
   testProvider?: ProviderConfigProvider
   testModel?: string
+  testCompletionMs?: number
+  testFirstTokenMs?: number
+  testLocalProcessingMs?: number
   testedAt?: number
   createdAt: number
   updatedAt: number

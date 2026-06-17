@@ -10,6 +10,7 @@ import {
 } from "~styles/aviso"
 import type { ConversationMessage, Settings } from "~types/history"
 import type { MessageRequest, MessageResponse } from "~types/messages"
+import type { CommandQuickActionId } from "~utils/command-access"
 import { parseIntentLocally, type ParsedIntent } from "~utils/intent"
 import { useSyncedAvisoLanguage, type I18nKey } from "~utils/i18n"
 import {
@@ -39,7 +40,7 @@ type ResultItem = {
   subtitle?: string
   url?: string
   operation?: string
-  actionId?: "page_translate" | "page_summary"
+  actionId?: CommandQuickActionId
   userMessage?: string
   restore?: {
     input: string
@@ -54,6 +55,7 @@ type ResultItem = {
     | "ask-ai"
     | "bookmark"
     | "browser-history"
+    | "local-action"
     | "open-url"
     | "page-action"
 }
@@ -86,6 +88,7 @@ function getResultTypeLabel(
   t: (key: I18nKey) => string
 ): string {
   if (type === "open-url") return t("command.openUrl")
+  if (type === "local-action") return t("command.localAction")
   if (type === "page-action") return t("command.pageAction")
   if (type === "ask-ai") return t("command.askAi")
   if (type === "browser-history") return t("command.history")
@@ -95,6 +98,7 @@ function getResultTypeLabel(
 
 function getResultIcon(type: ResultItem["type"]) {
   if (type === "bookmark") return "bookmark"
+  if (type === "local-action") return "search"
   if (type === "ask-ai" || type === "page-action") return "explain"
   if (type === "open-url") return "search"
   return "history"
@@ -311,10 +315,18 @@ function CommandPalette() {
       const intent = parseIntentLocally(q)
       const searchTarget = intent.target.trim() || q
       const intentResults = buildIntentResults(intent, q)
+      const shouldSearchOpenTarget =
+        intent.action === "navigate" &&
+        Boolean(searchTarget) &&
+        !normalizeSafeBrowserOpenUrl(searchTarget)
       const shouldSearchBrowserHistory =
-        intent.action === "search" || intent.action === "history_search"
+        intent.action === "search" ||
+        intent.action === "history_search" ||
+        shouldSearchOpenTarget
       const shouldSearchBookmarks =
-        intent.action === "search" || intent.action === "bookmark_search"
+        intent.action === "search" ||
+        intent.action === "bookmark_search" ||
+        shouldSearchOpenTarget
       const shouldSearchAiHistory =
         intent.action === "search" || intent.action === "conversation_search"
 
@@ -357,6 +369,32 @@ function CommandPalette() {
 
   function buildIntentResults(intent: ParsedIntent, rawQuery: string): ResultItem[] {
     const target = intent.target.trim()
+    if (intent.action === "open_bookmarks") {
+      return [
+        {
+          id: "open-chrome-bookmarks",
+          title: t("command.openChromeBookmarks"),
+          subtitle: t("command.confirmOpenChromePage"),
+          actionId: "open_bookmarks",
+          requiresConfirmation: true,
+          type: "local-action"
+        }
+      ]
+    }
+
+    if (intent.action === "open_history") {
+      return [
+        {
+          id: "open-chrome-history",
+          title: t("command.openChromeHistory"),
+          subtitle: t("command.confirmOpenChromePage"),
+          actionId: "open_history",
+          requiresConfirmation: true,
+          type: "local-action"
+        }
+      ]
+    }
+
     if (intent.action === "navigate") {
       const normalizedUrl = normalizeSafeBrowserOpenUrl(target)
       return normalizedUrl
@@ -543,7 +581,7 @@ function CommandPalette() {
       }
       window.open(item.url, "_blank")
     } else if (item.actionId) {
-      if (!aiConnection.connected) {
+      if (item.type === "page-action" && !aiConnection.connected) {
         setAiNotice({
           title: t("command.aiDisconnected"),
           detail: t("command.aiDisconnectedDetail"),
@@ -690,13 +728,16 @@ function CommandPalette() {
       setSelectedIndex((i) => Math.max(i - 1, 0))
     } else if (e.key === "Enter") {
       e.preventDefault()
-      const directTranslateIntent = parseIntentLocally(query)
-      if (isDirectTranslateIntent(directTranslateIntent)) {
-        handleSendToAI(directTranslateIntent)
-      } else if (results.length > 0) {
+      if (results.length > 0) {
         handleSelect(results[selectedIndex])
       } else {
-        handleSendToAI()
+        setAiNotice({
+          title: t("command.selectVisibleCandidate"),
+          detail: aiConnection.connected
+            ? t("command.selectVisibleCandidateDetail")
+            : t("command.aiDisconnectedDetail"),
+          type: "info"
+        })
       }
     } else if (e.key === "Tab" && !query.trim() && selectionSuggestion) {
       e.preventDefault()
@@ -704,9 +745,6 @@ function CommandPalette() {
       setSelectionSuggestion("")
     }
   }
-
-  const isDirectTranslateIntent = (intent: ParsedIntent): boolean =>
-    intent.action === "translate" && Boolean(intent.target.trim())
 
   const handlePanelWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     const list = resultsListRef.current

@@ -77,8 +77,11 @@ import {
   categorizeConnectivityError,
   CONNECTIVITY_TEST_PROMPT,
   getConnectivityModelId,
+  getConnectivityTimingSummary,
   hasPrivateContextPayload,
-  isProviderHostPermissionPresent
+  isProviderHostPermissionPresent,
+  parseConnectivityLatencyMs,
+  resolveConnectivitySpeedGrade
 } from "../src/utils/provider-connectivity.ts"
 import {
   buildChatCompletionReasoningParams,
@@ -308,12 +311,31 @@ test("command palette local candidates are confirm-first and local-only", () => 
     new URL("../src/contents/command.tsx", import.meta.url),
     "utf8"
   )
+  const commandActionsSource = readFileSync(
+    new URL("../src/background/command-actions.ts", import.meta.url),
+    "utf8"
+  )
+  const commandAccessSource = readFileSync(
+    new URL("../src/utils/command-access.ts", import.meta.url),
+    "utf8"
+  )
 
   assert.match(commandSource, /buildIntentResults\(intent, q\)/)
+  assert.match(commandSource, /intent\.action === "open_bookmarks"/)
+  assert.match(commandSource, /intent\.action === "open_history"/)
+  assert.match(commandSource, /type: "local-action"/)
+  assert.match(commandSource, /actionId: "open_bookmarks"/)
+  assert.match(commandSource, /actionId: "open_history"/)
   assert.match(commandSource, /actionId: "page_translate"/)
   assert.match(commandSource, /actionId: "page_summary"/)
   assert.match(commandSource, /RUN_COMMAND_QUICK_ACTION/)
   assert.match(commandSource, /restore: item\.restore/)
+  assert.match(commandSource, /item\.type === "page-action" && !aiConnection\.connected/)
+  assert.match(commandActionsSource, /chrome:\/\/bookmarks\//)
+  assert.match(commandActionsSource, /chrome:\/\/history\//)
+  assert.match(commandActionsSource, /chrome\.tabs\.create\(\{ url \}\)/)
+  assert.match(commandAccessSource, /"open_bookmarks"/)
+  assert.match(commandAccessSource, /"open_history"/)
   const handleSelectBlock =
     commandSource.match(
       /const handleSelect = async \(item: ResultItem\) => \{[\s\S]*?\n  \}\n\n  const handleSendToAI/
@@ -331,12 +353,62 @@ test("command palette Escape closes from the focused input handler", () => {
   )
   const handleKeyDownBlock =
     commandSource.match(
-      /const handleKeyDown = \(e: React\.KeyboardEvent\) => \{[\s\S]*?\n  \}\n\n  const isDirectTranslateIntent/
+      /const handleKeyDown = \(e: React\.KeyboardEvent\) => \{[\s\S]*?\n  \}\n\n  const handlePanelWheel/
     )?.[0] ?? ""
 
   assert.match(handleKeyDownBlock, /e\.key === "Escape"/)
   assert.match(handleKeyDownBlock, /setVisible\(false\)/)
   assert.match(handleKeyDownBlock, /e\.stopPropagation\(\)/)
+})
+
+test("command palette no-result Enter does not silently call AI", () => {
+  const commandSource = readFileSync(
+    new URL("../src/contents/command.tsx", import.meta.url),
+    "utf8"
+  )
+  const searchBlock =
+    commandSource.match(
+      /const nextResults = \[[\s\S]*?\n      if \(browserHistoryResults\.failed/
+    )?.[0] ?? ""
+  const handleKeyDownBlock =
+    commandSource.match(
+      /const handleKeyDown = \(e: React\.KeyboardEvent\) => \{[\s\S]*?\n  \}\n\n  const handlePanelWheel/
+    )?.[0] ?? ""
+
+  assert.match(handleKeyDownBlock, /e\.key === "Enter"/)
+  assert.match(handleKeyDownBlock, /handleSelect\(results\[selectedIndex\]\)/)
+  assert.match(handleKeyDownBlock, /command\.selectVisibleCandidate/)
+  assert.doesNotMatch(handleKeyDownBlock, /handleSendToAI\(/)
+  assert.match(searchBlock, /setResults\(nextResults\)/)
+  assert.doesNotMatch(searchBlock, /buildAiFallbackResult/)
+  assert.doesNotMatch(commandSource, /ask-ai-fallback/)
+})
+
+test("command palette AI actions are visible candidates with disconnected guard", () => {
+  const commandSource = readFileSync(
+    new URL("../src/contents/command.tsx", import.meta.url),
+    "utf8"
+  )
+  const buildIntentResultsBlock =
+    commandSource.match(
+      /function buildIntentResults\(intent: ParsedIntent, rawQuery: string\): ResultItem\[\] \{[\s\S]*?\n  function getAiIntentTitle/
+    )?.[0] ?? ""
+  const handleSelectBlock =
+    commandSource.match(
+      /const handleSelect = async \(item: ResultItem\) => \{[\s\S]*?\n  \}\n\n  const handleSendToAI/
+    )?.[0] ?? ""
+  const handleSendToAiBlock =
+    commandSource.match(
+      /const handleSendToAI = \(parsedIntent\?: ParsedIntent, overrideInput\?: string\) => \{[\s\S]*?\n  \}/
+    )?.[0] ?? ""
+
+  assert.match(buildIntentResultsBlock, /intent\.action === "ask_ai"/)
+  assert.match(buildIntentResultsBlock, /"explain", "translate", "polish", "summarize"/)
+  assert.match(buildIntentResultsBlock, /type: "ask-ai"/)
+  assert.doesNotMatch(buildIntentResultsBlock, /fallback/)
+  assert.match(handleSelectBlock, /command\.aiDisconnected/)
+  assert.match(handleSendToAiBlock, /!aiConnection\.connected/)
+  assert.match(handleSendToAiBlock, /command\.aiDisconnected/)
 })
 
 test("URL-bearing warning logs use presence fields instead of raw URLs", () => {
@@ -477,6 +549,9 @@ test("command palette searches browser history, bookmarks, and AI conversations"
   assert.match(commandSource, /searchBrowserHistory\(searchTarget\)/)
   assert.match(commandSource, /searchChromeBookmarks\(searchTarget\)/)
   assert.match(commandSource, /searchAvisoHistory\(searchTarget\)/)
+  assert.match(commandSource, /const shouldSearchOpenTarget =/)
+  assert.match(commandSource, /intent\.action === "navigate"[\s\S]*!normalizeSafeBrowserOpenUrl\(searchTarget\)/)
+  assert.match(commandSource, /shouldSearchOpenTarget/)
   assert.match(commandSource, /browser-history[\s\S]*command\.history/)
   assert.match(commandSource, /type: "browser-history"/)
   assert.match(commandSource, /type: "bookmark"/)
@@ -1517,6 +1592,76 @@ test("parseIntentLocally 识别 command palette 本地意图", () => {
     target: "react",
     params: {}
   })
+  assert.deepEqual(parseIntentLocally("在书签里找 YouTube"), {
+    action: "bookmark_search",
+    target: "YouTube",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("从书签打开 YouTube"), {
+    action: "bookmark_search",
+    target: "YouTube",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("从历史记录打开 YouTube"), {
+    action: "history_search",
+    target: "YouTube",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("在历史里找 YouTube"), {
+    action: "history_search",
+    target: "YouTube",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("打开我的书签"), {
+    action: "open_bookmarks",
+    target: "打开我的书签",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("打开书签"), {
+    action: "open_bookmarks",
+    target: "打开书签",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("show my bookmarks"), {
+    action: "open_bookmarks",
+    target: "show my bookmarks",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("open bookmarks"), {
+    action: "open_bookmarks",
+    target: "open bookmarks",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("打开历史记录"), {
+    action: "open_history",
+    target: "打开历史记录",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("浏览历史"), {
+    action: "open_history",
+    target: "浏览历史",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("open history"), {
+    action: "open_history",
+    target: "open history",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("show history"), {
+    action: "open_history",
+    target: "show history",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("帮我打开YouTube"), {
+    action: "navigate",
+    target: "YouTube",
+    params: {}
+  })
+  assert.deepEqual(parseIntentLocally("打开 javascript:alert(1)"), {
+    action: "navigate",
+    target: "javascript:alert(1)",
+    params: {}
+  })
   assert.deepEqual(parseIntentLocally("对话 provider"), {
     action: "conversation_search",
     target: "provider",
@@ -2253,15 +2398,24 @@ test("provider config stores last connectivity result by provider and model", ()
 
   assert.match(typeSource, /testProvider\?: ProviderConfigProvider/)
   assert.match(typeSource, /testModel\?: string/)
+  assert.match(typeSource, /testCompletionMs\?: number/)
   assert.match(providerConfigSource, /markProviderConfigTestResult/)
   assert.match(providerConfigSource, /testProvider: config\.provider/)
   assert.match(providerConfigSource, /testModel: getProviderConfigTestModel\(config\)/)
   assert.match(connectivitySource, /buildLastConnectivityTestSummaryMap/)
+  assert.match(connectivitySource, /completionMs: config\.testCompletionMs/)
   assert.match(connectivitySource, /上次通过/)
   assert.match(connectivitySource, /上次失败/)
   assert.match(popupSource, /buildLastConnectivityTestSummaryMap\(configs\)/)
+  assert.match(popupSource, /resolveConnectivitySpeedGrade\(connectivity\)/)
+  assert.match(popupSource, /withPopupConnectivityTiming\(summary, testedAt\)/)
   assert.match(popupSource, /popup\.connectivity\.lastPassed/)
   assert.match(popupSource, /popup\.connectivity\.lastFailed/)
+  assert.match(popupSource, /popup\.connectivity\.safetyNote/)
+  assert.doesNotMatch(
+    popupSource.match(/const rows = \[[\s\S]*?\n  \]/)?.[0] ?? "",
+    /raw_prompt_logged|raw_response_logged|private_page_data_logged|latency_note/
+  )
   assert.match(popupSource, /const \[expanded, setExpanded\] = useState\(false\)/)
   assert.match(popupSource, /aria-expanded=\{expanded\}/)
   assert.match(popupSource, /expanded &&\s*rows\.map/)
@@ -2269,6 +2423,9 @@ test("provider config stores last connectivity result by provider and model", ()
   assert.equal(getI18nMessage("popup.connectivity.hideDetails", "en"), "Hide details")
   assert.equal(getI18nMessage("popup.connectivity.lastPassed", "en"), "Last connection test passed")
   assert.equal(getI18nMessage("popup.connectivity.lastFailed", "zh-CN"), "上次连接测试未通过")
+  assert.equal(getI18nMessage("popup.connectivity.speed.untested", "zh-CN"), "未测速")
+  assert.equal(getI18nMessage("popup.connectivity.speed.fast", "en"), "Fast")
+  assert.equal(getI18nMessage("popup.connectivity.noData", "zh-CN"), "暂无数据")
 })
 
 test("provider config connectivity result invalidates on key or model changes", () => {
@@ -3116,7 +3273,7 @@ test("inline translation uses shared two-second slow hint without fake output", 
   assert.doesNotMatch(toolbarSource, /output: SLOW_MODEL_RESPONSE_TEXT/)
 })
 
-test("translation triggers avoid avoidable local waits", () => {
+test("translation triggers avoid avoidable local waits without implicit command AI calls", () => {
   const toolbarSource = readFileSync(
     new URL("../src/contents/toolbar.tsx", import.meta.url),
     "utf8"
@@ -3138,8 +3295,10 @@ test("translation triggers avoid avoidable local waits", () => {
   assert.doesNotMatch(retryBlock, /setTimeout/)
   assert.doesNotMatch(toolbarOperationBlock, /setTimeout/)
   assert.match(commandSource, /parseIntentLocally/)
-  assert.match(commandSource, /isDirectTranslateIntent/)
-  assert.match(commandEnterBlock, /handleSendToAI\(directTranslateIntent\)/)
+  assert.match(commandSource, /buildIntentResults\(intent, q\)/)
+  assert.match(commandSource, /type: "ask-ai"/)
+  assert.match(commandEnterBlock, /handleSelect\(results\[selectedIndex\]\)/)
+  assert.doesNotMatch(commandEnterBlock, /handleSendToAI\(/)
   assert.doesNotMatch(commandSource, /await parseUserIntent/)
 })
 
@@ -3590,6 +3749,65 @@ test("connectivity 摘要固定为脱敏字段，不记录 raw prompt/response",
     private_page_data_logged: "no",
     notes: "请先保存当前 provider 的 API Key，再手动测试连接。"
   })
+})
+
+test("connectivity speed grade uses local summary timing only", () => {
+  const fast = buildConnectivityValidationSummary({
+    provider: "openai",
+    modelOrEndpoint: "gpt-4o-mini",
+    hostPermissionPresent: true,
+    result: "success",
+    latencyNote: "已发起并收到 provider 响应，耗时约 1200 ms。",
+    errorCategory: "none",
+    notes: "仅发送固定公开短句。"
+  })
+  const moderate = buildConnectivityValidationSummary({
+    provider: "openai",
+    modelOrEndpoint: "gpt-4o-mini",
+    hostPermissionPresent: true,
+    result: "success",
+    latencyNote: "已发起并收到 provider 响应，耗时约 2.4 秒。",
+    errorCategory: "none",
+    notes: "仅发送固定公开短句。"
+  })
+  const slow = buildConnectivityValidationSummary({
+    provider: "doubao",
+    modelOrEndpoint: "doubao-seed-2-0-lite-260428",
+    hostPermissionPresent: true,
+    result: "success",
+    latencyNote: "已发起并收到 provider 响应，耗时约 4800 ms。",
+    errorCategory: "none",
+    notes: "仅发送固定公开短句。"
+  })
+  const failed = buildConnectivityValidationSummary({
+    provider: "openai",
+    modelOrEndpoint: "gpt-4o-mini",
+    hostPermissionPresent: true,
+    result: "failure",
+    latencyNote: "已发起但 provider 未通过，耗时约 800 ms。",
+    errorCategory: "unauthorized",
+    notes: "provider 返回失败。"
+  })
+  const noTiming = buildConnectivityValidationSummary({
+    provider: "openai",
+    modelOrEndpoint: "gpt-4o-mini",
+    hostPermissionPresent: true,
+    result: "success",
+    latencyNote: "上次通过：2026-06-17T06:12:00.000Z",
+    errorCategory: "none",
+    notes: "上次手动连接测试通过。"
+  })
+
+  assert.equal(parseConnectivityLatencyMs("耗时约 4800 ms。"), 4800)
+  assert.equal(parseConnectivityLatencyMs("took about 2.4 seconds"), 2400)
+  assert.equal(parseConnectivityLatencyMs("上次通过：2026-06-17T06:12:00.000Z"), undefined)
+  assert.equal(getConnectivityTimingSummary(slow).completionMs, 4800)
+  assert.equal(resolveConnectivitySpeedGrade(), "untested")
+  assert.equal(resolveConnectivitySpeedGrade(fast), "fast")
+  assert.equal(resolveConnectivitySpeedGrade(moderate), "moderate")
+  assert.equal(resolveConnectivitySpeedGrade(slow), "slow")
+  assert.equal(resolveConnectivitySpeedGrade(failed), "failed")
+  assert.equal(resolveConnectivitySpeedGrade(noTiming), "untested")
 })
 
 test("connectivity 字段缺失时生成未发起的脱敏摘要", () => {

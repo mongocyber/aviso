@@ -2,6 +2,8 @@ import type { ModelRoute } from "~utils/model-registry"
 
 export type CommandQuickActionId =
   | "copy_context"
+  | "open_bookmarks"
+  | "open_history"
   | "page_translate"
   | "page_summary"
   | "template"

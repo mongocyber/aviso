@@ -46,6 +46,8 @@ import {
 import {
   buildLastConnectivityTestSummaryMap,
   buildConnectivityPreflightSummary,
+  getConnectivityTimingSummary,
+  resolveConnectivitySpeedGrade,
   type ConnectivityValidationSummary
 } from "~utils/provider-connectivity"
 import {
@@ -1127,14 +1129,16 @@ function Popup() {
         t("popup.provider.testTimeout"),
         t
       )
+      const testedAt = Date.now()
+      const timedSummary = withPopupConnectivityTiming(summary, testedAt)
       setProviderConfigConnectivityResults((prev) => ({
         ...prev,
-        [config.id]: summary
+        [config.id]: timedSummary
       }))
       const failedConfig = markProviderConfigTestResult(savedConfig, {
         status: "failure",
-        errorCategory: summary.error_category,
-        testedAt: Date.now()
+        errorCategory: timedSummary.error_category,
+        testedAt
       })
       const failedConfigs = nextConfigs.map((item) =>
         item.id === config.id ? failedConfig : item
@@ -1167,18 +1171,27 @@ function Popup() {
                 resp?.error ?? chrome.runtime.lastError?.message,
                 t
               )
+        const testedAt = Date.now()
+        const timedSummary = withPopupConnectivityTiming(summary, testedAt)
         setProviderConfigConnectivityResults((prev) => ({
           ...prev,
-          [config.id]: summary
+          [config.id]: timedSummary
         }))
-        const nextStatus = summary.result === "success" ? "success" : "failure"
+        const nextStatus = timedSummary.result === "success" ? "success" : "failure"
         const updatedConfig = markProviderConfigTestResult(savedConfig, {
           status: nextStatus,
-          errorCategory: summary.error_category,
-          testedAt: Date.now()
+          errorCategory: timedSummary.error_category,
+          testedAt
         })
+        const timing = getConnectivityTimingSummary(timedSummary)
+        const updatedConfigWithTiming = {
+          ...updatedConfig,
+          testCompletionMs: timing.completionMs,
+          testFirstTokenMs: timing.firstTokenMs,
+          testLocalProcessingMs: timing.localProcessingMs
+        }
         const testedConfigs = nextConfigs.map((item) =>
-          item.id === config.id ? updatedConfig : item
+          item.id === config.id ? updatedConfigWithTiming : item
         )
         setProviderConfigs(testedConfigs)
         void persistProviderConfigs(
@@ -2669,8 +2682,13 @@ function Popup() {
                       : keyConfigured && !missingEndpoint
                         ? isEditing
                           ? t("popup.provider.status.untested")
-                          : t("popup.provider.status.recommendedTest")
+                        : t("popup.provider.status.recommendedTest")
                         : t("popup.provider.config.unconfigured")
+              const speedGrade = resolveConnectivitySpeedGrade(connectivity)
+              const speedPill = {
+                label: getConnectivitySpeedLabel(speedGrade, t),
+                tone: getConnectivitySpeedTone(speedGrade)
+              }
               const servicePills: {
                 label: string
                 tone: ModelAvailability["tone"]
@@ -2702,7 +2720,8 @@ function Popup() {
                         },
                         { label: connectionLabel, tone: connectionTone }
                       ]
-                    : [{ label: connectionLabel, tone: connectionTone }])
+                    : [{ label: connectionLabel, tone: connectionTone }]),
+                speedPill
               ]
               const configStateLabel = isAdd
                 ? t("popup.provider.config.waitingSave")
@@ -3450,20 +3469,23 @@ function ConnectivitySummaryView({
     : ok
       ? t("popup.connectivity.passed")
       : t("popup.connectivity.failed")
+  const timing = getConnectivityTimingSummary(summary)
+  const speedGrade = resolveConnectivitySpeedGrade(summary)
   const rows = [
-    ["provider", summary.provider],
-    ["model_or_endpoint", summary.model_or_endpoint],
-    ["action", summary.action],
-    ["trigger", summary.trigger],
-    ["host_permission_present", String(summary.host_permission_present)],
-    ["result", summary.result],
-    ["latency_note", summary.latency_note],
-    ["error_category", summary.error_category],
-    ["secret_leak_check", summary.secret_leak_check],
-    ["raw_prompt_logged", summary.raw_prompt_logged],
-    ["raw_response_logged", summary.raw_response_logged],
-    ["private_page_data_logged", summary.private_page_data_logged],
-    ["notes", summary.notes]
+    [
+      t("popup.connectivity.speedGrade"),
+      getConnectivitySpeedLabel(speedGrade, t)
+    ],
+    [t("popup.connectivity.firstToken"), formatMs(timing.firstTokenMs, t)],
+    [t("popup.connectivity.completion"), formatMs(timing.completionMs, t)],
+    [
+      t("popup.connectivity.localProcessing"),
+      formatMs(timing.localProcessingMs, t)
+    ],
+    [t("popup.connectivity.testedAt"), formatDateTime(timing.testedAt, t)],
+    [t("popup.connectivity.testModel"), summary.model_or_endpoint],
+    [t("popup.connectivity.provider"), summary.provider],
+    [t("popup.connectivity.safety"), t("popup.connectivity.safetyNote")]
   ]
 
   return (
@@ -3541,6 +3563,56 @@ function buildPopupFallbackSummary(
       ? t("popup.connectivity.fallbackWithError")
       : t("popup.connectivity.fallback")
   }
+}
+
+function withPopupConnectivityTiming(
+  summary: ConnectivityValidationSummary,
+  testedAt: number
+): ConnectivityValidationSummary {
+  const timing = getConnectivityTimingSummary(summary)
+  return {
+    ...summary,
+    ...(timing.completionMs ? { completion_ms: timing.completionMs } : {}),
+    ...(timing.firstTokenMs ? { first_token_ms: timing.firstTokenMs } : {}),
+    ...(timing.localProcessingMs
+      ? { local_processing_ms: timing.localProcessingMs }
+      : {}),
+    tested_at: testedAt
+  }
+}
+
+function getConnectivitySpeedLabel(
+  grade: ReturnType<typeof resolveConnectivitySpeedGrade>,
+  t: (key: I18nKey) => string
+): string {
+  return t(`popup.connectivity.speed.${grade}` as I18nKey)
+}
+
+function getConnectivitySpeedTone(
+  grade: ReturnType<typeof resolveConnectivitySpeedGrade>
+): ModelAvailability["tone"] {
+  if (grade === "fast") return "ok"
+  if (grade === "moderate") return "warning"
+  if (grade === "slow" || grade === "failed") return "danger"
+  return "muted"
+}
+
+function formatMs(value: number | undefined, t: (key: I18nKey) => string) {
+  if (!value) return t("popup.connectivity.noData")
+  if (value < 1_000) return `${Math.round(value)} ms`
+  return `${(value / 1_000).toFixed(value >= 10_000 ? 0 : 1)}s`
+}
+
+function formatDateTime(value: number | undefined, t: (key: I18nKey) => string) {
+  if (!value) return t("popup.connectivity.noData")
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return t("popup.connectivity.noData")
+  const year = date.getFullYear()
+  const month = String(date.getMonth() + 1).padStart(2, "0")
+  const day = String(date.getDate()).padStart(2, "0")
+  const hour = String(date.getHours()).padStart(2, "0")
+  const minute = String(date.getMinutes()).padStart(2, "0")
+  return `${year}-${month}-${day} ${hour}:${minute}`
 }
 
 type PopupUiTokens = AvisoThemeTokens

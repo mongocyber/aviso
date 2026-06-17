@@ -843,6 +843,66 @@ const MESSAGES = {
     "zh-CN": "收起详情",
     en: "Hide details"
   },
+  "popup.connectivity.speed.untested": {
+    "zh-CN": "未测速",
+    en: "Not tested"
+  },
+  "popup.connectivity.speed.fast": {
+    "zh-CN": "较快",
+    en: "Fast"
+  },
+  "popup.connectivity.speed.moderate": {
+    "zh-CN": "一般",
+    en: "Moderate"
+  },
+  "popup.connectivity.speed.slow": {
+    "zh-CN": "较慢",
+    en: "Slow"
+  },
+  "popup.connectivity.speed.failed": {
+    "zh-CN": "失败",
+    en: "Failed"
+  },
+  "popup.connectivity.speedGrade": {
+    "zh-CN": "速度等级",
+    en: "Speed grade"
+  },
+  "popup.connectivity.firstToken": {
+    "zh-CN": "首 token",
+    en: "First token"
+  },
+  "popup.connectivity.completion": {
+    "zh-CN": "完成时间",
+    en: "Completion"
+  },
+  "popup.connectivity.localProcessing": {
+    "zh-CN": "本地处理",
+    en: "Local processing"
+  },
+  "popup.connectivity.testedAt": {
+    "zh-CN": "测试时间",
+    en: "Tested at"
+  },
+  "popup.connectivity.testModel": {
+    "zh-CN": "测试模型",
+    en: "Test model"
+  },
+  "popup.connectivity.provider": {
+    "zh-CN": "服务",
+    en: "Provider"
+  },
+  "popup.connectivity.safety": {
+    "zh-CN": "说明",
+    en: "Note"
+  },
+  "popup.connectivity.safetyNote": {
+    "zh-CN": "基于本机最近一次手动连接测试；不上传测速数据。",
+    en: "Based on the latest local manual connection test; speed data is not uploaded."
+  },
+  "popup.connectivity.noData": {
+    "zh-CN": "暂无数据",
+    en: "No data"
+  },
   "popup.connectivity.fallbackLatency": {
     "zh-CN": "未发起或未收到 background 摘要。",
     en: "No background summary was started or received."
@@ -879,6 +939,10 @@ const MESSAGES = {
     "zh-CN": "打开链接",
     en: "Open URL"
   },
+  "command.localAction": {
+    "zh-CN": "本地动作",
+    en: "Local action"
+  },
   "command.pageAction": {
     "zh-CN": "当前页面",
     en: "Current page"
@@ -895,9 +959,21 @@ const MESSAGES = {
     "zh-CN": "点击后打开这个 http/https 链接",
     en: "Click to open this http/https link"
   },
+  "command.confirmOpenChromePage": {
+    "zh-CN": "点击后打开 Chrome 内置页面",
+    en: "Click to open the Chrome page"
+  },
   "command.confirmPageAction": {
     "zh-CN": "点击后读取当前页面并在结果面板处理",
     en: "Click to read the current page and handle it in the result panel"
+  },
+  "command.openChromeBookmarks": {
+    "zh-CN": "打开 Chrome 书签",
+    en: "Open Chrome bookmarks"
+  },
+  "command.openChromeHistory": {
+    "zh-CN": "打开 Chrome 历史记录",
+    en: "Open Chrome history"
   },
   "command.translateCurrentPage": {
     "zh-CN": "翻译当前页面",
@@ -918,6 +994,14 @@ const MESSAGES = {
   "command.selectLocalCandidateDetail": {
     "zh-CN": "打开链接、历史、书签和页面动作需要先在候选列表中确认。",
     en: "Opening URLs, history, bookmarks, and page actions must be confirmed from the candidate list first."
+  },
+  "command.selectVisibleCandidate": {
+    "zh-CN": "请选择可见候选",
+    en: "Choose a visible candidate"
+  },
+  "command.selectVisibleCandidateDetail": {
+    "zh-CN": "如果要使用 AI，请先选择列表里的 AI 候选；普通无结果输入不会自动发送。",
+    en: "To use AI, choose the AI candidate in the list first. Generic no-result input is not sent automatically."
   },
   "command.history": {
     "zh-CN": "浏览历史",
@@ -968,8 +1052,8 @@ const MESSAGES = {
     en: "Continue"
   },
   "command.sendWhenNoResults": {
-    "zh-CN": "无结果时可发给 AI",
-    en: "Send to AI when there are no results"
+    "zh-CN": "AI 需选择候选",
+    en: "AI requires a choice"
   },
   "command.searchOnly": {
     "zh-CN": "AI 未连接时仅搜索",
