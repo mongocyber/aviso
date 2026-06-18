@@ -4,6 +4,7 @@
     "node_modules",
     ".wxt",
     ".output",
+    "tmp",
     "tests",
     "src/entrypoints",
     "src/wxt",
