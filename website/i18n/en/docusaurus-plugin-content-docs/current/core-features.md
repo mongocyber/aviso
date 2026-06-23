@@ -1,12 +1,18 @@
 ---
 title: Core Features
-description: Main Aviso v0.1 features and current boundaries.
+description: Current Aviso features and usage boundaries.
 sidebar_position: 5
 ---
 
 # Core Features
 
-Aviso v0.1 focuses on connecting common webpage objects to AI and keeping the result inside the current page.
+Aviso currently focuses on connecting common webpage objects to AI and keeping the result inside the current page. Public installation remains subject to Chrome Web Store review status.
+
+## AI Service Paths
+
+Aviso keeps BYOK direct-provider as the default available path: users enter their own model API key, and the browser extension calls the selected provider directly without forcing sign-in.
+
+The hosted AI path prepared for v0.3 is optional. Only when the user chooses hosted AI and signs in does the request pass through the Aviso backend and upstream model providers. BYOK configuration and direct-provider requests are not blocked by hosted sign-in state.
 
 ## Right-Click Menu
 
@@ -81,6 +87,7 @@ The Popup manages:
 - API keys.
 - OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan model IDs.
 - Doubao / Volcengine Ark endpoint and model fields.
+- Hosted AI account sign-in, refresh, and sign-out state.
 - Feature switches.
 - Custom templates.
 - History.

@@ -23,6 +23,17 @@
 ### 版本规划
 
 - [planning/README.md](./planning/README.md)：版本规划、执行进度和归档规则。
+- [planning/inbox.md](./planning/inbox.md)：新想法、新需求和未定范围事项的入口。
+- [planning/backlog.md](./planning/backlog.md)：已梳理但暂不进入当前版本的需求池。
+- [planning/roadmap.md](./planning/roadmap.md)：产品路线图、版本顺序和跨仓库方向。
+- [planning/v0.3/README.md](./planning/v0.3/README.md)：v0.3 托管 AI 规划入口。
+- [planning/v0.3/hosted-ai-spec.md](./planning/v0.3/hosted-ai-spec.md)：v0.3 产品需求权威入口。
+- [planning/v0.3/requirements-closeout.md](./planning/v0.3/requirements-closeout.md)：v0.3 前端开工前的需求收口和 owner 决策检查。
+- [planning/v0.3/cross-repo-integration-plan.md](./planning/v0.3/cross-repo-integration-plan.md)：前后端跨仓库协同计划。
+- [planning/v0.3/release-gates.md](./planning/v0.3/release-gates.md)：v0.3 隐私、权限、部署、provider、计费和发布门禁。
+- [planning/v0.3/frontend-scope.md](./planning/v0.3/frontend-scope.md)：v0.3 前端接入范围。
+- [planning/v0.3/issue-plan.md](./planning/v0.3/issue-plan.md)：v0.3 issue 分组、归属和执行顺序。
+- [planning/v0.3/status.md](./planning/v0.3/status.md)：v0.3 当前状态和下一步 gate。
 - [planning/design-system-migration-preview.html](./planning/design-system-migration-preview.html)：设计系统迁移预览记录。
 - [planning/v0.2-fast-open-provider-spec.md](./planning/v0.2-fast-open-provider-spec.md)：v0.2 需求规格草案。
 - [planning/v0.2-issue-plan.md](./planning/v0.2-issue-plan.md)：v0.2 issue 拆分和执行顺序。
@@ -40,6 +51,10 @@
 
 - [archive/README.md](./archive/README.md)：历史版本归档规则。
 - [decisions/README.md](./decisions/README.md)：跨版本技术、隐私、权限和商业化决策记录规则。
+
+### Agent 上下文
+
+- [ai/PROJECT_CONTEXT.md](./ai/PROJECT_CONTEXT.md)：给 Codex / Claude 执行线程读取的仓库身份、当前边界和 v0.3 协同入口。
 
 ### 设计系统
 
@@ -65,5 +80,5 @@
 - 需求文档只记录当前版本对应的用户需求、数据需求和验收入口。
 - 技术、隐私和工作规则文档用于记录实现边界与维护要求。
 - 设计系统文档只记录当前已确认的品牌和组件基础，不代表公开发布、商店上架或 loaded-extension QA 完成。
-- 新版本需求、任务计划和执行进度先写入 `planning/`。
+- 新想法先写入 `planning/inbox.md`；已梳理但不进当前版本的事项写入 `planning/backlog.md`；新版本需求、任务计划和执行进度再写入对应 `planning/vX.Y/`。
 - 版本完成后，将对应 planning/status/release summary 归档到 `archive/`，再更新当前事实文档。

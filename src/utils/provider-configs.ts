@@ -5,6 +5,10 @@ import {
   PROVIDER_PRIMARY_MODEL,
   type ProviderId
 } from "./model-registry"
+import {
+  HOSTED_AI_PROVIDER_CONFIG_ID,
+  isHostedAiProviderConfigId
+} from "./hosted-session"
 import type { ApiKeys } from "./storage"
 
 const PROVIDER_DISPLAY_NAME: Record<ProviderId, string> = {
@@ -155,6 +159,10 @@ export function resolveDefaultProviderConfigId(
   settings: Settings,
   providerConfigs: ProviderConfig[]
 ): string {
+  if (isHostedAiProviderConfigId(settings.defaultProviderConfigId)) {
+    return HOSTED_AI_PROVIDER_CONFIG_ID
+  }
+
   if (
     settings.defaultProviderConfigId &&
     providerConfigs.some((config) => config.id === settings.defaultProviderConfigId)

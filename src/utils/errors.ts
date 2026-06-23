@@ -29,6 +29,17 @@ const USER_MESSAGES: Record<SafeErrorCategory, string> = {
   unknown_error: "请求失败，请稍后再试。"
 }
 
+const HOSTED_AI_SAFE_USER_MESSAGES = new Set([
+  "托管请求格式不可用，请检查本地集成配置。",
+  "托管登录状态已失效，请在 AI 服务页重新本地登录。",
+  "托管额度暂不可用，可切换到自己的 API Key。",
+  "当前托管模型不可用，请重试默认模型或切换到自己的 API Key。",
+  "托管请求过于频繁，请稍后重试或切换到自己的 API Key。",
+  "本地托管服务暂不可用，请确认本地后端已启动，或切换到自己的 API Key。",
+  "托管上游服务失败，请稍后重试或切换到自己的 API Key。",
+  "托管服务异常，请稍后重试或切换到自己的 API Key。"
+])
+
 const REMOTE_IMAGE_DOWNLOAD_ERROR =
   "模型无法读取这张网页图片，可能是图片服务器限制访问或加载超时。请换网页中的 JPG/PNG/WebP 图片再试。"
 
@@ -173,5 +184,6 @@ function normalizeKnownSafeUserMessage(message: string): string | null {
   if (message === SCREENSHOT_UNSUPPORTED_MODEL_ERROR) return message
   if (message === IMAGE_MODEL_DEPENDENT_ERROR) return message
   if (message === SCREENSHOT_MODEL_DEPENDENT_ERROR) return message
+  if (HOSTED_AI_SAFE_USER_MESSAGES.has(message)) return message
   return null
 }

@@ -1,6 +1,6 @@
 # Aviso Tech Spec
 
-Updated: 2026-06-12
+Updated: 2026-06-18
 
 ## 技术栈
 
@@ -132,7 +132,8 @@ WXT 已作为并行构建路径存在，产物位于 `.output/chrome-mv3`。当�
 
 - 自动构建和 manifest parity 已通过。
 - WXT manifest host permissions 与 Plasmo 构建一致，包含 OpenAI、Anthropic、火山方舟、DeepSeek、Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan。
-- 部分 loaded-extension QA 已完成；Popup、floating panel、clipboard toast、double-click enabled state、screenshot right-click internal path、readability 和 iframe bridge 仍需要最终手动 QA。
+- V02-WXT-005 closeout 已记录 refreshed browser smoke 和 owner manual pass evidence，状态可进入 owner release decision；这不等于 WXT 默认构建批准、公开发布批准或 Chrome Web Store 审核通过。
+- WXT default-build migration / default-build release 已移到独立 `v0.2.1` gate；当前默认 `dev`、`build` 和 `package` 仍保持 Plasmo 路径。
 - `.output/aviso-0.1.0-chrome.zip` 是内部迁移 artifact，不是 Chrome Web Store 提交包。
 
 ## 本地性能摘要

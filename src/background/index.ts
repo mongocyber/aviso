@@ -47,6 +47,7 @@ import {
   pinHistoryEntry,
   searchHistory
 } from "./history"
+import { handleHostedGoogleSignIn } from "./hosted-auth"
 
 const MAX_BOOKMARK_RESULTS = 12
 const MAX_BROWSER_HISTORY_RESULTS = 12
@@ -470,6 +471,16 @@ async function handleMessage(
         break
       }
 
+      case "HOSTED_GOOGLE_SIGN_IN": {
+        const result = await handleHostedGoogleSignIn()
+        sendResponse({
+          success: result.status === "signed_in",
+          data: result,
+          error: result.error?.code
+        })
+        break
+      }
+
       case "CAPTURE_VISIBLE_TAB": {
         if (!sender.tab?.windowId) {
           const t = createI18n(resolveSettingsUiLanguage(await getSettings()))
@@ -729,7 +740,7 @@ async function handleMessage(
   } catch (err) {
     const error = normalizeError(err)
     console.error(
-      "[Aviso] Unhandled error in message handler:",
+      `[Aviso] Unhandled error in message handler action=${request.action}`,
       buildSafeErrorLog(err)
     )
     sendResponse({ success: false, error })

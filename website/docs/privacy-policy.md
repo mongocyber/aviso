@@ -12,7 +12,10 @@ sidebar_position: 6
 
 Aviso 是一个 Chrome 浏览器扩展。它帮助用户在当前网页中调用 AI 解释、翻译、润色、总结或处理自定义提示词。
 
-Aviso 采用浏览器扩展直连 provider 的方式。你主动发起 AI 请求时，请求会由浏览器扩展直接发送到你选择的模型 provider；API Key、设置和历史记录保存在浏览器扩展存储中。
+Aviso 目前保留两条 AI 请求路径：
+
+- BYOK direct-provider：你提供自己的模型 API Key。你主动发起 AI 请求时，请求由浏览器扩展直接发送到你选择的模型 provider；API Key、设置和历史记录保存在浏览器扩展存储中。
+- 托管 AI：v0.3 准备中的可选路径。只有当你选择托管 AI 并登录时，请求才会经过 Aviso 后端，再路由到上游模型 provider。BYOK 不会被托管登录拦住。
 
 ## 本地保存的数据
 
@@ -27,9 +30,9 @@ Aviso 会在浏览器扩展存储中保存必要数据：
 
 部分内部存储 key 仍保留 `contextai_*` 命名，这是为兼容改名前的本地数据，不代表数据会发送到旧服务或第三方服务。
 
-## 会发送给模型 provider 的数据
+## 会发送给模型 provider 或托管路径的数据
 
-当用户主动触发 AI 操作时，Aviso 会把完成该操作所需的信息直接发送给用户选择的模型 provider。可能包含：
+当用户主动触发 AI 操作时，Aviso 会把完成该操作所需的信息发送到当前选择的路径。BYOK 路径会直接发送给用户选择的模型 provider；托管 AI 路径会经过 Aviso 后端和上游模型 provider。可能包含：
 
 - 选中的文本。
 - 用户输入的问题或提示词。
@@ -62,7 +65,9 @@ Aviso 的性能摘要只输出到本地扩展 console，用于内部排查等待
 
 ## Aviso 项目方可见数据
 
-Aviso 浏览器扩展当前没有用于接收用户内容或模型请求的项目方后端，因此不会把用户文本、历史、API Key、页面内容或模型请求发送到 Aviso 项目方服务器。
+BYOK direct-provider 路径不会把用户文本、历史、API Key、页面内容或模型请求发送到 Aviso 项目方服务器。
+
+托管 AI 路径会在用户主动选择并登录后经过 Aviso 后端。Aviso 后端会处理完成请求所需的临时内容，并保存账户、额度、风控、请求状态和运营排查所需的 metadata；metadata 当前保留 30 天。Aviso 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板内容、用户 BYOK API Key 或完整 URL。托管 AI 的上游 provider 可能按照其服务条款和账户配置处理请求内容，正式发布前会继续复核 provider 数据保留和日志配置。
 
 官网的反馈表单是独立的网站邮件通道。只有当用户主动提交反馈时，表单中填写的问题描述、可选问题类型标签、可选联系邮箱和用户主动上传的插图或截图，会通过 Vercel 函数调用 Resend 邮件服务，发送到维护者邮箱。反馈表单不会读取扩展本地历史、API Key、浏览器扩展存储或模型请求内容，也不属于扩展遥测。
 
@@ -70,17 +75,17 @@ Aviso 浏览器扩展当前没有用于接收用户内容或模型请求的项�
 
 ## API Key
 
-API Key 不明文保存，会经过本地加密/混淆级保护后保存在 Chrome local extension storage 中。Aviso 不会把 API Key 上传到 Aviso 服务器。
+BYOK API Key 不明文保存，会经过本地加密/混淆级保护后保存在 Chrome local extension storage 中。Aviso 不会把用户的 BYOK API Key 上传到 Aviso 服务器。托管 AI 不要求用户提供模型 provider API Key。
 
 这类保护不防御已经能读取本机浏览器 profile、控制本机或控制当前 Chrome 用户环境的攻击者。如果你怀疑本机或浏览器 profile 已被控制，请先在 provider 后台轮换或撤销 API Key。
 
-当你使用某个 provider 时，请求会从浏览器扩展直接发送到该 provider。provider 可能会按照其服务条款处理请求内容、日志、计费和滞留数据。使用 provider 前，请自行阅读并接受对应 provider 的条款和隐私政策。
+当你使用 BYOK provider 时，请求会从浏览器扩展直接发送到该 provider。当你使用托管 AI 时，请求会经过 Aviso 后端和上游 provider。provider 可能会按照其服务条款处理请求内容、日志、计费和滞留数据。使用前，请自行阅读并接受对应 provider 的条款和隐私政策。
 
 ## Chrome Web Store Limited Use 说明
 
-Aviso 只会把扩展处理的用户数据用于提供当前网页 AI 助手的用户主动触发功能。Aviso 不出售用户数据，不使用用户数据投放广告，不使用用户数据做信用、借贷或类似决策，也不允许 Aviso 项目方人员读取扩展处理的页面内容、历史、API Key 或模型请求内容。
+Aviso 只会把扩展处理的用户数据用于提供当前网页 AI 助手的用户主动触发功能。Aviso 不出售用户数据，不使用用户数据投放广告，不使用用户数据做信用、借贷或类似决策。
 
-用户主动触发 AI 操作时，为完成该功能所需的内容会从浏览器扩展直接发送到用户选择的模型 provider。provider 对数据的处理取决于用户与该 provider 的账户关系、服务条款和隐私政策。
+用户主动触发 AI 操作时，BYOK 路径会把完成该功能所需的内容从浏览器扩展直接发送到用户选择的模型 provider；托管 AI 路径会把完成该功能所需的内容发送到 Aviso 后端和上游模型 provider。托管后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板内容、用户 BYOK API Key 或完整 URL。provider 对数据的处理取决于 provider 服务条款、账户配置和隐私政策。
 
 ## 浏览器权限
 
@@ -91,9 +96,10 @@ Aviso 当前使用的主要权限包括：
 - `storage`：保存设置、API Key 和历史。
 - `history`：在命令面板中搜索 Chrome 浏览历史；搜索只在本地执行。
 - `bookmarks`：在命令面板中搜索书签。
+- `identity`：仅用于用户主动登录托管 AI 时打开 Google 授权窗口并换取托管 session；BYOK 不需要该登录。
 - `clipboardWrite`：支持从浮窗复制结果。
 
-Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页面上显示划词工具栏、划词翻译卡、双击快捷菜单、命令面板、页面内结果面板、剪贴板提示、iframe 桥接，以及右键内部路径需要的截图框选界面。这类站点访问不会用于抓取任意远端链接正文、投放广告、遥测、分析或把页面内容发送到 Aviso 服务器。只有当用户主动触发需要页面内容的 AI 操作时，相关内容才会由浏览器扩展直接发送到用户选择的模型 provider。
+Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页面上显示划词工具栏、划词翻译卡、双击快捷菜单、命令面板、页面内结果面板、剪贴板提示、iframe 桥接，以及右键内部路径需要的截图框选界面。这类站点访问不会用于抓取任意远端链接正文、投放广告、遥测或分析。只有当用户主动触发需要页面内容的 AI 操作时，相关内容才会按当前选择的 BYOK 或托管 AI 路径发送。
 
 当前 host permissions 仅包含已经批准的 provider 域名：
 
@@ -106,9 +112,10 @@ https://api.moonshot.cn/*
 https://openrouter.ai/*
 https://generativelanguage.googleapis.com/*
 https://api.hunyuan.cloud.tencent.com/*
+https://aviso-backend-staging.vercel.app/*
 ```
 
-Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文。
+`https://aviso-backend-staging.vercel.app/*` 是 v0.3 staging 托管 AI 验证使用的后端域名，不代表 production 后端、公开发布或 Chrome Web Store 提交已经批准。Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文。
 
 ## 用户控制
 
@@ -122,6 +129,7 @@ Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文�
 - 切换界面语言和外观主题。
 - 管理自定义模板。
 - 查看和管理本地历史记录。
+- 登录、刷新或退出托管 AI 账号；BYOK 配置不受托管登录状态影响。
 
 如果卸载 Aviso，Chrome 会清理该扩展的本地存储。你也可以在 provider 后台轮换或撤销不再使用的 API Key。
 
@@ -130,3 +138,5 @@ Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文�
 Aviso 支持配置 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan。用户可以在设置中填写自己的 API Key、模型 ID 或接入点；请求由浏览器扩展直连用户选择的 provider。OpenRouter、Gemini 和 Tencent Hunyuan 的模型 ID 需要用户手动填写，Aviso 不自动读取模型列表。
 
 当前内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持配置，但实际可用性取决于用户自己的 Key、模型权限和 provider 状态；DeepSeek 已有一次 owner 手动 connectivity pass，本站不把它扩大成所有 DeepSeek 模型或账号都已完成真实可用验收。Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 仍不能写成 live validated。
+
+托管 AI 路径仍处于 v0.3 发布前 gate。staging 已完成登录、额度、provider smoke 和前端账号展示验证，但这不等于 production、公开发布、付费托管 AI 或 Chrome Web Store 披露提交已经批准。

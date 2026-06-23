@@ -4,6 +4,12 @@ import { register } from "node:module"
 import { test } from "node:test"
 
 import {
+  clearPageContentMemoryCache,
+  getCachedPageContent,
+  getPageContentMemoryCacheStatsForTests,
+  setCachedPageContent
+} from "../src/background/page-content-cache.ts"
+import {
   AI_CONTEXT_LIMITS,
   applyAIContextBudget
 } from "../src/utils/ai-context.ts"
@@ -39,6 +45,43 @@ import {
   DEFAULT_FOLLOW_UP_CONTEXT_BUDGET
 } from "../src/utils/follow-up-context.ts"
 import {
+  createHostedAiClient,
+  createHostedAiSseParser,
+  HostedAiClientError,
+  normalizeHostedAiError,
+  resolveHostedAiBaseUrl
+} from "../src/utils/hosted-ai-client.ts"
+import {
+  buildHostedGoogleOAuthUrl,
+  HostedGoogleOAuthError,
+  HOSTED_GOOGLE_OAUTH_CLIENT_ID,
+  parseHostedGoogleOAuthRedirect,
+  requestHostedGoogleIdToken
+} from "../src/utils/hosted-oauth.ts"
+import {
+  buildHostedAccountQuotaDisplay,
+  clearHostedSession,
+  deriveHostedAccountStatus,
+  HOSTED_AI_DEFAULT_BASE_URL,
+  HOSTED_AI_DEFAULT_MODEL,
+  HOSTED_AI_LOCAL_BASE_URL,
+  HOSTED_AI_PROVIDER_CONFIG_ID,
+  HOSTED_AI_STAGING_BASE_URL,
+  HOSTED_AI_STAGING_HOST_PERMISSION,
+  HOSTED_SESSION_STORAGE_KEY,
+  isByokBlockedByHostedSignIn,
+  isHostedAiProviderConfigId,
+  readHostedSession,
+  requiresHostedSignInForRoute,
+  saveHostedSession
+} from "../src/utils/hosted-session.ts"
+import {
+  createI18n,
+  getI18nMessage,
+  normalizeUiLanguageSetting,
+  resolveUiLanguage
+} from "../src/utils/i18n.ts"
+import {
   parseSupportedImageSrc,
   UNSUPPORTED_IMAGE_SRC_MESSAGE
 } from "../src/utils/image-src.ts"
@@ -50,12 +93,12 @@ import {
 import {
   APPROVED_PROVIDER_HOST_PERMISSIONS,
   buildProviderConfigRoute,
-  DEFAULT_MODEL_ID,
   DEEPSEEK_BASE_URL,
+  DEFAULT_MODEL_ID,
   DOUBAO_BASE_URL,
   GEMINI_BASE_URL,
-  HUNYUAN_BASE_URL,
   getReasoningControlBlockReason,
+  HUNYUAN_BASE_URL,
   LEGACY_PROVIDER_CONFIG_IDS,
   MODEL_REGISTRY,
   MOONSHOT_BASE_URL,
@@ -71,8 +114,8 @@ import {
   truncatePageContent
 } from "../src/utils/page-content.ts"
 import {
-  buildConnectivityTestPayload,
   buildConnectivityPreflightSummary,
+  buildConnectivityTestPayload,
   buildConnectivityValidationSummary,
   categorizeConnectivityError,
   CONNECTIVITY_TEST_PROMPT,
@@ -108,12 +151,6 @@ import {
   haveProviderConfigMenusChanged,
   haveTemplatesChanged
 } from "../src/utils/settings-change.ts"
-import {
-  createI18n,
-  getI18nMessage,
-  normalizeUiLanguageSetting,
-  resolveUiLanguage
-} from "../src/utils/i18n.ts"
 import { expandTemplate } from "../src/utils/template.ts"
 import {
   bucketInputSize,
@@ -124,8 +161,8 @@ import {
   sanitizeTimingDetails
 } from "../src/utils/timing.ts"
 import {
-  buildTranslationUserContent,
   buildTranslationSystemPrompt,
+  buildTranslationUserContent,
   formatTranslationError,
   formatTranslationUserBubble,
   getInlineTranslationRoute,
@@ -144,12 +181,6 @@ import {
   isSafeBrowserOpenUrl,
   normalizeSafeBrowserOpenUrl
 } from "../src/utils/url-safety.ts"
-import {
-  clearPageContentMemoryCache,
-  getCachedPageContent,
-  getPageContentMemoryCacheStatsForTests,
-  setCachedPageContent
-} from "../src/background/page-content-cache.ts"
 
 const testImportAliasHook = `
 const testFileUrl = ${JSON.stringify(import.meta.url)}
@@ -182,15 +213,24 @@ test("detectType 识别 URL", () => {
 test("browser URL opening only allows http and https", () => {
   assert.equal(isSafeBrowserOpenUrl("https://example.com/path?q=1"), true)
   assert.equal(isSafeBrowserOpenUrl("http://example.com/path"), true)
-  assert.equal(normalizeSafeBrowserOpenUrl("example.com/docs"), "https://example.com/docs")
-  assert.equal(normalizeSafeBrowserOpenUrl("localhost:3000"), "http://localhost:3000/")
+  assert.equal(
+    normalizeSafeBrowserOpenUrl("example.com/docs"),
+    "https://example.com/docs"
+  )
+  assert.equal(
+    normalizeSafeBrowserOpenUrl("localhost:3000"),
+    "http://localhost:3000/"
+  )
   assert.equal(isSafeBrowserOpenUrl("javascript:alert(1)"), false)
   assert.equal(isSafeBrowserOpenUrl("data:text/html,<script></script>"), false)
   assert.equal(isSafeBrowserOpenUrl("file:///Users/example/private.txt"), false)
   assert.equal(isSafeBrowserOpenUrl("chrome://extensions"), false)
   assert.equal(isSafeBrowserOpenUrl("about:blank"), false)
   assert.equal(isSafeBrowserOpenUrl("blob:https://example.com/id"), false)
-  assert.equal(isSafeBrowserOpenUrl("chrome-extension://abc/options.html"), false)
+  assert.equal(
+    isSafeBrowserOpenUrl("chrome-extension://abc/options.html"),
+    false
+  )
   assert.equal(isSafeBrowserOpenUrl("not a url"), false)
 })
 
@@ -298,7 +338,10 @@ test("command palette guards bookmark and history URLs before opening", () => {
 
   assert.match(commandSource, /isSafeBrowserOpenUrl\(item\.url\)/)
   assert.match(commandSource, /window\.open\(item\.url,\s*"_blank"\)/)
-  assert.match(commandSource, /normalizeSafeBrowserOpenUrl\(item\.url \?\? ""\)/)
+  assert.match(
+    commandSource,
+    /normalizeSafeBrowserOpenUrl\(item\.url \?\? ""\)/
+  )
   assert.match(commandSource, /requiresConfirmation: true/)
   assert.doesNotMatch(
     commandSource,
@@ -330,7 +373,10 @@ test("command palette local candidates are confirm-first and local-only", () => 
   assert.match(commandSource, /actionId: "page_summary"/)
   assert.match(commandSource, /RUN_COMMAND_QUICK_ACTION/)
   assert.match(commandSource, /restore: item\.restore/)
-  assert.match(commandSource, /item\.type === "page-action" && !aiConnection\.connected/)
+  assert.match(
+    commandSource,
+    /item\.type === "page-action" && !aiConnection\.connected/
+  )
   assert.match(commandActionsSource, /chrome:\/\/bookmarks\//)
   assert.match(commandActionsSource, /chrome:\/\/history\//)
   assert.match(commandActionsSource, /chrome\.tabs\.create\(\{ url \}\)/)
@@ -403,7 +449,10 @@ test("command palette AI actions are visible candidates with disconnected guard"
     )?.[0] ?? ""
 
   assert.match(buildIntentResultsBlock, /intent\.action === "ask_ai"/)
-  assert.match(buildIntentResultsBlock, /"explain", "translate", "polish", "summarize"/)
+  assert.match(
+    buildIntentResultsBlock,
+    /"explain", "translate", "polish", "summarize"/
+  )
   assert.match(buildIntentResultsBlock, /type: "ask-ai"/)
   assert.doesNotMatch(buildIntentResultsBlock, /fallback/)
   assert.match(handleSelectBlock, /command\.aiDisconnected/)
@@ -435,7 +484,10 @@ test("readability listener only handles extraction without holding sync channel"
   )
 
   assert.match(readabilitySource, /message\.action !== "EXTRACT_PAGE_CONTENT"/)
-  assert.match(readabilitySource, /sendResponse\(\{ success: true, data: content \}\)/)
+  assert.match(
+    readabilitySource,
+    /sendResponse\(\{ success: true, data: content \}\)/
+  )
   assert.match(readabilitySource, /return false/)
   assert.doesNotMatch(readabilitySource, /return true/)
 })
@@ -490,14 +542,23 @@ test("content script async handlers use current language and catch copy errors",
 
   assert.match(floatingSource, /const tRef = useRef\(t\)/)
   assert.match(floatingSource, /tRef\.current = t/)
-  assert.match(floatingSource, /try \{\s*await navigator\.clipboard\.writeText\(output\)/)
-  assert.match(floatingSource, /error: tRef\.current\("translation\.copyError"\)/)
+  assert.match(
+    floatingSource,
+    /try \{\s*await navigator\.clipboard\.writeText\(output\)/
+  )
+  assert.match(
+    floatingSource,
+    /error: tRef\.current\("translation\.copyError"\)/
+  )
 
   assert.match(toolbarSource, /const languageRef = useRef\(language\)/)
   assert.match(toolbarSource, /const tRef = useRef\(t\)/)
   assert.match(toolbarSource, /languageRef\.current = language/)
   assert.match(toolbarSource, /tRef\.current = t/)
-  assert.match(toolbarSource, /formatTranslationError\(error, languageRef\.current\)/)
+  assert.match(
+    toolbarSource,
+    /formatTranslationError\(error, languageRef\.current\)/
+  )
   assert.match(toolbarSource, /tRef\.current\("model\.thinking"\)/)
 })
 
@@ -519,8 +580,9 @@ test("command palette is a search panel without mock access cards", () => {
   assert.match(commandSource, /t\("command\.fillSelection"\)/)
 
   const inputArea =
-    commandSource.match(/\{\/\* 输入框 \*\/\}[\s\S]*?<\/div>\n\n        \{\(canFillSelection \|\| aiNotice\)/)?.[0] ??
-    ""
+    commandSource.match(
+      /\{\/\* 输入框 \*\/\}[\s\S]*?<\/div>\n\n        \{\(canFillSelection \|\| aiNotice\)/
+    )?.[0] ?? ""
   assert.match(inputArea, /aria-label="AI 状态"/)
   assert.match(inputArea, /name="shield"[\s\S]*\{statusLabel\}/)
   assert.match(inputArea, /maxWidth: "38%"/)
@@ -550,7 +612,10 @@ test("command palette searches browser history, bookmarks, and AI conversations"
   assert.match(commandSource, /searchChromeBookmarks\(searchTarget\)/)
   assert.match(commandSource, /searchAvisoHistory\(searchTarget\)/)
   assert.match(commandSource, /const shouldSearchOpenTarget =/)
-  assert.match(commandSource, /intent\.action === "navigate"[\s\S]*!normalizeSafeBrowserOpenUrl\(searchTarget\)/)
+  assert.match(
+    commandSource,
+    /intent\.action === "navigate"[\s\S]*!normalizeSafeBrowserOpenUrl\(searchTarget\)/
+  )
   assert.match(commandSource, /shouldSearchOpenTarget/)
   assert.match(commandSource, /browser-history[\s\S]*command\.history/)
   assert.match(commandSource, /type: "browser-history"/)
@@ -558,7 +623,7 @@ test("command palette searches browser history, bookmarks, and AI conversations"
   assert.match(commandSource, /type: "ai-history"/)
 })
 
-test("popup avoids BYOK and hosted account entry copy", () => {
+test("popup adds local hosted account controls without hiding provider setup", () => {
   const popupSource = readFileSync(
     new URL("../src/popup/index.tsx", import.meta.url),
     "utf8"
@@ -568,12 +633,19 @@ test("popup avoids BYOK and hosted account entry copy", () => {
   assert.equal(popupSource.includes("Aviso AI"), false)
   assert.equal(popupSource.includes("匿名额度"), false)
   assert.equal(popupSource.includes("订阅"), false)
-  assert.equal(popupSource.includes("登录"), false)
   assert.match(popupSource, /popup\.tabs\.api/)
+  assert.match(popupSource, /popup\.hosted\.title/)
+  assert.match(popupSource, /signInHosted/)
+  assert.match(popupSource, /refreshHostedAccount/)
+  assert.match(popupSource, /signOutHostedLocal/)
+  assert.match(popupSource, /HOSTED_GOOGLE_SIGN_IN/)
+  assert.match(popupSource, /HOSTED_AI_DEFAULT_BASE_URL/)
   assert.match(popupSource, /popup\.addAiService/)
+  assert.match(popupSource, /providerConfigs\.map/)
   assert.match(popupSource, /popup\.templates\.title/)
   assert.equal(getI18nMessage("popup.tabs.api", "zh-CN"), "AI 服务")
   assert.equal(getI18nMessage("popup.addAiService", "en"), "Add AI service")
+  assert.equal(getI18nMessage("popup.hosted.signIn", "en"), "Sign in")
   assert.match(popupSource, /"gemini"/)
   assert.match(popupSource, /"hunyuan"/)
   assert.match(popupSource, /popup\.provider\.gemini/)
@@ -585,6 +657,769 @@ test("popup avoids BYOK and hosted account entry copy", () => {
     /Configure your own AI services/
   )
   assert.equal(getI18nMessage("popup.templates.title", "zh-CN"), "常用指令")
+})
+
+test("hosted AI base URL is explicit and limited to local or staging", () => {
+  assert.equal(resolveHostedAiBaseUrl(), null)
+  assert.equal(resolveHostedAiBaseUrl(""), null)
+  assert.equal(resolveHostedAiBaseUrl("https://api.aviso.app/v1"), null)
+  assert.equal(resolveHostedAiBaseUrl("http://example.com/v1"), null)
+  assert.equal(
+    resolveHostedAiBaseUrl("https://aviso-backend-staging.vercel.app"),
+    null
+  )
+  assert.equal(
+    resolveHostedAiBaseUrl("http://aviso-backend-staging.vercel.app/v1"),
+    null
+  )
+  assert.equal(
+    resolveHostedAiBaseUrl("https://aviso-backend-staging.vercel.app/v1/"),
+    HOSTED_AI_STAGING_BASE_URL
+  )
+  assert.equal(
+    resolveHostedAiBaseUrl("http://127.0.0.1:3000/v1/"),
+    "http://127.0.0.1:3000/v1"
+  )
+  assert.equal(
+    resolveHostedAiBaseUrl("http://localhost:3000/v1"),
+    "http://localhost:3000/v1"
+  )
+})
+
+test("hosted Google OAuth builds id-token auth URL without client secret", () => {
+  const authUrl = buildHostedGoogleOAuthUrl({
+    redirectUri: "https://extension-id.chromiumapp.org/",
+    nonce: "nonce-1",
+    state: "state-1"
+  })
+  const parsed = new URL(authUrl)
+
+  assert.equal(parsed.origin, "https://accounts.google.com")
+  assert.equal(parsed.pathname, "/o/oauth2/v2/auth")
+  assert.equal(parsed.searchParams.get("client_id"), HOSTED_GOOGLE_OAUTH_CLIENT_ID)
+  assert.equal(parsed.searchParams.get("redirect_uri"), "https://extension-id.chromiumapp.org/")
+  assert.equal(parsed.searchParams.get("response_type"), "id_token")
+  assert.equal(parsed.searchParams.get("response_mode"), "fragment")
+  assert.equal(parsed.searchParams.get("scope"), "openid email profile")
+  assert.equal(parsed.searchParams.get("prompt"), "select_account")
+  assert.equal(parsed.searchParams.get("nonce"), "nonce-1")
+  assert.equal(parsed.searchParams.get("state"), "state-1")
+  assert.equal(parsed.searchParams.has("client_secret"), false)
+})
+
+test("hosted Google OAuth parses redirect id token and sanitizes failures", async () => {
+  assert.equal(
+    parseHostedGoogleOAuthRedirect(
+      "https://extension-id.chromiumapp.org/#id_token=header.payload.sig&state=state-1",
+      {
+        expectedRedirectUri: "https://extension-id.chromiumapp.org/",
+        expectedState: "state-1"
+      }
+    ),
+    "header.payload.sig"
+  )
+
+  assert.throws(
+    () =>
+      parseHostedGoogleOAuthRedirect(
+        "https://extension-id.chromiumapp.org/#id_token=secret-token&state=wrong",
+        {
+          expectedRedirectUri: "https://extension-id.chromiumapp.org/",
+          expectedState: "state-1"
+        }
+      ),
+    (error) =>
+      error instanceof HostedGoogleOAuthError &&
+      error.code === "state_mismatch" &&
+      !error.message.includes("secret-token")
+  )
+
+  let launchedUrl = ""
+  const token = await requestHostedGoogleIdToken({
+    getRedirectUrl: () => "https://extension-id.chromiumapp.org/",
+    nonce: "nonce-1",
+    state: "state-1",
+    getLastError: () => undefined,
+    launchWebAuthFlow: (details, callback) => {
+      launchedUrl = details.url
+      callback(
+        "https://extension-id.chromiumapp.org/#id_token=header.payload.sig&state=state-1"
+      )
+    }
+  })
+
+  assert.equal(token, "header.payload.sig")
+  assert.match(launchedUrl, /response_type=id_token/)
+  assert.doesNotMatch(launchedUrl, /client_secret/)
+})
+
+test("hosted AI client exposes auth, logout, me, and chat with scoped headers", async () => {
+  const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = []
+  const responseBody = `data: {"delta":"hello"}\n\ndata: {"done":true,"usage":{"tokens_in":1,"tokens_out":2}}\n\n`
+  const fetchImpl: typeof fetch = async (input, init) => {
+    calls.push({ input, init })
+
+    if (String(input).endsWith("/auth/logout")) {
+      return new Response(null, { status: 204 })
+    }
+
+    if (String(input).endsWith("/chat")) {
+      return new Response(responseBody, {
+        status: 200,
+        headers: { "Content-Type": "text/event-stream" }
+      })
+    }
+
+    if (String(input).endsWith("/auth/google")) {
+      return Response.json({
+        session_token: "session-local",
+        expires_at: "2026-06-18T00:00:00.000Z",
+        user: {
+          id: "u1",
+          email: "u@example.com",
+          tier: "free",
+          region: "global"
+        }
+      })
+    }
+
+    return Response.json({
+      user: {
+        id: "u1",
+        email: "u@example.com",
+        tier: "free",
+        region: "global"
+      },
+      quota: {
+        unit: "tokens",
+        monthly: {
+          limit: 1000000,
+          used: 10,
+          resets_at: "2026-07-01T00:00:00.000Z"
+        }
+      },
+      rate_limit: { requests_per_min: 30, tokens_per_min: 30000 },
+      models: { available: ["free-small"], default: "free-small" }
+    })
+  }
+
+  const client = createHostedAiClient({
+    baseUrl: "http://127.0.0.1:3000/v1",
+    fetchImpl,
+    sessionToken: "session-local",
+    createIdempotencyKey: () => "idem-local"
+  })
+
+  await client.authGoogle({ id_token: "mock-id-token" })
+  await client.logout()
+  await client.me()
+  const events = []
+  for await (const event of client.chatStream({
+    operation: "translate",
+    input: "hello",
+    context: "selection",
+    model: "free-small"
+  })) {
+    events.push(event)
+  }
+
+  assert.deepEqual(events, [
+    { type: "delta", delta: "hello" },
+    { type: "done", usage: { tokens_in: 1, tokens_out: 2 } }
+  ])
+
+  const chatCall = calls.find((call) => String(call.input).endsWith("/chat"))
+  assert.ok(chatCall)
+  const headers = new Headers(chatCall.init?.headers)
+  assert.equal(headers.get("Authorization"), "Bearer session-local")
+  assert.equal(headers.get("Idempotency-Key"), "idem-local")
+  assert.equal(headers.get("Accept"), "text/event-stream")
+  assert.equal(headers.has("X-Install-Id"), false)
+})
+
+test("hosted AI SSE parser handles chunked delta, done, and error events", () => {
+  const parser = createHostedAiSseParser()
+  assert.deepEqual(parser.push('data: {"delta":"hel'), [])
+  assert.deepEqual(parser.push('lo"}\n\n'), [{ type: "delta", delta: "hello" }])
+  assert.deepEqual(
+    parser.push(
+      'data: {"error":{"code":"quota_exceeded","message":"raw backend detail"},"done":true}\n\n'
+    ),
+    [
+      {
+        type: "error",
+        error: normalizeHostedAiError("quota_exceeded")
+      }
+    ]
+  )
+  assert.deepEqual(parser.push('data: {"done":true}\n\n'), [{ type: "done" }])
+  assert.deepEqual(parser.finish(), [])
+})
+
+test("hosted AI errors normalize to safe frontend categories", async () => {
+  assert.deepEqual(normalizeHostedAiError("forbidden_model", 403), {
+    code: "forbidden_model",
+    status: 403,
+    upgrade: undefined,
+    category: "model_unavailable",
+    action: "fallback_to_default_model",
+    userMessage: "当前托管模型不可用，请重试默认模型或切换到自己的 API Key。"
+  })
+  assert.deepEqual(
+    [
+      [401, "unauthorized"],
+      [402, "quota_exceeded"],
+      [403, "forbidden_model"],
+      [429, "rate_limited"],
+      [502, "provider_error"],
+      [503, "service_unavailable"]
+    ].map(([status, code]) =>
+      normalizeHostedAiError(undefined, status as number).code === code
+    ),
+    [true, true, true, true, true, true]
+  )
+  assert.equal(normalizeHostedAiError("unauthorized").action, "sign_in_again")
+  assert.equal(
+    normalizeHostedAiError("quota_exceeded").action,
+    "switch_to_byok"
+  )
+  assert.equal(normalizeHostedAiError("rate_limited").action, "retry_later")
+  assert.equal(
+    normalizeHostedAiError("service_unavailable").action,
+    "retry_or_switch_to_byok"
+  )
+  assert.equal(
+    normalizeHostedAiError("provider_error").category,
+    "provider_unavailable"
+  )
+
+  const client = createHostedAiClient({
+    baseUrl: "http://localhost:3000/v1",
+    fetchImpl: async () =>
+      Response.json(
+        {
+          error: {
+            code: "provider_error",
+            message: "raw provider payload must not surface"
+          }
+        },
+        { status: 502 }
+      )
+  })
+
+  await assert.rejects(
+    () => client.me("session-local"),
+    (err) => {
+      assert.ok(err instanceof HostedAiClientError)
+      assert.equal(err.message.includes("raw provider payload"), false)
+      assert.equal(err.normalized.code, "provider_error")
+      assert.equal(err.normalized.status, 502)
+      return true
+    }
+  )
+})
+
+test("hosted AI fallback messages stay safe through global error handling", () => {
+  for (const status of [401, 402, 403, 429, 502, 503]) {
+    const error = new HostedAiClientError(
+      normalizeHostedAiError(undefined, status, status === 402)
+    )
+    const normalized = normalizeError(error)
+    assert.equal(normalized, error.normalized.userMessage)
+    assert.doesNotMatch(
+      normalized,
+      /checkout|billing|subscription|upgrade|付费上线|升级|订阅|购买/i
+    )
+    assert.doesNotMatch(normalized, /raw backend detail|private draft/i)
+  }
+})
+
+test("hosted chat routing builds local chat payloads only when explicitly selected", async () => {
+  const {
+    buildHostedChatRequest,
+    HOSTED_CHAT_DEFAULT_MODEL,
+    shouldUseHostedChatRoute
+  } = await import("../src/background/hosted-chat-routing.ts")
+
+  assert.equal(HOSTED_CHAT_DEFAULT_MODEL, "free-small")
+  assert.equal(shouldUseHostedChatRoute({ operation: "translate" }), false)
+  assert.equal(
+    shouldUseHostedChatRoute({
+      aiRoute: "byok",
+      operation: "translate"
+    }),
+    false
+  )
+  assert.equal(
+    shouldUseHostedChatRoute({
+      aiRoute: "hosted",
+      operation: "translate"
+    }),
+    true
+  )
+
+  assert.deepEqual(
+    buildHostedChatRequest(
+      {
+        aiRoute: "hosted",
+        operation: "translate",
+        context: "selection",
+        selectionText: " Hello ",
+        systemPrompt: "Translate naturally."
+      },
+      { targetLanguage: "zh-CN" }
+    ),
+    {
+      operation: "translate",
+      input: "Hello",
+      context: "selection",
+      target_lang: "zh-CN",
+      model: "free-small",
+      messages: [{ role: "system", content: "Translate naturally." }]
+    }
+  )
+
+  assert.deepEqual(
+    buildHostedChatRequest({
+      aiRoute: "hosted",
+      trigger: "follow-up",
+      operation: "custom",
+      userMessage: "What does this mean?",
+      priorContext: "Previous safe local context."
+    }),
+    {
+      operation: "custom",
+      input: "What does this mean?",
+      context: undefined,
+      target_lang: undefined,
+      model: "free-small",
+      messages: [
+        { role: "system", content: "Previous safe local context." },
+        { role: "user", content: "What does this mean?" }
+      ]
+    }
+  )
+
+  assert.throws(
+    () =>
+      buildHostedChatRequest({
+        aiRoute: "hosted",
+        operation: "image_explain",
+        imageSource: "screenshot-region",
+        selectionText: "describe"
+      }),
+    HostedAiClientError
+  )
+})
+
+test("Aviso AI service selection stays separate from BYOK provider configs", () => {
+  const providerConfigSource = readFileSync(
+    new URL("../src/utils/provider-configs.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.equal(HOSTED_AI_PROVIDER_CONFIG_ID, "aviso-hosted-ai")
+  assert.equal(HOSTED_AI_DEFAULT_MODEL, "free-small")
+  assert.equal(isHostedAiProviderConfigId(HOSTED_AI_PROVIDER_CONFIG_ID), true)
+  assert.equal(isHostedAiProviderConfigId("cfg-openai-personal"), false)
+  assert.match(
+    providerConfigSource,
+    /isHostedAiProviderConfigId\(settings\.defaultProviderConfigId\)/
+  )
+  assert.match(
+    providerConfigSource,
+    /return HOSTED_AI_PROVIDER_CONFIG_ID/
+  )
+})
+
+test("popup exposes Aviso AI in default and fast service selectors", () => {
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+  const aiClientSource = readFileSync(
+    new URL("../src/background/ai-client.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(popupSource, /setDefaultHostedAiService/)
+  assert.match(popupSource, /isHostedDefaultSelected/)
+  assert.match(popupSource, /HOSTED_AI_PROVIDER_CONFIG_ID/)
+  assert.match(popupSource, /popup\.hosted\.optionHelper/)
+  assert.match(popupSource, /fastServiceDropdownOpen/)
+  assert.match(popupSource, /fastServiceDropdownOption/)
+  assert.match(popupSource, /isHostedFastSelected/)
+  assert.match(popupSource, /providerConfigs\.map/)
+  assert.match(
+    aiClientSource,
+    /isHostedAiProviderConfigId\(settings\.defaultProviderConfigId\)/
+  )
+  assert.match(aiClientSource, /fastByokConfigSelected/)
+  assert.match(aiClientSource, /payload\.aiRoute !== "byok"/)
+})
+
+test("hosted session storage uses a separate local key from API keys", async () => {
+  const previousChrome = (globalThis as any).chrome
+  const localStore: Record<string, unknown> = {}
+  const setCalls: Array<Record<string, unknown>> = []
+
+  ;(globalThis as any).chrome = {
+    storage: {
+      local: {
+        get: async (key: string) => ({ [key]: localStore[key] }),
+        set: async (value: Record<string, unknown>) => {
+          setCalls.push(value)
+          Object.assign(localStore, value)
+        },
+        remove: async (key: string) => {
+          delete localStore[key]
+        }
+      }
+    }
+  }
+
+  try {
+    assert.equal(HOSTED_SESSION_STORAGE_KEY, "aviso_hosted_session")
+    assert.notEqual(HOSTED_SESSION_STORAGE_KEY, "contextai_api_keys")
+
+    await saveHostedSession(
+      {
+        session_token: "session-local",
+        expires_at: "2026-06-18T00:00:00.000Z",
+        user: {
+          id: "u1",
+          email: "u@example.com",
+          tier: "free",
+          region: "global"
+        }
+      },
+      { baseUrl: HOSTED_AI_DEFAULT_BASE_URL }
+    )
+
+    assert.deepEqual(Object.keys(setCalls[0]), [HOSTED_SESSION_STORAGE_KEY])
+    assert.equal(Object.hasOwn(localStore, "contextai_api_keys"), false)
+    assert.equal(
+      (await readHostedSession())?.session.session_token,
+      "session-local"
+    )
+
+    await clearHostedSession()
+    assert.equal(Object.hasOwn(localStore, HOSTED_SESSION_STORAGE_KEY), false)
+  } finally {
+    ;(globalThis as any).chrome = previousChrome
+  }
+})
+
+test("hosted account quota display formats me data and missing states", () => {
+  const labels = {
+    unknown: "Unknown",
+    unavailable: "Unavailable",
+    tokens: "tokens",
+    tierFree: "Free",
+    tierPaid: "Paid"
+  }
+  const session = {
+    session: {
+      session_token: "session-local",
+      expires_at: "2026-06-18T00:00:00.000Z",
+      user: {
+        id: "u1",
+        email: "u@example.com",
+        tier: "free" as const,
+        region: "global" as const
+      }
+    },
+    me: {
+      user: {
+        id: "u1",
+        email: "u@example.com",
+        tier: "free" as const,
+        region: "global" as const
+      },
+      quota: {
+        unit: "tokens",
+        monthly: {
+          limit: 1000000,
+          used: 2500,
+          resets_at: "2026-07-01T00:00:00"
+        },
+        daily: {
+          limit: 50000,
+          used: 1200,
+          resets_at: "2026-06-19T00:00:00"
+        }
+      },
+      rate_limit: { requests_per_min: 30, tokens_per_min: 30000 },
+      models: { available: ["free-small"], default: "free-small" }
+    },
+    baseUrl: HOSTED_AI_LOCAL_BASE_URL,
+    updatedAt: 1
+  }
+
+  assert.deepEqual(
+    buildHostedAccountQuotaDisplay({
+      session,
+      status: "signed_in",
+      labels
+    }),
+    {
+      tierLabel: "Free",
+      monthlyQuotaLabel: "2,500 / 1,000,000 tokens",
+      dailyQuotaLabel: "1,200 / 50,000 tokens",
+      resetLabel: "2026-07-01 00:00"
+    }
+  )
+
+  assert.deepEqual(
+    buildHostedAccountQuotaDisplay({
+      session: { ...session, me: undefined },
+      status: "signed_in",
+      labels
+    }),
+    {
+      tierLabel: "Free",
+      monthlyQuotaLabel: "Unknown",
+      dailyQuotaLabel: "Unknown",
+      resetLabel: "Unknown"
+    }
+  )
+
+  assert.deepEqual(
+    buildHostedAccountQuotaDisplay({
+      session,
+      status: "local_backend_unavailable",
+      labels
+    }),
+    {
+      tierLabel: "Free",
+      monthlyQuotaLabel: "Unavailable",
+      dailyQuotaLabel: "Unavailable",
+      resetLabel: "Unavailable"
+    }
+  )
+
+  assert.deepEqual(
+    buildHostedAccountQuotaDisplay({
+      session: null,
+      status: "local_backend_unavailable",
+      labels
+    }),
+    {
+      tierLabel: "Unavailable",
+      monthlyQuotaLabel: "Unavailable",
+      dailyQuotaLabel: "Unavailable",
+      resetLabel: "Unavailable"
+    }
+  )
+})
+
+test("hosted account state is just-in-time and does not block BYOK", () => {
+  assert.equal(
+    requiresHostedSignInForRoute({ route: "hosted", session: null }),
+    true
+  )
+  assert.equal(
+    requiresHostedSignInForRoute({ route: "byok", session: null }),
+    false
+  )
+  assert.equal(isByokBlockedByHostedSignIn(), false)
+  assert.equal(deriveHostedAccountStatus({ session: null }), "signed_out")
+  assert.equal(
+    deriveHostedAccountStatus({ session: null, errorCode: "unauthorized" }),
+    "expired"
+  )
+  assert.equal(
+    deriveHostedAccountStatus({
+      session: null,
+      errorCode: "service_unavailable"
+    }),
+    "local_backend_unavailable"
+  )
+  assert.equal(
+    deriveHostedAccountStatus({ session: null, errorCode: "quota_exceeded" }),
+    "quota_exhausted"
+  )
+  assert.equal(
+    deriveHostedAccountStatus({ session: null, errorCode: "rate_limited" }),
+    "rate_limited"
+  )
+  assert.equal(
+    deriveHostedAccountStatus({ session: null, errorCode: "provider_error" }),
+    "hosted_route_unavailable"
+  )
+  assert.equal(
+    deriveHostedAccountStatus({ session: null, errorCode: "bad_request" }),
+    "request_invalid"
+  )
+})
+
+test("floating window exposes hosted sign-in required only as a request state", () => {
+  const floatingSource = readFileSync(
+    new URL("../src/contents/floating.tsx", import.meta.url),
+    "utf8"
+  )
+  const messageSource = readFileSync(
+    new URL("../src/types/messages.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(messageSource, /hostedAi\?:/)
+  assert.match(messageSource, /state: "sign_in_required"/)
+  assert.match(floatingSource, /hostedAi\?\.state === "sign_in_required"/)
+  assert.match(floatingSource, /floating\.hostedSignInRequired\.title/)
+  assert.match(floatingSource, /loading: hostedAiNotice \? false : true/)
+  assert.match(floatingSource, /if \(!hostedAiNotice && !deferAiRequest\)/)
+  assert.doesNotMatch(floatingSource, /chrome\.identity/)
+})
+
+test("popup hosted quota display stays internal and keeps public copy clean", () => {
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+  const websiteSources = [
+    "../website/src/pages/index.tsx",
+    "../website/docs/core-features.md",
+    "../website/docs/known-limitations.md",
+    "../website/i18n/en/docusaurus-plugin-content-docs/current/core-features.md",
+    "../website/i18n/en/docusaurus-plugin-content-docs/current/known-limitations.md"
+  ]
+    .map((path) => readFileSync(new URL(path, import.meta.url), "utf8"))
+    .join("\n")
+
+  assert.match(popupSource, /popup\.hosted\.monthlyQuota/)
+  assert.match(popupSource, /popup\.hosted\.dailyQuota/)
+  assert.match(popupSource, /popup\.hosted\.resetTiming/)
+  assert.match(popupSource, /buildHostedAccountQuotaDisplay/)
+  assert.match(popupSource, /refreshHostedAccount/)
+  assert.match(popupSource, /popup\.addAiService/)
+  assert.match(popupSource, /providerConfigs\.map/)
+  assert.equal(getI18nMessage("popup.hosted.quota.unknown", "en"), "Unknown")
+  assert.equal(
+    getI18nMessage("popup.hosted.quota.unavailable", "zh-CN"),
+    "不可用"
+  )
+  assert.match(
+    getI18nMessage("popup.hosted.status.quota_exhausted", "zh-CN"),
+    /自己的 AI 服务配置/
+  )
+  assert.match(
+    getI18nMessage("popup.hosted.status.rate_limited", "en"),
+    /own AI service configuration/
+  )
+  assert.doesNotMatch(websiteSources, /1,000,000|1000000|50,000|50000/)
+  assert.doesNotMatch(
+    websiteSources,
+    /hosted quota|Aviso AI quota|托管额度|本地托管账户/i
+  )
+})
+
+test("hosted sign-in slice keeps staging backend and permission boundaries", () => {
+  const hostedSessionSource = readFileSync(
+    new URL("../src/utils/hosted-session.ts", import.meta.url),
+    "utf8"
+  )
+  const hostedClientSource = readFileSync(
+    new URL("../src/utils/hosted-ai-client.ts", import.meta.url),
+    "utf8"
+  )
+  const hostedChatRoutingSource = readFileSync(
+    new URL("../src/background/hosted-chat-routing.ts", import.meta.url),
+    "utf8"
+  )
+  const hostedOAuthSource = readFileSync(
+    new URL("../src/utils/hosted-oauth.ts", import.meta.url),
+    "utf8"
+  )
+  const hostedAuthSource = readFileSync(
+    new URL("../src/background/hosted-auth.ts", import.meta.url),
+    "utf8"
+  )
+  const aiClientSource = readFileSync(
+    new URL("../src/background/ai-client.ts", import.meta.url),
+    "utf8"
+  )
+  const messageSource = readFileSync(
+    new URL("../src/types/messages.ts", import.meta.url),
+    "utf8"
+  )
+  const floatingSource = readFileSync(
+    new URL("../src/contents/floating.tsx", import.meta.url),
+    "utf8"
+  )
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+  const wxtConfigSource = readFileSync(
+    new URL("../wxt.config.ts", import.meta.url),
+    "utf8"
+  )
+  const packageJson = JSON.parse(
+    readFileSync(new URL("../package.json", import.meta.url), "utf8")
+  )
+
+  assert.match(
+    hostedSessionSource,
+    /HOSTED_SESSION_STORAGE_KEY = "aviso_hosted_session"/
+  )
+  for (const source of [hostedSessionSource, hostedClientSource]) {
+    assert.match(
+      source,
+      /HOSTED_AI_LOCAL_BASE_URL = "http:\/\/127\.0\.0\.1:3000\/v1"/
+    )
+    assert.match(
+      source,
+      /HOSTED_AI_STAGING_BASE_URL =\s*"https:\/\/aviso-backend-staging\.vercel\.app\/v1"/
+    )
+  }
+  assert.match(
+    hostedSessionSource,
+    /HOSTED_AI_DEFAULT_BASE_URL = HOSTED_AI_STAGING_BASE_URL/
+  )
+  assert.match(messageSource, /HOSTED_GOOGLE_SIGN_IN/)
+  assert.match(popupSource, /HOSTED_GOOGLE_SIGN_IN/)
+  assert.doesNotMatch(popupSource, /requestHostedGoogleIdToken/)
+  assert.match(hostedAuthSource, /requestHostedGoogleIdToken/)
+  assert.match(hostedAuthSource, /HOSTED_AI_DEFAULT_BASE_URL/)
+  assert.match(
+    hostedAuthSource,
+    /createHostedAiClient\(\{\s*baseUrl: HOSTED_AI_DEFAULT_BASE_URL\s*\}\)/
+  )
+  assert.match(hostedAuthSource, /googleIdToken = null/)
+  assert.equal(
+    getI18nMessage("popup.hosted.status.authClientUnavailable", "zh-CN"),
+    "托管后端配置不可用，请重新加载 Aviso 后重试。"
+  )
+  assert.match(hostedOAuthSource, /launchWebAuthFlow/)
+  assert.match(hostedOAuthSource, /response_type: "id_token"/)
+  assert.doesNotMatch(hostedOAuthSource, /getAuthToken/)
+  assert.doesNotMatch(hostedOAuthSource, /client_secret/)
+  assert.doesNotMatch(
+    `${hostedClientSource}\n${hostedSessionSource}\n${hostedChatRoutingSource}\n${hostedOAuthSource}\n${hostedAuthSource}\n${popupSource}`,
+    /api\.aviso|production/i
+  )
+  assert.doesNotMatch(
+    `${hostedClientSource}\n${hostedSessionSource}\n${hostedChatRoutingSource}\n${hostedOAuthSource}\n${hostedAuthSource}\n${popupSource}`,
+    /X-Install-Id/
+  )
+  assert.doesNotMatch(
+    `${hostedClientSource}\n${hostedSessionSource}\n${hostedChatRoutingSource}\n${popupSource}`,
+    /chrome\.identity/
+  )
+  assert.match(messageSource, /aiRoute\?: "byok" \| "hosted"/)
+  assert.match(floatingSource, /aiRoute,/)
+  assert.match(aiClientSource, /shouldUseHostedChatRoute\(payload\)/)
+  assert.match(aiClientSource, /payload\.aiRoute !== "byok"/)
+  assert.match(aiClientSource, /runHostedChatRequest\(\{ \.\.\.payload, aiRoute: "hosted" \}, onChunk/)
+  assert.deepEqual(
+    [...packageJson.manifest.host_permissions].sort(),
+    [
+      ...APPROVED_PROVIDER_HOST_PERMISSIONS,
+      HOSTED_AI_STAGING_HOST_PERMISSION
+    ].sort()
+  )
+  assert.doesNotMatch(wxtConfigSource, /127\.0\.0\.1|localhost/)
 })
 
 test("popup high-fidelity settings panel keeps four tabs and local theme setting", () => {
@@ -620,8 +1455,14 @@ test("popup high-fidelity settings panel keeps four tabs and local theme setting
   assert.match(popupSource, /popup\.service\.editConfig/)
   assert.match(popupSource, /popup\.service\.deleteDraft/)
   assert.match(popupSource, /popup\.history\.title/)
-  assert.equal(getI18nMessage("popup.service.title", "en"), "Configuration and connection test")
-  assert.equal(getI18nMessage("popup.history.title", "en"), "Recent chats are saved automatically")
+  assert.equal(
+    getI18nMessage("popup.service.title", "en"),
+    "Configuration and connection test"
+  )
+  assert.equal(
+    getI18nMessage("popup.history.title", "en"),
+    "Recent chats are saved automatically"
+  )
   assert.match(popupSource, /popup\.theme\.light/)
   assert.match(popupSource, /popup\.theme\.dark/)
   assert.match(popupSource, /popup\.theme\.system/)
@@ -652,10 +1493,16 @@ test("popup common features keep two-line copy and mutually exclusive selection 
   assert.equal(popupSource.includes('"内联翻译"'), false)
   assert.match(popupSource, /name="features"/)
   assert.match(popupSource, /"selection",\s*t\("popup\.features\.selection"\)/)
-  assert.match(popupSource, /"translate",\s*t\("popup\.features\.translation"\)/)
+  assert.match(
+    popupSource,
+    /"translate",\s*t\("popup\.features\.translation"\)/
+  )
   assert.match(popupSource, /"commandPanel",\s*t\("popup\.features\.command"\)/)
   assert.match(popupSource, /"clipboard",\s*t\("popup\.features\.clipboard"\)/)
-  assert.match(popupSource, /"doubleClick",\s*t\("popup\.features\.doubleClick"\)/)
+  assert.match(
+    popupSource,
+    /"doubleClick",\s*t\("popup\.features\.doubleClick"\)/
+  )
   assert.match(popupSource, /name="local"/)
   assert.match(popupSource, /en: "English"/)
   assert.match(popupSource, /ja: "日本語"/)
@@ -705,7 +1552,10 @@ test("ui language copy lookup keeps Chinese and English surface labels", () => {
   assert.equal(zh("popup.templates.title"), "常用指令")
   assert.equal(en("popup.templates.title"), "Saved prompts")
   assert.equal(zh("popup.history.title"), "最近对话会自动保存")
-  assert.equal(en("popup.history.title"), "Recent chats are saved automatically")
+  assert.equal(
+    en("popup.history.title"),
+    "Recent chats are saved automatically"
+  )
   assert.equal(zh("popup.footer.privacy"), "隐私说明")
   assert.equal(en("popup.footer.privacy"), "Privacy")
   assert.equal(zh("popup.features.translation"), "划词翻译")
@@ -755,8 +1605,14 @@ test("ui language setting uses existing settings object and rebuilds context men
   assert.match(storageSource, /uiLanguage: "auto"/)
   assert.match(popupSource, /updateSetting\(\s*"uiLanguage"/)
   assert.match(backgroundSource, /hasUiLanguageChanged\(previous, next\)/)
-  assert.equal(hasUiLanguageChanged({ uiLanguage: "auto" }, { uiLanguage: "en" }), true)
-  assert.equal(hasUiLanguageChanged({ uiLanguage: "en" }, { uiLanguage: "en" }), false)
+  assert.equal(
+    hasUiLanguageChanged({ uiLanguage: "auto" }, { uiLanguage: "en" }),
+    true
+  )
+  assert.equal(
+    hasUiLanguageChanged({ uiLanguage: "en" }, { uiLanguage: "en" }),
+    false
+  )
 })
 
 test("popup language mini dropdown chooses direction instead of fixed upward only", () => {
@@ -774,7 +1630,10 @@ test("popup language mini dropdown chooses direction instead of fixed upward onl
   assert.match(popupSource, /type MiniDropdownDirection = "down" \| "up"/)
   assert.match(popupSource, /resolveMiniDropdownDirection/)
   assert.match(popupSource, /setLanguageDropdownDirection/)
-  assert.match(popupSource, /data-dropdown-direction=\{languageDropdownDirection\}/)
+  assert.match(
+    popupSource,
+    /data-dropdown-direction=\{languageDropdownDirection\}/
+  )
   assert.match(popupSource, /styles\.miniDropdownMenuDown/)
   assert.match(popupSource, /styles\.miniDropdownMenuUp/)
   assert.match(popupSource, /top: "calc\(100% \+ 7px\)"/)
@@ -782,7 +1641,10 @@ test("popup language mini dropdown chooses direction instead of fixed upward onl
   assert.doesNotMatch(menuBlock, /bottom: "calc\(100% \+ 7px\)"/)
   assert.match(settingListBlock, /overflow: "hidden"/)
   assert.match(settingListOpenBlock, /overflow: "visible"/)
-  assert.match(popupSource, /\.\.\.\(languageDropdownOpen \? styles\.settingListDropdownOpen : \{\}\)/)
+  assert.match(
+    popupSource,
+    /\.\.\.\(languageDropdownOpen\s*\?\s*styles\.settingListDropdownOpen\s*:\s*\{\}\)/
+  )
   assert.match(popupSource, /styles\.settingRowDropdownOpen/)
 })
 
@@ -796,19 +1658,35 @@ test("popup AI service card statuses render in meta pills, not the title row", (
       /<div style=\{styles\.serviceConfigTop\}>[\s\S]*?<span style=\{styles\.serviceIconActions\}>/
     )?.[0] ?? ""
   const servicePillsBlock =
-    popupSource.match(/const servicePills:[\s\S]*?const configStateLabel/)?.[0] ??
-    ""
+    popupSource.match(
+      /const servicePills:[\s\S]*?const configStateLabel/
+    )?.[0] ?? ""
 
   assert.doesNotMatch(popupSource, /styles\.editingBadge/)
   assert.doesNotMatch(serviceConfigTopBlock, /默认/)
   assert.doesNotMatch(serviceConfigTopBlock, /新增中/)
   assert.doesNotMatch(serviceConfigTopBlock, /编辑中/)
-  assert.match(servicePillsBlock, /label: t\("popup\.provider\.status\.default"\)/)
-  assert.match(servicePillsBlock, /label: t\("popup\.provider\.status\.adding"\)/)
-  assert.match(servicePillsBlock, /label: t\("popup\.provider\.status\.editing"\)/)
-  assert.match(servicePillsBlock, /label: t\("popup\.provider\.status\.unsaved"\)/)
+  assert.match(
+    servicePillsBlock,
+    /label: t\("popup\.provider\.status\.default"\)/
+  )
+  assert.match(
+    servicePillsBlock,
+    /label: t\("popup\.provider\.status\.adding"\)/
+  )
+  assert.match(
+    servicePillsBlock,
+    /label: t\("popup\.provider\.status\.editing"\)/
+  )
+  assert.match(
+    servicePillsBlock,
+    /label: t\("popup\.provider\.status\.unsaved"\)/
+  )
   assert.equal(getI18nMessage("popup.provider.status.default", "en"), "Default")
-  assert.equal(getI18nMessage("popup.provider.status.adding", "zh-CN"), "新增中")
+  assert.equal(
+    getI18nMessage("popup.provider.status.adding", "zh-CN"),
+    "新增中"
+  )
   assert.match(popupSource, /servicePills\.map\(\(pill\) =>/)
   assert.match(popupSource, /getDropdownStatusStyle\(pill\.tone, ui\)/)
 })
@@ -820,7 +1698,10 @@ test("popup provider config model ID is manually editable", () => {
   )
 
   assert.doesNotMatch(popupSource, /readOnly=\{config\.provider !== "doubao"\}/)
-  assert.match(popupSource, /updateProviderConfigDraft\(config\.id, \{\s*model: event\.target\.value/s)
+  assert.match(
+    popupSource,
+    /updateProviderConfigDraft\(config\.id, \{\s*model: event\.target\.value/s
+  )
   assert.equal(
     getI18nMessage("popup.service.modelHint", "zh-CN"),
     "手动填写模型 ID；Aviso 不会自动读取你的账号模型列表。"
@@ -853,7 +1734,10 @@ test("popup provider picker exposes Gemini and Tencent Hunyuan configuration pre
     "utf8"
   )
 
-  assert.match(popupSource, /const PROVIDER_ORDER:[\s\S]*"gemini"[\s\S]*"hunyuan"/)
+  assert.match(
+    popupSource,
+    /const PROVIDER_ORDER:[\s\S]*"gemini"[\s\S]*"hunyuan"/
+  )
   assert.match(popupSource, /titleKey: "popup\.provider\.gemini"/)
   assert.match(popupSource, /titleKey: "popup\.provider\.hunyuan"/)
   assert.equal(getI18nMessage("popup.provider.gemini", "en"), "Gemini")
@@ -894,7 +1778,7 @@ test("popup AI service cards use outer field focus and delete confirmation", () 
   assert.match(popupSource, /common\.cancel/)
   assert.match(
     popupSource,
-    /isAdd\s*\?\s*deleteProviderConfigInstance\(config\)\s*:\s*setConfirmingDeleteProviderConfigId\(config\.id\)/
+    /isAdd\s*\?\s*deleteProviderConfigInstance\(config\)\s*:\s*setConfirmingDeleteProviderConfigId\(\s*config\.id\s*\)/
   )
   assert.match(
     popupSource,
@@ -936,10 +1820,7 @@ test("popup draft icons and wrapping styles match settings panel reference", () 
     popupSource,
     /title=\{isAdd \? t\("popup\.service\.deleteDraft"\) : t\("popup\.service\.deleteConfig"\)\}[\s\S]{0,500}name="close"/
   )
-  assert.doesNotMatch(
-    popupSource,
-    /title="删除配置"[\s\S]{0,500}name="close"/
-  )
+  assert.doesNotMatch(popupSource, /title="删除配置"[\s\S]{0,500}name="close"/)
   assert.match(popupSource, /--aviso-line: \$\{ui\.line\}/)
   assert.doesNotMatch(popupSource, /aviso\.darkLine/)
 
@@ -952,8 +1833,9 @@ test("popup draft icons and wrapping styles match settings panel reference", () 
     "dropdownSubText"
   ]) {
     const block =
-      popupSource.match(new RegExp(`${styleName}: \\{[\\s\\S]*?\\n  \\}`))?.[0] ??
-      ""
+      popupSource.match(
+        new RegExp(`${styleName}: \\{[\\s\\S]*?\\n  \\}`)
+      )?.[0] ?? ""
     assert.match(block, /display: "block"/)
     assert.doesNotMatch(block, /whiteSpace: "nowrap"/)
     assert.doesNotMatch(block, /textOverflow: "ellipsis"/)
@@ -966,8 +1848,9 @@ test("inline translation card uses send-to-ai result button copy", () => {
     "utf8"
   )
   const inlineCardBlock =
-    toolbarSource.match(/function InlineTranslationCard\([\s\S]*?\nfunction InlineCardButton/)?.[0] ??
-    ""
+    toolbarSource.match(
+      /function InlineTranslationCard\([\s\S]*?\nfunction InlineCardButton/
+    )?.[0] ?? ""
 
   assert.match(inlineCardBlock, /label=\{t\("common\.sendToAi"\)\}/)
   assert.doesNotMatch(inlineCardBlock, /label="结果面板"/)
@@ -1035,16 +1918,34 @@ test("popup theme tabs and scroll match draft structure", () => {
   assert.match(popupSource, /window\.innerHeight/)
   assert.match(popupSource, /window\.screen\?\.availHeight/)
   assert.match(popupSource, /looksAutoShrunkByChrome/)
-  assert.match(popupSource, /Math\.min\(viewportHeight, POPUP_FRAME\.safeMaxHeight\)/)
-  assert.match(popupSource, /window\.addEventListener\("resize", updatePopupHeight\)/)
+  assert.match(
+    popupSource,
+    /Math\.min\(viewportHeight, POPUP_FRAME\.safeMaxHeight\)/
+  )
+  assert.match(
+    popupSource,
+    /window\.addEventListener\("resize", updatePopupHeight\)/
+  )
   assert.match(popupSource, /const popupHeightCss = `\$\{popupHeight\}px`/)
-  assert.match(popupSource, /#\__plasmo \{[\s\S]*height: \$\{popupHeightCss\} !important;/)
-  assert.match(popupSource, /#root,[\s\S]*body > div \{[\s\S]*height: \$\{popupHeightCss\} !important;/)
+  assert.match(
+    popupSource,
+    /#\__plasmo \{[\s\S]*height: \$\{popupHeightCss\} !important;/
+  )
+  assert.match(
+    popupSource,
+    /#root,[\s\S]*body > div \{[\s\S]*height: \$\{popupHeightCss\} !important;/
+  )
   assert.match(popupSource, /overflow: hidden !important;/)
   assert.doesNotMatch(popupSource, /position: fixed !important/)
   assert.doesNotMatch(popupSource, /100vh/)
-  assert.match(popupSource, /#aviso-popup-content \{[\s\S]*overflow-y: auto !important;/)
-  assert.match(popupSource, /#aviso-popup-content \{[\s\S]*height: 0 !important;/)
+  assert.match(
+    popupSource,
+    /#aviso-popup-content \{[\s\S]*overflow-y: auto !important;/
+  )
+  assert.match(
+    popupSource,
+    /#aviso-popup-content \{[\s\S]*height: 0 !important;/
+  )
   assert.match(popupSource, /flex: "1 1 0"/)
   assert.match(popupSource, /maxHeight: "100%"/)
   assert.match(popupSource, /height: 0/)
@@ -1080,7 +1981,10 @@ test("appearance theme is shared by popup and content surfaces", () => {
     "utf8"
   )
 
-  assert.match(themeSource, /export type AvisoThemeMode = "light" \| "dark" \| "system"/)
+  assert.match(
+    themeSource,
+    /export type AvisoThemeMode = "light" \| "dark" \| "system"/
+  )
   assert.match(themeSource, /export function resolveAvisoTheme/)
   assert.match(themeSource, /export function getAvisoThemeTokens/)
   assert.match(themeSource, /export function useSyncedAvisoTheme/)
@@ -1414,7 +2318,10 @@ test("normalizeError 限流与网络", () => {
 })
 
 test("normalizeError 不透传未知错误原文", () => {
-  assert.equal(normalizeError(new Error("something odd")), "请求失败，请稍后再试。")
+  assert.equal(
+    normalizeError(new Error("something odd")),
+    "请求失败，请稍后再试。"
+  )
 })
 
 test("normalizeError 和安全日志摘要不泄漏 provider raw error body", () => {
@@ -1422,7 +2329,7 @@ test("normalizeError 和安全日志摘要不泄漏 provider raw error body", ()
     "Provider 500 raw body",
     "https://private.example.com/path?token=abc",
     "sk-test-raw-provider-token-123456",
-    "{\"error\":{\"message\":\"customer private draft\"}}",
+    '{"error":{"message":"customer private draft"}}',
     "客户并购计划草稿"
   ].join(" ")
   const err = Object.assign(new Error(sensitiveMessage), { status: 500 })
@@ -1668,7 +2575,10 @@ test("parseIntentLocally 识别 command palette 本地意图", () => {
     params: {}
   })
   assert.equal(parseIntentLocally("翻译当前页面").action, "translate_page")
-  assert.equal(parseIntentLocally("summarize current page").action, "summarize_page")
+  assert.equal(
+    parseIntentLocally("summarize current page").action,
+    "summarize_page"
+  )
   assert.deepEqual(parseIntentLocally("ask ai what is TTFT"), {
     action: "ask_ai",
     target: "what is TTFT",
@@ -1803,7 +2713,9 @@ test("inline translation routing keeps short text inline and long text in result
   )
   assert.deepEqual(
     getInlineTranslationRoute(
-      Array(INLINE_TRANSLATION_MAX_LINES + 2).fill("x").join("\n")
+      Array(INLINE_TRANSLATION_MAX_LINES + 2)
+        .fill("x")
+        .join("\n")
     ),
     {
       route: "result-panel",
@@ -2124,8 +3036,14 @@ test("fast model strategy preserves missing-model guard for configured short tas
   assert.equal(route?.requestModel, "")
   assert.equal(route?.missingConfig, "model")
   assert.match(aiClientSource, /resolveFastModelRouteForOperation/)
-  assert.match(aiClientSource, /resolveRuntimeModelRoute\(payload\.model, settings\)/)
-  assert.match(aiClientSource, /if \(route\.missingConfig\) \{[\s\S]*?throw new Error\("模型 ID 或接入点未配置/)
+  assert.match(
+    aiClientSource,
+    /resolveRuntimeModelRoute\(payload\.model, settings\)/
+  )
+  assert.match(
+    aiClientSource,
+    /if \(route\.missingConfig\) \{[\s\S]*?throw new Error\("模型 ID 或接入点未配置/
+  )
 })
 
 test("OpenAI-compatible provider configs require manual model before provider call", () => {
@@ -2309,7 +3227,10 @@ test("legacy provider keys map to provider configs without changing storage keys
   assert.match(providerConfigSource, /getLegacyProviderConfigs/)
   assert.match(providerConfigSource, /LEGACY_PROVIDER_CONFIG_IDS/)
   assert.match(providerConfigSource, /apiKeys\[provider\]/)
-  assert.match(providerConfigSource, /apiKeys\.providerConfigKeys\[config\.id\]/)
+  assert.match(
+    providerConfigSource,
+    /apiKeys\.providerConfigKeys\[config\.id\]/
+  )
   assert.match(storageSource, /providerConfigKeys/)
   assert.match(storageSource, /contextai_api_keys/)
   assert.equal(LEGACY_PROVIDER_CONFIG_IDS.openai, "legacy-openai")
@@ -2341,7 +3262,10 @@ test("popup provider config save allows incomplete drafts and clears stale test 
     saveBlock,
     /await saveProviderConfigApiKey\(config\.id, normalizedKeyInput\)/
   )
-  assert.doesNotMatch(saveBlock, /saveProviderConfigApiKey\(config\.id, keyInput\)/)
+  assert.doesNotMatch(
+    saveBlock,
+    /saveProviderConfigApiKey\(config\.id, keyInput\)/
+  )
   assert.match(saveBlock, /delete next\[config\.id\]/)
   assert.match(saveBlock, /clearProviderConfigTestResult\(normalizedConfig\)/)
   assert.doesNotMatch(saveBlock, /buildConnectivityPreflightSummary/)
@@ -2354,7 +3278,10 @@ test("popup provider config save allows incomplete drafts and clears stale test 
     testBlock,
     /await saveProviderConfigApiKey\(config\.id, normalizedKeyInput\)/
   )
-  assert.doesNotMatch(testBlock, /saveProviderConfigApiKey\(config\.id, keyInput\)/)
+  assert.doesNotMatch(
+    testBlock,
+    /saveProviderConfigApiKey\(config\.id, keyInput\)/
+  )
 })
 
 test("API key storage normalizes hidden whitespace before saving and reading", () => {
@@ -2369,8 +3296,14 @@ test("API key storage normalizes hidden whitespace before saving and reading", (
 
   assert.match(storageSource, /function normalizeApiKeyInput/)
   assert.match(storageSource, /return value\.trim\(\)/)
-  assert.match(storageSource, /normalizeApiKeyInput\(decryptApiKey\(raw\.openai\)\)/)
-  assert.match(storageSource, /const normalizedKey = normalizeApiKeyInput\(plainKey\)/)
+  assert.match(
+    storageSource,
+    /normalizeApiKeyInput\(decryptApiKey\(raw\.openai\)\)/
+  )
+  assert.match(
+    storageSource,
+    /const normalizedKey = normalizeApiKeyInput\(plainKey\)/
+  )
   assert.match(storageSource, /encryptApiKey\(normalizedKey\)/)
   assert.doesNotMatch(storageSource, /encryptApiKey\(plainKey\)/)
   assert.match(popupSource, /const normalizedKeyInput = keyInput\.trim\(\)/)
@@ -2401,7 +3334,10 @@ test("provider config stores last connectivity result by provider and model", ()
   assert.match(typeSource, /testCompletionMs\?: number/)
   assert.match(providerConfigSource, /markProviderConfigTestResult/)
   assert.match(providerConfigSource, /testProvider: config\.provider/)
-  assert.match(providerConfigSource, /testModel: getProviderConfigTestModel\(config\)/)
+  assert.match(
+    providerConfigSource,
+    /testModel: getProviderConfigTestModel\(config\)/
+  )
   assert.match(connectivitySource, /buildLastConnectivityTestSummaryMap/)
   assert.match(connectivitySource, /completionMs: config\.testCompletionMs/)
   assert.match(connectivitySource, /上次通过/)
@@ -2416,14 +3352,32 @@ test("provider config stores last connectivity result by provider and model", ()
     popupSource.match(/const rows = \[[\s\S]*?\n  \]/)?.[0] ?? "",
     /raw_prompt_logged|raw_response_logged|private_page_data_logged|latency_note/
   )
-  assert.match(popupSource, /const \[expanded, setExpanded\] = useState\(false\)/)
+  assert.match(
+    popupSource,
+    /const \[expanded, setExpanded\] = useState\(false\)/
+  )
   assert.match(popupSource, /aria-expanded=\{expanded\}/)
   assert.match(popupSource, /expanded &&\s*rows\.map/)
-  assert.equal(getI18nMessage("popup.connectivity.showDetails", "zh-CN"), "展开详情")
-  assert.equal(getI18nMessage("popup.connectivity.hideDetails", "en"), "Hide details")
-  assert.equal(getI18nMessage("popup.connectivity.lastPassed", "en"), "Last connection test passed")
-  assert.equal(getI18nMessage("popup.connectivity.lastFailed", "zh-CN"), "上次连接测试未通过")
-  assert.equal(getI18nMessage("popup.connectivity.speed.untested", "zh-CN"), "未测速")
+  assert.equal(
+    getI18nMessage("popup.connectivity.showDetails", "zh-CN"),
+    "展开详情"
+  )
+  assert.equal(
+    getI18nMessage("popup.connectivity.hideDetails", "en"),
+    "Hide details"
+  )
+  assert.equal(
+    getI18nMessage("popup.connectivity.lastPassed", "en"),
+    "Last connection test passed"
+  )
+  assert.equal(
+    getI18nMessage("popup.connectivity.lastFailed", "zh-CN"),
+    "上次连接测试未通过"
+  )
+  assert.equal(
+    getI18nMessage("popup.connectivity.speed.untested", "zh-CN"),
+    "未测速"
+  )
   assert.equal(getI18nMessage("popup.connectivity.speed.fast", "en"), "Fast")
   assert.equal(getI18nMessage("popup.connectivity.noData", "zh-CN"), "暂无数据")
 })
@@ -2726,7 +3680,10 @@ test("package host_permissions 精确匹配批准 provider 边界", () => {
 
   assert.deepEqual(
     [...pkg.manifest.host_permissions].sort(),
-    [...APPROVED_PROVIDER_HOST_PERMISSIONS].sort()
+    [
+      ...APPROVED_PROVIDER_HOST_PERMISSIONS,
+      HOSTED_AI_STAGING_HOST_PERMISSION
+    ].sort()
   )
 })
 
@@ -2742,11 +3699,14 @@ test("WXT host_permissions 与批准 provider 边界保持一致", () => {
 
   assert.deepEqual(
     [...hostPermissions].sort(),
-    [...APPROVED_PROVIDER_HOST_PERMISSIONS].sort()
+    [
+      ...APPROVED_PROVIDER_HOST_PERMISSIONS,
+      HOSTED_AI_STAGING_HOST_PERMISSION
+    ].sort()
   )
 })
 
-test("package 普通权限保持最小边界且包含 clipboardWrite 和 history", () => {
+test("package 普通权限保持最小边界且包含 identity / clipboardWrite / history", () => {
   const pkg = JSON.parse(
     readFileSync(new URL("../package.json", import.meta.url), "utf8")
   )
@@ -2757,6 +3717,7 @@ test("package 普通权限保持最小边界且包含 clipboardWrite 和 history
     "clipboardWrite",
     "contextMenus",
     "history",
+    "identity",
     "storage"
   ])
 })
@@ -2772,7 +3733,10 @@ test("manifest-facing localization uses Chrome _locales without permission expan
     )
   )
   const enMessages = JSON.parse(
-    readFileSync(new URL("../locales/en/messages.json", import.meta.url), "utf8")
+    readFileSync(
+      new URL("../locales/en/messages.json", import.meta.url),
+      "utf8"
+    )
   )
 
   assert.equal(pkg.manifest.default_locale, "zh_CN")
@@ -2789,7 +3753,10 @@ test("manifest-facing localization uses Chrome _locales without permission expan
     enMessages.app_description.message,
     "An AI browser assistant for explaining, translating, polishing, and summarizing content in place."
   )
-  assert.equal(zhMessages.open_command_palette_description.message, "打开命令面板")
+  assert.equal(
+    zhMessages.open_command_palette_description.message,
+    "打开命令面板"
+  )
   assert.equal(
     enMessages.open_command_palette_description.message,
     "Open command palette"
@@ -2849,13 +3816,22 @@ test("OpenAI-compatible connectivity implementation uses fixed payload and non-s
       /export async function handleProviderConnectivityTest[\s\S]*?\nexport async function handleAIRequest/
     )?.[0] ?? ""
 
-  assert.match(connectivityBlock, /const testPayload = buildConnectivityTestPayload\(\)/)
+  assert.match(
+    connectivityBlock,
+    /const testPayload = buildConnectivityTestPayload\(\)/
+  )
   assert.match(connectivityBlock, /hasPrivateContextPayload\(testPayload\)/)
   assert.match(connectivityBlock, /route\.provider\.id === "anthropic"/)
   assert.match(connectivityBlock, /await callAnthropic/)
   assert.match(connectivityBlock, /await callOpenAIConnectivity/)
-  assert.match(connectivityBlock, /requestId: `connectivity-\$\{route\.provider\.id\}`/)
-  assert.match(connectivityBlock, /raw prompt、raw response、网页正文、截图或 API Key/)
+  assert.match(
+    connectivityBlock,
+    /requestId: `connectivity-\$\{route\.provider\.id\}`/
+  )
+  assert.match(
+    connectivityBlock,
+    /raw prompt、raw response、网页正文、截图或 API Key/
+  )
 
   const connectivityRequestBlock =
     aiClientSource.match(
@@ -2968,7 +3944,10 @@ test("conversation history 保留 pinned 并只裁剪普通最近 20 条", () =>
   const trimmed = sortAndTrimConversations([...entries, pinnedOld])
 
   assert.equal(trimmed.length, 21)
-  assert.equal(trimmed.some((entry) => entry.id === "pinned-old"), true)
+  assert.equal(
+    trimmed.some((entry) => entry.id === "pinned-old"),
+    true
+  )
   assert.equal(trimmed.filter((entry) => !entry.pinned).length, 20)
   assert.equal(
     trimmed.some((entry) => entry.id === "conversation-0"),
@@ -3235,12 +4214,24 @@ test("perf summary reaches content scripts through final stream chunks as JSON",
   assert.match(aiClientSource, /perfSummary:\s*\n\s*done && opts\?\.logPerf/)
   assert.match(aiClientSource, /buildAIRequestPerfSummary/)
   assert.match(aiClientSource, /Promise<PerfSummary \| undefined>/)
-  assert.match(aiClientSource, /if \(chunk\.perfSummary\) finalPerfSummary = chunk\.perfSummary/)
+  assert.match(
+    aiClientSource,
+    /if \(chunk\.perfSummary\) finalPerfSummary = chunk\.perfSummary/
+  )
   assert.match(aiClientSource, /return finalPerfSummary/)
-  assert.match(backgroundSource, /if \(chunk\.perfSummary\) perfSummary = chunk\.perfSummary/)
+  assert.match(
+    backgroundSource,
+    /if \(chunk\.perfSummary\) perfSummary = chunk\.perfSummary/
+  )
   assert.match(backgroundSource, /returnedPerfSummary/)
-  assert.doesNotMatch(backgroundSource, /void sendMessageToFrame\(\s*\n\s*tabId,\s*\n\s*\{\s*\n\s*action: "AI_PERF_SUMMARY"/)
-  assert.match(backgroundSource, /await sendMessageToFrame\(\s*\n\s*tabId,\s*\n\s*\{\s*\n\s*action: "AI_PERF_SUMMARY"/)
+  assert.doesNotMatch(
+    backgroundSource,
+    /void sendMessageToFrame\(\s*\n\s*tabId,\s*\n\s*\{\s*\n\s*action: "AI_PERF_SUMMARY"/
+  )
+  assert.match(
+    backgroundSource,
+    /await sendMessageToFrame\(\s*\n\s*tabId,\s*\n\s*\{\s*\n\s*action: "AI_PERF_SUMMARY"/
+  )
   assert.match(backgroundSource, /label: "ai-stream-perf-summary"/)
   assert.match(backgroundSource, /chunk: \{\s*\n\s*text: ""/)
   assert.match(backgroundSource, /perfSummary/)
@@ -3250,8 +4241,14 @@ test("perf summary reaches content scripts through final stream chunks as JSON",
   )
   assert.match(floatingSource, /chunk\.perfSummary/)
   assert.match(toolbarSource, /chunk\.perfSummary/)
-  assert.match(floatingSource, /`\[Aviso perf\] \$\{JSON\.stringify\(chunk\.perfSummary\)\}`/)
-  assert.match(toolbarSource, /`\[Aviso perf\] \$\{JSON\.stringify\(chunk\.perfSummary\)\}`/)
+  assert.match(
+    floatingSource,
+    /`\[Aviso perf\] \$\{JSON\.stringify\(chunk\.perfSummary\)\}`/
+  )
+  assert.match(
+    toolbarSource,
+    /`\[Aviso perf\] \$\{JSON\.stringify\(chunk\.perfSummary\)\}`/
+  )
   assert.match(
     readFileSync(new URL("../src/utils/timing.ts", import.meta.url), "utf8"),
     /`\[Aviso perf\] \$\{JSON\.stringify\(summary\)\}`/
@@ -3283,14 +4280,17 @@ test("translation triggers avoid avoidable local waits without implicit command 
     "utf8"
   )
   const retryBlock =
-    toolbarSource.match(/const retryInlineTranslation = \(\) => \{[\s\S]*?\n  \}/)
-      ?.[0] ?? ""
+    toolbarSource.match(
+      /const retryInlineTranslation = \(\) => \{[\s\S]*?\n  \}/
+    )?.[0] ?? ""
   const toolbarOperationBlock =
-    toolbarSource.match(/const handleOperation = \(op: Operation\) => \{[\s\S]*?\n  \}/)
-      ?.[0] ?? ""
+    toolbarSource.match(
+      /const handleOperation = \(op: Operation\) => \{[\s\S]*?\n  \}/
+    )?.[0] ?? ""
   const commandEnterBlock =
-    commandSource.match(/} else if \(e\.key === "Enter"\) \{[\s\S]*?\n    \}/)
-      ?.[0] ?? ""
+    commandSource.match(
+      /} else if \(e\.key === "Enter"\) \{[\s\S]*?\n    \}/
+    )?.[0] ?? ""
 
   assert.doesNotMatch(retryBlock, /setTimeout/)
   assert.doesNotMatch(toolbarOperationBlock, /setTimeout/)
@@ -3308,14 +4308,18 @@ test("AI output token budgets stay small for common short operations", () => {
     "utf8"
   )
   const tokenBudgetBlock =
-    aiClientSource.match(/export function getMaxOutputTokens[\s\S]*?\n\}/)?.[0] ??
-    ""
+    aiClientSource.match(
+      /export function getMaxOutputTokens[\s\S]*?\n\}/
+    )?.[0] ?? ""
 
   assert.match(tokenBudgetBlock, /getTranslationMaxOutputTokens\(payload\)/)
   assert.match(tokenBudgetBlock, /operation === "polish"\) return 768/)
   assert.match(tokenBudgetBlock, /return 1024/)
   assert.equal(
-    getTranslationMaxOutputTokens({ operation: "translate", selectionText: "hello" }),
+    getTranslationMaxOutputTokens({
+      operation: "translate",
+      selectionText: "hello"
+    }),
     128
   )
   assert.equal(
@@ -3455,7 +4459,10 @@ test("page summary paths parallelize page extraction and runtime warmup", () => 
     assert.match(source, /const runtimeWarmup = getRuntimeConfigSnapshot/)
     assert.match(source, /const displayPromise = sendMessageToDisplayFrame/)
     assert.match(source, /const contentPromise = requestPageContent/)
-    assert.match(source, /await Promise\.all\(\[displayPromise, contentPromise\]\)/)
+    assert.match(
+      source,
+      /await Promise\.all\(\[displayPromise, contentPromise\]\)/
+    )
     assert.match(source, /page_content_cache_hit/)
     assert.match(source, /AI_CONTEXT_LIMITS\.pageSummaryChars/)
   }
@@ -3500,7 +4507,10 @@ test("background batches stream chunks while flushing done and perf summaries", 
   assert.match(backgroundSource, /function createStreamChunkDispatcher/)
   assert.match(backgroundSource, /if \(chunk\.done \|\| chunk\.perfSummary\)/)
   assert.match(backgroundSource, /buffered\.kind !== chunk\.kind/)
-  assert.match(backgroundSource, /setTimeout\(flushBuffered, STREAM_CHUNK_BATCH_MS\)/)
+  assert.match(
+    backgroundSource,
+    /setTimeout\(flushBuffered, STREAM_CHUNK_BATCH_MS\)/
+  )
   assert.match(backgroundSource, /streamChunks\.push\(chunk\)/)
   assert.match(backgroundSource, /await streamChunks\.flush\(\)/)
   assert.doesNotMatch(
@@ -3527,7 +4537,10 @@ test("floating toolbar requests run AI directly from background after display op
   assert.match(showFloatingBlock, /deferAiRequest: true/)
   assert.match(showFloatingBlock, /await runtimeWarmup/)
   assert.match(showFloatingBlock, /await runAIRequestToFrame\(/)
-  assert.match(showFloatingBlock, /responseFrameId: result\.frameId \?\? TOP_FRAME_ID/)
+  assert.match(
+    showFloatingBlock,
+    /responseFrameId: result\.frameId \?\? TOP_FRAME_ID/
+  )
   assert.match(showFloatingBlock, /sendResponse\(aiResponse\)/)
 })
 
@@ -3541,9 +4554,15 @@ test("floating conversation persistence waits for stream completion", () => {
       /useEffect\(\(\) => \{\s*clearTimeout\(conversationTimer\.current\)[\s\S]*?\n  \}, \[[\s\S]*?\n  \]\)/
     )?.[0] ?? ""
 
-  assert.match(floatingSource, /const conversationPersistenceKey = state\.loading/)
+  assert.match(
+    floatingSource,
+    /const conversationPersistenceKey = state\.loading/
+  )
   assert.match(persistenceEffectBlock, /currentState\.loading/)
-  assert.match(persistenceEffectBlock, /persistConversation\(stateRef\.current\)/)
+  assert.match(
+    persistenceEffectBlock,
+    /persistConversation\(stateRef\.current\)/
+  )
   assert.match(persistenceEffectBlock, /conversationPersistenceKey/)
   assert.doesNotMatch(persistenceEffectBlock, /\}, \[state\]\)/)
 })
@@ -3577,8 +4596,14 @@ test("short translation memory cache is service-worker only and hashed", () => {
   assert.doesNotMatch(translationCacheSource, /chrome\.storage/)
   assert.match(runtimeCacheSource, /clearTranslationMemoryCache/)
   assert.match(aiClientSource, /getCachedTranslation\(translationCacheKey\)/)
-  assert.match(aiClientSource, /setCachedTranslation\(translationCacheKey, translationOutput\)/)
-  assert.match(aiClientSource, /const route =[\s\S]*resolveFastModelRouteForOperation/)
+  assert.match(
+    aiClientSource,
+    /setCachedTranslation\(translationCacheKey, translationOutput\)/
+  )
+  assert.match(
+    aiClientSource,
+    /const route =[\s\S]*resolveFastModelRouteForOperation/
+  )
   assert.match(aiClientSource, /getTranslationCacheKey\(\{[\s\S]*route,/)
   assert.match(
     backgroundSource,
@@ -3675,12 +4700,7 @@ test("short translation cache key separates fast routes and hides raw inputs", a
   assert.notEqual(fastKey, otherFastKey)
   assert.notEqual(fastKey, differentModelKey)
 
-  for (const key of [
-    defaultKey,
-    fastKey,
-    otherFastKey,
-    differentModelKey
-  ]) {
+  for (const key of [defaultKey, fastKey, otherFastKey, differentModelKey]) {
     assert.equal(typeof key, "string")
     assert.equal(key.includes(sourceText), false)
     assert.equal(key.includes(pageUrl), false)
@@ -3800,7 +4820,10 @@ test("connectivity speed grade uses local summary timing only", () => {
 
   assert.equal(parseConnectivityLatencyMs("耗时约 4800 ms。"), 4800)
   assert.equal(parseConnectivityLatencyMs("took about 2.4 seconds"), 2400)
-  assert.equal(parseConnectivityLatencyMs("上次通过：2026-06-17T06:12:00.000Z"), undefined)
+  assert.equal(
+    parseConnectivityLatencyMs("上次通过：2026-06-17T06:12:00.000Z"),
+    undefined
+  )
   assert.equal(getConnectivityTimingSummary(slow).completionMs, 4800)
   assert.equal(resolveConnectivitySpeedGrade(), "untested")
   assert.equal(resolveConnectivitySpeedGrade(fast), "fast")
@@ -3827,10 +4850,7 @@ test("connectivity 字段缺失时生成未发起的脱敏摘要", () => {
   assert.equal(missingKey.result, "failure")
   assert.equal(missingKey.latency_note, "未发起：API Key 未配置。")
   assert.equal(missingEndpoint.result, "failure")
-  assert.equal(
-    missingEndpoint.latency_note,
-    "未发起：模型或接入点未配置。"
-  )
+  assert.equal(missingEndpoint.latency_note, "未发起：模型或接入点未配置。")
   assert.equal(missingEndpoint.raw_prompt_logged, "no")
   assert.equal(missingEndpoint.raw_response_logged, "no")
 })
@@ -3891,7 +4911,10 @@ test("timing details redact URLs and raw text fields", () => {
     []
   )
   assert.equal(JSON.stringify(sanitized).includes("private.example.com"), false)
-  assert.equal(JSON.stringify(sanitized).includes("selected private text"), false)
+  assert.equal(
+    JSON.stringify(sanitized).includes("selected private text"),
+    false
+  )
   assert.equal(JSON.stringify(sanitized).includes("private page body"), false)
 })
 
@@ -4070,13 +5093,16 @@ test("selection TTFT dogfood rows only keep approved summary fields and aggregat
     p95_first_chunk_ms: 1700,
     excluded_count: 2
   })
-  assert.deepEqual(buildSelectionTtftAggregate(summaries, "selection_translate"), {
-    operation: "selection_translate",
-    sample_count: 2,
-    p50_first_chunk_ms: 800,
-    p95_first_chunk_ms: 1200,
-    excluded_count: 2
-  })
+  assert.deepEqual(
+    buildSelectionTtftAggregate(summaries, "selection_translate"),
+    {
+      operation: "selection_translate",
+      sample_count: 2,
+      p50_first_chunk_ms: 800,
+      p95_first_chunk_ms: 1200,
+      excluded_count: 2
+    }
+  )
 })
 
 test("perf summary 对未完成 timing 兼容并标记缺失阶段", () => {

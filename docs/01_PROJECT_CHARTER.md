@@ -1,6 +1,6 @@
 # Aviso Project Charter
 
-Updated: 2026-06-12
+Updated: 2026-06-18
 
 ## 定位
 
@@ -32,6 +32,14 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它把用户在网页上的当前�
 | Manifest 本地化 | 已实现 `zh_CN` / `en`。 |
 
 截图能力只保留在用户主动触发的右键内部路径中，不作为普通用户主入口或公开卖点。
+
+## v0.2 / v0.2.1 基线
+
+v0.2 记录的是当前内部试用版本上的 hardening 和实现证据，不代表公开发布、Chrome Web Store 审核通过或正式商店链接。已完成的用户可见能力包括多 provider 配置扩展、命令面板本地意图、等待状态改善、summary-only 本地计时方法和短文本快任务路由。
+
+v0.2.1 当前只作为 WXT default-build migration / rebaseline 的独立工程 gate。WXT 已有并行构建和 closeout 证据，但默认构建仍保持 Plasmo；任何默认构建切换、重新打包提交或公开发布都需要单独 owner decision。
+
+这些记录不改变当前产品边界：Aviso 仍是 BYOK direct-provider Chrome 扩展，没有项目方后端、provider proxy、账号、订阅、支付、匿名额度、遥测、分析 SDK、联网搜索或远端链接正文抓取。0.3 后端规划必须作为新阶段单独确认，不能回写成 0.2 / 0.2.1 已完成范围。
 
 ## 质量状态
 

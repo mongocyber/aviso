@@ -7,6 +7,7 @@ const expectedPermissions = [
   "storage",
   "history",
   "bookmarks",
+  "identity",
   "clipboardWrite"
 ]
 
@@ -18,7 +19,8 @@ const expectedHostPermissions = [
   "https://api.moonshot.cn/*",
   "https://openrouter.ai/*",
   "https://generativelanguage.googleapis.com/*",
-  "https://api.hunyuan.cloud.tencent.com/*"
+  "https://api.hunyuan.cloud.tencent.com/*",
+  "https://aviso-backend-staging.vercel.app/*"
 ]
 
 const expectedContentScripts = [

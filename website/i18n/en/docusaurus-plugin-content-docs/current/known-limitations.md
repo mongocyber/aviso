@@ -1,12 +1,12 @@
 ---
 title: Known Limitations
-description: Current Aviso v0.1 limitations.
+description: Current Aviso release-candidate limitations.
 sidebar_position: 8
 ---
 
 # Known Limitations
 
-Aviso is currently v0.1. These notes explain the current version boundaries.
+Aviso is still in internal-trial / release-candidate status. These notes explain the current usage boundaries. Public installation remains subject to Chrome Web Store review status, and v0.2 / v0.2.1 records do not mean public listing.
 
 ## Provider Response Speed
 
@@ -19,7 +19,7 @@ Aviso tries to show the floating panel and waiting state immediately after an ac
 - Input length.
 - Page text complexity.
 
-Aviso v0.1 does not promise instant model responses. v0.2 adds clearer waiting states and a local summary-only TTFT method, but no live provider sampling was run and no p50 / p95 target is claimed as achieved.
+The current Aviso version does not promise instant model responses. v0.2 adds clearer waiting states and a local summary-only TTFT method, but no live provider sampling was run and no p50 / p95 target is claimed as achieved.
 
 ## Page Summary Length
 
@@ -52,6 +52,14 @@ Arbitrary webpage image explanation is not guaranteed for every source.
 Screenshot capability is kept only in a user-triggered internal right-click path. The command palette and double-click quick menu do not show screenshot entries, and the current site does not present screenshot as a main public entry point or promotional feature.
 
 Screenshot questions also depend on whether the selected model supports visual input.
+
+## Hosted AI Pre-Release Status
+
+v0.3 hosted AI is still a pre-release gate. It does not mean production, public release, paid hosted AI, or Chrome Web Store disclosure submission has been approved.
+
+The verified evidence is staging-scoped: sign-in, quota, provider smoke, sensitive-log boundary, frontend account display, release build, and manifest checks have passed. Production backend, production OAuth, production provider validation, public launch copy, store submission, and owner release approval remain later gates.
+
+BYOK direct-provider remains the default available path. Being signed out of hosted AI does not prevent users from continuing with their own API key.
 
 ## Provider Verification Status
 

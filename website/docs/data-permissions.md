@@ -13,11 +13,11 @@ Aviso 的权限设计遵循最小可用原则：只申请当前功能需要的�
 1. 用户在网页中主动触发 Aviso 操作。
 2. Aviso 打开页面内浮窗，并读取完成该操作所需的上下文。
 3. Aviso 从本地存储读取设置和 API Key。
-4. 请求从浏览器扩展直接发送到用户选择的 provider。
+4. BYOK 路径下，请求从浏览器扩展直接发送到用户选择的 provider；托管 AI 路径下，请求发送到 Aviso 后端并由后端路由到上游 provider。
 5. provider 返回结果后，Aviso 在当前页面浮窗中展示。
 6. 如果用户保存结果，历史记录保存在浏览器本地。
 
-AI 请求由浏览器扩展直接发送到用户选择的 provider。
+BYOK 是默认可用路径，不强制登录。托管 AI 是 v0.3 准备中的可选路径，需要用户主动登录后使用。
 
 ## 本地数据
 
@@ -31,6 +31,8 @@ AI 请求由浏览器扩展直接发送到用户选择的 provider。
 ## 会进入 provider 请求的内容
 
 根据用户选择的功能，请求内容可能包括选中文本、页面 URL、链接 URL、图片 URL、页面正文片段、自定义提示词、继续追问时的近期对话节选，或用户直接输入的问题。
+
+BYOK 路径会把这些内容直接发送到用户选择的 provider。托管 AI 路径会把这些内容发送到 Aviso 后端和上游 provider。Aviso 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板内容、用户 BYOK API Key 或完整 URL；账户、额度、风控、请求状态和运营排查所需 metadata 当前保留 30 天。
 
 以下内容不进入 provider 请求：
 
@@ -49,13 +51,14 @@ AI 请求由浏览器扩展直接发送到用户选择的 provider。
 | `storage` | 保存设置、API Key、模板和历史。 |
 | `history` | 在命令面板中搜索用户 Chrome 浏览历史；搜索只在本地执行，不发送给 Aviso 服务器或 AI provider。 |
 | `bookmarks` | 在命令面板中搜索用户书签。 |
+| `identity` | 仅在用户主动登录托管 AI 时打开 Google 授权窗口并换取托管 session；BYOK 不需要该登录。 |
 | `clipboardWrite` | 允许从浮窗复制结果。 |
 
 ## 站点访问
 
 Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页面上显示划词工具栏、命令面板、页面内结果面板、剪贴板提示、iframe 桥接，以及右键内部路径需要的截图框选界面。
 
-这类站点访问不用于抓取任意远端链接正文，不用于广告、遥测、分析或项目方远端日志。只有当用户主动触发需要页面内容的 AI 操作时，相关内容才会由浏览器扩展直接发送到用户选择的模型 provider。
+这类站点访问不用于抓取任意远端链接正文，不用于广告、遥测、分析或项目方远端日志。只有当用户主动触发需要页面内容的 AI 操作时，相关内容才会按当前选择的 BYOK 或托管 AI 路径发送。
 
 命令面板搜索浏览历史、书签和本地 AI 对话时只生成本地候选。打开 URL、打开历史/书签候选、翻译当前页面和总结当前页面都需要用户选择确认后才执行。
 
@@ -72,11 +75,12 @@ https://api.moonshot.cn/*
 https://openrouter.ai/*
 https://generativelanguage.googleapis.com/*
 https://api.hunyuan.cloud.tencent.com/*
+https://aviso-backend-staging.vercel.app/*
 ```
 
-它们分别用于 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 的 provider 请求。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID；OpenRouter、Gemini 和 Tencent Hunyuan 的模型 ID 需要用户手动填写，Aviso 不自动读取模型列表。DeepSeek 已有一次 owner 手动 connectivity pass；Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 仍不能写成 live validated。
+它们分别用于 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini、Tencent Hunyuan 的 BYOK provider 请求，以及 v0.3 staging 托管 AI 后端请求。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID；OpenRouter、Gemini 和 Tencent Hunyuan 的模型 ID 需要用户手动填写，Aviso 不自动读取模型列表。DeepSeek 已有一次 owner 手动 connectivity pass；Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 仍不能写成 live validated。
 
-当前 host permissions 保持在已批准的 provider 域名范围内。
+`https://aviso-backend-staging.vercel.app/*` 只代表 staging 托管 AI 验证域名，不代表 production 后端、公开发布或 Chrome Web Store 提交已经批准。当前 host permissions 仍保持在已批准 provider 域名和已批准 staging 后端域名范围内。
 
 ## 敏感内容处理
 
@@ -85,6 +89,8 @@ Aviso 对剪贴板感知做了敏感域名和敏感内容过滤，尽量避免�
 这不是对所有敏感信息的完整保证。用户仍应自行判断哪些内容可以发送给模型 provider。
 
 API Key 的本地保护也不是本机安全边界：它不防御已经能读取本机浏览器 profile、控制本机或控制当前 Chrome 用户环境的攻击者。
+
+托管 AI 不要求用户提供模型 provider API Key。托管 session 保存在本地扩展存储中，用户可以在 Popup 中退出托管账号；退出不会删除或禁用 BYOK provider 配置。
 
 ## 截图能力
 

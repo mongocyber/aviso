@@ -10,6 +10,7 @@ import { assertSupportedImageSrc } from "~utils/image-src"
 import { parseIntentLocally } from "~utils/intent"
 import {
   getProviderConfigById,
+  isFastModelEligibleOperation,
   resolveFastModelRouteForOperation,
   type ModelRoute,
   type ProviderId
@@ -32,6 +33,7 @@ import {
   extractReasoningDeltaText,
   shouldUseMaxCompletionTokens
 } from "~utils/reasoning"
+import { isHostedAiProviderConfigId } from "~utils/hosted-session"
 import { getImageInputBlockReason } from "~utils/screenshot"
 import { getTemplates } from "~utils/storage"
 import { expandTemplate } from "~utils/template"
@@ -65,6 +67,10 @@ import {
   resolveRuntimeModelRoute,
   resolveRuntimeProviderConfigRoute
 } from "./ai-runtime-cache"
+import {
+  runHostedChatRequest,
+  shouldUseHostedChatRoute
+} from "./hosted-chat-routing"
 import {
   getCachedTranslation,
   getTranslationCacheKey,
@@ -221,6 +227,33 @@ export async function handleAIRequest(
   }
 
   const providerConfigs = getProviderConfigsWithLegacy(settings, apiKeys)
+  const fastEligible = isFastModelEligibleOperation(payload)
+  const fastByokConfigSelected = Boolean(
+    fastEligible &&
+      settings.fastProviderConfigId &&
+      !isHostedAiProviderConfigId(settings.fastProviderConfigId) &&
+      getProviderConfigById(providerConfigs, settings.fastProviderConfigId)
+  )
+  const shouldUseConfiguredHostedRoute =
+    payload.aiRoute !== "byok" &&
+    (shouldUseHostedChatRoute(payload) ||
+      (isHostedAiProviderConfigId(settings.fastProviderConfigId) &&
+        fastEligible) ||
+      (isHostedAiProviderConfigId(settings.defaultProviderConfigId) &&
+        !fastByokConfigSelected))
+
+  if (shouldUseConfiguredHostedRoute) {
+    try {
+      await runHostedChatRequest({ ...payload, aiRoute: "hosted" }, onChunk, {
+        signal: options.signal,
+        targetLanguage: settings.inlineTranslationTargetLanguage
+      })
+      return
+    } catch (err) {
+      throw new Error(normalizeError(err))
+    }
+  }
+
   const route =
     resolveFastModelRouteForOperation(payload, settings, providerConfigs) ??
     resolveRuntimeModelRoute(payload.model, settings)

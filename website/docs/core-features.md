@@ -1,12 +1,18 @@
 ---
 title: 核心功能
-description: Aviso v0.1 的主要功能和当前边界。
+description: Aviso 当前功能和使用边界。
 sidebar_position: 5
 ---
 
 # 核心功能
 
-Aviso v0.1 的重点是把常见网页对象接入 AI，并把结果留在当前页面。
+Aviso 当前重点是把常见网页对象接入 AI，并把结果留在当前页面。公开安装状态仍以 Chrome Web Store 审核结果为准。
+
+## AI 服务路径
+
+Aviso 保留 BYOK direct-provider 作为默认可用路径：用户填写自己的模型 API Key，浏览器扩展直接请求所选 provider，不强制登录。
+
+v0.3 准备中的托管 AI 是可选路径。只有用户选择托管 AI 并登录后，请求才会经过 Aviso 后端和上游模型 provider；BYOK 配置和直连请求不受托管登录状态影响。
 
 ## 右键菜单
 
@@ -81,6 +87,7 @@ Popup 用于管理：
 - API Key。
 - OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 模型 ID。
 - 豆包 / Volcengine Ark 接入点和模型字段。
+- 托管 AI 账号登录、刷新和退出状态。
 - 功能开关。
 - 自定义模板。
 - 历史记录。

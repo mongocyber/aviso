@@ -19,6 +19,30 @@ import type {
   ProviderConfig,
   Settings
 } from "~types/history"
+import type { HostedGoogleSignInData, MessageResponse } from "~types/messages"
+import {
+  createHostedAiClient,
+  HostedAiClientError
+} from "~utils/hosted-ai-client"
+import {
+  buildHostedAccountQuotaDisplay,
+  clearHostedSession,
+  deriveHostedAccountStatus,
+  HOSTED_AI_DEFAULT_BASE_URL,
+  HOSTED_AI_DEFAULT_MODEL,
+  HOSTED_AI_PROVIDER_CONFIG_ID,
+  isHostedAiProviderConfigId,
+  readHostedSession,
+  updateHostedSessionMe,
+  type HostedAccountStatus,
+  type StoredHostedSession
+} from "~utils/hosted-session"
+import {
+  createI18n,
+  resolveUiLanguage,
+  type I18nKey,
+  type UiLanguageSetting
+} from "~utils/i18n"
 import type { ModelAvailability } from "~utils/model-availability"
 import { getModelAvailability } from "~utils/model-availability"
 import type { ProviderId } from "~utils/model-registry"
@@ -44,29 +68,21 @@ import {
   shouldClearProviderConfigTestResult
 } from "~utils/provider-configs"
 import {
-  buildLastConnectivityTestSummaryMap,
   buildConnectivityPreflightSummary,
+  buildLastConnectivityTestSummaryMap,
   getConnectivityTimingSummary,
   resolveConnectivitySpeedGrade,
   type ConnectivityValidationSummary
 } from "~utils/provider-connectivity"
 import {
+  deleteProviderConfigApiKey,
   getApiKeys,
   getSettings,
-  deleteProviderConfigApiKey,
   saveApiKey,
   saveProviderConfigApiKey,
   saveSettings
 } from "~utils/storage"
-import {
-  TRANSLATION_TARGET_OPTIONS
-} from "~utils/translation"
-import {
-  createI18n,
-  resolveUiLanguage,
-  type I18nKey,
-  type UiLanguageSetting
-} from "~utils/i18n"
+import { TRANSLATION_TARGET_OPTIONS } from "~utils/translation"
 
 const TEMPLATE_CONTEXTS: { value: string; labelKey: I18nKey }[] = [
   { value: "selection", labelKey: "popup.templates.context.selection" },
@@ -75,6 +91,10 @@ const TEMPLATE_CONTEXTS: { value: string; labelKey: I18nKey }[] = [
   { value: "editable", labelKey: "popup.templates.context.editable" },
   { value: "page", labelKey: "popup.templates.context.page" }
 ]
+
+type PopupRuntimeResponse<TData = unknown> = Omit<MessageResponse, "data"> & {
+  data?: TData
+}
 
 const DEFAULT_SETTINGS: Settings = {
   defaultModel: "gpt-4o-mini",
@@ -158,6 +178,7 @@ function resolveMiniDropdownDirection(trigger: HTMLElement | null) {
 const settingsSignature = (value: Settings) =>
   JSON.stringify({
     defaultModel: value.defaultModel,
+    defaultProviderConfigId: value.defaultProviderConfigId ?? "",
     fastProviderConfigId: value.fastProviderConfigId ?? "",
     doubaoModel: value.doubaoModel ?? "",
     appearanceTheme: value.appearanceTheme,
@@ -328,10 +349,8 @@ const normalizeCommonFeatureSettings = (value: Settings): Settings =>
 
 function ThemeModeIcon({ name }: { name: ThemeModeIconName }) {
   const paths: Record<ThemeModeIconName, string> = {
-    sun:
-      '<circle cx="12" cy="12" r="4.2"></circle><path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M16.6 16.6 18 18M18 6l-1.4 1.4M7.4 16.6 6 18"></path>',
-    moon:
-      '<path d="M18.8 15.2A7.2 7.2 0 0 1 9 5.2 8.2 8.2 0 1 0 18.8 15.2z"></path>',
+    sun: '<circle cx="12" cy="12" r="4.2"></circle><path d="M12 3.5v2M12 18.5v2M3.5 12h2M18.5 12h2M6 6l1.4 1.4M16.6 16.6 18 18M18 6l-1.4 1.4M7.4 16.6 6 18"></path>',
+    moon: '<path d="M18.8 15.2A7.2 7.2 0 0 1 9 5.2 8.2 8.2 0 1 0 18.8 15.2z"></path>',
     system:
       '<rect x="4" y="5" width="16" height="11" rx="2.2"></rect><path d="M9 20h6M12 16v4"></path>'
   }
@@ -382,13 +401,16 @@ function Popup() {
   const [connectivityResults, setConnectivityResults] = useState<
     Partial<Record<ProviderId, ConnectivityValidationSummary>>
   >({})
-  const [providerConfigConnectivityResults, setProviderConfigConnectivityResults] =
-    useState<Partial<Record<string, ConnectivityValidationSummary>>>({})
+  const [
+    providerConfigConnectivityResults,
+    setProviderConfigConnectivityResults
+  ] = useState<Partial<Record<string, ConnectivityValidationSummary>>>({})
   const [draft, setDraft] = useState<PromptTemplate | null>(null)
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [openHint, setOpenHint] = useState("")
   const [showPrivacy, setShowPrivacy] = useState(false)
   const [modelDropdownOpen, setModelDropdownOpen] = useState(false)
+  const [fastServiceDropdownOpen, setFastServiceDropdownOpen] = useState(false)
   const [providerDropdownOpen, setProviderDropdownOpen] = useState(false)
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false)
   const [languageDropdownDirection, setLanguageDropdownDirection] =
@@ -396,8 +418,10 @@ function Popup() {
   const [focusedProviderConfigField, setFocusedProviderConfigField] = useState<
     string | null
   >(null)
-  const [confirmingDeleteProviderConfigId, setConfirmingDeleteProviderConfigId] =
-    useState<string | null>(null)
+  const [
+    confirmingDeleteProviderConfigId,
+    setConfirmingDeleteProviderConfigId
+  ] = useState<string | null>(null)
   const [activeProvider, setActiveProvider] = useState<ProviderId | null>(null)
   const [providerCardModes, setProviderCardModes] = useState<
     Record<ProviderId, ProviderCardMode>
@@ -438,6 +462,14 @@ function Popup() {
   const [providerMessages, setProviderMessages] = useState<
     Partial<Record<ProviderId, ProviderActionMessage>>
   >({})
+  const [hostedSession, setHostedSession] =
+    useState<StoredHostedSession | null>(null)
+  const [hostedBusy, setHostedBusy] = useState(false)
+  const [hostedStatus, setHostedStatus] =
+    useState<HostedAccountStatus>("signed_out")
+  const [hostedMessageKey, setHostedMessageKey] = useState<I18nKey>(
+    "popup.hosted.status.signedOut"
+  )
   const [systemPrefersDark, setSystemPrefersDark] = useState(true)
   const [popupRuntimeHeight, setPopupRuntimeHeight] = useState<number>(
     POPUP_FRAME.safeMaxHeight
@@ -448,12 +480,15 @@ function Popup() {
   const persistedSettingsSignature = useRef("")
   const saveTimer = useRef<ReturnType<typeof setTimeout>>()
   const modelDropdownRef = useRef<HTMLDivElement>(null)
+  const fastServiceDropdownRef = useRef<HTMLDivElement>(null)
   const providerDropdownRef = useRef<HTMLDivElement>(null)
   const languageDropdownRef = useRef<HTMLSpanElement>(null)
   const providerCardRefs = useRef<
     Partial<Record<ProviderId, HTMLDivElement | null>>
   >({})
-  const providerConfigCardRefs = useRef<Record<string, HTMLDivElement | null>>({})
+  const providerConfigCardRefs = useRef<Record<string, HTMLDivElement | null>>(
+    {}
+  )
 
   // 顶部短暂提示"已保存"
   const flashSaved = () => {
@@ -495,6 +530,9 @@ function Popup() {
       if (!modelDropdownRef.current?.contains(event.target as Node)) {
         setModelDropdownOpen(false)
       }
+      if (!fastServiceDropdownRef.current?.contains(event.target as Node)) {
+        setFastServiceDropdownOpen(false)
+      }
       if (!providerDropdownRef.current?.contains(event.target as Node)) {
         setProviderDropdownOpen(false)
       }
@@ -505,6 +543,7 @@ function Popup() {
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setModelDropdownOpen(false)
+        setFastServiceDropdownOpen(false)
         setProviderDropdownOpen(false)
         setLanguageDropdownOpen(false)
       }
@@ -640,71 +679,195 @@ function Popup() {
     })
   }
 
-  useEffect(() => {
-    Promise.all([getSettings(), getApiKeys()]).then(([s, keys]) => {
-      const normalizedSettings = normalizeCommonFeatureSettings(s)
-      persistedSettingsSignature.current = settingsSignature(normalizedSettings)
-      setSettings(normalizedSettings)
-      if (settingsSignature(normalizedSettings) !== settingsSignature(s)) {
-        void saveSettings(normalizedSettings)
-      }
-      setProviderModelDrafts({
-        openai: PROVIDER_PRIMARY_MODEL.openai,
-        anthropic: PROVIDER_PRIMARY_MODEL.anthropic,
-        doubao: normalizedSettings.doubaoModel ?? "",
-        deepseek: "",
-        moonshot: "",
-        openrouter: "",
-        gemini: "",
-        hunyuan: ""
-      })
-      setSavedProviderKeys({
-        openai: Boolean(keys.openai),
-        anthropic: Boolean(keys.anthropic),
-        doubao: Boolean(keys.doubao),
-        deepseek: false,
-        moonshot: false,
-        openrouter: false,
-        gemini: false,
-        hunyuan: false
-      })
-      const configs = getProviderConfigsWithLegacy(normalizedSettings, keys)
-      const nextDefaultProviderConfigId = resolveDefaultProviderConfigId(
-        normalizedSettings,
-        configs
-      )
-      setProviderConfigs(configs)
-      setProviderConfigConnectivityResults(
-        buildLastConnectivityTestSummaryMap(configs)
-      )
-      setProviderConfigKeys(keys.providerConfigKeys)
-      setProviderConfigKeyInputs(
-        Object.fromEntries(
-          configs.map((config) => {
-            const key = getProviderConfigKey(config, keys)
-            return [config.id, key ? `••••••••${key.slice(-4)}` : ""]
-          })
-        )
-      )
-      setProviderConfigModes(
-        Object.fromEntries(configs.map((config) => [config.id, "view"]))
-      )
-      if (
-        nextDefaultProviderConfigId &&
-        nextDefaultProviderConfigId !== normalizedSettings.defaultProviderConfigId
-      ) {
-        setSettings((prev) => ({
-          ...prev,
-          defaultProviderConfigId: nextDefaultProviderConfigId
-        }))
-      }
-      // 显示掩码
-      if (keys.openai) setOpenaiKey("••••••••" + keys.openai.slice(-4))
-      if (keys.anthropic) setAnthropicKey("••••••••" + keys.anthropic.slice(-4))
-      if (keys.doubao) setDoubaoKey("••••••••" + keys.doubao.slice(-4))
-      // 加载完成后才允许自动保存
-      loaded.current = true
+  const setHostedAccountResult = (
+    status: HostedAccountStatus,
+    messageKey: I18nKey,
+    session: StoredHostedSession | null = hostedSession
+  ) => {
+    setHostedStatus(status)
+    setHostedMessageKey(messageKey)
+    setHostedSession(session)
+  }
+
+  const createLocalHostedClient = (session?: StoredHostedSession | null) =>
+    createHostedAiClient({
+      baseUrl: session?.baseUrl ?? HOSTED_AI_DEFAULT_BASE_URL,
+      sessionToken: session?.session.session_token
     })
+
+  const signInHosted = async () => {
+    setHostedBusy(true)
+    setHostedAccountResult("signing_in", "popup.hosted.status.signingIn")
+    try {
+      const response = await sendRuntimeMessage<HostedGoogleSignInData>({
+        action: "HOSTED_GOOGLE_SIGN_IN"
+      })
+      const stored = await readHostedSession()
+      if (!response.success || !stored) {
+        const result = response.data
+        const status = result?.status ?? "local_backend_unavailable"
+        setHostedAccountResult(
+          status,
+          getHostedSignInFailureMessageKey(result, Boolean(stored))
+        )
+        return
+      }
+      setHostedAccountResult(
+        deriveHostedAccountStatus({ session: stored }),
+        "popup.hosted.status.signedIn",
+        stored
+      )
+    } catch (error) {
+      const status =
+        error instanceof HostedAiClientError
+          ? deriveHostedAccountStatus({
+              session: null,
+              errorCode: error.normalized.code
+            })
+          : "local_backend_unavailable"
+      setHostedAccountResult(
+        status,
+        error instanceof HostedAiClientError
+          ? getHostedAccountStatusMessageKey(status)
+          : "popup.hosted.status.runtimeUnavailable"
+      )
+    } finally {
+      setHostedBusy(false)
+    }
+  }
+
+  const refreshHostedAccount = async () => {
+    if (!hostedSession) {
+      setHostedAccountResult(
+        "signed_out",
+        "popup.hosted.status.signedOut",
+        null
+      )
+      return
+    }
+
+    setHostedBusy(true)
+    setHostedAccountResult("signing_in", "popup.hosted.status.refreshing")
+    try {
+      const client = createLocalHostedClient(hostedSession)
+      const me = await client.me(hostedSession.session.session_token)
+      const stored = await updateHostedSessionMe(hostedSession, me)
+      setHostedAccountResult(
+        "signed_in",
+        "popup.hosted.status.refreshed",
+        stored
+      )
+    } catch (error) {
+      const status =
+        error instanceof HostedAiClientError
+          ? deriveHostedAccountStatus({
+              session: hostedSession,
+              errorCode: error.normalized.code
+            })
+          : "local_backend_unavailable"
+      setHostedAccountResult(status, getHostedAccountStatusMessageKey(status))
+    } finally {
+      setHostedBusy(false)
+    }
+  }
+
+  const signOutHostedLocal = async () => {
+    setHostedBusy(true)
+    try {
+      if (hostedSession) {
+        const client = createLocalHostedClient(hostedSession)
+        await client.logout(hostedSession.session.session_token)
+      }
+    } catch {
+      // Local sign-out should not leave a stale token when the backend is down.
+    } finally {
+      await clearHostedSession()
+      setHostedAccountResult(
+        "signed_out",
+        "popup.hosted.status.signedOut",
+        null
+      )
+      setHostedBusy(false)
+    }
+  }
+
+  useEffect(() => {
+    Promise.all([getSettings(), getApiKeys(), readHostedSession()]).then(
+      ([s, keys, session]) => {
+        const normalizedSettings = normalizeCommonFeatureSettings(s)
+        persistedSettingsSignature.current =
+          settingsSignature(normalizedSettings)
+        setSettings(normalizedSettings)
+        setHostedSession(session)
+        setHostedStatus(deriveHostedAccountStatus({ session }))
+        setHostedMessageKey(
+          session
+            ? "popup.hosted.status.signedIn"
+            : "popup.hosted.status.signedOut"
+        )
+        if (settingsSignature(normalizedSettings) !== settingsSignature(s)) {
+          void saveSettings(normalizedSettings)
+        }
+        setProviderModelDrafts({
+          openai: PROVIDER_PRIMARY_MODEL.openai,
+          anthropic: PROVIDER_PRIMARY_MODEL.anthropic,
+          doubao: normalizedSettings.doubaoModel ?? "",
+          deepseek: "",
+          moonshot: "",
+          openrouter: "",
+          gemini: "",
+          hunyuan: ""
+        })
+        setSavedProviderKeys({
+          openai: Boolean(keys.openai),
+          anthropic: Boolean(keys.anthropic),
+          doubao: Boolean(keys.doubao),
+          deepseek: false,
+          moonshot: false,
+          openrouter: false,
+          gemini: false,
+          hunyuan: false
+        })
+        const configs = getProviderConfigsWithLegacy(normalizedSettings, keys)
+        const nextDefaultProviderConfigId = resolveDefaultProviderConfigId(
+          normalizedSettings,
+          configs
+        )
+        setProviderConfigs(configs)
+        setProviderConfigConnectivityResults(
+          buildLastConnectivityTestSummaryMap(configs)
+        )
+        setProviderConfigKeys(keys.providerConfigKeys)
+        setProviderConfigKeyInputs(
+          Object.fromEntries(
+            configs.map((config) => {
+              const key = getProviderConfigKey(config, keys)
+              return [config.id, key ? `••••••••${key.slice(-4)}` : ""]
+            })
+          )
+        )
+        setProviderConfigModes(
+          Object.fromEntries(configs.map((config) => [config.id, "view"]))
+        )
+        if (
+          nextDefaultProviderConfigId &&
+          nextDefaultProviderConfigId !==
+            normalizedSettings.defaultProviderConfigId
+        ) {
+          setSettings((prev) => ({
+            ...prev,
+            defaultProviderConfigId: nextDefaultProviderConfigId
+          }))
+        }
+        // 显示掩码
+        if (keys.openai) setOpenaiKey("••••••••" + keys.openai.slice(-4))
+        if (keys.anthropic)
+          setAnthropicKey("••••••••" + keys.anthropic.slice(-4))
+        if (keys.doubao) setDoubaoKey("••••••••" + keys.doubao.slice(-4))
+        // 加载完成后才允许自动保存
+        loaded.current = true
+      }
+    )
   }, [])
 
   // 设置（模型 / 开关 / 模板 / 豆包接入点）变更即时保存，防抖 300ms
@@ -813,21 +976,37 @@ function Popup() {
     const savedConfigs = nextConfigs.filter(
       (config) => !isLegacyProviderConfigId(config.id)
     )
-    const defaultProviderConfigId =
-      preferredDefaultId && nextConfigs.some((config) => config.id === preferredDefaultId)
-        ? preferredDefaultId
-        : (nextConfigs.find((config) => config.id !== activeProviderConfigId)?.id ?? "")
-    const defaultConfig =
-      nextConfigs.find((config) => config.id === defaultProviderConfigId) ??
-      nextConfigs[0]
-    const nextDefaultModel = defaultConfig
+    let defaultProviderConfigId = ""
+    if (isHostedAiProviderConfigId(preferredDefaultId)) {
+      defaultProviderConfigId = HOSTED_AI_PROVIDER_CONFIG_ID
+    } else if (
+      preferredDefaultId &&
+      nextConfigs.some((config) => config.id === preferredDefaultId)
+    ) {
+      defaultProviderConfigId = preferredDefaultId
+    } else {
+      defaultProviderConfigId =
+        nextConfigs.find((config) => config.id !== activeProviderConfigId)
+          ?.id ?? ""
+    }
+    const defaultConfig = isHostedAiProviderConfigId(defaultProviderConfigId)
+      ? undefined
+      : nextConfigs.find((config) => config.id === defaultProviderConfigId) ??
+        nextConfigs[0]
+    const nextDefaultModel = isHostedAiProviderConfigId(defaultProviderConfigId)
+      ? HOSTED_AI_DEFAULT_MODEL
+      : defaultConfig
       ? getModelForProviderConfig(defaultConfig)
       : settings.defaultModel
-    const nextFastProviderConfigId =
+    let nextFastProviderConfigId = ""
+    if (isHostedAiProviderConfigId(settings.fastProviderConfigId)) {
+      nextFastProviderConfigId = HOSTED_AI_PROVIDER_CONFIG_ID
+    } else if (
       settings.fastProviderConfigId &&
       nextConfigs.some((config) => config.id === settings.fastProviderConfigId)
-        ? settings.fastProviderConfigId
-        : ""
+    ) {
+      nextFastProviderConfigId = settings.fastProviderConfigId
+    }
 
     await saveSettings({
       providerConfigs: savedConfigs,
@@ -857,7 +1036,8 @@ function Popup() {
 
   const addProviderConfigDraft = (provider: ProviderId) => {
     const existingCount =
-      providerConfigs.filter((config) => config.provider === provider).length + 1
+      providerConfigs.filter((config) => config.provider === provider).length +
+      1
     const draft = buildProviderConfig({
       id: createProviderConfigId(provider),
       provider,
@@ -872,7 +1052,9 @@ function Popup() {
     setFocusedProviderConfigField(null)
     setConfirmingDeleteProviderConfigId(null)
     setProviderDropdownOpen(false)
-    setOpenHint(`${t("popup.hint.addingService")}${getProviderCopy(provider, t).title}`)
+    setOpenHint(
+      `${t("popup.hint.addingService")}${getProviderCopy(provider, t).title}`
+    )
     window.setTimeout(() => {
       providerConfigCardRefs.current[draft.id]?.scrollIntoView({
         block: "nearest",
@@ -939,7 +1121,8 @@ function Popup() {
       config,
       {
         displayName:
-          config.displayName.trim() || getProviderCopy(config.provider, t).title,
+          config.displayName.trim() ||
+          getProviderCopy(config.provider, t).title,
         model: config.model.trim() || defaultProviderModel(config.provider)
       },
       { apiKeyChanged }
@@ -1009,7 +1192,7 @@ function Popup() {
     const nextConfigs = providerConfigs.filter((item) => item.id !== config.id)
     const nextDefaultId =
       settings.defaultProviderConfigId === config.id
-        ? (nextConfigs[0]?.id ?? "")
+        ? nextConfigs[0]?.id ?? ""
         : settings.defaultProviderConfigId
     setProviderConfigs(nextConfigs)
     setProviderConfigKeyInputs((prev) => {
@@ -1040,6 +1223,17 @@ function Popup() {
     }))
     setProviderConfigs(nextConfigs)
     await persistProviderConfigs(nextConfigs, config.id)
+    flashSaved()
+  }
+
+  const setDefaultHostedAiService = async () => {
+    setConfirmingDeleteProviderConfigId(null)
+    const nextConfigs = providerConfigs.map((item) => ({
+      ...item,
+      isDefault: false
+    }))
+    setProviderConfigs(nextConfigs)
+    await persistProviderConfigs(nextConfigs, HOSTED_AI_PROVIDER_CONFIG_ID)
     flashSaved()
   }
 
@@ -1102,7 +1296,8 @@ function Popup() {
       config,
       {
         displayName:
-          config.displayName.trim() || getProviderCopy(config.provider, t).title,
+          config.displayName.trim() ||
+          getProviderCopy(config.provider, t).title,
         model: config.model.trim() || defaultProviderModel(config.provider)
       },
       { apiKeyChanged }
@@ -1111,7 +1306,10 @@ function Popup() {
       item.id === config.id ? savedConfig : item
     )
     setProviderConfigs(nextConfigs)
-    await persistProviderConfigs(nextConfigs, settings.defaultProviderConfigId || config.id)
+    await persistProviderConfigs(
+      nextConfigs,
+      settings.defaultProviderConfigId || config.id
+    )
 
     setTestingProviderConfigId(config.id)
     setActiveProviderConfigId(config.id)
@@ -1177,7 +1375,8 @@ function Popup() {
           ...prev,
           [config.id]: timedSummary
         }))
-        const nextStatus = timedSummary.result === "success" ? "success" : "failure"
+        const nextStatus =
+          timedSummary.result === "success" ? "success" : "failure"
         const updatedConfig = markProviderConfigTestResult(savedConfig, {
           status: nextStatus,
           errorCategory: timedSummary.error_category,
@@ -1220,7 +1419,10 @@ function Popup() {
     clearConnectivityResult(provider)
     setActiveProvider(provider)
     if (providerCardModes[provider] === "view") {
-      setProviderCardMode(provider, savedProviderKeys[provider] ? "edit" : "add")
+      setProviderCardMode(
+        provider,
+        savedProviderKeys[provider] ? "edit" : "add"
+      )
     }
     setProviderMessage(provider, {
       tone: "muted",
@@ -1318,7 +1520,10 @@ function Popup() {
       })
     }
 
-    if (requiresProviderConfigModel(provider) && !providerModelDrafts[provider].trim()) {
+    if (
+      requiresProviderConfigModel(provider) &&
+      !providerModelDrafts[provider].trim()
+    ) {
       return buildConnectivityPreflightSummary({
         provider,
         modelOrEndpoint: t("popup.provider.config.unconfigured"),
@@ -1344,7 +1549,10 @@ function Popup() {
       })
       setActiveProvider(provider)
       if (providerCardModes[provider] === "view") {
-        setProviderCardMode(provider, savedProviderKeys[provider] ? "edit" : "add")
+        setProviderCardMode(
+          provider,
+          savedProviderKeys[provider] ? "edit" : "add"
+        )
       }
       return
     }
@@ -1487,9 +1695,12 @@ function Popup() {
     settings,
     providerConfigs
   )
-  const selectedProviderConfig = providerConfigs.find(
-    (config) => config.id === defaultProviderConfigId
+  const isHostedDefaultSelected = isHostedAiProviderConfigId(
+    defaultProviderConfigId
   )
+  const selectedProviderConfig = isHostedDefaultSelected
+    ? undefined
+    : providerConfigs.find((config) => config.id === defaultProviderConfigId)
   const selectedModel =
     MODEL_OPTIONS.find(
       (m) =>
@@ -1529,14 +1740,22 @@ function Popup() {
     return acc
   }, {})
   const selectedProviderConfigKeyValue = selectedProviderConfig
-    ? (providerConfigKeyInputs[selectedProviderConfig.id] ??
+    ? providerConfigKeyInputs[selectedProviderConfig.id] ??
       providerConfigKeys[selectedProviderConfig.id] ??
-      "")
+      ""
     : ""
   const selectedProviderConfigConnectivity = selectedProviderConfig
     ? providerConfigConnectivityResults[selectedProviderConfig.id]
     : undefined
-  const selectedModelAvailability = selectedProviderConfig
+  const hostedStatusTone = getHostedAccountStatusTone(hostedStatus)
+  const hostedSelectedModelAvailability: ModelAvailability = {
+    disabled: hostedStatus !== "signed_in",
+    status: t(`popup.hosted.statusLabel.${hostedStatus}` as I18nKey),
+    tone: hostedStatusTone
+  }
+  const selectedModelAvailability = isHostedDefaultSelected
+    ? hostedSelectedModelAvailability
+    : selectedProviderConfig
     ? (() => {
         if (!selectedProviderConfigKeyValue.trim()) {
           return {
@@ -1582,19 +1801,23 @@ function Popup() {
           tone: "muted"
         } as const
       })()
-    : (modelAvailability[selectedModel.value] ??
+    : modelAvailability[selectedModel.value] ??
       getModelAvailability({
         route: resolveModelRoute(selectedModel.value, settings),
         providerConfigured,
         connectivityResults,
         testingProvider,
         uiLanguage: resolvedUiLanguage
-      }))
+      })
   const configuredProviderConfigOptions = providerConfigs.filter(
     (config) => providerConfigModes[config.id] !== "add"
   )
+  const selectedFastProviderConfigId = settings.fastProviderConfigId ?? ""
+  const isHostedFastSelected = isHostedAiProviderConfigId(
+    selectedFastProviderConfigId
+  )
   const selectedFastProviderConfig = configuredProviderConfigOptions.find(
-    (config) => config.id === settings.fastProviderConfigId
+    (config) => config.id === selectedFastProviderConfigId
   )
   const selectedRoute = selectedProviderConfig
     ? buildProviderConfigRoute(selectedProviderConfig, settings)
@@ -1606,26 +1829,53 @@ function Popup() {
     : serviceFailed
       ? t("popup.service.failed")
       : t("popup.service.disconnected")
-  const serviceStatusDetail = serviceReady
-    ? `${t("popup.service.currentUsing")}${selectedRoute.providerConfigName ?? selectedRoute.provider.displayName}`
-    : serviceFailed
-      ? t("popup.service.checkKeyNetwork")
-      : t("popup.service.connectFirst")
-  const routeLabel = `${t("popup.service.routePrefix")}${selectedRoute.providerConfigName ?? selectedRoute.provider.displayName}`
-  const routeModelLabel =
-    requiresProviderConfigModel(selectedRoute.provider.id)
+  const serviceStatusDetail = isHostedDefaultSelected
+    ? serviceReady
+      ? `${t("popup.service.currentUsing")}${t("popup.hosted.title")}`
+      : t(hostedMessageKey)
+    : serviceReady
+      ? `${t("popup.service.currentUsing")}${selectedRoute.providerConfigName ?? selectedRoute.provider.displayName}`
+      : serviceFailed
+        ? t("popup.service.checkKeyNetwork")
+        : t("popup.service.connectFirst")
+  const routeLabel = `${t("popup.service.routePrefix")}${
+    isHostedDefaultSelected
+      ? t("popup.hosted.title")
+      : selectedRoute.providerConfigName ?? selectedRoute.provider.displayName
+  }`
+  const routeModelLabel = isHostedDefaultSelected
+    ? HOSTED_AI_DEFAULT_MODEL
+    : requiresProviderConfigModel(selectedRoute.provider.id)
       ? selectedRoute.requestModel || t("popup.provider.status.endpointMissing")
       : selectedRoute.model.displayName
-  const selectedProviderKeyValue = getProviderKeyValue(selectedRoute.provider.id, {
-    openai: openaiKey,
-    anthropic: anthropicKey,
-    doubao: doubaoKey,
-    deepseek: "",
-    moonshot: "",
-    openrouter: "",
-    gemini: "",
-    hunyuan: ""
+  const hostedAccountLabel =
+    hostedSession?.session.user.email ??
+    hostedSession?.session.user.id ??
+    t("popup.hosted.account.none")
+  const hostedQuotaDisplay = buildHostedAccountQuotaDisplay({
+    session: hostedSession,
+    status: hostedStatus,
+    labels: {
+      unknown: t("popup.hosted.quota.unknown"),
+      unavailable: t("popup.hosted.quota.unavailable"),
+      tokens: t("popup.hosted.quota.tokens"),
+      tierFree: t("popup.hosted.tier.free"),
+      tierPaid: t("popup.hosted.tier.paid")
+    }
   })
+  const selectedProviderKeyValue = getProviderKeyValue(
+    selectedRoute.provider.id,
+    {
+      openai: openaiKey,
+      anthropic: anthropicKey,
+      doubao: doubaoKey,
+      deepseek: "",
+      moonshot: "",
+      openrouter: "",
+      gemini: "",
+      hunyuan: ""
+    }
+  )
   const resolvedAppearance = resolveAvisoTheme(
     settings.appearanceTheme,
     systemPrefersDark
@@ -1682,9 +1932,7 @@ function Popup() {
               ...styles.chip,
               borderColor: ui.line,
               color: ui.text2,
-              ...(formDraft.contexts.includes(c.value)
-                ? styles.chipActive
-                : {})
+              ...(formDraft.contexts.includes(c.value) ? styles.chipActive : {})
             }}>
             {t(c.labelKey)}
           </button>
@@ -1975,19 +2223,31 @@ function Popup() {
                       title={t("popup.testCurrentModel")}
                       aria-label={t("popup.testCurrentModel")}
                       onClick={() =>
-                        selectedProviderConfig
-                          ? testProviderConfigInstance(selectedProviderConfig)
-                          : testProviderConnectivity(
-                              selectedRoute.provider.id,
-                              selectedProviderKeyValue
-                            )
+                        isHostedDefaultSelected
+                          ? hostedSession
+                            ? void refreshHostedAccount()
+                            : void signInHosted()
+                          : selectedProviderConfig
+                            ? testProviderConfigInstance(selectedProviderConfig)
+                            : testProviderConnectivity(
+                                selectedRoute.provider.id,
+                                selectedProviderKeyValue
+                              )
                       }
-                      disabled={testingProvider !== null || testingProviderConfigId !== null}
+                      disabled={
+                        isHostedDefaultSelected
+                          ? hostedBusy
+                          : testingProvider !== null ||
+                            testingProviderConfigId !== null
+                      }
                       style={{
                         ...styles.iconBtn,
                         borderColor: ui.line,
                         color: ui.text2,
-                        ...(testingProvider !== null || testingProviderConfigId !== null
+                        ...((isHostedDefaultSelected
+                          ? hostedBusy
+                          : testingProvider !== null ||
+                            testingProviderConfigId !== null)
                           ? styles.disabledBtn
                           : {})
                       }}>
@@ -2006,7 +2266,9 @@ function Popup() {
                     style={{
                       ...styles.dropdownTrigger,
                       background: ui.bg,
-                      borderColor: modelDropdownOpen ? ui.accentBorder : ui.line,
+                      borderColor: modelDropdownOpen
+                        ? ui.accentBorder
+                        : ui.line,
                       color: ui.text
                     }}>
                     <AvisoIcon
@@ -2016,8 +2278,10 @@ function Popup() {
                     />
                     <span style={styles.modelDropdownCopy}>
                       <strong style={{ color: ui.text }}>
-                        {selectedProviderConfig?.displayName ??
-                          t(selectedModel.labelKey)}
+                        {isHostedDefaultSelected
+                          ? t("popup.hosted.title")
+                          : selectedProviderConfig?.displayName ??
+                            t(selectedModel.labelKey)}
                       </strong>
                       <small style={{ color: ui.text3 }}>
                         {serviceStatusDetail}
@@ -2049,15 +2313,62 @@ function Popup() {
                         background: ui.surface2,
                         borderColor: ui.line
                       }}>
-                      {configuredProviderConfigOptions.length === 0 && (
-                        <div style={styles.dropdownEmpty}>
-                          {t("popup.noAiService")}
-                        </div>
-                      )}
+                      <button
+                        type="button"
+                        className="aviso-dropdown-option"
+                        role="option"
+                        aria-selected={isHostedDefaultSelected}
+                        onClick={async () => {
+                          await setDefaultHostedAiService()
+                          setModelDropdownOpen(false)
+                        }}
+                        style={{
+                          ...styles.dropdownOption,
+                          color: isHostedDefaultSelected
+                            ? ui.accent
+                            : ui.text2,
+                          ...(isHostedDefaultSelected
+                            ? {
+                                background: ui.accentSoft,
+                                fontWeight: 650
+                              }
+                            : {})
+                        }}>
+                        <AvisoIcon
+                          name="shield"
+                          size={16}
+                          style={{
+                            color: isHostedDefaultSelected
+                              ? ui.accent
+                              : ui.text3
+                          }}
+                        />
+                        <span style={styles.dropdownOptionBody}>
+                          <span style={styles.dropdownOptionText}>
+                            {t("popup.hosted.title")}
+                          </span>
+                          <span style={styles.dropdownSubText}>
+                            {t("popup.hosted.optionHelper")}
+                          </span>
+                        </span>
+                        <span
+                          style={getDropdownStatusStyle(hostedStatusTone, ui)}>
+                          {t(`popup.hosted.statusLabel.${hostedStatus}` as I18nKey)}
+                        </span>
+                        <AvisoIcon
+                          name="check"
+                          size={15}
+                          style={{
+                            ...styles.dropdownCheck,
+                            opacity: isHostedDefaultSelected ? 1 : 0
+                          }}
+                        />
+                      </button>
                       {configuredProviderConfigOptions.map((config) => {
                         const route = buildProviderConfigRoute(config, settings)
                         const selected = config.id === defaultProviderConfigId
-                        const result = providerConfigConnectivityResults[config.id]
+                        const result =
+                          providerConfigConnectivityResults[config.id]
                         const keyValue =
                           providerConfigKeyInputs[config.id] ??
                           providerConfigKeys[config.id] ??
@@ -2078,10 +2389,13 @@ function Popup() {
                                   : t("popup.provider.status.lastFailed")
                             }
                           : {
-                              tone: disabled ? ("danger" as const) : ("muted" as const),
+                              tone: disabled
+                                ? ("danger" as const)
+                                : ("muted" as const),
                               status: disabled
-                                ? requiresProviderConfigModel(config.provider) &&
-                                  !config.model.trim()
+                                ? requiresProviderConfigModel(
+                                    config.provider
+                                  ) && !config.model.trim()
                                   ? t("popup.provider.status.endpointRequired")
                                   : t("popup.provider.status.keyMissing")
                                 : t("popup.provider.status.untested")
@@ -2103,14 +2417,16 @@ function Popup() {
                             style={{
                               ...styles.dropdownOption,
                               color: selected ? ui.accent : ui.text2,
-                              ...(disabled ? styles.dropdownOptionDisabled : {}),
+                              ...(disabled
+                                ? styles.dropdownOptionDisabled
+                                : {}),
                               ...(selected
                                 ? {
                                     background: ui.accentSoft,
                                     fontWeight: 650
                                   }
                                 : {})
-                          }}>
+                            }}>
                             <AvisoIcon
                               name="model"
                               size={16}
@@ -2161,7 +2477,11 @@ function Popup() {
                           borderRadius: 0,
                           marginTop: 4
                         }}>
-                        <AvisoIcon name="key" size={16} style={{ color: ui.accent }} />
+                        <AvisoIcon
+                          name="key"
+                          size={16}
+                          style={{ color: ui.accent }}
+                        />
                         <span style={styles.dropdownOptionBody}>
                           <span style={styles.dropdownOptionText}>
                             {t("popup.addAiService")}
@@ -2170,8 +2490,7 @@ function Popup() {
                             {t("popup.providerList")}
                           </span>
                         </span>
-                        <span
-                          style={getDropdownStatusStyle("muted", ui)}>
+                        <span style={getDropdownStatusStyle("muted", ui)}>
                           {t("popup.configure")}
                         </span>
                       </button>
@@ -2188,7 +2507,12 @@ function Popup() {
                   ...styles.controlSection,
                   borderBottomColor: ui.line
                 }}>
-                <div style={{ ...styles.settingList, background: ui.bg, borderColor: ui.line }}>
+                <div
+                  style={{
+                    ...styles.settingList,
+                    background: ui.bg,
+                    borderColor: ui.line
+                  }}>
                   <div
                     style={{
                       ...styles.settingRow,
@@ -2200,10 +2524,12 @@ function Popup() {
                       style={{ color: ui.accent }}
                     />
                     <div style={styles.settingCopy}>
-                      <strong style={{ ...styles.settingTitle, color: ui.text }}>
+                      <strong
+                        style={{ ...styles.settingTitle, color: ui.text }}>
                         {t("popup.language.title")}
                       </strong>
-                      <small style={{ ...styles.settingHelper, color: ui.text3 }}>
+                      <small
+                        style={{ ...styles.settingHelper, color: ui.text3 }}>
                         {t("popup.language.helper")}
                       </small>
                     </div>
@@ -2250,7 +2576,9 @@ function Popup() {
                 <div
                   style={{
                     ...styles.settingList,
-                    ...(languageDropdownOpen ? styles.settingListDropdownOpen : {}),
+                    ...(languageDropdownOpen
+                      ? styles.settingListDropdownOpen
+                      : {}),
                     background: ui.bg,
                     borderColor: ui.line
                   }}>
@@ -2289,13 +2617,15 @@ function Popup() {
                         "doubleClick",
                         t("popup.features.doubleClick"),
                         t("popup.features.doubleClickHelper")
-                      ],
+                      ]
                     ] as [
-                      | "enableToolbar"
-                      | "enableInlineTranslation"
-                      | "enableCommandPalette"
-                      | "enableClipboardSense"
-                      | "enableDoubleClickMenu",
+                      (
+                        | "enableToolbar"
+                        | "enableInlineTranslation"
+                        | "enableCommandPalette"
+                        | "enableClipboardSense"
+                        | "enableDoubleClickMenu"
+                      ),
                       AvisoIconName,
                       string,
                       string
@@ -2317,10 +2647,12 @@ function Popup() {
                         style={{ color: ui.accent }}
                       />
                       <div style={styles.settingCopy}>
-                        <strong style={{ ...styles.settingTitle, color: ui.text }}>
+                        <strong
+                          style={{ ...styles.settingTitle, color: ui.text }}>
                           {label}
                         </strong>
-                        <small style={{ ...styles.settingHelper, color: ui.text3 }}>
+                        <small
+                          style={{ ...styles.settingHelper, color: ui.text3 }}>
                           {helper}
                         </small>
                       </div>
@@ -2332,7 +2664,9 @@ function Popup() {
                             data-dropdown-direction={languageDropdownDirection}
                             style={{
                               ...styles.miniDropdown,
-                              ...(languageDropdownOpen ? styles.miniDropdownOpen : {})
+                              ...(languageDropdownOpen
+                                ? styles.miniDropdownOpen
+                                : {})
                             }}>
                             <button
                               type="button"
@@ -2366,7 +2700,9 @@ function Popup() {
                                 cursor: settings.enableInlineTranslation
                                   ? "pointer"
                                   : "not-allowed",
-                                opacity: settings.enableInlineTranslation ? 1 : 0.72
+                                opacity: settings.enableInlineTranslation
+                                  ? 1
+                                  : 0.72
                               }}>
                               <span>
                                 {
@@ -2377,49 +2713,54 @@ function Popup() {
                               </span>
                               <AvisoIcon name="chevdown" size={13} />
                             </button>
-                            {languageDropdownOpen && settings.enableInlineTranslation && (
-                              <div
-                                role="listbox"
-                                aria-label={t("popup.translationTargetAria")}
-                                style={{
-                                  ...styles.miniDropdownMenu,
-                                  ...(languageDropdownDirection === "down"
-                                    ? styles.miniDropdownMenuDown
-                                    : styles.miniDropdownMenuUp),
-                                  background: ui.surface2,
-                                  borderColor: ui.line
-                                }}>
-                                {TRANSLATION_TARGET_OPTIONS.map((option) => {
-                                  const selected =
-                                    settings.inlineTranslationTargetLanguage ===
-                                    option.value
-                                  return (
-                                    <button
-                                      key={option.value}
-                                      type="button"
-                                      className="aviso-mini-dropdown-option"
-                                      role="option"
-                                      aria-selected={selected}
-                                      onClick={() => {
-                                        updateSetting(
-                                          "inlineTranslationTargetLanguage",
-                                          option.value
-                                        )
-                                        setLanguageDropdownOpen(false)
-                                      }}
-                                      style={{
-                                        ...styles.miniDropdownOption,
-                                        color: selected ? ui.text : ui.text2,
-                                        background: selected
-                                          ? ui.accentSoft
-                                          : "transparent"
-                                      }}>
-                                      {POPUP_TRANSLATION_TARGET_LABELS[option.value]}
-                                    </button>
-                                  )
-                                })}
-                              </div>
-                            )}
+                            {languageDropdownOpen &&
+                              settings.enableInlineTranslation && (
+                                <div
+                                  role="listbox"
+                                  aria-label={t("popup.translationTargetAria")}
+                                  style={{
+                                    ...styles.miniDropdownMenu,
+                                    ...(languageDropdownDirection === "down"
+                                      ? styles.miniDropdownMenuDown
+                                      : styles.miniDropdownMenuUp),
+                                    background: ui.surface2,
+                                    borderColor: ui.line
+                                  }}>
+                                  {TRANSLATION_TARGET_OPTIONS.map((option) => {
+                                    const selected =
+                                      settings.inlineTranslationTargetLanguage ===
+                                      option.value
+                                    return (
+                                      <button
+                                        key={option.value}
+                                        type="button"
+                                        className="aviso-mini-dropdown-option"
+                                        role="option"
+                                        aria-selected={selected}
+                                        onClick={() => {
+                                          updateSetting(
+                                            "inlineTranslationTargetLanguage",
+                                            option.value
+                                          )
+                                          setLanguageDropdownOpen(false)
+                                        }}
+                                        style={{
+                                          ...styles.miniDropdownOption,
+                                          color: selected ? ui.text : ui.text2,
+                                          background: selected
+                                            ? ui.accentSoft
+                                            : "transparent"
+                                        }}>
+                                        {
+                                          POPUP_TRANSLATION_TARGET_LABELS[
+                                            option.value
+                                          ]
+                                        }
+                                      </button>
+                                    )
+                                  })}
+                                </div>
+                              )}
                           </span>
                         )}
                         <button
@@ -2429,7 +2770,9 @@ function Popup() {
                           }
                           style={{
                             ...styles.toggle,
-                            background: settings[key] ? aviso.sage500 : ui.surface2
+                            background: settings[key]
+                              ? aviso.sage500
+                              : ui.surface2
                           }}>
                           <span
                             style={{
@@ -2561,27 +2904,110 @@ function Popup() {
                   />
                   {t("popup.service.fastTitle")}
                 </span>
-                <select
-                  value={selectedFastProviderConfig?.id ?? ""}
-                  aria-label={t("popup.service.fastAria")}
-                  onChange={(event) =>
-                    void commitSettings({
-                      fastProviderConfigId: event.target.value
-                    })
-                  }
-                  style={{
-                    ...styles.fastServiceSelect,
-                    background: ui.surface,
-                    borderColor: ui.line,
-                    color: ui.text
-                  }}>
-                  <option value="">{t("popup.service.fastDisabled")}</option>
-                  {configuredProviderConfigOptions.map((config) => (
-                    <option key={config.id} value={config.id}>
-                      {config.displayName}
-                    </option>
-                  ))}
-                </select>
+                <div
+                  ref={fastServiceDropdownRef}
+                  style={styles.fastServiceDropdown}>
+                  <button
+                    type="button"
+                    className="aviso-dropdown-trigger"
+                    aria-haspopup="listbox"
+                    aria-expanded={fastServiceDropdownOpen}
+                    aria-label={t("popup.service.fastAria")}
+                    onClick={() =>
+                      setFastServiceDropdownOpen((open) => !open)
+                    }
+                    style={{
+                      ...styles.fastServiceDropdownTrigger,
+                      background: ui.surface,
+                      borderColor: fastServiceDropdownOpen
+                        ? ui.accentBorder
+                        : ui.line,
+                      color: ui.text
+                    }}>
+                    <span style={styles.fastServiceDropdownText}>
+                      {isHostedFastSelected
+                        ? t("popup.hosted.title")
+                        : selectedFastProviderConfig?.displayName ??
+                          t("popup.service.fastDisabled")}
+                    </span>
+                    <AvisoIcon
+                      name="chevdown"
+                      size={16}
+                      style={{
+                        ...styles.dropdownChevron,
+                        color: ui.text3,
+                        transform: fastServiceDropdownOpen
+                          ? "rotate(180deg)"
+                          : "none"
+                      }}
+                    />
+                  </button>
+                  {fastServiceDropdownOpen && (
+                    <div
+                      role="listbox"
+                      aria-label={t("popup.service.fastAria")}
+                      style={{
+                        ...styles.fastServiceDropdownMenu,
+                        background: ui.surface2,
+                        borderColor: ui.line
+                      }}>
+                      {[
+                        {
+                          id: "",
+                          label: t("popup.service.fastDisabled")
+                        },
+                        {
+                          id: HOSTED_AI_PROVIDER_CONFIG_ID,
+                          label: t("popup.hosted.title")
+                        },
+                        ...configuredProviderConfigOptions.map((config) => ({
+                          id: config.id,
+                          label: config.displayName
+                        }))
+                      ].map((option) => {
+                        const selected =
+                          option.id === selectedFastProviderConfigId ||
+                          (!option.id && !selectedFastProviderConfigId)
+                        return (
+                          <button
+                            key={option.id || "disabled"}
+                            type="button"
+                            className="aviso-dropdown-option"
+                            role="option"
+                            aria-selected={selected}
+                            onClick={async () => {
+                              await commitSettings({
+                                fastProviderConfigId: option.id
+                              })
+                              setFastServiceDropdownOpen(false)
+                            }}
+                            style={{
+                              ...styles.fastServiceDropdownOption,
+                              color: selected ? ui.accent : ui.text2,
+                              ...(selected
+                                ? {
+                                    background: ui.accentSoft,
+                                    fontWeight: 700
+                                  }
+                                : {})
+                            }}>
+                            <span style={styles.fastServiceDropdownText}>
+                              {option.label}
+                            </span>
+                            <AvisoIcon
+                              name="check"
+                              size={15}
+                              style={{
+                                ...styles.dropdownCheck,
+                                opacity: selected ? 1 : 0
+                              }}
+                            />
+                          </button>
+                        )
+                      })}
+                    </div>
+                  )}
+                </div>
               </label>
               <p
                 style={{
@@ -2642,6 +3068,146 @@ function Popup() {
               </div>
             </div>
 
+            <div
+              style={{
+                ...styles.serviceConfigCard,
+                background: ui.bg,
+                borderColor: isHostedDefaultSelected
+                  ? ui.accentBorder
+                  : ui.line
+              }}>
+              <div style={styles.serviceConfigTop}>
+                <span style={{ ...styles.serviceConfigName, color: ui.text }}>
+                  <AvisoIcon
+                    name="shield"
+                    size={16}
+                    style={{ color: ui.accent }}
+                  />
+                  {t("popup.hosted.title")}
+                </span>
+                <span style={styles.serviceIconActions}>
+                  <button
+                    type="button"
+                    title={t("popup.service.setDefault")}
+                    aria-label={`${t("popup.service.setDefault")} ${t("popup.hosted.title")}`}
+                    className="aviso-popup-button"
+                    onClick={() => void setDefaultHostedAiService()}
+                    disabled={isHostedDefaultSelected}
+                    style={{
+                      ...styles.iconBtn,
+                      borderColor: ui.line,
+                      color: ui.text2,
+                      ...(isHostedDefaultSelected ? styles.disabledBtn : {})
+                    }}>
+                    <AvisoIcon name="check" size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    title={t("popup.hosted.signIn")}
+                    aria-label={t("popup.hosted.signIn")}
+                    className="aviso-popup-button"
+                    onClick={() => void signInHosted()}
+                    disabled={hostedBusy || hostedStatus === "signed_in"}
+                    style={{
+                      ...styles.iconBtn,
+                      borderColor: ui.line,
+                      color: ui.text2,
+                      ...(hostedBusy || hostedStatus === "signed_in"
+                        ? styles.disabledBtn
+                        : {})
+                    }}>
+                    <AvisoIcon name="shield" size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    title={t("popup.hosted.refresh")}
+                    aria-label={t("popup.hosted.refresh")}
+                    className="aviso-popup-button"
+                    onClick={() => void refreshHostedAccount()}
+                    disabled={hostedBusy || !hostedSession}
+                    style={{
+                      ...styles.iconBtn,
+                      borderColor: ui.line,
+                      color: ui.text2,
+                      ...(hostedBusy || !hostedSession
+                        ? styles.disabledBtn
+                        : {})
+                    }}>
+                    <AvisoIcon name="refresh" size={14} />
+                  </button>
+                  <button
+                    type="button"
+                    title={t("popup.hosted.signOut")}
+                    aria-label={t("popup.hosted.signOut")}
+                    className="aviso-popup-button"
+                    onClick={() => void signOutHostedLocal()}
+                    disabled={hostedBusy || !hostedSession}
+                    style={{
+                      ...styles.iconBtn,
+                      borderColor: ui.line,
+                      color: ui.text2,
+                      ...(hostedBusy || !hostedSession
+                        ? styles.disabledBtn
+                        : {})
+                    }}>
+                    <AvisoIcon name="close" size={14} />
+                  </button>
+                </span>
+              </div>
+              <div style={{ ...styles.serviceConfigMeta, color: ui.text3 }}>
+                {isHostedDefaultSelected && (
+                  <span
+                    style={{
+                      ...styles.statusPill,
+                      ...getDropdownStatusStyle("muted", ui)
+                    }}>
+                    {t("popup.provider.status.default")}
+                  </span>
+                )}
+                <span
+                  style={{
+                    ...styles.statusPill,
+                    ...getDropdownStatusStyle(hostedStatusTone, ui)
+                  }}>
+                  {t(`popup.hosted.statusLabel.${hostedStatus}` as I18nKey)}
+                </span>
+                {t("popup.hosted.optionHelper")}
+              </div>
+              <p style={{ ...styles.helper, color: ui.text3 }}>
+                {t("popup.hosted.helper")}
+              </p>
+              <div style={{ ...styles.hostedAccountMeta, color: ui.text3 }}>
+                <div style={styles.configStateRow}>
+                  <span>{t("popup.hosted.localBackend")}</span>
+                  <strong>{HOSTED_AI_DEFAULT_BASE_URL}</strong>
+                </div>
+                <div style={styles.configStateRow}>
+                  <span>{t("popup.hosted.account")}</span>
+                  <strong>{hostedAccountLabel}</strong>
+                </div>
+                <div style={styles.configStateRow}>
+                  <span>{t("popup.hosted.tier")}</span>
+                  <strong>{hostedQuotaDisplay.tierLabel}</strong>
+                </div>
+                <div style={styles.configStateRow}>
+                  <span>{t("popup.hosted.monthlyQuota")}</span>
+                  <strong>{hostedQuotaDisplay.monthlyQuotaLabel}</strong>
+                </div>
+                <div style={styles.configStateRow}>
+                  <span>{t("popup.hosted.dailyQuota")}</span>
+                  <strong>{hostedQuotaDisplay.dailyQuotaLabel}</strong>
+                </div>
+                <div style={styles.configStateRow}>
+                  <span>{t("popup.hosted.resetTiming")}</span>
+                  <strong>{hostedQuotaDisplay.resetLabel}</strong>
+                </div>
+                <div style={styles.configStateRow}>
+                  <span>{t("popup.hosted.latestStatus")}</span>
+                  <strong>{t(hostedMessageKey)}</strong>
+                </div>
+              </div>
+            </div>
+
             {providerConfigs.length === 0 && (
               <p style={{ ...styles.emptyText, marginTop: 12 }}>
                 {t("popup.service.empty")}
@@ -2682,7 +3248,7 @@ function Popup() {
                       : keyConfigured && !missingEndpoint
                         ? isEditing
                           ? t("popup.provider.status.untested")
-                        : t("popup.provider.status.recommendedTest")
+                          : t("popup.provider.status.recommendedTest")
                         : t("popup.provider.config.unconfigured")
               const speedGrade = resolveConnectivitySpeedGrade(connectivity)
               const speedPill = {
@@ -2748,12 +3314,14 @@ function Popup() {
                   style={{
                     ...styles.serviceConfigCard,
                     background: ui.bg,
-                    borderColor: isActive || isDefault ? ui.accentBorder : ui.line,
+                    borderColor:
+                      isActive || isDefault ? ui.accentBorder : ui.line,
                     borderStyle: isAdd ? "dashed" : "solid",
                     boxShadow: isActive ? ui.activeShadow : "none"
                   }}>
                   <div style={styles.serviceConfigTop}>
-                    <span style={{ ...styles.serviceConfigName, color: ui.text }}>
+                    <span
+                      style={{ ...styles.serviceConfigName, color: ui.text }}>
                       <AvisoIcon
                         name={isAdd ? "plus" : "model"}
                         size={16}
@@ -2779,7 +3347,9 @@ function Popup() {
                           <button
                             type="button"
                             className="aviso-popup-button"
-                            onClick={() => setConfirmingDeleteProviderConfigId(null)}
+                            onClick={() =>
+                              setConfirmingDeleteProviderConfigId(null)
+                            }
                             style={{
                               ...styles.cancelDeleteBtn,
                               borderColor: ui.line,
@@ -2814,7 +3384,9 @@ function Popup() {
                                 title={t("popup.service.saveConfig")}
                                 aria-label={`${t("popup.service.saveConfig")} ${config.displayName}`}
                                 className="aviso-popup-button"
-                                onClick={() => saveProviderConfigInstance(config)}
+                                onClick={() =>
+                                  saveProviderConfigInstance(config)
+                                }
                                 style={{
                                   ...styles.iconBtn,
                                   borderColor: ui.line,
@@ -2851,7 +3423,9 @@ function Popup() {
                                 onClick={() =>
                                   isAdd
                                     ? deleteProviderConfigInstance(config)
-                                    : setConfirmingDeleteProviderConfigId(config.id)
+                                    : setConfirmingDeleteProviderConfigId(
+                                        config.id
+                                      )
                                 }
                                 style={{
                                   ...styles.iconBtn,
@@ -3036,7 +3610,8 @@ function Popup() {
                       <label
                         style={{
                           ...styles.configField,
-                          ...(focusedProviderConfigField === `${config.id}:model`
+                          ...(focusedProviderConfigField ===
+                          `${config.id}:model`
                             ? styles.configFieldFocused
                             : {}),
                           borderColor:
@@ -3110,7 +3685,11 @@ function Popup() {
                 borderColor: ui.line
               }}>
               <h3 style={{ ...styles.panelTitle, color: ui.text }}>
-                <AvisoIcon name="shield" size={16} style={{ color: ui.accent }} />
+                <AvisoIcon
+                  name="shield"
+                  size={16}
+                  style={{ color: ui.accent }}
+                />
                 {t("popup.privacyBoundary.title")}
               </h3>
               <p style={{ ...styles.helper, color: ui.text3 }}>
@@ -3164,7 +3743,8 @@ function Popup() {
                     <strong style={{ ...styles.templateName, color: ui.text }}>
                       {template.name}
                     </strong>
-                    <small style={{ ...styles.templateSummary, color: ui.text3 }}>
+                    <small
+                      style={{ ...styles.templateSummary, color: ui.text3 }}>
                       {getTemplateSummary(template, t)}
                     </small>
                   </div>
@@ -3240,7 +3820,11 @@ function Popup() {
                 borderColor: ui.line
               }}>
               <h3 style={{ ...styles.panelTitle, color: ui.text }}>
-                <AvisoIcon name="history" size={16} style={{ color: ui.accent }} />
+                <AvisoIcon
+                  name="history"
+                  size={16}
+                  style={{ color: ui.accent }}
+                />
                 {t("popup.history.title")}
               </h3>
               <p style={{ ...styles.helper, color: ui.text3 }}>
@@ -3375,8 +3959,12 @@ function getProviderKeyValue(
   return keys[provider] ?? ""
 }
 
-function isLegacyProviderId(provider: ProviderId): provider is LegacyProviderId {
-  return provider === "openai" || provider === "anthropic" || provider === "doubao"
+function isLegacyProviderId(
+  provider: ProviderId
+): provider is LegacyProviderId {
+  return (
+    provider === "openai" || provider === "anthropic" || provider === "doubao"
+  )
 }
 
 function getProviderModelValue(provider: ProviderId, settings: Settings) {
@@ -3396,10 +3984,7 @@ function getProviderModelInputValue(
   return value || PROVIDER_PRIMARY_MODEL[provider]
 }
 
-function formatRelativeTime(
-  timestamp: number,
-  t: (key: I18nKey) => string
-) {
+function formatRelativeTime(timestamp: number, t: (key: I18nKey) => string) {
   const diffMs = Date.now() - timestamp
   const minutes = Math.max(0, Math.floor(diffMs / 60_000))
   if (minutes < 1) return t("popup.history.justNow")
@@ -3409,10 +3994,7 @@ function formatRelativeTime(
   return `${Math.floor(hours / 24)}d`
 }
 
-function getHistoryTitle(
-  entry: HistoryEntry,
-  t: (key: I18nKey) => string
-) {
+function getHistoryTitle(entry: HistoryEntry, t: (key: I18nKey) => string) {
   const operationLabel =
     entry.operation === "translate"
       ? t("popup.history.translateTitle")
@@ -3424,10 +4006,7 @@ function getHistoryTitle(
   return entry.input?.trim() ? entry.input.trim().slice(0, 28) : operationLabel
 }
 
-function getHistorySummary(
-  entry: HistoryEntry,
-  t: (key: I18nKey) => string
-) {
+function getHistorySummary(entry: HistoryEntry, t: (key: I18nKey) => string) {
   return entry.output?.trim()
     ? entry.output.trim().slice(0, 58)
     : t("popup.history.restoreSummary")
@@ -3597,13 +4176,89 @@ function getConnectivitySpeedTone(
   return "muted"
 }
 
+function getHostedAccountStatusTone(
+  status: HostedAccountStatus
+): ModelAvailability["tone"] {
+  if (status === "signed_in") return "ok"
+  if (status === "signing_in" || status === "rate_limited") return "warning"
+  if (
+    status === "expired" ||
+    status === "local_backend_unavailable" ||
+    status === "quota_exhausted" ||
+    status === "hosted_route_unavailable" ||
+    status === "request_invalid"
+  ) {
+    return "danger"
+  }
+  return "muted"
+}
+
+function getHostedAccountStatusMessageKey(
+  status: HostedAccountStatus
+): I18nKey {
+  return `popup.hosted.status.${status}` as I18nKey
+}
+
+function getHostedSignInFailureMessageKey(
+  result: HostedGoogleSignInData | undefined,
+  hasStoredSession: boolean
+): I18nKey {
+  if (!result) return "popup.hosted.status.runtimeUnavailable"
+  if (hasStoredSession) return "popup.hosted.status.refreshed"
+
+  if (result.error?.source === "oauth") {
+    if (result.error.code === "user_cancelled") {
+      return "popup.hosted.status.oauthCanceled"
+    }
+    if (result.error.code === "config_missing") {
+      return "popup.hosted.status.oauthConfigMissing"
+    }
+    if (result.error.code === "state_mismatch") {
+      return "popup.hosted.status.oauthStateMismatch"
+    }
+    return "popup.hosted.status.oauthUnavailable"
+  }
+
+  if (result.error?.source === "backend") {
+    if (result.stage === "client") {
+      return "popup.hosted.status.authClientUnavailable"
+    }
+    if (result.stage === "auth_google" && result.error.httpStatusClass === "4xx") {
+      return "popup.hosted.status.authRejected"
+    }
+    if (result.stage === "me") return "popup.hosted.status.accountReadFailed"
+    return "popup.hosted.status.authBackendUnavailable"
+  }
+
+  if (result.stage === "storage") return "popup.hosted.status.sessionSaveFailed"
+  return getHostedAccountStatusMessageKey(result.status)
+}
+
+function sendRuntimeMessage<TData = unknown>(
+  message: unknown
+): Promise<PopupRuntimeResponse<TData>> {
+  return new Promise((resolve, reject) => {
+    chrome.runtime.sendMessage(message, (response?: PopupRuntimeResponse<TData>) => {
+      const runtimeError = chrome.runtime.lastError
+      if (runtimeError) {
+        reject(new Error("runtime_message_failed"))
+        return
+      }
+      resolve(response ?? { success: false, error: "empty_response" })
+    })
+  })
+}
+
 function formatMs(value: number | undefined, t: (key: I18nKey) => string) {
   if (!value) return t("popup.connectivity.noData")
   if (value < 1_000) return `${Math.round(value)} ms`
   return `${(value / 1_000).toFixed(value >= 10_000 ? 0 : 1)}s`
 }
 
-function formatDateTime(value: number | undefined, t: (key: I18nKey) => string) {
+function formatDateTime(
+  value: number | undefined,
+  t: (key: I18nKey) => string
+) {
   if (!value) return t("popup.connectivity.noData")
   const date = new Date(value)
   if (Number.isNaN(date.getTime())) return t("popup.connectivity.noData")
@@ -3827,17 +4482,92 @@ const styles: Record<string, React.CSSProperties> = {
     display: "grid",
     gap: 9
   },
-  fastServiceSelect: {
+  fastServiceDropdown: {
+    position: "relative",
     width: "100%",
+    minWidth: 0
+  },
+  fastServiceDropdownTrigger: {
+    width: "100%",
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) auto",
+    alignItems: "center",
+    gap: 10,
     minHeight: 38,
     border: `1px solid var(--aviso-line)`,
     borderRadius: aviso.radiusSm,
     fontFamily: aviso.font,
     fontSize: 13,
-    padding: "0 10px"
+    fontWeight: 650,
+    padding: "0 9px 0 12px",
+    cursor: "pointer",
+    outline: "none",
+    textAlign: "left",
+    transition: `.15s ${aviso.ease}`
+  },
+  fastServiceDropdownText: {
+    display: "block",
+    minWidth: 0,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  fastServiceDropdownMenu: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    top: "calc(100% + 6px)",
+    zIndex: 45,
+    display: "grid",
+    gap: 3,
+    padding: 6,
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: aviso.radiusMd,
+    boxShadow: "0 16px 38px -14px oklch(0.12 0.02 155 / .6)",
+    boxSizing: "border-box"
+  },
+  fastServiceDropdownOption: {
+    width: "100%",
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) auto",
+    alignItems: "center",
+    gap: 10,
+    minHeight: 34,
+    padding: "7px 9px 7px 11px",
+    border: 0,
+    borderRadius: aviso.radiusSm,
+    background: "transparent",
+    cursor: "pointer",
+    fontFamily: aviso.font,
+    fontSize: 13,
+    lineHeight: 1.25,
+    textAlign: "left"
   },
   fastServiceHelper: {
     marginTop: 8
+  },
+  hostedAccountCard: {
+    padding: "12px",
+    marginBottom: 12,
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: aviso.radiusMd
+  },
+  hostedAccountHeader: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10
+  },
+  hostedAccountMeta: {
+    marginTop: 9,
+    borderTop: `1px solid var(--aviso-line)`,
+    paddingTop: 8
+  },
+  hostedAccountActions: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: 8,
+    marginTop: 10
   },
   iconBtn: {
     display: "inline-flex",

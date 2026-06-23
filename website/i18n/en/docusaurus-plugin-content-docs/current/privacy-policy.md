@@ -12,7 +12,10 @@ This page explains the data flow and permission boundaries of the current Aviso 
 
 Aviso is a Chrome extension. It helps users call AI inside the current webpage to explain, translate, refine, summarize, or run custom prompts.
 
-Aviso uses a direct browser-to-provider model. When you actively trigger an AI request, the browser extension sends the request directly to the model provider you selected. API keys, settings, and history are stored in Chrome extension storage.
+Aviso currently has two AI request paths:
+
+- BYOK direct-provider: you bring your own model API key. When you actively trigger an AI request, the browser extension sends the request directly to the model provider you selected. API keys, settings, and history are stored in Chrome extension storage.
+- Hosted AI: an optional v0.3 path in release preparation. Only when you choose hosted AI and sign in does the request pass through the Aviso backend and then to upstream model providers. BYOK remains available without hosted sign-in.
 
 ## Data Stored Locally
 
@@ -27,9 +30,9 @@ Aviso stores necessary data in browser extension storage:
 
 Some internal storage keys still use `contextai_*` names for compatibility with data before the rename. This does not mean data is sent to an old service or third party.
 
-## Data Sent to Model Providers
+## Data Sent to Model Providers or Hosted AI
 
-When you actively trigger an AI action, Aviso sends only the information needed for that action directly to the provider you selected. Depending on the action, this may include:
+When you actively trigger an AI action, Aviso sends only the information needed for that action through the path you selected. The BYOK path sends it directly to the provider you selected. The hosted AI path sends it through the Aviso backend and upstream model providers. Depending on the action, this may include:
 
 - Selected text.
 - User-entered question or prompt.
@@ -62,7 +65,9 @@ Aviso’s performance summary is only written to the local extension console for
 
 ## Data Visible to the Aviso Project
 
-The Aviso browser extension currently has no project-owned backend for receiving user content or model requests. It does not send user text, history, API keys, page content, or model requests to Aviso project servers.
+The BYOK direct-provider path does not send user text, history, API keys, page content, or model requests to Aviso project servers.
+
+The hosted AI path passes through the Aviso backend only after the user actively chooses hosted AI and signs in. The backend processes transient request content needed to complete the request, and stores account, quota, abuse-prevention, request-status, and operational metadata. Metadata is currently retained for 30 days. The Aviso backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, user BYOK API keys, or full URLs. Upstream providers may process request content according to their own terms and account configuration; provider retention and logging settings remain part of the pre-release review.
 
 The website feedback form is a separate website email channel. Only when a user actively submits feedback, the issue description, optional issue tag, optional contact email, and user-uploaded images or screenshots are sent through a Vercel Function and Resend email service to the maintainer mailbox. The feedback form does not read extension history, API keys, Chrome extension storage, or model request content, and it is not extension telemetry.
 
@@ -70,17 +75,17 @@ Do not submit API keys, tokens, private webpage bodies, customer data, unpublish
 
 ## API Keys
 
-API keys are not stored in plaintext. They are stored in Chrome local extension storage with local encryption/obfuscation-level protection. Aviso does not upload API keys to Aviso servers.
+BYOK API keys are not stored in plaintext. They are stored in Chrome local extension storage with local encryption/obfuscation-level protection. Aviso does not upload user BYOK API keys to Aviso servers. Hosted AI does not require users to provide model provider API keys.
 
 This protection does not defend against an attacker who can read the local browser profile, control the device, or control the current Chrome user environment. If you suspect the device or browser profile is compromised, rotate or revoke the API key in the provider console first.
 
-When you use a provider, the request goes directly from the browser extension to that provider. The provider may process request content, logs, billing, and retention according to its own terms. Review and accept the provider’s terms and privacy policy before use.
+When you use a BYOK provider, the request goes directly from the browser extension to that provider. When you use hosted AI, the request passes through the Aviso backend and upstream providers. Providers may process request content, logs, billing, and retention according to their own terms. Review and accept the provider’s terms and privacy policy before use.
 
 ## Chrome Web Store Limited Use Statement
 
-Aviso uses extension-handled user data only to provide user-triggered AI assistant features on the current webpage. Aviso does not sell user data, use user data for advertising, use user data for credit/lending or similar decisions, or allow Aviso project personnel to read page content, history, API keys, or model request content handled by the extension.
+Aviso uses extension-handled user data only to provide user-triggered AI assistant features on the current webpage. Aviso does not sell user data, use user data for advertising, or use user data for credit/lending or similar decisions.
 
-When the user actively triggers an AI action, required content is sent directly from the browser extension to the selected model provider. Provider handling depends on the user’s account relationship, provider terms, and provider privacy policy.
+When the user actively triggers an AI action, the BYOK path sends required content directly from the browser extension to the selected model provider. The hosted AI path sends required content to the Aviso backend and upstream model providers. The hosted backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, user BYOK API keys, or full URLs. Provider handling depends on provider terms, account configuration, and privacy policy.
 
 ## Browser Permissions
 
@@ -91,9 +96,10 @@ Aviso currently uses these permissions:
 - `storage`: save settings, API keys, and history.
 - `history`: search Chrome browsing history in the command palette; search runs locally.
 - `bookmarks`: search bookmarks in the command palette.
+- `identity`: open the Google authorization window and exchange for a hosted session only when the user actively signs in to hosted AI; BYOK does not require this sign-in.
 - `clipboardWrite`: copy results from the floating panel.
 
-Aviso content scripts match webpage URLs to show the selection toolbar, selection translation card, double-click quick menu, command palette, in-page result panel, clipboard prompt, iframe bridge, and the screenshot selection UI used by the internal right-click path. This site access is not used to fetch arbitrary remote link bodies, serve ads, run telemetry, run analytics, or send page content to Aviso servers. Only when the user actively triggers an AI action that requires page content does the browser extension send relevant content directly to the selected provider.
+Aviso content scripts match webpage URLs to show the selection toolbar, selection translation card, double-click quick menu, command palette, in-page result panel, clipboard prompt, iframe bridge, and the screenshot selection UI used by the internal right-click path. This site access is not used to fetch arbitrary remote link bodies, serve ads, run telemetry, or run analytics. Only when the user actively triggers an AI action that requires page content does Aviso send relevant content through the selected BYOK or hosted AI path.
 
 Current host permissions are limited to approved provider domains:
 
@@ -106,9 +112,10 @@ https://api.moonshot.cn/*
 https://openrouter.ai/*
 https://generativelanguage.googleapis.com/*
 https://api.hunyuan.cloud.tencent.com/*
+https://aviso-backend-staging.vercel.app/*
 ```
 
-Aviso does not request broad host permissions to fetch arbitrary remote webpage bodies.
+`https://aviso-backend-staging.vercel.app/*` is the v0.3 staging backend origin used for hosted AI validation. It does not mean production backend, public release, or Chrome Web Store submission has been approved. Aviso does not request broad host permissions to fetch arbitrary remote webpage bodies.
 
 ## User Control
 
@@ -122,6 +129,7 @@ In the Aviso Popup, users can:
 - Switch UI language and theme.
 - Manage custom templates.
 - View and manage local history.
+- Sign in to, refresh, or sign out of hosted AI; BYOK provider configuration is not blocked by hosted sign-in state.
 
 If you uninstall Aviso, Chrome clears the extension’s local storage. You can also rotate or revoke unused API keys in the provider console.
 
@@ -130,3 +138,5 @@ If you uninstall Aviso, Chrome clears the extension’s local storage. You can a
 Aviso supports configurable OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan paths. Users can enter their own API key, model ID, or endpoint in settings; requests are sent directly from the browser extension to the selected provider. OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually, and Aviso does not automatically read model lists.
 
 Current internal testing and user feedback confirm the Doubao / Volcengine Ark path works. OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan are configurable, but actual availability depends on the user's own key, model access, and provider status. DeepSeek has one owner-manual connectivity pass; this site does not expand it into proof that every DeepSeek model or account has completed real availability acceptance. Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan should not be described as live-provider validated.
+
+Hosted AI remains in the v0.3 pre-release gate. Staging has completed sign-in, quota, provider smoke, and frontend account-display validation, but this does not approve production, public release, paid hosted AI, or Chrome Web Store disclosure submission.

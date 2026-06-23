@@ -1,12 +1,12 @@
 ---
 title: 已知限制
-description: Aviso v0.1 的当前限制。
+description: Aviso 当前 release candidate 的使用限制。
 sidebar_position: 8
 ---
 
 # 已知限制
 
-Aviso 当前是 v0.1。以下记录用于说明当前版本的使用边界。
+Aviso 当前仍处于内部试用 / release candidate 阶段。以下记录用于说明当前使用边界；公开安装状态仍以 Chrome Web Store 审核结果为准，0.2 / 0.2.1 记录不代表公开上架。
 
 ## Provider 响应速度
 
@@ -19,7 +19,7 @@ Aviso 会尽量在触发后立即显示浮窗和等待状态，但模型首段�
 - 输入内容长度。
 - 页面正文复杂度。
 
-Aviso v0.1 不承诺模型秒回。v0.2 已加入更明确的等待状态和本地 summary-only TTFT 方法，但未执行真实 provider 采样，也不宣称 p50 / p95 目标已经达成。
+Aviso 当前版本不承诺模型秒回。v0.2 已加入更明确的等待状态和本地 summary-only TTFT 方法，但未执行真实 provider 采样，也不宣称 p50 / p95 目标已经达成。
 
 ## 页面总结长度
 
@@ -52,6 +52,14 @@ Aviso 仅在右键内部路径中，对支持的图片 URL 或支持格式的 ba
 截图能力仅保留在用户主动触发的右键内部路径中。命令面板和双击快捷菜单不展示截图入口，当前也不把截图作为普通用户主入口或公开卖点。
 
 截图提问是否可用还取决于用户选择的模型是否支持视觉输入。
+
+## 托管 AI 发布前状态
+
+v0.3 托管 AI 当前仍是发布前 gate，不代表 production、公开发布、付费托管 AI 或 Chrome Web Store 披露提交已经批准。
+
+已验证的是 staging 范围：登录、额度、provider smoke、敏感日志边界、前端账号展示、release build 和 manifest 检查已经通过。production 后端、production OAuth、生产 provider 验证、公开上线文案、商店提交和 owner release approval 仍是后续 gate。
+
+BYOK direct-provider 仍是默认可用路径；未登录托管 AI 不会阻止用户继续使用自己的 API Key。
 
 ## Provider 验证状态
 

@@ -1,10 +1,15 @@
 # Aviso Privacy and Security
 
-Updated: 2026-06-11
+Updated: 2026-06-23
 
 ## 核心原则
 
-Aviso 当前是 BYOK direct-provider 浏览器扩展。用户提供自己的 API Key，扩展在用户主动触发 AI 动作时直接请求所选 provider。项目方不运行后端，不中转模型请求，不收集遥测，不使用分析 SDK。
+Aviso 当前保留 BYOK direct-provider 作为默认路径，并在 v0.3 中准备可选托管 AI 路径。
+
+- BYOK direct-provider：用户提供自己的 API Key，扩展在用户主动触发 AI 动作时直接请求所选 provider；不强制登录，不经过 Aviso 后端。
+- 托管 AI：用户主动选择托管路径并登录后，请求经过 Aviso 后端和上游 provider；BYOK 配置和直连请求不受托管登录状态影响。
+
+Aviso 不收集遥测，不使用分析 SDK，不出售用户数据，不把用户数据用于广告或信用/借贷类决策。
 
 ## 数据存储
 
@@ -13,6 +18,7 @@ Aviso 当前是 BYOK direct-provider 浏览器扩展。用户提供自己的 API
 | API Key | `chrome.storage.local/contextai_api_keys` | 不明文保存，不同步；当前使用由扩展 ID 派生的口令做本地加密 / 混淆级保护。 |
 | 设置 | `chrome.storage.sync/contextai_settings` | 非敏感设置，包括功能开关、界面语言、主题、默认服务、自定义指令和 provider metadata。 |
 | 本地 AI 对话历史 | `chrome.storage.local/contextai_history` | 本地保存，不包含 API Key。 |
+| 托管 AI session/account state | `chrome.storage.local` hosted account/session records | 仅用于托管路径登录态、账号和额度展示；退出托管账号不删除 BYOK 配置。 |
 | 运行时短缓存 | Service worker 内存 | 随运行时失效，不持久化。 |
 
 ## 权限
@@ -24,6 +30,7 @@ Aviso 当前是 BYOK direct-provider 浏览器扩展。用户提供自己的 API
 - `storage`
 - `history`
 - `bookmarks`
+- `identity`
 - `clipboardWrite`
 
 Host permissions：
@@ -36,6 +43,9 @@ Host permissions：
 - `https://openrouter.ai/*`
 - `https://generativelanguage.googleapis.com/*`
 - `https://api.hunyuan.cloud.tencent.com/*`
+- `https://aviso-backend-staging.vercel.app/*`
+
+`identity` 和 `https://aviso-backend-staging.vercel.app/*` 仅在 v0.3 staging 托管 AI gate 中批准。它们不代表 production backend、production OAuth、公开发布或 Chrome Web Store 提交已经批准。
 
 ## 数据流
 
@@ -46,6 +56,16 @@ Host permissions：
 3. Background 读取当前默认 provider config 和本地保存的 API Key。
 4. 浏览器扩展直接请求对应 provider host。
 5. 流式结果返回页面内结果面板。
+
+### 托管 AI 请求
+
+1. 用户主动选择托管 AI 路径。
+2. 若未登录，用户通过 Chrome identity / Google 授权窗口登录托管账号；BYOK 路径不需要该登录。
+3. Background 使用临时 id token 与 staging 后端交换托管 session，并只保存托管 session/account state。
+4. 请求发送到 Aviso 后端，再路由到上游 provider。
+5. 后端返回流式结果，页面内结果面板展示。
+
+托管后端不持久化 raw prompt、raw provider response、页面正文、截图/base64、剪贴板内容、用户 BYOK API Key 或完整 URL。账户、额度、风控、请求状态和运营排查所需 metadata 当前保留 30 天。
 
 ### 本地搜索
 
@@ -88,6 +108,8 @@ Aviso 当前不收集、不远端保存：
 - 远端 telemetry 或 analytics。
 - 联网搜索或远端链接正文抓取结果。
 
+托管 AI 后端当前允许保存的仅限账户、额度、风控、请求状态和运营排查所需 metadata，保留 30 天。任何扩大 metadata 字段、保留窗口、日志内容、provider logging 或生产数据流的变更，都必须重新过 release gate。
+
 ## API Key 保护边界
 
 API Key 不明文保存，位置是 `chrome.storage.local/contextai_api_keys`，不会进入 Chrome sync。当前口令由扩展 ID 派生，属于本地加密 / 混淆级保护：它能避免普通配置同步和直接明文暴露，但不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。
@@ -95,6 +117,7 @@ API Key 不明文保存，位置是 `chrome.storage.local/contextai_api_keys`，
 ## 安全维护要求
 
 - 修改权限、host permissions、API Key 存储、provider route 或真实 provider 调用前必须单独确认。
+- 修改托管 AI metadata 字段、保留窗口、provider logging、OAuth 数据处理或 production backend 前必须单独确认。
 - 新增用户数据流时必须同步更新 `docs/03_TECH_SPEC.md`、本文档和 `RELEASE_CHECKLIST.md`。
 - 不把当前内部试用记录写成公开发布批准。
 - 不把 DeepSeek、Kimi / Moonshot、OpenRouter、Gemini、Tencent Hunyuan 等配置支持写成真实 provider live validation；DeepSeek 的 owner 手动 connectivity pass 只能按单次 summary-only evidence 描述。

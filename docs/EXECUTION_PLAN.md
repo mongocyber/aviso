@@ -42,7 +42,7 @@ git diff --check
 - 权限没有变化。
 - 构建通过。
 - OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 模型 ID 可以手动编辑；OpenRouter、Gemini 和 Tencent Hunyuan 不自动读取模型列表。
-- 当前文档不再引用已删除的 roadmap、issues、specs、store、design 或 brand 目录。
+- 当前文档只引用实际存在的 roadmap、planning、design-system、archive 和 decisions 入口；不再引用已删除的 store、brand 或旧 specs 目录。
 
 ## 停线条件
 
