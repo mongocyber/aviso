@@ -2399,25 +2399,46 @@ function Popup() {
                 className="aviso-popup-button"
                 onClick={() => setTab("api")}
                 style={{
-                  ...styles.zeroNotice,
-                  borderColor: ui.accentBorder,
-                  background: ui.accentSoft
+                  ...styles.enableCard,
+                  background: ui.accentSoft,
+                  borderColor: ui.accentBorder
                 }}>
-                <span style={styles.zeroNoticeHead}>
-                  <AvisoIcon
-                    name="warning"
-                    size={14}
-                    style={{ color: ui.text3 }}
-                  />
-                  <span style={{ ...styles.zeroNoticeTitle, color: ui.text }}>
-                    {t("popup.zero.notice.title")}
+                <span
+                  style={{
+                    ...styles.enableIco,
+                    background: ui.surface,
+                    borderColor: ui.accentBorder,
+                    color: ui.accent
+                  }}>
+                  <AvisoMark size={18} />
+                </span>
+                <span style={styles.enableText}>
+                  <span style={styles.enableHead}>
+                    <span style={{ ...styles.enableTitle, color: ui.text }}>
+                      {t("popup.zero.notice.title")}
+                    </span>
+                    <span
+                      style={{
+                        ...styles.enableBadge,
+                        color: "oklch(0.58 0.12 75)",
+                        background:
+                          "color-mix(in oklab, oklch(0.74 0.11 75) 18%, transparent)"
+                      }}>
+                      {t("popup.zero.notice.badge")}
+                    </span>
                   </span>
-                  <span style={{ ...styles.zeroNoticeCta, color: ui.accent }}>
-                    {t("popup.zero.jump")} ›
+                  <span style={{ ...styles.enableSub, color: ui.text2 }}>
+                    {t("popup.zero.notice.hint")}
                   </span>
                 </span>
-                <span style={{ ...styles.zeroNoticeText, color: ui.text2 }}>
-                  {t("popup.zero.notice.hint")}
+                <span
+                  style={{
+                    ...styles.enableGo,
+                    background: ui.surface,
+                    borderColor: ui.accentBorder,
+                    color: ui.accent
+                  }}>
+                  {t("popup.zero.jump")} ›
                 </span>
               </button>
             )}
@@ -2745,64 +2766,6 @@ function Popup() {
                   ...styles.controlSection,
                   borderBottomColor: ui.line
                 }}>
-                <div
-                  style={{
-                    ...styles.settingList,
-                    background: ui.bg,
-                    borderColor: ui.line
-                  }}>
-                  <div
-                    style={{
-                      ...styles.settingRow,
-                      borderTopColor: ui.line
-                    }}>
-                    <AvisoIcon
-                      name="features"
-                      size={16}
-                      style={{ color: ui.accent }}
-                    />
-                    <div style={styles.settingCopy}>
-                      <strong
-                        style={{ ...styles.settingTitle, color: ui.text }}>
-                        {t("popup.language.title")}
-                      </strong>
-                      <small
-                        style={{ ...styles.settingHelper, color: ui.text3 }}>
-                        {t("popup.language.helper")}
-                      </small>
-                    </div>
-                    <select
-                      aria-label={t("popup.language.title")}
-                      value={settings.uiLanguage}
-                      onChange={(event) =>
-                        updateSetting(
-                          "uiLanguage",
-                          event.target.value as UiLanguageSetting
-                        )
-                      }
-                      style={{
-                        ...styles.languageSelect,
-                        width: 96,
-                        padding: "7px 8px",
-                        background: ui.surface,
-                        borderColor: ui.line,
-                        color: ui.text2
-                      }}>
-                      {UI_LANGUAGE_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {t(option.labelKey)}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-              </div>
-
-              <div
-                style={{
-                  ...styles.controlSection,
-                  borderBottomColor: ui.line
-                }}>
                 <div style={{ ...styles.controlSectionTitle, color: ui.text }}>
                   <AvisoIcon
                     name="features"
@@ -3104,6 +3067,73 @@ function Popup() {
                     {openHint}
                   </p>
                 )}
+              </div>
+
+              <div
+                style={{
+                  ...styles.controlSection,
+                  borderBottom: "none",
+                  marginBottom: 0
+                }}>
+                <div style={{ ...styles.controlSectionTitle, color: ui.text }}>
+                  <AvisoIcon
+                    name="features"
+                    size={15}
+                    style={{ color: ui.accent }}
+                  />
+                  {t("popup.preferences")}
+                </div>
+                <div
+                  style={{
+                    ...styles.settingList,
+                    background: ui.bg,
+                    borderColor: ui.line
+                  }}>
+                  <div
+                    style={{
+                      ...styles.settingRow,
+                      borderTopColor: ui.line
+                    }}>
+                    <AvisoIcon
+                      name="features"
+                      size={16}
+                      style={{ color: ui.text3 }}
+                    />
+                    <div style={styles.settingCopy}>
+                      <strong
+                        style={{ ...styles.settingTitle, color: ui.text }}>
+                        {t("popup.language.title")}
+                      </strong>
+                      <small
+                        style={{ ...styles.settingHelper, color: ui.text3 }}>
+                        {t("popup.language.helper")}
+                      </small>
+                    </div>
+                    <select
+                      aria-label={t("popup.language.title")}
+                      value={settings.uiLanguage}
+                      onChange={(event) =>
+                        updateSetting(
+                          "uiLanguage",
+                          event.target.value as UiLanguageSetting
+                        )
+                      }
+                      style={{
+                        ...styles.languageSelect,
+                        width: 96,
+                        padding: "7px 8px",
+                        background: ui.surface,
+                        borderColor: ui.line,
+                        color: ui.text2
+                      }}>
+                      {UI_LANGUAGE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {t(option.labelKey)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
               </div>
             </div>
           </>
@@ -4885,37 +4915,66 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     gap: 9
   },
-  zeroNotice: {
+  enableCard: {
     display: "flex",
-    flexDirection: "column",
-    gap: 6,
+    alignItems: "center",
+    gap: 11,
     margin: "13px 15px 0",
-    padding: "10px 12px",
+    padding: "11px 12px",
     border: `1px solid transparent`,
-    borderRadius: 10,
+    borderRadius: 9,
     textAlign: "left",
     cursor: "pointer"
   },
-  zeroNoticeHead: {
+  enableIco: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 32,
+    height: 32,
+    flex: "0 0 auto",
+    borderRadius: 6,
+    border: `1px solid var(--aviso-line)`
+  },
+  enableText: {
+    flex: 1,
+    minWidth: 0,
+    display: "flex",
+    flexDirection: "column",
+    gap: 2
+  },
+  enableHead: {
     display: "flex",
     alignItems: "center",
-    gap: 6
+    gap: 7
   },
-  zeroNoticeTitle: {
+  enableTitle: {
     fontFamily: aviso.font,
-    fontSize: 13,
+    fontSize: 13.5,
     fontWeight: 700
   },
-  zeroNoticeCta: {
-    fontFamily: aviso.font,
-    fontSize: 12,
+  enableBadge: {
+    fontFamily: aviso.mono,
+    fontSize: 9,
     fontWeight: 700,
-    marginLeft: "auto"
+    letterSpacing: "0.03em",
+    padding: "2px 7px",
+    borderRadius: 6
   },
-  zeroNoticeText: {
+  enableSub: {
     fontFamily: aviso.font,
-    fontSize: 12,
-    lineHeight: 1.5
+    fontSize: 11,
+    lineHeight: 1.4
+  },
+  enableGo: {
+    flex: "0 0 auto",
+    fontFamily: aviso.font,
+    fontSize: 12.5,
+    fontWeight: 700,
+    padding: "8px 12px",
+    borderRadius: 9,
+    border: `1px solid var(--aviso-line)`,
+    whiteSpace: "nowrap"
   },
   zeroTitle: {
     fontFamily: aviso.font,
