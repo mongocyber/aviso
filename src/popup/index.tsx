@@ -2399,13 +2399,26 @@ function Popup() {
                 className="aviso-popup-button"
                 onClick={() => setTab("api")}
                 style={{
-                  ...styles.zeroJump,
+                  ...styles.zeroNotice,
                   borderColor: ui.accentBorder,
-                  background: ui.accentSoft,
-                  color: ui.accent
+                  background: ui.accentSoft
                 }}>
-                <AvisoIcon name="shield" size={14} />
-                {t("popup.zero.jump")}
+                <span style={styles.zeroNoticeHead}>
+                  <AvisoIcon
+                    name="warning"
+                    size={14}
+                    style={{ color: ui.text3 }}
+                  />
+                  <span style={{ ...styles.zeroNoticeTitle, color: ui.text }}>
+                    {t("popup.zero.notice.title")}
+                  </span>
+                  <span style={{ ...styles.zeroNoticeCta, color: ui.accent }}>
+                    {t("popup.zero.jump")} ›
+                  </span>
+                </span>
+                <span style={{ ...styles.zeroNoticeText, color: ui.text2 }}>
+                  {t("popup.zero.notice.hint")}
+                </span>
               </button>
             )}
             <div style={styles.homePane}>
@@ -4872,19 +4885,37 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     gap: 9
   },
-  zeroJump: {
+  zeroNotice: {
     display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 7,
+    flexDirection: "column",
+    gap: 6,
     margin: "13px 15px 0",
-    padding: "11px 12px",
+    padding: "10px 12px",
     border: `1px solid transparent`,
     borderRadius: 10,
+    textAlign: "left",
+    cursor: "pointer"
+  },
+  zeroNoticeHead: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6
+  },
+  zeroNoticeTitle: {
     fontFamily: aviso.font,
     fontSize: 13,
+    fontWeight: 700
+  },
+  zeroNoticeCta: {
+    fontFamily: aviso.font,
+    fontSize: 12,
     fontWeight: 700,
-    cursor: "pointer"
+    marginLeft: "auto"
+  },
+  zeroNoticeText: {
+    fontFamily: aviso.font,
+    fontSize: 12,
+    lineHeight: 1.5
   },
   zeroTitle: {
     fontFamily: aviso.font,

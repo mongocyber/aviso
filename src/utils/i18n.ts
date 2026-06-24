@@ -576,8 +576,16 @@ const MESSAGES = {
     en: "Choose how to enable AI"
   },
   "popup.zero.jump": {
-    "zh-CN": "开始使用 · 前往 AI 服务",
-    en: "Get started — open AI services"
+    "zh-CN": "前往 AI 服务",
+    en: "Open AI services"
+  },
+  "popup.zero.notice.title": {
+    "zh-CN": "还没启用 AI",
+    en: "AI is not enabled yet"
+  },
+  "popup.zero.notice.hint": {
+    "zh-CN": "未登录、也未配置自己的 Key，下方 AI 功能暂不可用。",
+    en: "Not signed in and no key configured — the AI features below won't work yet."
   },
   "popup.zero.recommended": {
     "zh-CN": "推荐",
