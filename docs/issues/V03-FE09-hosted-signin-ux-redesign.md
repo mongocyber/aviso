@@ -18,9 +18,9 @@ BYOK remains first-class and usable without sign-in. Paid / subscription is out 
 ## What changed (frontend only)
 
 - `src/popup/index.tsx`
-  - Header: persistent account chip. Signed out shows a sign-in action; signed in shows an avatar initial + tier label + chevron that opens an account panel.
+  - Header: persistent account chip placed right after the Aviso wordmark; the theme toggle moves to the far right and the version label moves to the footer (next to the privacy link). Signed out shows a sign-in action; signed in shows an avatar initial + tier label + chevron that opens an account panel.
   - Account panel (popover from the chip): account label, tier, status pill, monthly quota meter + reset, refresh, "manage in AI services", and sign out. This is the single at-a-glance source for login state.
-  - General tab: a non-blocking zero-state dual entry, shown only when there is no hosted session and no BYOK config — `Aviso AI` (sign in for free quota, recommended) or add your own API key. Not a wall; tabs, toggles, and history stay reachable.
+  - AI-services tab: the zero-state dual entry ("开始使用"), shown only when there is no hosted session and no BYOK config — `Aviso AI` (sign in for free quota, recommended) or add your own API key. The general tab shows a compact jump to AI services when nothing is configured and keeps its existing settings. Not a wall; tabs, toggles, and history stay reachable.
   - Reuses existing hosted state and handlers (`signInHosted`, `refreshHostedAccount`, `signOutHostedLocal`, `hostedStatus`, `hostedSession`, `buildHostedAccountQuotaDisplay`).
 - `src/utils/hosted-session.ts`: add `getHostedMonthlyQuotaWindow()` to expose the numeric monthly window for the quota meter (reuses the existing private normalizer).
 - `src/utils/i18n.ts`: add `popup.account.*` and `popup.zero.*` keys (zh-CN + en). All new user-facing copy goes through i18n.

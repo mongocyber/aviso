@@ -575,6 +575,10 @@ const MESSAGES = {
     "zh-CN": "选择一种方式启用 AI",
     en: "Choose how to enable AI"
   },
+  "popup.zero.jump": {
+    "zh-CN": "开始使用 · 前往 AI 服务",
+    en: "Get started — open AI services"
+  },
   "popup.zero.recommended": {
     "zh-CN": "推荐",
     en: "Recommended"

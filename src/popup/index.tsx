@@ -2145,11 +2145,11 @@ function Popup() {
         }
       `}</style>
       <header style={styles.header}>
-        <span style={{ ...styles.logo, color: ui.text }}>
-          <AvisoMark size={20} />
-          Aviso
-        </span>
-        <span style={styles.headerActions}>
+        <span style={styles.headerLeft}>
+          <span style={{ ...styles.logo, color: ui.text }}>
+            <AvisoMark size={20} />
+            Aviso
+          </span>
           <span style={styles.accountWrap}>
             {hostedSession ? (
               <button
@@ -2306,6 +2306,8 @@ function Popup() {
               </>
             )}
           </span>
+        </span>
+        <span style={styles.headerActions}>
           <span
             role="group"
             aria-label={t("popup.theme.aria")}
@@ -2339,7 +2341,6 @@ function Popup() {
               </button>
             ))}
           </span>
-          <span style={{ ...styles.version, color: ui.text3 }}>v0.1.0</span>
         </span>
       </header>
 
@@ -2372,91 +2373,19 @@ function Popup() {
         {tab === "general" && (
           <>
             {showZeroState && (
-              <div style={{ ...styles.zeroCard, borderBottomColor: ui.line }}>
-                <div style={{ ...styles.zeroTitle, color: ui.text }}>
-                  {t("popup.zero.title")}
-                </div>
-                <div style={{ ...styles.zeroSubtitle, color: ui.text3 }}>
-                  {t("popup.zero.subtitle")}
-                </div>
-                <div
-                  style={{
-                    ...styles.zeroOption,
-                    borderColor: ui.accentBorder,
-                    background: ui.accentSoft
-                  }}>
-                  <div style={styles.zeroOptionHead}>
-                    <AvisoIcon
-                      name="shield"
-                      size={15}
-                      style={{ color: ui.accent }}
-                    />
-                    <span style={{ ...styles.zeroOptionName, color: ui.text }}>
-                      {t("popup.hosted.title")}
-                    </span>
-                    <span
-                      style={{
-                        ...styles.zeroBadge,
-                        background: ui.accent,
-                        color: ui.accentText
-                      }}>
-                      {t("popup.zero.recommended")}
-                    </span>
-                  </div>
-                  <div style={{ ...styles.zeroOptionDesc, color: ui.text2 }}>
-                    {t("popup.zero.hosted.desc")}
-                  </div>
-                  <button
-                    type="button"
-                    className="aviso-popup-button"
-                    onClick={() => void signInHosted()}
-                    disabled={hostedBusy}
-                    style={{
-                      ...styles.zeroPrimaryBtn,
-                      background: ui.accent,
-                      color: ui.accentText,
-                      ...(hostedBusy ? styles.disabledBtn : {})
-                    }}>
-                    {hostedBusy
-                      ? t("popup.hosted.statusLabel.signing_in")
-                      : t("popup.zero.hosted.cta")}
-                  </button>
-                </div>
-                <div style={{ ...styles.zeroOption, borderColor: ui.line }}>
-                  <div style={styles.zeroOptionHead}>
-                    <AvisoIcon
-                      name="key"
-                      size={15}
-                      style={{ color: ui.text2 }}
-                    />
-                    <span style={{ ...styles.zeroOptionName, color: ui.text }}>
-                      {t("popup.zero.byok.title")}
-                    </span>
-                    <span
-                      style={{
-                        ...styles.zeroBadgeMuted,
-                        background: ui.pill,
-                        color: ui.text2
-                      }}>
-                      {t("popup.zero.byok.badge")}
-                    </span>
-                  </div>
-                  <div style={{ ...styles.zeroOptionDesc, color: ui.text2 }}>
-                    {t("popup.zero.byok.desc")}
-                  </div>
-                  <button
-                    type="button"
-                    className="aviso-popup-button"
-                    onClick={() => setTab("api")}
-                    style={{
-                      ...styles.zeroSecondaryBtn,
-                      borderColor: ui.line,
-                      color: ui.text
-                    }}>
-                    {t("popup.zero.byok.cta")}
-                  </button>
-                </div>
-              </div>
+              <button
+                type="button"
+                className="aviso-popup-button"
+                onClick={() => setTab("api")}
+                style={{
+                  ...styles.zeroJump,
+                  borderColor: ui.accentBorder,
+                  background: ui.accentSoft,
+                  color: ui.accent
+                }}>
+                <AvisoIcon name="shield" size={14} />
+                {t("popup.zero.jump")}
+              </button>
             )}
             <div style={styles.homePane}>
               <div
@@ -3149,6 +3078,102 @@ function Popup() {
         {/* AI */}
         {tab === "api" && (
           <div style={{ ...panelSectionStyle, paddingTop: 14 }}>
+            {showZeroState && (
+              <div
+                style={{
+                  ...styles.zeroCard,
+                  background: ui.bg,
+                  borderColor: ui.line
+                }}>
+                <div style={{ ...styles.zeroTitle, color: ui.text }}>
+                  {t("popup.zero.title")}
+                </div>
+                <div style={{ ...styles.zeroSubtitle, color: ui.text3 }}>
+                  {t("popup.zero.subtitle")}
+                </div>
+                <div
+                  style={{
+                    ...styles.zeroOption,
+                    borderColor: ui.accentBorder,
+                    background: ui.accentSoft
+                  }}>
+                  <div style={styles.zeroOptionHead}>
+                    <AvisoIcon
+                      name="shield"
+                      size={15}
+                      style={{ color: ui.accent }}
+                    />
+                    <span style={{ ...styles.zeroOptionName, color: ui.text }}>
+                      {t("popup.hosted.title")}
+                    </span>
+                    <span
+                      style={{
+                        ...styles.zeroBadge,
+                        background: ui.accent,
+                        color: ui.accentText
+                      }}>
+                      {t("popup.zero.recommended")}
+                    </span>
+                  </div>
+                  <div style={{ ...styles.zeroOptionDesc, color: ui.text2 }}>
+                    {t("popup.zero.hosted.desc")}
+                  </div>
+                  <button
+                    type="button"
+                    className="aviso-popup-button"
+                    onClick={() => void signInHosted()}
+                    disabled={hostedBusy}
+                    style={{
+                      ...styles.zeroPrimaryBtn,
+                      background: ui.accent,
+                      color: ui.accentText,
+                      ...(hostedBusy ? styles.disabledBtn : {})
+                    }}>
+                    {hostedBusy
+                      ? t("popup.hosted.statusLabel.signing_in")
+                      : t("popup.zero.hosted.cta")}
+                  </button>
+                </div>
+                <div style={{ ...styles.zeroOption, borderColor: ui.line }}>
+                  <div style={styles.zeroOptionHead}>
+                    <AvisoIcon
+                      name="key"
+                      size={15}
+                      style={{ color: ui.text2 }}
+                    />
+                    <span style={{ ...styles.zeroOptionName, color: ui.text }}>
+                      {t("popup.zero.byok.title")}
+                    </span>
+                    <span
+                      style={{
+                        ...styles.zeroBadgeMuted,
+                        background: ui.pill,
+                        color: ui.text2
+                      }}>
+                      {t("popup.zero.byok.badge")}
+                    </span>
+                  </div>
+                  <div style={{ ...styles.zeroOptionDesc, color: ui.text2 }}>
+                    {t("popup.zero.byok.desc")}
+                  </div>
+                  <button
+                    type="button"
+                    className="aviso-popup-button"
+                    onClick={() =>
+                      document
+                        .getElementById("aviso-popup-content")
+                        ?.scrollTo({ top: 99999, behavior: "smooth" })
+                    }
+                    style={{
+                      ...styles.zeroSecondaryBtn,
+                      borderColor: ui.line,
+                      color: ui.text
+                    }}>
+                    {t("popup.zero.byok.cta")}
+                  </button>
+                </div>
+              </div>
+            )}
             <div
               style={{
                 ...styles.panelCard,
@@ -4216,12 +4241,15 @@ function Popup() {
               ? t("popup.footer.saved")
               : t("popup.footer.autoSave")}
         </span>
-        <button
-          className="aviso-popup-button"
-          onClick={() => setShowPrivacy((v) => !v)}
-          style={{ ...styles.link, color: ui.text3 }}>
-          {t("popup.footer.privacy")}
-        </button>
+        <span style={styles.footerRight}>
+          <button
+            className="aviso-popup-button"
+            onClick={() => setShowPrivacy((v) => !v)}
+            style={{ ...styles.link, color: ui.text3 }}>
+            {t("popup.footer.privacy")}
+          </button>
+          <span style={{ ...styles.version, color: ui.text3 }}>v0.1.0</span>
+        </span>
       </footer>
     </div>
   )
@@ -4636,6 +4664,12 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 10,
     padding: "15px 17px 11px"
   },
+  headerLeft: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 9,
+    minWidth: 0
+  },
   logo: {
     display: "inline-flex",
     alignItems: "center",
@@ -4710,7 +4744,7 @@ const styles: Record<string, React.CSSProperties> = {
   accountPanel: {
     position: "absolute",
     top: "calc(100% + 6px)",
-    right: 0,
+    left: 0,
     width: 270,
     zIndex: 50,
     border: `1px solid var(--aviso-line)`,
@@ -4809,11 +4843,27 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer"
   },
   zeroCard: {
-    padding: 15,
-    borderBottom: `1px solid var(--aviso-line)`,
+    padding: 14,
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 12,
+    marginBottom: 12,
     display: "flex",
     flexDirection: "column",
     gap: 9
+  },
+  zeroJump: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 7,
+    margin: "13px 15px 0",
+    padding: "11px 12px",
+    border: `1px solid transparent`,
+    borderRadius: 10,
+    fontFamily: aviso.font,
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer"
   },
   zeroTitle: {
     fontFamily: aviso.font,
@@ -6103,6 +6153,11 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 12,
     padding: "14px 18px",
     borderTop: `1px solid var(--aviso-line)`
+  },
+  footerRight: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 10
   },
   autoSaveHint: {
     fontSize: 12,
