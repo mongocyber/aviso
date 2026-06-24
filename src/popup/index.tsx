@@ -2443,6 +2443,7 @@ function Popup() {
               </button>
             )}
             <div style={styles.homePane}>
+              {!showZeroState && (
               <div
                 style={{
                   ...styles.controlCard,
@@ -2760,6 +2761,7 @@ function Popup() {
                   {t("popup.currentModelHelp")}
                 </p>
               </div>
+              )}
 
               <div
                 style={{
