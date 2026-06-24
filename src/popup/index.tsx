@@ -416,6 +416,9 @@ function Popup() {
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false)
   const [languageDropdownDirection, setLanguageDropdownDirection] =
     useState<MiniDropdownDirection>("down")
+  const [uiLangDropdownOpen, setUiLangDropdownOpen] = useState(false)
+  const [uiLangDropdownDirection, setUiLangDropdownDirection] =
+    useState<MiniDropdownDirection>("down")
   const [focusedProviderConfigField, setFocusedProviderConfigField] = useState<
     string | null
   >(null)
@@ -485,6 +488,7 @@ function Popup() {
   const fastServiceDropdownRef = useRef<HTMLDivElement>(null)
   const providerDropdownRef = useRef<HTMLDivElement>(null)
   const languageDropdownRef = useRef<HTMLSpanElement>(null)
+  const uiLangDropdownRef = useRef<HTMLSpanElement>(null)
   const providerCardRefs = useRef<
     Partial<Record<ProviderId, HTMLDivElement | null>>
   >({})
@@ -541,6 +545,9 @@ function Popup() {
       if (!languageDropdownRef.current?.contains(event.target as Node)) {
         setLanguageDropdownOpen(false)
       }
+      if (!uiLangDropdownRef.current?.contains(event.target as Node)) {
+        setUiLangDropdownOpen(false)
+      }
     }
     const closeOnEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
@@ -548,6 +555,7 @@ function Popup() {
         setFastServiceDropdownOpen(false)
         setProviderDropdownOpen(false)
         setLanguageDropdownOpen(false)
+        setUiLangDropdownOpen(false)
       }
     }
 
@@ -2166,11 +2174,8 @@ function Popup() {
         }
       `}</style>
       <header style={styles.header}>
-        <span style={styles.headerLeft}>
-          <span style={{ ...styles.logo, color: ui.text }}>
-            <AvisoMark size={20} />
-            Aviso
-          </span>
+        <span style={{ ...styles.logo, color: ui.text }}>Aviso</span>
+        <span style={styles.headerActions}>
           <span style={styles.accountWrap}>
             {hostedSession ? (
               <button
@@ -2327,8 +2332,6 @@ function Popup() {
               </>
             )}
           </span>
-        </span>
-        <span style={styles.headerActions}>
           <span
             role="group"
             aria-label={t("popup.theme.aria")}
@@ -3120,29 +3123,92 @@ function Popup() {
                         {t("popup.language.helper")}
                       </small>
                     </div>
-                    <select
-                      aria-label={t("popup.language.title")}
-                      value={settings.uiLanguage}
-                      onChange={(event) =>
-                        updateSetting(
-                          "uiLanguage",
-                          event.target.value as UiLanguageSetting
-                        )
-                      }
+                    <span
+                      ref={uiLangDropdownRef}
                       style={{
-                        ...styles.languageSelect,
-                        width: 96,
-                        padding: "7px 8px",
-                        background: ui.surface,
-                        borderColor: ui.line,
-                        color: ui.text2
+                        ...styles.miniDropdown,
+                        ...(uiLangDropdownOpen ? styles.miniDropdownOpen : {})
                       }}>
-                      {UI_LANGUAGE_OPTIONS.map((option) => (
-                        <option key={option.value} value={option.value}>
-                          {t(option.labelKey)}
-                        </option>
-                      ))}
-                    </select>
+                      <button
+                        type="button"
+                        className="aviso-mini-dropdown-trigger"
+                        aria-haspopup="listbox"
+                        aria-expanded={uiLangDropdownOpen}
+                        aria-label={t("popup.language.title")}
+                        onClick={() => {
+                          setUiLangDropdownOpen((open) => {
+                            const nextOpen = !open
+                            if (nextOpen) {
+                              setUiLangDropdownDirection(
+                                resolveMiniDropdownDirection(
+                                  uiLangDropdownRef.current
+                                )
+                              )
+                            }
+                            return nextOpen
+                          })
+                        }}
+                        style={{
+                          ...styles.miniDropdownTrigger,
+                          background: ui.bg,
+                          borderColor: ui.line,
+                          color: ui.text2
+                        }}>
+                        <span>
+                          {t(
+                            (
+                              UI_LANGUAGE_OPTIONS.find(
+                                (option) =>
+                                  option.value === settings.uiLanguage
+                              ) ?? UI_LANGUAGE_OPTIONS[0]
+                            ).labelKey
+                          )}
+                        </span>
+                        <AvisoIcon name="chevdown" size={13} />
+                      </button>
+                      {uiLangDropdownOpen && (
+                        <div
+                          role="listbox"
+                          aria-label={t("popup.language.title")}
+                          style={{
+                            ...styles.miniDropdownMenu,
+                            ...(uiLangDropdownDirection === "down"
+                              ? styles.miniDropdownMenuDown
+                              : styles.miniDropdownMenuUp),
+                            background: ui.surface2,
+                            borderColor: ui.line
+                          }}>
+                          {UI_LANGUAGE_OPTIONS.map((option) => {
+                            const selected =
+                              settings.uiLanguage === option.value
+                            return (
+                              <button
+                                key={option.value}
+                                type="button"
+                                className="aviso-mini-dropdown-option"
+                                role="option"
+                                aria-selected={selected}
+                                onClick={() => {
+                                  updateSetting(
+                                    "uiLanguage",
+                                    option.value as UiLanguageSetting
+                                  )
+                                  setUiLangDropdownOpen(false)
+                                }}
+                                style={{
+                                  ...styles.miniDropdownOption,
+                                  color: selected ? ui.text : ui.text2,
+                                  background: selected
+                                    ? ui.accentSoft
+                                    : "transparent"
+                                }}>
+                                {t(option.labelKey)}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -4819,7 +4885,7 @@ const styles: Record<string, React.CSSProperties> = {
   accountPanel: {
     position: "absolute",
     top: "calc(100% + 6px)",
-    left: 0,
+    right: 0,
     width: 270,
     zIndex: 50,
     border: `1px solid var(--aviso-line)`,
