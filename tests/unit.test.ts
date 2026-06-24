@@ -682,7 +682,7 @@ test("popup surfaces explicit account chip and zero-state dual entry (MON-26)", 
   assert.equal(popupSource.includes("升级"), false)
   assert.equal(/\bUpgrade\b/.test(popupSource), false)
   // i18n strings exist for the new surfaces
-  assert.equal(getI18nMessage("popup.zero.title", "zh-CN"), "开始使用 Aviso")
+  assert.equal(getI18nMessage("popup.zero.title", "zh-CN"), "开始使用")
   assert.equal(
     getI18nMessage("popup.zero.hosted.cta", "en"),
     "Sign in / sign up"

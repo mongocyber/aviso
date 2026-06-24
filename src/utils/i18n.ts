@@ -568,12 +568,16 @@ const MESSAGES = {
     en: "Manage in AI services"
   },
   "popup.zero.title": {
-    "zh-CN": "开始使用 Aviso",
-    en: "Get started with Aviso"
+    "zh-CN": "开始使用",
+    en: "Get started"
   },
   "popup.zero.subtitle": {
-    "zh-CN": "选择一种方式启用 AI",
-    en: "Choose how to enable AI"
+    "zh-CN": "两种方式，选一种就能用。",
+    en: "Two ways — pick one to get going."
+  },
+  "popup.zero.or": {
+    "zh-CN": "或者",
+    en: "or"
   },
   "popup.zero.jump": {
     "zh-CN": "去启用",
@@ -604,8 +608,8 @@ const MESSAGES = {
     en: "Recommended"
   },
   "popup.zero.hosted.desc": {
-    "zh-CN": "登录后可使用免费额度，无需自己的 Key",
-    en: "Sign in to use free quota — no key of your own needed"
+    "zh-CN": "登录后即可免费使用，内置额度、开箱即用。",
+    en: "Sign in to use it free — built-in quota, ready to go."
   },
   "popup.zero.hosted.cta": {
     "zh-CN": "登录 / 注册",
@@ -619,13 +623,21 @@ const MESSAGES = {
     "zh-CN": "BYOK",
     en: "BYOK"
   },
+  "popup.zero.byok.heading": {
+    "zh-CN": "已经有 API Key?",
+    en: "Already have an API key?"
+  },
   "popup.zero.byok.desc": {
-    "zh-CN": "连接 OpenAI · Claude · 豆包 等",
-    en: "Connect OpenAI, Claude, Doubao, and more"
+    "zh-CN": "连接 OpenAI · Claude · 豆包，浏览器直连厂商，请求不经过我们。",
+    en: "Connect OpenAI · Claude · Doubao — your browser talks to providers directly; requests don't go through us."
   },
   "popup.zero.byok.cta": {
-    "zh-CN": "添加 AI 服务",
-    en: "Add AI service"
+    "zh-CN": "连接自己的服务",
+    en: "Connect your own service"
+  },
+  "popup.zero.privacy": {
+    "zh-CN": "你发起请求时，内容只发往你选择的那一个服务。",
+    en: "When you send a request, the content goes only to the one service you chose."
   },
   "popup.hosted.title": {
     "zh-CN": "Aviso AI",

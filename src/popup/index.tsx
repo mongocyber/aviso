@@ -3231,52 +3231,51 @@ function Popup() {
         {tab === "api" && (
           <div style={{ ...panelSectionStyle, paddingTop: 14 }}>
             {showZeroState && (
-              <div
-                style={{
-                  ...styles.zeroCard,
-                  background: ui.bg,
-                  borderColor: ui.line
-                }}>
-                <div style={{ ...styles.zeroTitle, color: ui.text }}>
+              <>
+                <h3 style={{ ...styles.onbH, color: ui.text }}>
                   {t("popup.zero.title")}
-                </div>
-                <div style={{ ...styles.zeroSubtitle, color: ui.text3 }}>
+                </h3>
+                <p style={{ ...styles.onbSub, color: ui.text2 }}>
                   {t("popup.zero.subtitle")}
-                </div>
+                </p>
                 <div
                   style={{
-                    ...styles.zeroOption,
+                    ...styles.recCard,
+                    background: ui.accentSoft,
                     borderColor: ui.accentBorder,
-                    background: ui.accentSoft
+                    boxShadow: `0 0 0 3px ${ui.accentSoft}`
                   }}>
-                  <div style={styles.zeroOptionHead}>
-                    <AvisoIcon
-                      name="shield"
-                      size={15}
-                      style={{ color: ui.accent }}
-                    />
-                    <span style={{ ...styles.zeroOptionName, color: ui.text }}>
+                  <div style={styles.recTop}>
+                    <span
+                      style={{
+                        color: ui.accent,
+                        display: "inline-flex",
+                        flex: "0 0 auto"
+                      }}>
+                      <AvisoMark size={20} />
+                    </span>
+                    <span style={{ ...styles.recName, color: ui.text }}>
                       {t("popup.hosted.title")}
                     </span>
                     <span
                       style={{
-                        ...styles.zeroBadge,
+                        ...styles.recBadge,
                         background: ui.accent,
                         color: ui.accentText
                       }}>
                       {t("popup.zero.recommended")}
                     </span>
                   </div>
-                  <div style={{ ...styles.zeroOptionDesc, color: ui.text2 }}>
+                  <p style={{ ...styles.recDesc, color: ui.text2 }}>
                     {t("popup.zero.hosted.desc")}
-                  </div>
+                  </p>
                   <button
                     type="button"
                     className="aviso-popup-button"
                     onClick={() => void signInHosted()}
                     disabled={hostedBusy}
                     style={{
-                      ...styles.zeroPrimaryBtn,
+                      ...styles.recPrimaryBtn,
                       background: ui.accent,
                       color: ui.accentText,
                       ...(hostedBusy ? styles.disabledBtn : {})
@@ -3286,45 +3285,58 @@ function Popup() {
                       : t("popup.zero.hosted.cta")}
                   </button>
                 </div>
-                <div style={{ ...styles.zeroOption, borderColor: ui.line }}>
-                  <div style={styles.zeroOptionHead}>
-                    <AvisoIcon
-                      name="key"
-                      size={15}
-                      style={{ color: ui.text2 }}
-                    />
-                    <span style={{ ...styles.zeroOptionName, color: ui.text }}>
-                      {t("popup.zero.byok.title")}
-                    </span>
-                    <span
-                      style={{
-                        ...styles.zeroBadgeMuted,
-                        background: ui.pill,
-                        color: ui.text2
-                      }}>
-                      {t("popup.zero.byok.badge")}
-                    </span>
-                  </div>
-                  <div style={{ ...styles.zeroOptionDesc, color: ui.text2 }}>
-                    {t("popup.zero.byok.desc")}
-                  </div>
-                  <button
-                    type="button"
-                    className="aviso-popup-button"
-                    onClick={() =>
-                      document
-                        .getElementById("aviso-popup-content")
-                        ?.scrollTo({ top: 99999, behavior: "smooth" })
-                    }
-                    style={{
-                      ...styles.zeroSecondaryBtn,
-                      borderColor: ui.line,
-                      color: ui.text
-                    }}>
-                    {t("popup.zero.byok.cta")}
-                  </button>
+                <div style={styles.orRow}>
+                  <span style={{ ...styles.orLine, background: ui.line }} />
+                  <span style={{ ...styles.orText, color: ui.text3 }}>
+                    {t("popup.zero.or")}
+                  </span>
+                  <span style={{ ...styles.orLine, background: ui.line }} />
                 </div>
-              </div>
+                <h3 style={{ ...styles.byokH, color: ui.text }}>
+                  {t("popup.zero.byok.heading")}
+                </h3>
+                <p style={{ ...styles.byokP, color: ui.text2 }}>
+                  {t("popup.zero.byok.desc")}
+                </p>
+                <button
+                  type="button"
+                  className="aviso-popup-button"
+                  onClick={() =>
+                    document
+                      .getElementById("aviso-popup-content")
+                      ?.scrollTo({ top: 99999, behavior: "smooth" })
+                  }
+                  style={{
+                    ...styles.ghostBtn,
+                    borderColor: ui.line,
+                    color: ui.text
+                  }}>
+                  <AvisoIcon name="key" size={15} style={{ color: ui.text3 }} />
+                  {t("popup.zero.byok.cta")}
+                </button>
+                <div
+                  style={{
+                    ...styles.privLine,
+                    borderTopColor: ui.line,
+                    color: ui.text3
+                  }}>
+                  <AvisoIcon
+                    name="shield"
+                    size={14}
+                    style={{ color: ui.accent, flex: "0 0 auto", marginTop: 1 }}
+                  />
+                  <span>
+                    {t("popup.zero.privacy")}{" "}
+                    <button
+                      type="button"
+                      className="aviso-popup-button"
+                      onClick={() => setShowPrivacy((v) => !v)}
+                      style={{ ...styles.privLink, color: ui.accent }}>
+                      {t("popup.footer.privacy")} ›
+                    </button>
+                  </span>
+                </div>
+              </>
             )}
             <div
               style={{
@@ -5129,6 +5141,126 @@ const styles: Record<string, React.CSSProperties> = {
     background: "transparent",
     fontFamily: aviso.font,
     fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer"
+  },
+  onbH: {
+    fontFamily: aviso.font,
+    fontSize: 17,
+    fontWeight: 800,
+    letterSpacing: "-0.01em",
+    margin: "2px 0 3px"
+  },
+  onbSub: {
+    fontFamily: aviso.font,
+    fontSize: 12.5,
+    lineHeight: 1.5,
+    margin: "0 0 15px"
+  },
+  recCard: {
+    border: `1px solid transparent`,
+    borderRadius: 14,
+    padding: "14px 15px 15px"
+  },
+  recTop: {
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 9
+  },
+  recName: {
+    fontFamily: aviso.font,
+    fontSize: 15.5,
+    fontWeight: 800,
+    letterSpacing: "-0.01em"
+  },
+  recBadge: {
+    marginLeft: "auto",
+    fontFamily: aviso.mono,
+    fontSize: 9.5,
+    fontWeight: 700,
+    letterSpacing: "0.04em",
+    borderRadius: 6,
+    padding: "3px 8px"
+  },
+  recDesc: {
+    fontFamily: aviso.font,
+    fontSize: 12.5,
+    lineHeight: 1.5,
+    margin: "0 0 13px"
+  },
+  recPrimaryBtn: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    height: 40,
+    border: "none",
+    borderRadius: 9,
+    fontFamily: aviso.font,
+    fontSize: 14,
+    fontWeight: 700,
+    cursor: "pointer"
+  },
+  orRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+    margin: "15px 2px"
+  },
+  orLine: {
+    flex: 1,
+    height: 1
+  },
+  orText: {
+    fontFamily: aviso.font,
+    fontSize: 11.5
+  },
+  byokH: {
+    fontFamily: aviso.font,
+    fontSize: 13,
+    fontWeight: 700,
+    margin: "0 0 3px"
+  },
+  byokP: {
+    fontFamily: aviso.font,
+    fontSize: 12,
+    lineHeight: 1.5,
+    margin: "0 0 11px"
+  },
+  ghostBtn: {
+    width: "100%",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 8,
+    height: 38,
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 9,
+    background: "transparent",
+    fontFamily: aviso.font,
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer"
+  },
+  privLine: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: 9,
+    marginTop: 16,
+    paddingTop: 14,
+    borderTop: `1px solid var(--aviso-line)`,
+    fontFamily: aviso.font,
+    fontSize: 12,
+    lineHeight: 1.55
+  },
+  privLink: {
+    border: "none",
+    background: "transparent",
+    padding: 0,
+    fontFamily: aviso.font,
+    fontSize: 12,
     fontWeight: 600,
     cursor: "pointer"
   },
