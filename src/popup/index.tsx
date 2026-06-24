@@ -2174,7 +2174,10 @@ function Popup() {
         }
       `}</style>
       <header style={styles.header}>
-        <span style={{ ...styles.logo, color: ui.text }}>Aviso</span>
+        <span style={{ ...styles.logo, color: ui.text }}>
+          <AvisoMark size={20} />
+          Aviso
+        </span>
         <span style={styles.headerActions}>
           <span style={styles.accountWrap}>
             {hostedSession ? (
@@ -2406,15 +2409,6 @@ function Popup() {
                   background: ui.accentSoft,
                   borderColor: ui.accentBorder
                 }}>
-                <span
-                  style={{
-                    ...styles.enableIco,
-                    background: ui.surface,
-                    borderColor: ui.accentBorder,
-                    color: ui.accent
-                  }}>
-                  <AvisoMark size={18} />
-                </span>
                 <span style={styles.enableText}>
                   <span style={styles.enableHead}>
                     <span style={{ ...styles.enableTitle, color: ui.text }}>
@@ -3100,12 +3094,18 @@ function Popup() {
                 <div
                   style={{
                     ...styles.settingList,
+                    ...(uiLangDropdownOpen
+                      ? styles.settingListDropdownOpen
+                      : {}),
                     background: ui.bg,
                     borderColor: ui.line
                   }}>
                   <div
                     style={{
                       ...styles.settingRow,
+                      ...(uiLangDropdownOpen
+                        ? styles.settingRowDropdownOpen
+                        : {}),
                       borderTopColor: ui.line
                     }}>
                     <AvisoIcon
