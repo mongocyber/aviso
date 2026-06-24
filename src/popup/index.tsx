@@ -2768,13 +2768,16 @@ function Popup() {
                   ...styles.controlSection,
                   borderBottomColor: ui.line
                 }}>
-                <div style={{ ...styles.controlSectionTitle, color: ui.text }}>
+                <div style={{ ...styles.controlSectionTitle, color: ui.text3 }}>
                   <AvisoIcon
                     name="features"
-                    size={15}
-                    style={{ color: ui.accent }}
+                    size={13}
+                    style={{ color: ui.text3 }}
                   />
                   {t("popup.commonFeatures")}
+                  <span
+                    style={{ ...styles.sectionLine, background: ui.line }}
+                  />
                 </div>
                 <div
                   style={{
@@ -2981,7 +2984,7 @@ function Popup() {
                             style={{
                               ...styles.toggleThumb,
                               transform: settings[key]
-                                ? "translateX(21px)"
+                                ? "translateX(19px)"
                                 : "translateX(3px)"
                             }}
                           />
@@ -2993,13 +2996,16 @@ function Popup() {
               </div>
 
               <div style={styles.controlSection}>
-                <div style={{ ...styles.controlSectionTitle, color: ui.text }}>
+                <div style={{ ...styles.controlSectionTitle, color: ui.text3 }}>
                   <AvisoIcon
                     name="local"
-                    size={15}
-                    style={{ color: ui.accent }}
+                    size={13}
+                    style={{ color: ui.text3 }}
                   />
                   {t("popup.localAvailable")}
+                  <span
+                    style={{ ...styles.sectionLine, background: ui.line }}
+                  />
                 </div>
                 <div style={styles.compactLocalRow}>
                   {[
@@ -3039,7 +3045,7 @@ function Popup() {
                       }}>
                       <AvisoIcon
                         name={icon as AvisoIconName}
-                        size={18}
+                        size={16}
                         style={{
                           ...styles.compactLocalIcon,
                           color: ui.accent
@@ -3077,13 +3083,16 @@ function Popup() {
                   borderBottom: "none",
                   marginBottom: 0
                 }}>
-                <div style={{ ...styles.controlSectionTitle, color: ui.text }}>
+                <div style={{ ...styles.controlSectionTitle, color: ui.text3 }}>
                   <AvisoIcon
                     name="features"
-                    size={15}
-                    style={{ color: ui.accent }}
+                    size={13}
+                    style={{ color: ui.text3 }}
                   />
                   {t("popup.preferences")}
+                  <span
+                    style={{ ...styles.sectionLine, background: ui.line }}
+                  />
                 </div>
                 <div
                   style={{
@@ -5256,9 +5265,14 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: 8,
-    marginBottom: 10,
-    fontSize: 13.5,
-    fontWeight: 800
+    marginBottom: 8,
+    fontSize: 11.5,
+    fontWeight: 600,
+    letterSpacing: "0.02em"
+  },
+  sectionLine: {
+    flex: 1,
+    height: 1
   },
   modelDropdownCopy: {
     display: "flex",
@@ -5466,8 +5480,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   toggle: {
     position: "relative",
-    width: 42,
-    height: 24,
+    width: 38,
+    height: 22,
     borderRadius: 999,
     border: "none",
     cursor: "pointer",
@@ -5479,8 +5493,8 @@ const styles: Record<string, React.CSSProperties> = {
     position: "absolute",
     top: 3,
     left: 0,
-    width: 18,
-    height: 18,
+    width: 16,
+    height: 16,
     borderRadius: "50%",
     background: "#fff",
     boxShadow: "0 1px 3px oklch(0 0 0 / .25)",
@@ -5695,10 +5709,9 @@ const styles: Record<string, React.CSSProperties> = {
   settingRow: {
     display: "grid",
     gridTemplateColumns: "auto minmax(0, 1fr) auto",
-    gap: 10,
+    gap: 11,
     alignItems: "center",
-    minHeight: 56,
-    padding: "9px 10px",
+    padding: "9px 12px",
     borderTop: `1px solid var(--aviso-line)`
   },
   settingRowDropdownOpen: {
@@ -5716,8 +5729,8 @@ const styles: Record<string, React.CSSProperties> = {
   settingTitle: {
     display: "block",
     minWidth: 0,
-    fontSize: 13,
-    fontWeight: 800,
+    fontSize: 13.5,
+    fontWeight: 600,
     lineHeight: 1.25,
     overflowWrap: "anywhere"
   },
@@ -5805,9 +5818,8 @@ const styles: Record<string, React.CSSProperties> = {
     flexDirection: "column",
     alignItems: "flex-start",
     justifyContent: "flex-start",
-    gap: 7,
-    minHeight: 76,
-    padding: "10px 10px 9px",
+    gap: 6,
+    padding: "11px 10px",
     textAlign: "left",
     border: `1px solid var(--aviso-line)`,
     borderRadius: aviso.radiusMd,
@@ -5818,8 +5830,8 @@ const styles: Record<string, React.CSSProperties> = {
   compactLocalIcon: {
     display: "inline-flex",
     flex: "0 0 auto",
-    width: 18,
-    height: 18
+    width: 16,
+    height: 16
   },
   compactLocalCopy: {
     display: "flex",
@@ -5832,7 +5844,7 @@ const styles: Record<string, React.CSSProperties> = {
     display: "block",
     minWidth: 0,
     fontSize: 12.5,
-    fontWeight: 800,
+    fontWeight: 600,
     lineHeight: 1.2,
     whiteSpace: "normal",
     overflowWrap: "anywhere"
@@ -5840,8 +5852,8 @@ const styles: Record<string, React.CSSProperties> = {
   compactLocalHelper: {
     display: "block",
     minWidth: 0,
-    fontSize: 11,
-    lineHeight: 1.25,
+    fontSize: 10.5,
+    lineHeight: 1.3,
     whiteSpace: "normal",
     overflowWrap: "anywhere"
   },
