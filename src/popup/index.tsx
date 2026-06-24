@@ -2149,6 +2149,10 @@ function Popup() {
           background: ${ui.hover} !important;
           border-color: ${ui.accentBorder} !important;
         }
+        .aviso-accent-btn:hover:not(:disabled) {
+          background: color-mix(in oklab, ${ui.accent} 88%, black) !important;
+          border-color: transparent !important;
+        }
         .aviso-config-input:focus,
         .aviso-config-input:focus-visible {
           outline: none !important;
@@ -3271,7 +3275,7 @@ function Popup() {
                   </p>
                   <button
                     type="button"
-                    className="aviso-popup-button"
+                    className="aviso-popup-button aviso-accent-btn"
                     onClick={() => void signInHosted()}
                     disabled={hostedBusy}
                     style={{
