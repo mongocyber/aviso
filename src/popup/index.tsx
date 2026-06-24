@@ -866,6 +866,27 @@ function Popup() {
         if (keys.anthropic)
           setAnthropicKey("••••••••" + keys.anthropic.slice(-4))
         if (keys.doubao) setDoubaoKey("••••••••" + keys.doubao.slice(-4))
+        // 零状态（无 hosted 登录且无任何自有 Key）默认进入 AI 服务页签，
+        // 让新用户直接看到「开始使用」；已配置用户仍默认停在设置页。
+        const hasByokAtLoad =
+          configs.length > 0 ||
+          Boolean(
+            keys.openai ||
+              keys.anthropic ||
+              keys.doubao ||
+              keys.deepseek ||
+              keys.moonshot ||
+              keys.openrouter ||
+              keys.gemini ||
+              keys.hunyuan
+          ) ||
+          Object.keys(keys.providerConfigKeys ?? {}).length > 0
+        if (
+          !hasByokAtLoad &&
+          deriveHostedAccountStatus({ session }) !== "signed_in"
+        ) {
+          setTab("api")
+        }
         // 加载完成后才允许自动保存
         loaded.current = true
       }

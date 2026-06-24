@@ -671,6 +671,8 @@ test("popup surfaces explicit account chip and zero-state dual entry (MON-26)", 
   assert.match(popupSource, /hostedQuotaPercent/)
   // Zero-state dual entry (sign in for free quota OR add own key), not a wall
   assert.match(popupSource, /showZeroState/)
+  // Zero-state opens on the AI services tab by default (smart default)
+  assert.match(popupSource, /hasByokAtLoad/)
   assert.match(popupSource, /popup\.zero\.title/)
   assert.match(popupSource, /popup\.zero\.hosted\.cta/)
   assert.match(popupSource, /popup\.zero\.byok\.cta/)
