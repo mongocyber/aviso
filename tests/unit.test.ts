@@ -1750,7 +1750,7 @@ test("popup provider config model ID is manually editable", () => {
   )
   assert.match(
     getI18nMessage("popup.service.fastHelper", "en"),
-    /short translate, explain, and polish/
+    /translate \/ explain \/ polish/
   )
   assert.equal(
     getI18nMessage("popup.provider.geminiModelPlaceholder", "en"),

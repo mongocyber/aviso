@@ -852,8 +852,8 @@ const MESSAGES = {
     en: "Off"
   },
   "popup.service.fastHelper": {
-    "zh-CN": "仅用于短文本的翻译、解释、润色；未选择时不会自动切换模型。",
-    en: "Used only for short translate, explain, and polish tasks. When off, Aviso will not switch models automatically."
+    "zh-CN": "短文本的翻译、解释、润色走这个，省下主模型额度。",
+    en: "Short translate / explain / polish go here, saving your main-model quota."
   },
   "popup.service.configs": {
     "zh-CN": "服务配置",
@@ -967,6 +967,22 @@ const MESSAGES = {
     "zh-CN":
       "Aviso 没有项目方服务器。你主动发起 AI 请求时，内容会由浏览器直接发送到你选择的模型厂商。",
     en: "Aviso has no project-owned server. When you start an AI request, the browser sends content directly to the model provider you choose."
+  },
+  "popup.privacy.hostedTitle": {
+    "zh-CN": "用 Aviso AI",
+    en: "With Aviso AI"
+  },
+  "popup.privacy.hostedDesc": {
+    "zh-CN": "内容先经过 Aviso 服务再转给模型厂商，我们不存储你的正文。",
+    en: "Content passes through Aviso's service to the model provider; we don't store your text."
+  },
+  "popup.privacy.byokTitle": {
+    "zh-CN": "用自己的 Key",
+    en: "With your own key"
+  },
+  "popup.privacy.byokDesc": {
+    "zh-CN": "浏览器直连厂商，请求不经过我们。",
+    en: "Your browser connects to the provider directly; requests don't go through us."
   },
   "popup.privacy.full": {
     "zh-CN":

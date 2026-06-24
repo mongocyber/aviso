@@ -4308,9 +4308,37 @@ function Popup() {
                 />
                 {t("popup.privacyBoundary.title")}
               </h3>
-              <p style={{ ...styles.helper, color: ui.text3 }}>
-                {t("popup.privacyBoundary.helper")}
-              </p>
+              <div style={styles.privMode}>
+                <span style={{ ...styles.privModeDot, background: ui.accent }} />
+                <div>
+                  <div style={{ ...styles.privModeTitle, color: ui.text }}>
+                    {t("popup.privacy.hostedTitle")}
+                  </div>
+                  <p style={{ ...styles.privModeDesc, color: ui.text2 }}>
+                    {t("popup.privacy.hostedDesc")}
+                  </p>
+                </div>
+              </div>
+              <div
+                style={{
+                  ...styles.privMode,
+                  borderTop: `1px solid ${ui.line}`
+                }}>
+                <span
+                  style={{
+                    ...styles.privModeDot,
+                    background: "oklch(0.64 0.07 215)"
+                  }}
+                />
+                <div>
+                  <div style={{ ...styles.privModeTitle, color: ui.text }}>
+                    {t("popup.privacy.byokTitle")}
+                  </div>
+                  <p style={{ ...styles.privModeDesc, color: ui.text2 }}>
+                    {t("popup.privacy.byokDesc")}
+                  </p>
+                </div>
+              </div>
             </div>
             )}
             </>
@@ -5449,6 +5477,29 @@ const styles: Record<string, React.CSSProperties> = {
     letterSpacing: "0.04em",
     borderRadius: 6,
     padding: "2px 7px"
+  },
+  privMode: {
+    display: "flex",
+    gap: 9,
+    padding: "8px 0"
+  },
+  privModeDot: {
+    width: 7,
+    height: 7,
+    borderRadius: "50%",
+    flex: "0 0 auto",
+    marginTop: 5
+  },
+  privModeTitle: {
+    fontFamily: aviso.font,
+    fontSize: 12,
+    fontWeight: 700
+  },
+  privModeDesc: {
+    fontFamily: aviso.font,
+    fontSize: 11,
+    lineHeight: 1.55,
+    margin: "2px 0 0"
   },
   themeToggle: {
     display: "inline-grid",
