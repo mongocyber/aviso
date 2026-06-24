@@ -567,6 +567,10 @@ const MESSAGES = {
     "zh-CN": "在 AI 服务中管理",
     en: "Manage in AI services"
   },
+  "popup.account.section": {
+    "zh-CN": "账户",
+    en: "Account"
+  },
   "popup.zero.title": {
     "zh-CN": "开始使用",
     en: "Get started"

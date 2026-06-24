@@ -3352,6 +3352,139 @@ function Popup() {
             )}
             {(!showZeroState || hasOpenAddDraft) && (
             <>
+            {!showZeroState &&
+              (hostedSession ? (
+                <>
+                  <div
+                    style={{ ...styles.controlSectionTitle, color: ui.text3 }}>
+                    {t("popup.account.section")}
+                    <span
+                      style={{ ...styles.sectionLine, background: ui.line }}
+                    />
+                  </div>
+                  <div
+                    style={{
+                      ...styles.acard,
+                      background: ui.accentSoft,
+                      borderColor: ui.accentBorder
+                    }}>
+                    <div style={styles.acardTop}>
+                      <span style={{ color: ui.accent, display: "inline-flex" }}>
+                        <AvisoMark size={20} />
+                      </span>
+                      <span
+                        style={{
+                          ...styles.recName,
+                          color: ui.text,
+                          fontSize: 14
+                        }}>
+                        {t("popup.hosted.title")}
+                      </span>
+                      <span
+                        style={{
+                          ...styles.statusPill,
+                          ...getDropdownStatusStyle(hostedStatusTone, ui),
+                          marginLeft: "auto"
+                        }}>
+                        {t(
+                          `popup.hosted.statusLabel.${hostedStatus}` as I18nKey
+                        )}
+                      </span>
+                    </div>
+                    <div style={{ ...styles.acardQuotaRow, color: ui.text2 }}>
+                      <span
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 7,
+                          fontSize: 12
+                        }}>
+                        {t("popup.hosted.monthlyQuota")}
+                        <span
+                          style={{
+                            ...styles.tagMono,
+                            background: ui.pill,
+                            color: ui.text2
+                          }}>
+                          {hostedQuotaDisplay.tierLabel}
+                        </span>
+                      </span>
+                      <span
+                        style={{
+                          fontFamily: aviso.mono,
+                          fontSize: 12,
+                          color: ui.text
+                        }}>
+                        {hostedQuotaDisplay.monthlyQuotaLabel}
+                      </span>
+                    </div>
+                    {hostedQuotaPercent !== null && (
+                      <div style={{ ...styles.quotaBarTrack, background: ui.bg }}>
+                        <div
+                          style={{
+                            ...styles.quotaBarFill,
+                            width: `${hostedQuotaPercent}%`,
+                            background: hostedQuotaBarColor
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div style={{ ...styles.acardMeta, color: ui.text3 }}>
+                      {t("popup.hosted.resetTiming")}:{" "}
+                      {hostedQuotaDisplay.resetLabel}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div
+                  style={{
+                    ...styles.recCard,
+                    background: ui.accentSoft,
+                    borderColor: ui.accentBorder,
+                    boxShadow: `0 0 0 3px ${ui.accentSoft}`,
+                    marginBottom: 14
+                  }}>
+                  <div style={styles.recTop}>
+                    <span
+                      style={{
+                        color: ui.accent,
+                        display: "inline-flex",
+                        flex: "0 0 auto"
+                      }}>
+                      <AvisoMark size={20} />
+                    </span>
+                    <span style={{ ...styles.recName, color: ui.text }}>
+                      {t("popup.hosted.title")}
+                    </span>
+                    <span
+                      style={{
+                        ...styles.recBadge,
+                        background: ui.accent,
+                        color: ui.accentText
+                      }}>
+                      {t("popup.zero.recommended")}
+                    </span>
+                  </div>
+                  <p style={{ ...styles.recDesc, color: ui.text2 }}>
+                    {t("popup.zero.hosted.desc")}
+                  </p>
+                  <button
+                    type="button"
+                    className="aviso-popup-button aviso-accent-btn"
+                    onClick={() => void signInHosted()}
+                    disabled={hostedBusy}
+                    style={{
+                      ...styles.recPrimaryBtn,
+                      background: ui.accent,
+                      color: ui.accentText,
+                      ...(hostedBusy ? styles.disabledBtn : {})
+                    }}>
+                    {hostedBusy
+                      ? t("popup.hosted.statusLabel.signing_in")
+                      : t("popup.zero.hosted.cta")}
+                  </button>
+                </div>
+              ))}
             <div
               style={{
                 ...styles.panelCard,
@@ -5279,6 +5412,37 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 12,
     fontWeight: 600,
     cursor: "pointer"
+  },
+  acard: {
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 12,
+    padding: "12px 13px",
+    marginBottom: 14
+  },
+  acardTop: {
+    display: "flex",
+    alignItems: "center",
+    gap: 9,
+    marginBottom: 9
+  },
+  acardQuotaRow: {
+    display: "flex",
+    alignItems: "baseline",
+    justifyContent: "space-between",
+    marginBottom: 7
+  },
+  acardMeta: {
+    fontFamily: aviso.font,
+    fontSize: 11,
+    marginTop: 9
+  },
+  tagMono: {
+    fontFamily: aviso.mono,
+    fontSize: 9,
+    fontWeight: 700,
+    letterSpacing: "0.04em",
+    borderRadius: 6,
+    padding: "2px 7px"
   },
   themeToggle: {
     display: "inline-grid",
