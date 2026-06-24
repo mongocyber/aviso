@@ -1950,6 +1950,9 @@ function Popup() {
     configuredProviderConfigOptions.length > 0 ||
     Object.values(providerConfigured).some(Boolean)
   const showZeroState = !hasAnyByok && hostedStatus !== "signed_in"
+  const hasOpenAddDraft = Object.values(providerConfigModes).some(
+    (mode) => mode === "add"
+  )
   const popupHeight = popupRuntimeHeight
   const popupHeightCss = `${popupHeight}px`
   const panelSectionStyle =
@@ -3305,11 +3308,16 @@ function Popup() {
                 <button
                   type="button"
                   className="aviso-popup-button"
-                  onClick={() =>
-                    document
-                      .getElementById("aviso-popup-content")
-                      ?.scrollTo({ top: 99999, behavior: "smooth" })
-                  }
+                  onClick={() => {
+                    addProviderConfigDraft("openai")
+                    setTimeout(
+                      () =>
+                        document
+                          .getElementById("aviso-popup-content")
+                          ?.scrollTo({ top: 99999, behavior: "smooth" }),
+                      0
+                    )
+                  }}
                   style={{
                     ...styles.ghostBtn,
                     borderColor: ui.line,
@@ -3342,6 +3350,8 @@ function Popup() {
                 </div>
               </>
             )}
+            {(!showZeroState || hasOpenAddDraft) && (
+            <>
             <div
               style={{
                 ...styles.panelCard,
@@ -4164,6 +4174,8 @@ function Popup() {
                 {t("popup.privacyBoundary.helper")}
               </p>
             </div>
+            </>
+            )}
           </div>
         )}
 
