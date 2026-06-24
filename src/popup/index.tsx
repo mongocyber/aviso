@@ -3057,6 +3057,9 @@ function Popup() {
                         <strong
                           style={{
                             ...styles.compactLocalTitle,
+                            ...(resolvedUiLanguage === "zh-CN"
+                              ? {}
+                              : { minHeight: 30 }),
                             color: ui.text
                           }}>
                           {String(title)}
@@ -3064,6 +3067,9 @@ function Popup() {
                         <small
                           style={{
                             ...styles.compactLocalHelper,
+                            ...(resolvedUiLanguage === "zh-CN"
+                              ? {}
+                              : { minHeight: 27 }),
                             color: ui.text3
                           }}>
                           {String(helper)}
@@ -5914,7 +5920,6 @@ const styles: Record<string, React.CSSProperties> = {
   compactLocalTitle: {
     display: "block",
     minWidth: 0,
-    minHeight: 30,
     fontSize: 12.5,
     fontWeight: 600,
     lineHeight: 1.2,
@@ -5924,7 +5929,6 @@ const styles: Record<string, React.CSSProperties> = {
   compactLocalHelper: {
     display: "block",
     minWidth: 0,
-    minHeight: 27,
     fontSize: 10.5,
     lineHeight: 1.3,
     whiteSpace: "normal",
