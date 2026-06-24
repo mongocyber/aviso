@@ -659,6 +659,38 @@ test("popup adds local hosted account controls without hiding provider setup", (
   assert.equal(getI18nMessage("popup.templates.title", "zh-CN"), "常用指令")
 })
 
+test("popup surfaces explicit account chip and zero-state dual entry (MON-26)", () => {
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+  // Persistent identity affordance: header account chip + account panel
+  assert.match(popupSource, /accountPanelOpen/)
+  assert.match(popupSource, /styles\.accountChip/)
+  assert.match(popupSource, /styles\.accountPanel/)
+  assert.match(popupSource, /hostedQuotaPercent/)
+  // Zero-state dual entry (sign in for free quota OR add own key), not a wall
+  assert.match(popupSource, /showZeroState/)
+  assert.match(popupSource, /popup\.zero\.title/)
+  assert.match(popupSource, /popup\.zero\.hosted\.cta/)
+  assert.match(popupSource, /popup\.zero\.byok\.cta/)
+  // Jargon stays in i18n, not hardcoded in source
+  assert.equal(popupSource.includes("BYOK"), false)
+  // Subscription stays deferred: no upgrade/checkout entry shipped
+  assert.equal(popupSource.includes("升级"), false)
+  assert.equal(/\bUpgrade\b/.test(popupSource), false)
+  // i18n strings exist for the new surfaces
+  assert.equal(getI18nMessage("popup.zero.title", "zh-CN"), "开始使用 Aviso")
+  assert.equal(
+    getI18nMessage("popup.zero.hosted.cta", "en"),
+    "Sign in / sign up"
+  )
+  assert.equal(
+    getI18nMessage("popup.account.manage", "zh-CN"),
+    "在 AI 服务中管理"
+  )
+})
+
 test("hosted AI base URL is explicit and limited to local or staging", () => {
   assert.equal(resolveHostedAiBaseUrl(), null)
   assert.equal(resolveHostedAiBaseUrl(""), null)

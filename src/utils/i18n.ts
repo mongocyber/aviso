@@ -563,6 +563,46 @@ const MESSAGES = {
       "在这里配置自己的 AI 服务。保存草稿不等于连接测试通过；API Key 只保存在本地浏览器，非密钥设置保存在同步设置中。",
     en: "Configure your own AI services here. Saving a draft does not mean the connection test passed. API keys stay in local browser storage; non-secret settings use sync storage."
   },
+  "popup.account.manage": {
+    "zh-CN": "在 AI 服务中管理",
+    en: "Manage in AI services"
+  },
+  "popup.zero.title": {
+    "zh-CN": "开始使用 Aviso",
+    en: "Get started with Aviso"
+  },
+  "popup.zero.subtitle": {
+    "zh-CN": "选择一种方式启用 AI",
+    en: "Choose how to enable AI"
+  },
+  "popup.zero.recommended": {
+    "zh-CN": "推荐",
+    en: "Recommended"
+  },
+  "popup.zero.hosted.desc": {
+    "zh-CN": "登录后可使用免费额度，无需自己的 Key",
+    en: "Sign in to use free quota — no key of your own needed"
+  },
+  "popup.zero.hosted.cta": {
+    "zh-CN": "登录 / 注册",
+    en: "Sign in / sign up"
+  },
+  "popup.zero.byok.title": {
+    "zh-CN": "我自己的 API Key",
+    en: "Your own API key"
+  },
+  "popup.zero.byok.badge": {
+    "zh-CN": "BYOK",
+    en: "BYOK"
+  },
+  "popup.zero.byok.desc": {
+    "zh-CN": "连接 OpenAI · Claude · 豆包 等",
+    en: "Connect OpenAI, Claude, Doubao, and more"
+  },
+  "popup.zero.byok.cta": {
+    "zh-CN": "添加 AI 服务",
+    en: "Add AI service"
+  },
   "popup.hosted.title": {
     "zh-CN": "Aviso AI",
     en: "Aviso AI"

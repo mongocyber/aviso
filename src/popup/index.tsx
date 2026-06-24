@@ -28,6 +28,7 @@ import {
   buildHostedAccountQuotaDisplay,
   clearHostedSession,
   deriveHostedAccountStatus,
+  getHostedMonthlyQuotaWindow,
   HOSTED_AI_DEFAULT_BASE_URL,
   HOSTED_AI_DEFAULT_MODEL,
   HOSTED_AI_PROVIDER_CONFIG_ID,
@@ -470,6 +471,7 @@ function Popup() {
   const [hostedMessageKey, setHostedMessageKey] = useState<I18nKey>(
     "popup.hosted.status.signedOut"
   )
+  const [accountPanelOpen, setAccountPanelOpen] = useState(false)
   const [systemPrefersDark, setSystemPrefersDark] = useState(true)
   const [popupRuntimeHeight, setPopupRuntimeHeight] = useState<number>(
     POPUP_FRAME.safeMaxHeight
@@ -1881,6 +1883,36 @@ function Popup() {
     systemPrefersDark
   )
   const ui = getAvisoThemeTokens(resolvedAppearance)
+  const hostedMonthlyWindow = getHostedMonthlyQuotaWindow(hostedSession)
+  const hostedQuotaPercent =
+    hostedMonthlyWindow && hostedMonthlyWindow.limit > 0
+      ? Math.min(
+          100,
+          Math.round(
+            (hostedMonthlyWindow.used / hostedMonthlyWindow.limit) * 100
+          )
+        )
+      : null
+  const hostedQuotaBarColor =
+    hostedQuotaPercent === null
+      ? ui.text3
+      : hostedQuotaPercent >= 100
+        ? ui.danger
+        : hostedQuotaPercent >= 80
+          ? ui.warningBorder
+          : ui.accent
+  const accountInitial = (
+    hostedSession?.session.user.email ??
+    hostedSession?.session.user.id ??
+    "A"
+  )
+    .trim()
+    .charAt(0)
+    .toUpperCase()
+  const hasAnyByok =
+    configuredProviderConfigOptions.length > 0 ||
+    Object.values(providerConfigured).some(Boolean)
+  const showZeroState = !hasAnyByok && hostedStatus !== "signed_in"
   const popupHeight = popupRuntimeHeight
   const popupHeightCss = `${popupHeight}px`
   const panelSectionStyle =
@@ -2118,6 +2150,162 @@ function Popup() {
           Aviso
         </span>
         <span style={styles.headerActions}>
+          <span style={styles.accountWrap}>
+            {hostedSession ? (
+              <button
+                type="button"
+                className="aviso-popup-button"
+                aria-haspopup="dialog"
+                aria-expanded={accountPanelOpen}
+                aria-label={t("popup.hosted.account")}
+                onClick={() => setAccountPanelOpen((open) => !open)}
+                style={{
+                  ...styles.accountChip,
+                  borderColor: ui.line,
+                  color: ui.text2
+                }}>
+                <span
+                  style={{
+                    ...styles.accountAvatar,
+                    background: ui.accentSoft,
+                    color: ui.accent
+                  }}>
+                  {accountInitial}
+                </span>
+                <span style={{ ...styles.accountChipTier, color: ui.text3 }}>
+                  {hostedQuotaDisplay.tierLabel}
+                </span>
+                <AvisoIcon name="chevdown" size={12} />
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="aviso-popup-button"
+                onClick={() => void signInHosted()}
+                disabled={hostedBusy}
+                style={{
+                  ...styles.accountSignInBtn,
+                  borderColor: ui.accentBorder,
+                  background: ui.accentSoft,
+                  color: ui.accent,
+                  ...(hostedBusy ? styles.disabledBtn : {})
+                }}>
+                <AvisoIcon name="shield" size={13} />
+                {hostedBusy
+                  ? t("popup.hosted.statusLabel.signing_in")
+                  : t("popup.hosted.signIn")}
+              </button>
+            )}
+            {accountPanelOpen && hostedSession && (
+              <>
+                <div
+                  style={styles.accountBackdrop}
+                  onClick={() => setAccountPanelOpen(false)}
+                />
+                <div
+                  role="dialog"
+                  aria-label={t("popup.hosted.account")}
+                  style={{
+                    ...styles.accountPanel,
+                    background: ui.card,
+                    borderColor: ui.line,
+                    boxShadow: ui.popShadow
+                  }}>
+                  <div style={styles.accountPanelHead}>
+                    <span
+                      style={{
+                        ...styles.accountAvatarLg,
+                        background: ui.accentSoft,
+                        color: ui.accent
+                      }}>
+                      {accountInitial}
+                    </span>
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ ...styles.accountPanelName, color: ui.text }}>
+                        {hostedAccountLabel}
+                      </div>
+                      <div
+                        style={{ ...styles.accountPanelTier, color: ui.text3 }}>
+                        {hostedQuotaDisplay.tierLabel}
+                      </div>
+                    </div>
+                    <span
+                      style={{
+                        ...styles.statusPill,
+                        ...getDropdownStatusStyle(hostedStatusTone, ui),
+                        marginLeft: "auto"
+                      }}>
+                      {t(`popup.hosted.statusLabel.${hostedStatus}` as I18nKey)}
+                    </span>
+                  </div>
+                  <div style={styles.accountQuotaBlock}>
+                    <div style={{ ...styles.accountQuotaRow, color: ui.text3 }}>
+                      <span>{t("popup.hosted.monthlyQuota")}</span>
+                      <span>{hostedQuotaDisplay.monthlyQuotaLabel}</span>
+                    </div>
+                    {hostedQuotaPercent !== null && (
+                      <div style={{ ...styles.quotaBarTrack, background: ui.bg }}>
+                        <div
+                          style={{
+                            ...styles.quotaBarFill,
+                            width: `${hostedQuotaPercent}%`,
+                            background: hostedQuotaBarColor
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div style={{ ...styles.accountQuotaReset, color: ui.text3 }}>
+                      {t("popup.hosted.resetTiming")}:{" "}
+                      {hostedQuotaDisplay.resetLabel}
+                    </div>
+                  </div>
+                  <div style={styles.accountPanelActions}>
+                    <button
+                      type="button"
+                      className="aviso-popup-button"
+                      onClick={() => void refreshHostedAccount()}
+                      disabled={hostedBusy}
+                      style={{
+                        ...styles.accountActionBtn,
+                        borderColor: ui.line,
+                        color: ui.text2,
+                        ...(hostedBusy ? styles.disabledBtn : {})
+                      }}>
+                      <AvisoIcon name="refresh" size={13} />
+                      {t("popup.hosted.refresh")}
+                    </button>
+                    <button
+                      type="button"
+                      className="aviso-popup-button"
+                      onClick={() => {
+                        setTab("api")
+                        setAccountPanelOpen(false)
+                      }}
+                      style={{
+                        ...styles.accountActionBtn,
+                        borderColor: ui.line,
+                        color: ui.text2
+                      }}>
+                      {t("popup.account.manage")}
+                    </button>
+                  </div>
+                  <button
+                    type="button"
+                    className="aviso-popup-button"
+                    onClick={() => void signOutHostedLocal()}
+                    disabled={hostedBusy}
+                    style={{
+                      ...styles.accountSignOutBtn,
+                      color: ui.danger,
+                      ...(hostedBusy ? styles.disabledBtn : {})
+                    }}>
+                    <AvisoIcon name="close" size={13} />
+                    {t("popup.hosted.signOut")}
+                  </button>
+                </div>
+              </>
+            )}
+          </span>
           <span
             role="group"
             aria-label={t("popup.theme.aria")}
@@ -2183,6 +2371,93 @@ function Popup() {
         {/* 常规设置 */}
         {tab === "general" && (
           <>
+            {showZeroState && (
+              <div style={{ ...styles.zeroCard, borderBottomColor: ui.line }}>
+                <div style={{ ...styles.zeroTitle, color: ui.text }}>
+                  {t("popup.zero.title")}
+                </div>
+                <div style={{ ...styles.zeroSubtitle, color: ui.text3 }}>
+                  {t("popup.zero.subtitle")}
+                </div>
+                <div
+                  style={{
+                    ...styles.zeroOption,
+                    borderColor: ui.accentBorder,
+                    background: ui.accentSoft
+                  }}>
+                  <div style={styles.zeroOptionHead}>
+                    <AvisoIcon
+                      name="shield"
+                      size={15}
+                      style={{ color: ui.accent }}
+                    />
+                    <span style={{ ...styles.zeroOptionName, color: ui.text }}>
+                      {t("popup.hosted.title")}
+                    </span>
+                    <span
+                      style={{
+                        ...styles.zeroBadge,
+                        background: ui.accent,
+                        color: ui.accentText
+                      }}>
+                      {t("popup.zero.recommended")}
+                    </span>
+                  </div>
+                  <div style={{ ...styles.zeroOptionDesc, color: ui.text2 }}>
+                    {t("popup.zero.hosted.desc")}
+                  </div>
+                  <button
+                    type="button"
+                    className="aviso-popup-button"
+                    onClick={() => void signInHosted()}
+                    disabled={hostedBusy}
+                    style={{
+                      ...styles.zeroPrimaryBtn,
+                      background: ui.accent,
+                      color: ui.accentText,
+                      ...(hostedBusy ? styles.disabledBtn : {})
+                    }}>
+                    {hostedBusy
+                      ? t("popup.hosted.statusLabel.signing_in")
+                      : t("popup.zero.hosted.cta")}
+                  </button>
+                </div>
+                <div style={{ ...styles.zeroOption, borderColor: ui.line }}>
+                  <div style={styles.zeroOptionHead}>
+                    <AvisoIcon
+                      name="key"
+                      size={15}
+                      style={{ color: ui.text2 }}
+                    />
+                    <span style={{ ...styles.zeroOptionName, color: ui.text }}>
+                      {t("popup.zero.byok.title")}
+                    </span>
+                    <span
+                      style={{
+                        ...styles.zeroBadgeMuted,
+                        background: ui.pill,
+                        color: ui.text2
+                      }}>
+                      {t("popup.zero.byok.badge")}
+                    </span>
+                  </div>
+                  <div style={{ ...styles.zeroOptionDesc, color: ui.text2 }}>
+                    {t("popup.zero.byok.desc")}
+                  </div>
+                  <button
+                    type="button"
+                    className="aviso-popup-button"
+                    onClick={() => setTab("api")}
+                    style={{
+                      ...styles.zeroSecondaryBtn,
+                      borderColor: ui.line,
+                      color: ui.text
+                    }}>
+                    {t("popup.zero.byok.cta")}
+                  </button>
+                </div>
+              </div>
+            )}
             <div style={styles.homePane}>
               <div
                 style={{
@@ -4382,6 +4657,231 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 8,
     marginLeft: "auto"
+  },
+  accountWrap: {
+    position: "relative",
+    display: "inline-flex"
+  },
+  accountChip: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    height: 26,
+    padding: "0 7px 0 3px",
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 999,
+    background: "transparent",
+    cursor: "pointer"
+  },
+  accountAvatar: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 20,
+    height: 20,
+    borderRadius: 999,
+    fontFamily: aviso.font,
+    fontSize: 11,
+    fontWeight: 700
+  },
+  accountChipTier: {
+    fontFamily: aviso.font,
+    fontSize: 11,
+    fontWeight: 600
+  },
+  accountSignInBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 5,
+    height: 26,
+    padding: "0 11px",
+    border: `1px solid transparent`,
+    borderRadius: 999,
+    fontFamily: aviso.font,
+    fontSize: 12,
+    fontWeight: 700,
+    cursor: "pointer"
+  },
+  accountBackdrop: {
+    position: "fixed",
+    inset: 0,
+    zIndex: 40
+  },
+  accountPanel: {
+    position: "absolute",
+    top: "calc(100% + 6px)",
+    right: 0,
+    width: 270,
+    zIndex: 50,
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 14,
+    padding: 13,
+    display: "flex",
+    flexDirection: "column",
+    gap: 11,
+    textAlign: "left"
+  },
+  accountPanelHead: {
+    display: "flex",
+    alignItems: "center",
+    gap: 9
+  },
+  accountAvatarLg: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    width: 34,
+    height: 34,
+    borderRadius: 999,
+    flex: "0 0 auto",
+    fontFamily: aviso.font,
+    fontSize: 14,
+    fontWeight: 700
+  },
+  accountPanelName: {
+    fontFamily: aviso.font,
+    fontSize: 13,
+    fontWeight: 700,
+    overflow: "hidden",
+    textOverflow: "ellipsis",
+    whiteSpace: "nowrap"
+  },
+  accountPanelTier: {
+    fontFamily: aviso.font,
+    fontSize: 11,
+    fontWeight: 600
+  },
+  accountQuotaBlock: {
+    display: "flex",
+    flexDirection: "column",
+    gap: 6
+  },
+  accountQuotaRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    fontFamily: aviso.font,
+    fontSize: 12
+  },
+  quotaBarTrack: {
+    height: 6,
+    borderRadius: 999,
+    overflow: "hidden"
+  },
+  quotaBarFill: {
+    height: "100%",
+    borderRadius: 999
+  },
+  accountQuotaReset: {
+    fontFamily: aviso.font,
+    fontSize: 11
+  },
+  accountPanelActions: {
+    display: "flex",
+    gap: 7
+  },
+  accountActionBtn: {
+    flex: 1,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    height: 30,
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 9,
+    background: "transparent",
+    fontFamily: aviso.font,
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: "pointer"
+  },
+  accountSignOutBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    height: 30,
+    border: `1px solid transparent`,
+    borderRadius: 9,
+    background: "transparent",
+    fontFamily: aviso.font,
+    fontSize: 12,
+    fontWeight: 600,
+    cursor: "pointer"
+  },
+  zeroCard: {
+    padding: 15,
+    borderBottom: `1px solid var(--aviso-line)`,
+    display: "flex",
+    flexDirection: "column",
+    gap: 9
+  },
+  zeroTitle: {
+    fontFamily: aviso.font,
+    fontSize: 15,
+    fontWeight: 800
+  },
+  zeroSubtitle: {
+    fontFamily: aviso.font,
+    fontSize: 12,
+    marginTop: -4
+  },
+  zeroOption: {
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 12,
+    padding: "11px 12px",
+    display: "flex",
+    flexDirection: "column",
+    gap: 8
+  },
+  zeroOptionHead: {
+    display: "flex",
+    alignItems: "center",
+    gap: 7
+  },
+  zeroOptionName: {
+    fontFamily: aviso.font,
+    fontSize: 13,
+    fontWeight: 700
+  },
+  zeroBadge: {
+    fontFamily: aviso.font,
+    fontSize: 10,
+    fontWeight: 700,
+    padding: "2px 7px",
+    borderRadius: 999,
+    marginLeft: "auto"
+  },
+  zeroBadgeMuted: {
+    fontFamily: aviso.font,
+    fontSize: 10,
+    fontWeight: 700,
+    padding: "2px 7px",
+    borderRadius: 999,
+    marginLeft: "auto"
+  },
+  zeroOptionDesc: {
+    fontFamily: aviso.font,
+    fontSize: 12,
+    lineHeight: 1.5
+  },
+  zeroPrimaryBtn: {
+    height: 32,
+    border: "none",
+    borderRadius: 9,
+    fontFamily: aviso.font,
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer"
+  },
+  zeroSecondaryBtn: {
+    height: 32,
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 9,
+    background: "transparent",
+    fontFamily: aviso.font,
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer"
   },
   themeToggle: {
     display: "inline-grid",

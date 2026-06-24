@@ -70,6 +70,8 @@ Do not show a global sign-in wall when the extension opens. Common feature toggl
 
 Primary placement is the popup API/account area because account, quota, local backend status, and BYOK provider setup are settings-level concerns. The popup general tab may show a compact route/account summary for the active route.
 
+2026-06-24 update (MON-26, see [`../../issues/V03-FE09-hosted-signin-ux-redesign.md`](../../issues/V03-FE09-hosted-signin-ux-redesign.md)): a persistent account chip is added to the popup header as the primary at-a-glance identity surface. It shows signed-out vs signed-in plus the account tier, and opens a compact account panel (monthly quota meter, reset timing, refresh, manage-in-AI-services, sign out). This supersedes the earlier "account state lives only in the API tab" placement: the API/AI-service tab stays the settings-level detail/config surface, while the header chip + panel make login state explicit on every tab. The general tab additionally surfaces a non-blocking zero-state with a dual entry (sign in for free hosted quota, or add your own API key) when the user has neither a hosted session nor any BYOK config. No global sign-in wall is introduced, and paid/subscription/upgrade entries remain deferred per decision `0003`.
+
 The floating window should show only request-relevant account/quota states: sign in required, quota exhausted, rate limited, auth expired, hosted unavailable, or active hosted route. It should not become the main account dashboard.
 
 Quota copy in the local slice may reference account usage from `/v1/me`, but placeholder quota values remain development/QA details and must not become public marketing or Chrome Web Store copy.

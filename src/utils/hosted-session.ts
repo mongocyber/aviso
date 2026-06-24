@@ -225,6 +225,15 @@ export function buildHostedAccountQuotaDisplay(options: {
   }
 }
 
+export function getHostedMonthlyQuotaWindow(
+  session?: StoredHostedSession | null
+): { limit: number; used: number; resets_at: string } | null {
+  const me = session?.me
+  if (!me || typeof me.quota !== "object" || !me.quota) return null
+  const quota = me.quota as { monthly?: unknown }
+  return normalizeHostedQuotaWindow(quota.monthly)
+}
+
 export function formatHostedQuotaUsage(
   value: unknown,
   labels: Pick<HostedQuotaDisplayLabels, "tokens">,
