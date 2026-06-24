@@ -3485,6 +3485,8 @@ function Popup() {
                   </button>
                 </div>
               ))}
+            {!showZeroState && (
+            <>
             <div
               style={{
                 ...styles.panelCard,
@@ -3818,8 +3820,10 @@ function Popup() {
                 </div>
               </div>
             </div>
+            </>
+            )}
 
-            {providerConfigs.length === 0 && (
+            {providerConfigs.length === 0 && !showZeroState && (
               <p style={{ ...styles.emptyText, marginTop: 12 }}>
                 {t("popup.service.empty")}
               </p>
@@ -4289,6 +4293,7 @@ function Popup() {
               )
             })}
 
+            {!showZeroState && (
             <div
               style={{
                 ...styles.panelCard,
@@ -4307,6 +4312,7 @@ function Popup() {
                 {t("popup.privacyBoundary.helper")}
               </p>
             </div>
+            )}
             </>
             )}
           </div>
