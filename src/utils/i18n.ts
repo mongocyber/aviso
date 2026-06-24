@@ -595,6 +595,10 @@ const MESSAGES = {
     "zh-CN": "偏好",
     en: "Preferences"
   },
+  "popup.translationTarget.auto": {
+    "zh-CN": "自动",
+    en: "Auto"
+  },
   "popup.zero.recommended": {
     "zh-CN": "推荐",
     en: "Recommended"

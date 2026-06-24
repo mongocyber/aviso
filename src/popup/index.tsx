@@ -335,6 +335,14 @@ const POPUP_TRANSLATION_TARGET_LABELS: Record<
   de: "Deutsch"
 }
 
+function getTranslationTargetLabel(
+  value: Settings["inlineTranslationTargetLanguage"],
+  t: (key: I18nKey) => string
+): string {
+  if (value === "auto") return t("popup.translationTarget.auto")
+  return POPUP_TRANSLATION_TARGET_LABELS[value]
+}
+
 type ProviderActionMessage = {
   tone: "ok" | "warning" | "danger" | "muted"
   text: string
@@ -2797,11 +2805,10 @@ function Popup() {
                         "enableInlineTranslation",
                         "translate",
                         t("popup.features.translation"),
-                        `${t("popup.translationTargetPrefix")}${
-                          POPUP_TRANSLATION_TARGET_LABELS[
-                            settings.inlineTranslationTargetLanguage
-                          ]
-                        }`
+                        `${t("popup.translationTargetPrefix")}${getTranslationTargetLabel(
+                          settings.inlineTranslationTargetLanguage,
+                          t
+                        )}`
                       ],
                       [
                         "enableCommandPalette",
@@ -2908,11 +2915,10 @@ function Popup() {
                                   : 0.72
                               }}>
                               <span>
-                                {
-                                  POPUP_TRANSLATION_TARGET_LABELS[
-                                    settings.inlineTranslationTargetLanguage
-                                  ]
-                                }
+                                {getTranslationTargetLabel(
+                                  settings.inlineTranslationTargetLanguage,
+                                  t
+                                )}
                               </span>
                               <AvisoIcon name="chevdown" size={13} />
                             </button>
@@ -2954,11 +2960,10 @@ function Popup() {
                                             ? ui.accentSoft
                                             : "transparent"
                                         }}>
-                                        {
-                                          POPUP_TRANSLATION_TARGET_LABELS[
-                                            option.value
-                                          ]
-                                        }
+                                        {getTranslationTargetLabel(
+                                          option.value,
+                                          t
+                                        )}
                                       </button>
                                     )
                                   })}
@@ -5909,6 +5914,7 @@ const styles: Record<string, React.CSSProperties> = {
   compactLocalTitle: {
     display: "block",
     minWidth: 0,
+    minHeight: 30,
     fontSize: 12.5,
     fontWeight: 600,
     lineHeight: 1.2,
@@ -5918,6 +5924,7 @@ const styles: Record<string, React.CSSProperties> = {
   compactLocalHelper: {
     display: "block",
     minWidth: 0,
+    minHeight: 27,
     fontSize: 10.5,
     lineHeight: 1.3,
     whiteSpace: "normal",
