@@ -1307,8 +1307,8 @@ const MESSAGES = {
     en: "AI not connected"
   },
   "command.aiDisconnectedDetail": {
-    "zh-CN": "请先在 Popup 的 AI 服务页连接自己的 AI 服务。",
-    en: "Connect your AI service in the popup first."
+    "zh-CN": "请登录 Aviso AI，或在 AI 服务页配置自己的 API Key。",
+    en: "Sign in to Aviso AI, or configure your own API key in AI services."
   },
   "command.selectionPrefix": {
     "zh-CN": "选中文字：",
@@ -1427,22 +1427,54 @@ const MESSAGES = {
     en: "Ask a follow-up..."
   },
   "floating.hostedSignInRequired.title": {
-    "zh-CN": "需要先登录托管服务",
-    en: "Sign in to use hosted AI"
+    "zh-CN": "需要登录 Aviso AI",
+    en: "Sign in to Aviso AI"
   },
   "floating.hostedSignInRequired.withByok": {
     "zh-CN":
-      "这个请求选择了托管路线。你可以先在 AI 服务页完成本地登录，也可以继续使用自己的服务配置。",
-    en: "This request selected the hosted route. Sign in from AI services, or continue with your own service configuration."
+      "这个请求选择了 Aviso AI。请先在 AI 服务页登录，或切换到自己的服务配置。",
+    en: "This request selected Aviso AI. Sign in from AI services, or switch to your own service configuration."
   },
   "floating.hostedSignInRequired.noByok": {
     "zh-CN":
-      "这个请求选择了托管路线。请先在 AI 服务页完成本地登录，或配置自己的 AI 服务。",
-    en: "This request selected the hosted route. Sign in from AI services, or configure your own AI service."
+      "这个请求选择了 Aviso AI。请先在 AI 服务页登录，或配置自己的 API Key。",
+    en: "This request selected Aviso AI. Sign in from AI services, or configure your own API key."
   },
   "floating.hostedSignInRequired.configureByok": {
     "zh-CN": "配置自己的服务",
     en: "Configure own service"
+  },
+  "aiUnavailable.hostedSignIn.title": {
+    "zh-CN": "需要登录 Aviso AI",
+    en: "Sign in to Aviso AI"
+  },
+  "aiUnavailable.hostedSignIn.detail": {
+    "zh-CN": "请先登录 Aviso AI；如果想继续用自己的服务，可以在 AI 服务页切换。",
+    en: "Sign in to Aviso AI first. To keep using your own service, switch from AI services."
+  },
+  "aiUnavailable.apiKeyMissing.title": {
+    "zh-CN": "AI 服务还不能使用",
+    en: "AI service is not ready"
+  },
+  "aiUnavailable.apiKeyMissing.detail": {
+    "zh-CN": "请登录 Aviso AI，或在 AI 服务页配置自己的 API Key。",
+    en: "Sign in to Aviso AI, or configure your own API key in AI services."
+  },
+  "aiUnavailable.modelMissing.title": {
+    "zh-CN": "模型或接入点未配置",
+    en: "Model or endpoint is missing"
+  },
+  "aiUnavailable.modelMissing.detail": {
+    "zh-CN": "请去 AI 服务页补全模型 ID 或接入点，或切换到已配置的服务。",
+    en: "Open AI services to complete the model ID or endpoint, or switch to a configured service."
+  },
+  "aiUnavailable.serviceUnavailable.title": {
+    "zh-CN": "当前 AI 服务不可用",
+    en: "AI service is unavailable"
+  },
+  "aiUnavailable.serviceUnavailable.detail": {
+    "zh-CN": "请稍后重试，或去 AI 服务页切换到自己的服务配置。",
+    en: "Retry later, or switch to your own service configuration from AI services."
   },
   "translation.autoTitle": {
     "zh-CN": "自动翻译",

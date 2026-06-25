@@ -5,6 +5,7 @@ import type {
   MessageRequest,
   MessageResponse
 } from "~types/messages"
+import { deriveAiUnavailableGuidance } from "~utils/ai-unavailable-guidance"
 import { buildSafeErrorLog, normalizeError } from "~utils/errors"
 import { createI18n, resolveSettingsUiLanguage } from "~utils/i18n"
 import { parseIntentLocally } from "~utils/intent"
@@ -230,13 +231,14 @@ async function runAIRequestToFrame(input: {
     }
   } catch (err) {
     const error = normalizeError(err)
+    const guidance = deriveAiUnavailableGuidance(error)
     await streamChunks.flush()
     if (tabId) {
       await sendMessageToFrame(
         tabId,
         {
           action: "AI_STREAM_ERROR",
-          payload: { error, requestId }
+          payload: { error, requestId, guidance }
         },
         {
           frameId: responseFrameId,
@@ -244,7 +246,11 @@ async function runAIRequestToFrame(input: {
         }
       )
     }
-    return { success: false, error }
+    return {
+      success: false,
+      error,
+      meta: guidance ? { aiGuidance: guidance } : undefined
+    }
   } finally {
     if (activeAIRequests.get(requestId) === abortController) {
       activeAIRequests.delete(requestId)
@@ -534,7 +540,8 @@ async function handleMessage(
       case "RUN_COMMAND_QUICK_ACTION": {
         const response = await handleCommandQuickAction(
           request.payload.actionId,
-          sender
+          sender,
+          { aiRoute: request.payload.aiRoute }
         )
         sendResponse(response)
         break
