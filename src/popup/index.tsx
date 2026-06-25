@@ -1732,7 +1732,8 @@ function Popup() {
 
   const defaultProviderConfigId = resolveDefaultProviderConfigId(
     settings,
-    providerConfigs
+    providerConfigs,
+    hostedStatus === "signed_in"
   )
   const isHostedDefaultSelected = isHostedAiProviderConfigId(
     defaultProviderConfigId
@@ -2459,73 +2460,18 @@ function Popup() {
               <div
                 style={{
                   ...styles.controlCard,
-                  borderBottomColor: ui.line
+                  borderBottom: "none"
                 }}>
-                <div style={styles.controlHead}>
-                  <span style={{ ...styles.controlTitle, color: ui.text }}>
-                    <AvisoIcon
-                      name="model"
-                      size={16}
-                      style={{ color: ui.accent }}
-                    />
-                    {t("popup.currentModel")}
-                  </span>
-                  <span style={styles.controlHeadActions}>
-                    <span
-                      style={{
-                        ...styles.statusPill,
-                        ...getDropdownStatusStyle(
-                          serviceReady
-                            ? "ok"
-                            : serviceFailed
-                              ? "danger"
-                              : "warning",
-                          ui
-                        )
-                      }}>
-                      {serviceReady
-                        ? t("popup.status.ready")
-                        : serviceFailed
-                          ? t("popup.status.check")
-                          : t("popup.status.unconfigured")}
-                    </span>
-                    <button
-                      type="button"
-                      className="aviso-popup-button"
-                      title={t("popup.testCurrentModel")}
-                      aria-label={t("popup.testCurrentModel")}
-                      onClick={() =>
-                        isHostedDefaultSelected
-                          ? hostedSession
-                            ? void refreshHostedAccount()
-                            : void signInHosted()
-                          : selectedProviderConfig
-                            ? testProviderConfigInstance(selectedProviderConfig)
-                            : testProviderConnectivity(
-                                selectedRoute.provider.id,
-                                selectedProviderKeyValue
-                              )
-                      }
-                      disabled={
-                        isHostedDefaultSelected
-                          ? hostedBusy
-                          : testingProvider !== null ||
-                            testingProviderConfigId !== null
-                      }
-                      style={{
-                        ...styles.iconBtn,
-                        borderColor: ui.line,
-                        color: ui.text2,
-                        ...((isHostedDefaultSelected
-                          ? hostedBusy
-                          : testingProvider !== null ||
-                            testingProviderConfigId !== null)
-                          ? styles.disabledBtn
-                          : {})
-                      }}>
-                      <AvisoIcon name="refresh" size={15} />
-                    </button>
-                  </span>
+                <div style={{ ...styles.controlSectionTitle, color: ui.text3 }}>
+                  <AvisoIcon
+                    name="model"
+                    size={13}
+                    style={{ color: ui.text3 }}
+                  />
+                  {t("popup.currentModel")}
+                  <span
+                    style={{ ...styles.sectionLine, background: ui.line }}
+                  />
                 </div>
 
                 <div ref={modelDropdownRef} style={styles.dropdown}>
@@ -2769,9 +2715,6 @@ function Popup() {
                     </div>
                   )}
                 </div>
-                <p style={{ ...styles.controlHelp, color: ui.text3 }}>
-                  {t("popup.currentModelHelp")}
-                </p>
               </div>
               )}
 
@@ -3305,48 +3248,69 @@ function Popup() {
                 <p style={{ ...styles.byokP, color: ui.text2 }}>
                   {t("popup.zero.byok.desc")}
                 </p>
-                <button
-                  type="button"
-                  className="aviso-popup-button"
-                  onClick={() => {
-                    addProviderConfigDraft("openai")
-                    setTimeout(
-                      () =>
-                        document
-                          .getElementById("aviso-popup-content")
-                          ?.scrollTo({ top: 99999, behavior: "smooth" }),
-                      0
-                    )
-                  }}
-                  style={{
-                    ...styles.ghostBtn,
-                    borderColor: ui.line,
-                    color: ui.text
-                  }}>
-                  <AvisoIcon name="key" size={15} style={{ color: ui.text3 }} />
-                  {t("popup.zero.byok.cta")}
-                </button>
-                <div
-                  style={{
-                    ...styles.privLine,
-                    borderTopColor: ui.line,
-                    color: ui.text3
-                  }}>
-                  <AvisoIcon
-                    name="shield"
-                    size={14}
-                    style={{ color: ui.accent, flex: "0 0 auto", marginTop: 1 }}
-                  />
-                  <span>
-                    {t("popup.zero.privacy")}{" "}
-                    <button
-                      type="button"
-                      className="aviso-popup-button"
-                      onClick={() => setShowPrivacy((v) => !v)}
-                      style={{ ...styles.privLink, color: ui.accent }}>
-                      {t("popup.footer.privacy")} ›
-                    </button>
-                  </span>
+                <div ref={providerDropdownRef} style={styles.providerDropdown}>
+                  <button
+                    type="button"
+                    className="aviso-popup-button"
+                    aria-haspopup="listbox"
+                    aria-expanded={providerDropdownOpen}
+                    onClick={() => setProviderDropdownOpen((open) => !open)}
+                    style={{
+                      ...styles.ghostBtn,
+                      borderColor: providerDropdownOpen
+                        ? ui.accentBorder
+                        : ui.line,
+                      color: ui.text
+                    }}>
+                    <AvisoIcon
+                      name="key"
+                      size={15}
+                      style={{ color: ui.text3 }}
+                    />
+                    {t("popup.zero.byok.cta")}
+                    <AvisoIcon
+                      name="chevdown"
+                      size={15}
+                      style={{
+                        color: ui.text3,
+                        transform: providerDropdownOpen
+                          ? "rotate(180deg)"
+                          : "none"
+                      }}
+                    />
+                  </button>
+                  {providerDropdownOpen && (
+                    <div
+                      role="listbox"
+                      aria-label={t("popup.service.addAria")}
+                      style={{
+                        ...styles.providerMenu,
+                        left: 0,
+                        right: 0,
+                        width: "auto",
+                        top: "auto",
+                        bottom: "calc(100% + 6px)",
+                        maxHeight: 320,
+                        overflowY: "auto",
+                        background: ui.surface2,
+                        borderColor: ui.line
+                      }}>
+                      {PROVIDER_ORDER.map((provider) => (
+                        <button
+                          key={provider}
+                          type="button"
+                          className="aviso-dropdown-option"
+                          onClick={() => addProviderConfigDraft(provider)}
+                          style={{
+                            ...styles.dropdownOption,
+                            minHeight: 34,
+                            color: ui.text2
+                          }}>
+                          {getProviderCopy(provider, t).addLabel}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </>
             )}
@@ -3430,6 +3394,9 @@ function Popup() {
                       </div>
                     )}
                     <div style={{ ...styles.acardMeta, color: ui.text3 }}>
+                      {t("popup.hosted.dailyQuota")}:{" "}
+                      {hostedQuotaDisplay.dailyQuotaLabel}
+                      {" · "}
                       {t("popup.hosted.resetTiming")}:{" "}
                       {hostedQuotaDisplay.resetLabel}
                     </div>
@@ -3487,36 +3454,13 @@ function Popup() {
               ))}
             {!showZeroState && (
             <>
-            <div
-              style={{
-                ...styles.panelCard,
-                background: ui.bg,
-                borderColor: ui.line
-              }}>
-              <h3 style={{ ...styles.panelTitle, color: ui.text }}>
-                <AvisoIcon name="key" size={16} style={{ color: ui.accent }} />
-                {t("popup.service.title")}
-              </h3>
-              <p style={{ ...styles.helper, color: ui.text3 }}>
-                {t("popup.service.helper")}
-              </p>
-            </div>
-
-            <div
-              style={{
-                ...styles.fastServiceCard,
-                background: ui.bg,
-                borderColor: ui.line
-              }}>
-              <label style={styles.fastServiceLabel}>
-                <span style={{ ...styles.panelTitle, color: ui.text }}>
-                  <AvisoIcon
-                    name="model"
-                    size={16}
-                    style={{ color: ui.accent }}
-                  />
-                  {t("popup.service.fastTitle")}
-                </span>
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ ...styles.controlSectionTitle, color: ui.text3 }}>
+                {t("popup.service.fastTitle")}
+                <span
+                  style={{ ...styles.sectionLine, background: ui.line }}
+                />
+              </div>
                 <div
                   ref={fastServiceDropdownRef}
                   style={styles.fastServiceDropdown}>
@@ -3621,7 +3565,6 @@ function Popup() {
                     </div>
                   )}
                 </div>
-              </label>
               <p
                 style={{
                   ...styles.helper,
@@ -3671,6 +3614,7 @@ function Popup() {
                         onClick={() => addProviderConfigDraft(provider)}
                         style={{
                           ...styles.dropdownOption,
+                          minHeight: 34,
                           color: ui.text2
                         }}>
                         {getProviderCopy(provider, t).addLabel}
@@ -3681,153 +3625,85 @@ function Popup() {
               </div>
             </div>
 
-            <div
+            <button
+              type="button"
+              className="aviso-popup-button"
+              onClick={() =>
+                hostedStatus === "signed_in"
+                  ? void setDefaultHostedAiService()
+                  : void signInHosted()
+              }
+              disabled={hostedBusy}
               style={{
-                ...styles.serviceConfigCard,
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                width: "100%",
+                textAlign: "left",
+                padding: "10px 12px",
+                marginBottom: 9,
+                border: `1px solid ${
+                  isHostedDefaultSelected ? ui.accentBorder : ui.line
+                }`,
+                borderRadius: 14,
                 background: ui.bg,
-                borderColor: isHostedDefaultSelected
-                  ? ui.accentBorder
-                  : ui.line
+                boxShadow: isHostedDefaultSelected ? ui.activeShadow : "none",
+                fontFamily: "inherit",
+                cursor: hostedBusy ? "default" : "pointer",
+                ...(hostedBusy ? styles.disabledBtn : {})
               }}>
-              <div style={styles.serviceConfigTop}>
-                <span style={{ ...styles.serviceConfigName, color: ui.text }}>
-                  <AvisoIcon
-                    name="shield"
-                    size={16}
-                    style={{ color: ui.accent }}
-                  />
-                  {t("popup.hosted.title")}
+              <span
+                style={{
+                  width: 28,
+                  height: 28,
+                  flex: "none",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  borderRadius: 8,
+                  background: ui.accentSoft,
+                  color: ui.accent
+                }}>
+                <AvisoMark size={18} />
+              </span>
+              <span
+                style={{
+                  flex: 1,
+                  minWidth: 0,
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 2
+                }}>
+                <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                  <strong
+                    style={{ fontSize: 13, fontWeight: 700, color: ui.text }}>
+                    {t("popup.hosted.title")}
+                  </strong>
+                  {isHostedDefaultSelected && (
+                    <span
+                      style={{
+                        ...styles.statusPill,
+                        ...getDropdownStatusStyle("muted", ui)
+                      }}>
+                      {t("popup.provider.status.default")}
+                    </span>
+                  )}
                 </span>
-                <span style={styles.serviceIconActions}>
-                  <button
-                    type="button"
-                    title={t("popup.service.setDefault")}
-                    aria-label={`${t("popup.service.setDefault")} ${t("popup.hosted.title")}`}
-                    className="aviso-popup-button"
-                    onClick={() => void setDefaultHostedAiService()}
-                    disabled={isHostedDefaultSelected}
-                    style={{
-                      ...styles.iconBtn,
-                      borderColor: ui.line,
-                      color: ui.text2,
-                      ...(isHostedDefaultSelected ? styles.disabledBtn : {})
-                    }}>
-                    <AvisoIcon name="check" size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    title={t("popup.hosted.signIn")}
-                    aria-label={t("popup.hosted.signIn")}
-                    className="aviso-popup-button"
-                    onClick={() => void signInHosted()}
-                    disabled={hostedBusy || hostedStatus === "signed_in"}
-                    style={{
-                      ...styles.iconBtn,
-                      borderColor: ui.line,
-                      color: ui.text2,
-                      ...(hostedBusy || hostedStatus === "signed_in"
-                        ? styles.disabledBtn
-                        : {})
-                    }}>
-                    <AvisoIcon name="shield" size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    title={t("popup.hosted.refresh")}
-                    aria-label={t("popup.hosted.refresh")}
-                    className="aviso-popup-button"
-                    onClick={() => void refreshHostedAccount()}
-                    disabled={hostedBusy || !hostedSession}
-                    style={{
-                      ...styles.iconBtn,
-                      borderColor: ui.line,
-                      color: ui.text2,
-                      ...(hostedBusy || !hostedSession
-                        ? styles.disabledBtn
-                        : {})
-                    }}>
-                    <AvisoIcon name="refresh" size={14} />
-                  </button>
-                  <button
-                    type="button"
-                    title={t("popup.hosted.signOut")}
-                    aria-label={t("popup.hosted.signOut")}
-                    className="aviso-popup-button"
-                    onClick={() => void signOutHostedLocal()}
-                    disabled={hostedBusy || !hostedSession}
-                    style={{
-                      ...styles.iconBtn,
-                      borderColor: ui.line,
-                      color: ui.text2,
-                      ...(hostedBusy || !hostedSession
-                        ? styles.disabledBtn
-                        : {})
-                    }}>
-                    <AvisoIcon name="close" size={14} />
-                  </button>
+                <span style={{ fontSize: 11.5, color: ui.text3 }}>
+                  {t("popup.hosted.compactSub")}
                 </span>
-              </div>
-              <div style={{ ...styles.serviceConfigMeta, color: ui.text3 }}>
-                {isHostedDefaultSelected && (
-                  <span
-                    style={{
-                      ...styles.statusPill,
-                      ...getDropdownStatusStyle("muted", ui)
-                    }}>
-                    {t("popup.provider.status.default")}
-                  </span>
-                )}
-                <span
-                  style={{
-                    ...styles.statusPill,
-                    ...getDropdownStatusStyle(hostedStatusTone, ui)
-                  }}>
-                  {t(`popup.hosted.statusLabel.${hostedStatus}` as I18nKey)}
-                </span>
-                {t("popup.hosted.optionHelper")}
-              </div>
-              <p style={{ ...styles.helper, color: ui.text3 }}>
-                {t("popup.hosted.helper")}
-              </p>
-              <div style={{ ...styles.hostedAccountMeta, color: ui.text3 }}>
-                <div style={styles.configStateRow}>
-                  <span>{t("popup.hosted.localBackend")}</span>
-                  <strong>{HOSTED_AI_DEFAULT_BASE_URL}</strong>
-                </div>
-                <div style={styles.configStateRow}>
-                  <span>{t("popup.hosted.account")}</span>
-                  <strong>{hostedAccountLabel}</strong>
-                </div>
-                <div style={styles.configStateRow}>
-                  <span>{t("popup.hosted.tier")}</span>
-                  <strong>{hostedQuotaDisplay.tierLabel}</strong>
-                </div>
-                <div style={styles.configStateRow}>
-                  <span>{t("popup.hosted.monthlyQuota")}</span>
-                  <strong>{hostedQuotaDisplay.monthlyQuotaLabel}</strong>
-                </div>
-                <div style={styles.configStateRow}>
-                  <span>{t("popup.hosted.dailyQuota")}</span>
-                  <strong>{hostedQuotaDisplay.dailyQuotaLabel}</strong>
-                </div>
-                <div style={styles.configStateRow}>
-                  <span>{t("popup.hosted.resetTiming")}</span>
-                  <strong>{hostedQuotaDisplay.resetLabel}</strong>
-                </div>
-                <div style={styles.configStateRow}>
-                  <span>{t("popup.hosted.latestStatus")}</span>
-                  <strong>{t(hostedMessageKey)}</strong>
-                </div>
-              </div>
-            </div>
+              </span>
+              <span
+                style={{
+                  ...styles.statusPill,
+                  ...getDropdownStatusStyle(hostedStatusTone, ui)
+                }}>
+                {t(`popup.hosted.statusLabel.${hostedStatus}` as I18nKey)}
+              </span>
+            </button>
             </>
             )}
 
-            {providerConfigs.length === 0 && !showZeroState && (
-              <p style={{ ...styles.emptyText, marginTop: 12 }}>
-                {t("popup.service.empty")}
-              </p>
-            )}
 
             {providerConfigs.map((config) => {
               const copy = getProviderCopy(config.provider, t)
@@ -3928,6 +3804,7 @@ function Popup() {
                   }}
                   style={{
                     ...styles.serviceConfigCard,
+                    ...(showZeroState ? { marginTop: 24 } : {}),
                     background: ui.bg,
                     borderColor:
                       isActive || isDefault ? ui.accentBorder : ui.line,
@@ -4342,6 +4219,30 @@ function Popup() {
             </div>
             )}
             </>
+            )}
+            {showZeroState && (
+            <div
+              style={{
+                ...styles.privLine,
+                borderTopColor: ui.line,
+                color: ui.text3
+              }}>
+              <AvisoIcon
+                name="shield"
+                size={14}
+                style={{ color: ui.accent, flex: "0 0 auto", marginTop: 1 }}
+              />
+              <span>
+                {t("popup.zero.privacy")}{" "}
+                <button
+                  type="button"
+                  className="aviso-popup-button"
+                  onClick={() => setShowPrivacy((v) => !v)}
+                  style={{ ...styles.privLink, color: ui.accent }}>
+                  {t("popup.footer.privacy")} ›
+                </button>
+              </span>
+            </div>
             )}
           </div>
         )}
@@ -5034,13 +4935,14 @@ const styles: Record<string, React.CSSProperties> = {
     color: aviso.darkText3
   },
   headerActions: {
+    position: "relative",
     display: "inline-flex",
     alignItems: "center",
     gap: 8,
     marginLeft: "auto"
   },
   accountWrap: {
-    position: "relative",
+    position: "static",
     display: "inline-flex"
   },
   accountChip: {
@@ -5564,42 +5466,6 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 12,
     borderBottom: `1px solid var(--aviso-line)`
   },
-  controlHead: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 9,
-    marginBottom: 9
-  },
-  controlHeadActions: {
-    display: "flex",
-    alignItems: "center",
-    gap: 7
-  },
-  controlTitle: {
-    display: "flex",
-    alignItems: "center",
-    gap: 8,
-    minWidth: 0,
-    fontSize: 14,
-    fontWeight: 800,
-    lineHeight: 1.35
-  },
-  controlHelp: {
-    margin: "8px 0 0",
-    fontSize: 11.5,
-    lineHeight: 1.45
-  },
-  fastServiceCard: {
-    padding: "12px",
-    marginBottom: 12,
-    border: `1px solid var(--aviso-line)`,
-    borderRadius: aviso.radiusMd
-  },
-  fastServiceLabel: {
-    display: "grid",
-    gap: 9
-  },
   fastServiceDropdown: {
     position: "relative",
     width: "100%",
@@ -5675,11 +5541,6 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "space-between",
     gap: 10
-  },
-  hostedAccountMeta: {
-    marginTop: 9,
-    borderTop: `1px solid var(--aviso-line)`,
-    paddingTop: 8
   },
   hostedAccountActions: {
     display: "flex",

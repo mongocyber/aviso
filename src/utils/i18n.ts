@@ -149,11 +149,6 @@ const MESSAGES = {
     "zh-CN": "配置",
     en: "Configure"
   },
-  "popup.currentModelHelp": {
-    "zh-CN":
-      "AI 动作用当前模型；复制上下文、搜索记录、恢复对话等本地动作不受影响。",
-    en: "AI actions use this model. Local actions such as copy context, search, and restore are not affected."
-  },
   "popup.commonFeatures": {
     "zh-CN": "常用功能",
     en: "Common features"
@@ -554,15 +549,6 @@ const MESSAGES = {
     "zh-CN": "测试中...",
     en: "Testing..."
   },
-  "popup.service.title": {
-    "zh-CN": "配置和连通测试",
-    en: "Configuration and connection test"
-  },
-  "popup.service.helper": {
-    "zh-CN":
-      "在这里配置自己的 AI 服务。保存草稿不等于连接测试通过；API Key 只保存在本地浏览器，非密钥设置保存在同步设置中。",
-    en: "Configure your own AI services here. Saving a draft does not mean the connection test passed. API keys stay in local browser storage; non-secret settings use sync storage."
-  },
   "popup.account.manage": {
     "zh-CN": "在 AI 服务中管理",
     en: "Manage in AI services"
@@ -654,6 +640,10 @@ const MESSAGES = {
   "popup.hosted.optionHelper": {
     "zh-CN": "官方后端 · free-small",
     en: "Aviso backend · free-small"
+  },
+  "popup.hosted.compactSub": {
+    "zh-CN": "官方服务 · 登录可用",
+    en: "Official service · sign in to use"
   },
   "popup.hosted.localBackend": {
     "zh-CN": "后端",
@@ -866,10 +856,6 @@ const MESSAGES = {
   "popup.service.addAria": {
     "zh-CN": "选择要添加的 AI 服务",
     en: "Choose an AI service to add"
-  },
-  "popup.service.empty": {
-    "zh-CN": "暂无自己的 AI 服务配置。可继续使用 Aviso AI，或点击“添加”创建 BYOK 配置。",
-    en: "No personal AI service configured. You can keep using Aviso AI, or click Add to create a BYOK configuration."
   },
   "popup.service.ready": {
     "zh-CN": "AI 服务可以使用",

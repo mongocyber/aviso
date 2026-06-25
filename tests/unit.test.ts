@@ -652,10 +652,6 @@ test("popup adds local hosted account controls without hiding provider setup", (
   assert.match(popupSource, /popup\.provider\.hunyuan/)
   assert.equal(getI18nMessage("popup.provider.gemini", "en"), "Gemini")
   assert.equal(getI18nMessage("popup.provider.hunyuan", "zh-CN"), "腾讯混元")
-  assert.match(
-    getI18nMessage("popup.service.helper", "en"),
-    /Configure your own AI services/
-  )
   assert.equal(getI18nMessage("popup.templates.title", "zh-CN"), "常用指令")
 })
 
@@ -1478,7 +1474,6 @@ test("popup high-fidelity settings panel keeps four tabs and local theme setting
   assert.match(popupSource, /popup\.addAiService/)
   assert.match(popupSource, /popup\.localAvailable/)
   assert.match(popupSource, /popup\.language\.title/)
-  assert.match(popupSource, /popup\.service\.title/)
   assert.match(popupSource, /type ProviderCardMode = "view" \| "edit" \| "add"/)
   assert.match(popupSource, /providerConfigs/)
   assert.match(popupSource, /providerConfigKeyInputs/)
@@ -1489,10 +1484,6 @@ test("popup high-fidelity settings panel keeps four tabs and local theme setting
   assert.match(popupSource, /popup\.service\.editConfig/)
   assert.match(popupSource, /popup\.service\.deleteDraft/)
   assert.match(popupSource, /popup\.history\.title/)
-  assert.equal(
-    getI18nMessage("popup.service.title", "en"),
-    "Configuration and connection test"
-  )
   assert.equal(
     getI18nMessage("popup.history.title", "en"),
     "Recent chats are saved automatically"
@@ -1581,8 +1572,6 @@ test("ui language copy lookup keeps Chinese and English surface labels", () => {
 
   assert.equal(zh("popup.tabs.general"), "设置")
   assert.equal(en("popup.tabs.general"), "Settings")
-  assert.equal(zh("popup.service.title"), "配置和连通测试")
-  assert.equal(en("popup.service.title"), "Configuration and connection test")
   assert.equal(zh("popup.templates.title"), "常用指令")
   assert.equal(en("popup.templates.title"), "Saved prompts")
   assert.equal(zh("popup.history.title"), "最近对话会自动保存")
