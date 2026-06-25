@@ -71,9 +71,12 @@ import {
   HOSTED_SESSION_STORAGE_KEY,
   isByokBlockedByHostedSignIn,
   isHostedAiProviderConfigId,
+  isHostedSessionUsable,
   readHostedSession,
   requiresHostedSignInForRoute,
-  saveHostedSession
+  saveHostedSession,
+  selectConfiguredHostedRoute,
+  type StoredHostedSession
 } from "../src/utils/hosted-session.ts"
 import {
   createI18n,
@@ -652,11 +655,41 @@ test("popup adds local hosted account controls without hiding provider setup", (
   assert.match(popupSource, /popup\.provider\.hunyuan/)
   assert.equal(getI18nMessage("popup.provider.gemini", "en"), "Gemini")
   assert.equal(getI18nMessage("popup.provider.hunyuan", "zh-CN"), "腾讯混元")
-  assert.match(
-    getI18nMessage("popup.service.helper", "en"),
-    /Configure your own AI services/
-  )
   assert.equal(getI18nMessage("popup.templates.title", "zh-CN"), "常用指令")
+})
+
+test("popup surfaces explicit account chip and zero-state dual entry (MON-26)", () => {
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+  // Persistent identity affordance: header account chip + account panel
+  assert.match(popupSource, /accountPanelOpen/)
+  assert.match(popupSource, /styles\.accountChip/)
+  assert.match(popupSource, /styles\.accountPanel/)
+  assert.match(popupSource, /hostedQuotaPercent/)
+  // Zero-state dual entry (sign in for free quota OR add own key), not a wall
+  assert.match(popupSource, /showZeroState/)
+  // Zero-state opens on the AI services tab by default (smart default)
+  assert.match(popupSource, /hasByokAtLoad/)
+  assert.match(popupSource, /popup\.zero\.title/)
+  assert.match(popupSource, /popup\.zero\.hosted\.cta/)
+  assert.match(popupSource, /popup\.zero\.byok\.cta/)
+  // Jargon stays in i18n, not hardcoded in source
+  assert.equal(popupSource.includes("BYOK"), false)
+  // Subscription stays deferred: no upgrade/checkout entry shipped
+  assert.equal(popupSource.includes("升级"), false)
+  assert.equal(/\bUpgrade\b/.test(popupSource), false)
+  // i18n strings exist for the new surfaces
+  assert.equal(getI18nMessage("popup.zero.title", "zh-CN"), "开始使用")
+  assert.equal(
+    getI18nMessage("popup.zero.hosted.cta", "en"),
+    "Sign in / sign up"
+  )
+  assert.equal(
+    getI18nMessage("popup.account.manage", "zh-CN"),
+    "在 AI 服务中管理"
+  )
 })
 
 test("hosted AI base URL is explicit and limited to local or staging", () => {
@@ -1213,6 +1246,118 @@ test("hosted account quota display formats me data and missing states", () => {
   )
 })
 
+test("runtime hosted route falls back to BYOK unless hosted is explicitly chosen (MON-26)", () => {
+  const makeSession = (
+    token: string,
+    expiresAt: string
+  ): StoredHostedSession => ({
+    session: {
+      session_token: token,
+      expires_at: expiresAt,
+      user: { id: "u", tier: "free", region: "global" }
+    },
+    baseUrl: HOSTED_AI_STAGING_BASE_URL,
+    updatedAt: 0
+  })
+  const valid = makeSession("tok", "2099-01-01T00:00:00.000Z")
+  const expired = makeSession("tok", "2000-01-01T00:00:00.000Z")
+
+  // "hosted usable" = token present AND not expired — the single judgment shared
+  // by popup, context menu and runtime.
+  assert.equal(isHostedSessionUsable(null), false)
+  assert.equal(isHostedSessionUsable(valid), true)
+  assert.equal(isHostedSessionUsable(expired), false)
+  assert.equal(
+    isHostedSessionUsable(makeSession("", "2099-01-01T00:00:00.000Z")),
+    false
+  )
+  // expiry honoured against an injected clock
+  assert.equal(
+    isHostedSessionUsable(valid, Date.parse("2099-06-01T00:00:00.000Z")),
+    false
+  )
+
+  // explicit hosted route still requires sign-in when the session isn't usable
+  assert.equal(
+    requiresHostedSignInForRoute({ route: "hosted", session: null }),
+    true
+  )
+  assert.equal(
+    requiresHostedSignInForRoute({ route: "hosted", session: expired }),
+    true
+  )
+  assert.equal(
+    requiresHostedSignInForRoute({ route: "hosted", session: valid }),
+    false
+  )
+  assert.equal(
+    requiresHostedSignInForRoute({ route: "byok", session: null }),
+    false
+  )
+
+  // signed-out hosted *default* must not block BYOK
+  assert.equal(
+    selectConfiguredHostedRoute({
+      hostedExplicit: false,
+      hostedIsSavedDefault: true,
+      hostedUsable: false,
+      hasByokFallback: true
+    }),
+    false
+  )
+  // explicit hosted request keeps the hosted route (sign-in enforced downstream)
+  assert.equal(
+    selectConfiguredHostedRoute({
+      hostedExplicit: true,
+      hostedIsSavedDefault: true,
+      hostedUsable: false,
+      hasByokFallback: true
+    }),
+    true
+  )
+  // a usable hosted default uses hosted
+  assert.equal(
+    selectConfiguredHostedRoute({
+      hostedExplicit: false,
+      hostedIsSavedDefault: true,
+      hostedUsable: true,
+      hasByokFallback: true
+    }),
+    true
+  )
+  // hosted default, not usable, and no BYOK to fall back to → keep hosted (sign-in)
+  assert.equal(
+    selectConfiguredHostedRoute({
+      hostedExplicit: false,
+      hostedIsSavedDefault: true,
+      hostedUsable: false,
+      hasByokFallback: false
+    }),
+    true
+  )
+  // an explicit byok request never takes the hosted route
+  assert.equal(
+    selectConfiguredHostedRoute({
+      requestedRoute: "byok",
+      hostedExplicit: false,
+      hostedIsSavedDefault: true,
+      hostedUsable: true,
+      hasByokFallback: true
+    }),
+    false
+  )
+  // a plain BYOK user (hosted not a default) never takes the hosted route
+  assert.equal(
+    selectConfiguredHostedRoute({
+      hostedExplicit: false,
+      hostedIsSavedDefault: false,
+      hostedUsable: false,
+      hasByokFallback: false
+    }),
+    false
+  )
+})
+
 test("hosted account state is just-in-time and does not block BYOK", () => {
   assert.equal(
     requiresHostedSignInForRoute({ route: "hosted", session: null }),
@@ -1444,7 +1589,6 @@ test("popup high-fidelity settings panel keeps four tabs and local theme setting
   assert.match(popupSource, /popup\.addAiService/)
   assert.match(popupSource, /popup\.localAvailable/)
   assert.match(popupSource, /popup\.language\.title/)
-  assert.match(popupSource, /popup\.service\.title/)
   assert.match(popupSource, /type ProviderCardMode = "view" \| "edit" \| "add"/)
   assert.match(popupSource, /providerConfigs/)
   assert.match(popupSource, /providerConfigKeyInputs/)
@@ -1455,10 +1599,6 @@ test("popup high-fidelity settings panel keeps four tabs and local theme setting
   assert.match(popupSource, /popup\.service\.editConfig/)
   assert.match(popupSource, /popup\.service\.deleteDraft/)
   assert.match(popupSource, /popup\.history\.title/)
-  assert.equal(
-    getI18nMessage("popup.service.title", "en"),
-    "Configuration and connection test"
-  )
   assert.equal(
     getI18nMessage("popup.history.title", "en"),
     "Recent chats are saved automatically"
@@ -1547,8 +1687,6 @@ test("ui language copy lookup keeps Chinese and English surface labels", () => {
 
   assert.equal(zh("popup.tabs.general"), "设置")
   assert.equal(en("popup.tabs.general"), "Settings")
-  assert.equal(zh("popup.service.title"), "配置和连通测试")
-  assert.equal(en("popup.service.title"), "Configuration and connection test")
   assert.equal(zh("popup.templates.title"), "常用指令")
   assert.equal(en("popup.templates.title"), "Saved prompts")
   assert.equal(zh("popup.history.title"), "最近对话会自动保存")
@@ -1716,7 +1854,7 @@ test("popup provider config model ID is manually editable", () => {
   )
   assert.match(
     getI18nMessage("popup.service.fastHelper", "en"),
-    /short translate, explain, and polish/
+    /translate \/ explain \/ polish/
   )
   assert.equal(
     getI18nMessage("popup.provider.geminiModelPlaceholder", "en"),
