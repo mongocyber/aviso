@@ -71,9 +71,12 @@ import {
   HOSTED_SESSION_STORAGE_KEY,
   isByokBlockedByHostedSignIn,
   isHostedAiProviderConfigId,
+  isHostedSessionUsable,
   readHostedSession,
   requiresHostedSignInForRoute,
-  saveHostedSession
+  saveHostedSession,
+  selectConfiguredHostedRoute,
+  type StoredHostedSession
 } from "../src/utils/hosted-session.ts"
 import {
   createI18n,
@@ -1240,6 +1243,118 @@ test("hosted account quota display formats me data and missing states", () => {
       dailyQuotaLabel: "Unavailable",
       resetLabel: "Unavailable"
     }
+  )
+})
+
+test("runtime hosted route falls back to BYOK unless hosted is explicitly chosen (MON-26)", () => {
+  const makeSession = (
+    token: string,
+    expiresAt: string
+  ): StoredHostedSession => ({
+    session: {
+      session_token: token,
+      expires_at: expiresAt,
+      user: { id: "u", tier: "free", region: "global" }
+    },
+    baseUrl: HOSTED_AI_STAGING_BASE_URL,
+    updatedAt: 0
+  })
+  const valid = makeSession("tok", "2099-01-01T00:00:00.000Z")
+  const expired = makeSession("tok", "2000-01-01T00:00:00.000Z")
+
+  // "hosted usable" = token present AND not expired — the single judgment shared
+  // by popup, context menu and runtime.
+  assert.equal(isHostedSessionUsable(null), false)
+  assert.equal(isHostedSessionUsable(valid), true)
+  assert.equal(isHostedSessionUsable(expired), false)
+  assert.equal(
+    isHostedSessionUsable(makeSession("", "2099-01-01T00:00:00.000Z")),
+    false
+  )
+  // expiry honoured against an injected clock
+  assert.equal(
+    isHostedSessionUsable(valid, Date.parse("2099-06-01T00:00:00.000Z")),
+    false
+  )
+
+  // explicit hosted route still requires sign-in when the session isn't usable
+  assert.equal(
+    requiresHostedSignInForRoute({ route: "hosted", session: null }),
+    true
+  )
+  assert.equal(
+    requiresHostedSignInForRoute({ route: "hosted", session: expired }),
+    true
+  )
+  assert.equal(
+    requiresHostedSignInForRoute({ route: "hosted", session: valid }),
+    false
+  )
+  assert.equal(
+    requiresHostedSignInForRoute({ route: "byok", session: null }),
+    false
+  )
+
+  // signed-out hosted *default* must not block BYOK
+  assert.equal(
+    selectConfiguredHostedRoute({
+      hostedExplicit: false,
+      hostedIsSavedDefault: true,
+      hostedUsable: false,
+      hasByokFallback: true
+    }),
+    false
+  )
+  // explicit hosted request keeps the hosted route (sign-in enforced downstream)
+  assert.equal(
+    selectConfiguredHostedRoute({
+      hostedExplicit: true,
+      hostedIsSavedDefault: true,
+      hostedUsable: false,
+      hasByokFallback: true
+    }),
+    true
+  )
+  // a usable hosted default uses hosted
+  assert.equal(
+    selectConfiguredHostedRoute({
+      hostedExplicit: false,
+      hostedIsSavedDefault: true,
+      hostedUsable: true,
+      hasByokFallback: true
+    }),
+    true
+  )
+  // hosted default, not usable, and no BYOK to fall back to → keep hosted (sign-in)
+  assert.equal(
+    selectConfiguredHostedRoute({
+      hostedExplicit: false,
+      hostedIsSavedDefault: true,
+      hostedUsable: false,
+      hasByokFallback: false
+    }),
+    true
+  )
+  // an explicit byok request never takes the hosted route
+  assert.equal(
+    selectConfiguredHostedRoute({
+      requestedRoute: "byok",
+      hostedExplicit: false,
+      hostedIsSavedDefault: true,
+      hostedUsable: true,
+      hasByokFallback: true
+    }),
+    false
+  )
+  // a plain BYOK user (hosted not a default) never takes the hosted route
+  assert.equal(
+    selectConfiguredHostedRoute({
+      hostedExplicit: false,
+      hostedIsSavedDefault: false,
+      hostedUsable: false,
+      hasByokFallback: false
+    }),
+    false
   )
 })
 

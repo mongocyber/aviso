@@ -33,6 +33,7 @@ import {
   HOSTED_AI_DEFAULT_MODEL,
   HOSTED_AI_PROVIDER_CONFIG_ID,
   isHostedAiProviderConfigId,
+  isHostedSessionUsable,
   readHostedSession,
   updateHostedSessionMe,
   type HostedAccountStatus,
@@ -1733,7 +1734,7 @@ function Popup() {
   const defaultProviderConfigId = resolveDefaultProviderConfigId(
     settings,
     providerConfigs,
-    hostedStatus === "signed_in"
+    isHostedSessionUsable(hostedSession)
   )
   const isHostedDefaultSelected = isHostedAiProviderConfigId(
     defaultProviderConfigId

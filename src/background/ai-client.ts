@@ -17,7 +17,8 @@ import {
 } from "~utils/model-registry"
 import {
   getLegacyProviderFromConfigId,
-  getProviderConfigsWithLegacy
+  getProviderConfigsWithLegacy,
+  resolveDefaultProviderConfigId
 } from "~utils/provider-configs"
 import {
   buildConnectivityTestPayload,
@@ -33,7 +34,12 @@ import {
   extractReasoningDeltaText,
   shouldUseMaxCompletionTokens
 } from "~utils/reasoning"
-import { isHostedAiProviderConfigId } from "~utils/hosted-session"
+import {
+  isHostedAiProviderConfigId,
+  isHostedSessionUsable,
+  readHostedSession,
+  selectConfiguredHostedRoute
+} from "~utils/hosted-session"
 import { getImageInputBlockReason } from "~utils/screenshot"
 import { getTemplates } from "~utils/storage"
 import { expandTemplate } from "~utils/template"
@@ -234,13 +240,27 @@ export async function handleAIRequest(
       !isHostedAiProviderConfigId(settings.fastProviderConfigId) &&
       getProviderConfigById(providerConfigs, settings.fastProviderConfigId)
   )
-  const shouldUseConfiguredHostedRoute =
-    payload.aiRoute !== "byok" &&
-    (shouldUseHostedChatRoute(payload) ||
-      (isHostedAiProviderConfigId(settings.fastProviderConfigId) &&
-        fastEligible) ||
-      (isHostedAiProviderConfigId(settings.defaultProviderConfigId) &&
-        !fastByokConfigSelected))
+  const hostedSession = await readHostedSession()
+  const hostedUsable = isHostedSessionUsable(hostedSession)
+  const hostedIsSavedDefault =
+    (isHostedAiProviderConfigId(settings.fastProviderConfigId) &&
+      fastEligible) ||
+    (isHostedAiProviderConfigId(settings.defaultProviderConfigId) &&
+      !fastByokConfigSelected)
+  const byokFallbackConfigId = hostedIsSavedDefault
+    ? resolveDefaultProviderConfigId(settings, providerConfigs, false)
+    : ""
+  const byokFallbackConfig =
+    byokFallbackConfigId && !isHostedAiProviderConfigId(byokFallbackConfigId)
+      ? getProviderConfigById(providerConfigs, byokFallbackConfigId)
+      : undefined
+  const shouldUseConfiguredHostedRoute = selectConfiguredHostedRoute({
+    requestedRoute: payload.aiRoute,
+    hostedExplicit: shouldUseHostedChatRoute(payload),
+    hostedIsSavedDefault,
+    hostedUsable,
+    hasByokFallback: Boolean(byokFallbackConfig)
+  })
 
   if (shouldUseConfiguredHostedRoute) {
     try {
@@ -254,7 +274,14 @@ export async function handleAIRequest(
     }
   }
 
+  // Hosted was only a saved default and isn't usable right now: route to the
+  // effective BYOK default config instead of a stale hosted model id.
+  const byokFallbackRoute =
+    hostedIsSavedDefault && payload.aiRoute !== "byok" && byokFallbackConfig
+      ? resolveRuntimeProviderConfigRoute(byokFallbackConfig, settings)
+      : undefined
   const route =
+    byokFallbackRoute ??
     resolveFastModelRouteForOperation(payload, settings, providerConfigs) ??
     resolveRuntimeModelRoute(payload.model, settings)
 

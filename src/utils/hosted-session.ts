@@ -172,11 +172,42 @@ export function deriveHostedAccountStatus(options: {
   return options.session?.session?.session_token ? "signed_in" : "signed_out"
 }
 
+// Single source of truth for "is the hosted session currently usable" — a stored
+// session counts only when it has a token AND has not expired. popup, context menu
+// and runtime all route off this same judgment.
+export function isHostedSessionUsable(
+  session?: StoredHostedSession | null,
+  now: number = Date.now()
+): boolean {
+  const token = session?.session?.session_token
+  if (typeof token !== "string" || !token.trim()) return false
+  const expiresAt = Date.parse(session.session.expires_at)
+  if (Number.isFinite(expiresAt) && expiresAt <= now) return false
+  return true
+}
+
 export function requiresHostedSignInForRoute(options: {
   route: HostedRouteSelection
   session?: StoredHostedSession | null
 }): boolean {
-  return options.route === "hosted" && !options.session?.session.session_token
+  return options.route === "hosted" && !isHostedSessionUsable(options.session)
+}
+
+// Decide whether a runtime AI request should take the hosted route. Hosted as a
+// *saved default* yields to BYOK when the session isn't usable; only an explicit
+// hosted request (or hosted being the only configured option) keeps the hosted
+// route — which then surfaces sign-in required downstream.
+export function selectConfiguredHostedRoute(options: {
+  requestedRoute?: HostedRouteSelection
+  hostedExplicit: boolean
+  hostedIsSavedDefault: boolean
+  hostedUsable: boolean
+  hasByokFallback: boolean
+}): boolean {
+  if (options.requestedRoute === "byok") return false
+  if (options.hostedExplicit) return true
+  if (!options.hostedIsSavedDefault) return false
+  return options.hostedUsable || !options.hasByokFallback
 }
 
 export function isByokBlockedByHostedSignIn(): boolean {
