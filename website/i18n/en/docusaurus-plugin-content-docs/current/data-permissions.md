@@ -17,7 +17,7 @@ Aviso follows a minimum-use permission design: it requests only the permissions 
 5. After the provider returns a result, Aviso shows it in the current page.
 6. If the user saves the result, history is stored locally in the browser.
 
-BYOK remains the default available path and does not force sign-in. Hosted AI is an optional v0.3 path in release preparation and requires user-initiated sign-in before use.
+BYOK remains the default available path and does not force sign-in. Hosted AI is an optional v0.3 staging path and requires user-initiated sign-in before use; it does not mean production, public release, or Chrome Web Store approval.
 
 ## Local Data
 
@@ -64,7 +64,7 @@ Command-palette browsing history, bookmark, and local AI conversation results ar
 
 ## Host Permissions
 
-Current host permissions are limited to approved provider domains:
+Current host permissions are limited to approved provider domains and the v0.3 staging hosted AI backend origin:
 
 ```text
 https://api.openai.com/*

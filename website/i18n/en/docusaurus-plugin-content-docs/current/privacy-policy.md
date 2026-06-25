@@ -15,7 +15,7 @@ Aviso is a Chrome extension. It helps users call AI inside the current webpage t
 Aviso currently has two AI request paths:
 
 - BYOK direct-provider: you bring your own model API key. When you actively trigger an AI request, the browser extension sends the request directly to the model provider you selected. API keys, settings, and history are stored in Chrome extension storage.
-- Hosted AI: an optional v0.3 path in release preparation. Only when you choose hosted AI and sign in does the request pass through the Aviso backend and then to upstream model providers. BYOK remains available without hosted sign-in.
+- Hosted AI: an optional v0.3 staging path. Only when you choose hosted AI and sign in does the request pass through the Aviso backend and then to upstream model providers. BYOK remains available without hosted sign-in; this does not mean production, public release, or Chrome Web Store approval.
 
 ## Data Stored Locally
 
@@ -101,7 +101,7 @@ Aviso currently uses these permissions:
 
 Aviso content scripts match webpage URLs to show the selection toolbar, selection translation card, double-click quick menu, command palette, in-page result panel, clipboard prompt, iframe bridge, and the screenshot selection UI used by the internal right-click path. This site access is not used to fetch arbitrary remote link bodies, serve ads, run telemetry, or run analytics. Only when the user actively triggers an AI action that requires page content does Aviso send relevant content through the selected BYOK or hosted AI path.
 
-Current host permissions are limited to approved provider domains:
+Current host permissions are limited to approved provider domains and the v0.3 staging hosted AI backend origin:
 
 ```text
 https://api.openai.com/*

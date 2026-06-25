@@ -17,7 +17,7 @@ Aviso 的权限设计遵循最小可用原则：只申请当前功能需要的�
 5. provider 返回结果后，Aviso 在当前页面浮窗中展示。
 6. 如果用户保存结果，历史记录保存在浏览器本地。
 
-BYOK 是默认可用路径，不强制登录。托管 AI 是 v0.3 准备中的可选路径，需要用户主动登录后使用。
+BYOK 是默认可用路径，不强制登录。托管 AI 是 v0.3 staging 中的可选路径，需要用户主动登录后使用；它不代表 production、公开发布或 Chrome Web Store 批准。
 
 ## 本地数据
 
@@ -64,7 +64,7 @@ Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页�
 
 ## Host permissions
 
-当前 host permissions 仅包含已经批准的 provider 域名：
+当前 host permissions 仅包含已经批准的 provider 域名和 v0.3 staging 托管 AI 后端域名：
 
 ```text
 https://api.openai.com/*
