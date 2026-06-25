@@ -19,7 +19,8 @@ import {
 
 export async function handleCommandQuickAction(
   actionId: CommandQuickActionId,
-  sender: chrome.runtime.MessageSender
+  sender: chrome.runtime.MessageSender,
+  options: { aiRoute?: AIRequestPayload["aiRoute"] } = {}
 ): Promise<MessageResponse> {
   const tabId = sender.tab?.id
   if (!tabId) {
@@ -53,11 +54,23 @@ export async function handleCommandQuickAction(
   }
 
   if (actionId === "page_summary") {
-    return summarizePageQuickAction(tabId, sourceFrameId, sourceFrameUrl, pageUrl)
+    return summarizePageQuickAction(
+      tabId,
+      sourceFrameId,
+      sourceFrameUrl,
+      pageUrl,
+      options.aiRoute
+    )
   }
 
   if (actionId === "page_translate") {
-    return translatePageQuickAction(tabId, sourceFrameId, sourceFrameUrl, pageUrl)
+    return translatePageQuickAction(
+      tabId,
+      sourceFrameId,
+      sourceFrameUrl,
+      pageUrl,
+      options.aiRoute
+    )
   }
 
   return {
@@ -119,7 +132,8 @@ async function summarizePageQuickAction(
   tabId: number,
   sourceFrameId: number,
   sourceFrameUrl: string | undefined,
-  pageUrl: string
+  pageUrl: string,
+  aiRoute?: AIRequestPayload["aiRoute"]
 ): Promise<MessageResponse> {
   return runPageAiQuickAction({
     tabId,
@@ -133,6 +147,7 @@ async function summarizePageQuickAction(
     aiPayload: (pageContent, timing) => ({
       trigger: "command-palette",
       operation: "summarize",
+      aiRoute,
       context: "page",
       pageUrl,
       pageContent,
@@ -145,7 +160,8 @@ async function translatePageQuickAction(
   tabId: number,
   sourceFrameId: number,
   sourceFrameUrl: string | undefined,
-  pageUrl: string
+  pageUrl: string,
+  aiRoute?: AIRequestPayload["aiRoute"]
 ): Promise<MessageResponse> {
   return runPageAiQuickAction({
     tabId,
@@ -159,6 +175,7 @@ async function translatePageQuickAction(
     aiPayload: (pageContent, timing) => ({
       trigger: "command-palette",
       operation: "translate",
+      aiRoute,
       context: "page",
       pageUrl,
       selectionText: pageContent,

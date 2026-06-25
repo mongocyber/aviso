@@ -459,8 +459,13 @@ test("command palette AI actions are visible candidates with disconnected guard"
   assert.match(buildIntentResultsBlock, /type: "ask-ai"/)
   assert.doesNotMatch(buildIntentResultsBlock, /fallback/)
   assert.match(handleSelectBlock, /command\.aiDisconnected/)
+  assert.match(handleSelectBlock, /aiConnection\.route === "hosted"/)
   assert.match(handleSendToAiBlock, /!aiConnection\.connected/)
   assert.match(handleSendToAiBlock, /command\.aiDisconnected/)
+  assert.match(handleSendToAiBlock, /aiRoute: aiConnection\.route === "hosted"/)
+  assert.match(commandSource, /readHostedSession/)
+  assert.match(commandSource, /isHostedSessionUsable/)
+  assert.match(commandSource, /providerLabel: "Aviso AI"/)
 })
 
 test("URL-bearing warning logs use presence fields instead of raw URLs", () => {
@@ -560,8 +565,9 @@ test("content script async handlers use current language and catch copy errors",
   assert.match(toolbarSource, /tRef\.current = t/)
   assert.match(
     toolbarSource,
-    /formatTranslationError\(error, languageRef\.current\)/
+    /formatTranslationError\(displayError, languageRef\.current\)/
   )
+  assert.match(toolbarSource, /getAiUnavailableDetailKey\(guidance\)/)
   assert.match(toolbarSource, /tRef\.current\("model\.thinking"\)/)
 })
 
@@ -1412,9 +1418,27 @@ test("floating window exposes hosted sign-in required only as a request state", 
   assert.match(messageSource, /state: "sign_in_required"/)
   assert.match(floatingSource, /hostedAi\?\.state === "sign_in_required"/)
   assert.match(floatingSource, /floating\.hostedSignInRequired\.title/)
+  assert.match(floatingSource, /getAiUnavailableTitleKey/)
+  assert.match(floatingSource, /getAiUnavailableDetailKey/)
   assert.match(floatingSource, /loading: hostedAiNotice \? false : true/)
   assert.match(floatingSource, /if \(!hostedAiNotice && !deferAiRequest\)/)
   assert.doesNotMatch(floatingSource, /chrome\.identity/)
+})
+
+test("floating follow-up send stays disabled during AI unavailable guidance", () => {
+  const floatingSource = readFileSync(
+    new URL("../src/contents/floating.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(floatingSource, /const followUpBlocked = Boolean/)
+  assert.match(
+    floatingSource,
+    /const canSendFollowUp = !followUpBlocked && followUp\.trim\(\)\.length > 0/
+  )
+  assert.match(floatingSource, /disabled=\{!canSendFollowUp\}/)
+  assert.match(floatingSource, /canSendFollowUp \? ui\.accent : ui\.disabledBg/)
+  assert.match(floatingSource, /\.aviso-send-button:disabled/)
 })
 
 test("popup hosted quota display stays internal and keeps public copy clean", () => {
@@ -2002,7 +2026,7 @@ test("inline translation error prefix follows English UI language", () => {
 
   assert.match(
     toolbarSource,
-    /formatTranslationError\(error,\s*languageRef\.current\)/
+    /formatTranslationError\(displayError,\s*languageRef\.current\)/
   )
   assert.match(
     toolbarSource,
@@ -2010,7 +2034,7 @@ test("inline translation error prefix follows English UI language", () => {
   )
   assert.match(
     toolbarSource,
-    /formatTranslationError\(\s*response\.error as string,\s*languageRef\.current\s*\)/
+    /const displayError = guidance[\s\S]*?formatTranslationError\(\s*displayError,\s*languageRef\.current\s*\)/
   )
 })
 
@@ -2713,6 +2737,7 @@ test("parseIntentLocally 识别 command palette 本地意图", () => {
     params: {}
   })
   assert.equal(parseIntentLocally("翻译当前页面").action, "translate_page")
+  assert.equal(parseIntentLocally("总结这个页面。").action, "summarize_page")
   assert.equal(
     parseIntentLocally("summarize current page").action,
     "summarize_page"
@@ -3796,7 +3821,7 @@ test("command access blockers match BYOK basic states", () => {
   }
 })
 
-test("command access has no hosted quota login subscription mock copy", () => {
+test("command access guides AI setup without quota subscription mock copy", () => {
   const source = readFileSync(
     new URL("../src/utils/command-access.ts", import.meta.url),
     "utf8"
@@ -3804,8 +3829,9 @@ test("command access has no hosted quota login subscription mock copy", () => {
 
   assert.doesNotMatch(
     source,
-    /quota|额度|login|登录|subscription|订阅|hosted|Aviso AI|Mock/i
+    /quota|额度|subscription|订阅|hosted|Mock/i
   )
+  assert.match(source, /登录 Aviso AI/)
   assert.match(source, /api_key_missing/)
   assert.match(source, /model_unavailable/)
   assert.match(source, /feature_unavailable/)

@@ -14,6 +14,7 @@ import {
   isUnsafeDoubleClickTarget,
   type DoubleClickTargetDescriptor
 } from "~utils/double-click-menu"
+import { getAiUnavailableDetailKey } from "~utils/ai-unavailable-guidance"
 import {
   shouldShowSlowResponseHint,
   SLOW_FIRST_CHUNK_MS,
@@ -337,17 +338,20 @@ function SelectionToolbar() {
       }
 
       if (message.action === "AI_STREAM_ERROR") {
-        const { error, requestId } = message.payload
+        const { error, guidance, requestId } = message.payload
         if (requestId !== inlineRequestRef.current) return
         inlineRequestRef.current = ""
         clearTimeout(inlineSlowTimer.current)
+        const displayError = guidance
+          ? tRef.current(getAiUnavailableDetailKey(guidance))
+          : error
         setInlineCard((prev) =>
           prev.requestId === requestId
             ? {
                 ...prev,
                 mode: "error",
                 statusText: "",
-                error: formatTranslationError(error, languageRef.current)
+                error: formatTranslationError(displayError, languageRef.current)
               }
             : prev
         )
@@ -412,6 +416,10 @@ function SelectionToolbar() {
         }
 
         if (response && !response.success && response.error) {
+          const guidance = response.meta?.aiGuidance
+          const displayError = guidance
+            ? tRef.current(getAiUnavailableDetailKey(guidance))
+            : (response.error as string)
           clearTimeout(inlineSlowTimer.current)
           setInlineCard((prev) =>
             prev.requestId === requestId &&
@@ -421,7 +429,7 @@ function SelectionToolbar() {
                   mode: "error",
                   statusText: "",
                   error: formatTranslationError(
-                    response.error as string,
+                    displayError,
                     languageRef.current
                   )
                 }

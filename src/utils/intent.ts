@@ -29,14 +29,14 @@ const INTENT_RULES: IntentRule[] = [
   {
     action: "translate_page",
     match: [
-      /^(翻译|翻译一下|translate)\s*(当前)?(页面|网页|this page|current page)\s*$/i
+      /^(翻译|翻译一下|translate)\s*(当前|这个)?(页面|网页|this page|current page)[。.!！?？]?\s*$/i
     ],
     strip: [/[\s\S]*/]
   },
   {
     action: "summarize_page",
     match: [
-      /^(总结|摘要|概括|summarize|summarise|summary)\s*(当前)?(页面|网页|this page|current page)\s*$/i
+      /^(总结|摘要|概括|summarize|summarise|summary)\s*(当前|这个)?(页面|网页|this page|current page)[。.!！?？]?\s*$/i
     ],
     strip: [/[\s\S]*/]
   },
