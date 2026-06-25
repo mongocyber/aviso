@@ -2,6 +2,7 @@ import type { ConversationMessage } from "~types/history"
 import type { ClipboardType } from "~utils/clipboard-detect"
 import type { CommandQuickActionId } from "~utils/command-access"
 import type { HostedAccountStatus } from "~utils/hosted-session"
+import type { AiUnavailableGuidance } from "~utils/ai-unavailable-guidance"
 import type { ProviderId } from "~utils/model-registry"
 import type { PerfSummary, RequestTiming } from "~utils/timing"
 
@@ -158,7 +159,11 @@ export type MessageRequest =
     }
   | {
       action: "AI_STREAM_ERROR"
-      payload: { error: string; requestId: string }
+      payload: {
+        error: string
+        requestId: string
+        guidance?: AiUnavailableGuidance
+      }
     }
   | {
       action: "AI_PERF_SUMMARY"
@@ -168,7 +173,10 @@ export type MessageRequest =
   | { action: "SEARCH_BOOKMARKS"; payload: { query: string } }
   | {
       action: "RUN_COMMAND_QUICK_ACTION"
-      payload: { actionId: CommandQuickActionId }
+      payload: {
+        actionId: CommandQuickActionId
+        aiRoute?: AIRequestPayload["aiRoute"]
+      }
     }
   | { action: "OPEN_COMMAND_PALETTE" }
   | { action: "REQUEST_OPEN_COMMAND_PALETTE" }
@@ -214,5 +222,7 @@ export type MessageResponse = {
   success: boolean
   data?: MessageResponseData | unknown
   error?: string
-  meta?: Record<string, unknown>
+  meta?: Record<string, unknown> & {
+    aiGuidance?: AiUnavailableGuidance
+  }
 }

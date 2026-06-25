@@ -212,6 +212,14 @@ function normalizeProviderConfigDraftUpdate(
 
 type PopupTab = "general" | "api" | "templates" | "history"
 
+function getInitialPopupTab(): PopupTab {
+  const hash =
+    typeof window === "undefined" ? "" : window.location.hash.replace("#", "")
+  return hash === "api" || hash === "history" || hash === "templates"
+    ? hash
+    : "general"
+}
+
 const APPEARANCE_OPTIONS: {
   value: Settings["appearanceTheme"]
   labelKey: I18nKey
@@ -388,7 +396,7 @@ function Popup() {
   const [doubaoKey, setDoubaoKey] = useState("")
   const [saved, setSaved] = useState(false)
   const [saveErrorKey, setSaveErrorKey] = useState<I18nKey | null>(null)
-  const [tab, setTab] = useState<PopupTab>("general")
+  const [tab, setTab] = useState<PopupTab>(() => getInitialPopupTab())
   const [testingProvider, setTestingProvider] = useState<ProviderId | null>(
     null
   )

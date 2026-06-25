@@ -20,6 +20,11 @@ import {
   appendConversationTurn,
   historyEntryFromConversation
 } from "~utils/conversation-history"
+import type { AiUnavailableGuidance } from "~utils/ai-unavailable-guidance"
+import {
+  getAiUnavailableDetailKey,
+  getAiUnavailableTitleKey
+} from "~utils/ai-unavailable-guidance"
 import { buildFollowUpPriorContext } from "~utils/follow-up-context"
 import { useSyncedAvisoLanguage, type I18nKey } from "~utils/i18n"
 import {
@@ -54,6 +59,7 @@ type FloatingState = {
   visible: boolean
   loading: boolean
   error: string
+  aiGuidance?: AiUnavailableGuidance
   hostedAiNotice?: {
     state: "sign_in_required"
     hasByokProvider: boolean
@@ -74,6 +80,7 @@ const INITIAL_STATE: FloatingState = {
   visible: false,
   loading: false,
   error: "",
+  aiGuidance: undefined,
   hostedAiNotice: undefined,
   sessionId: "",
   createdAt: 0,
@@ -324,6 +331,7 @@ function FloatingWindow() {
             ...prev,
             loading: true,
             error: "",
+            aiGuidance: undefined,
             hostedAiNotice: undefined,
             statusText
           }
@@ -344,6 +352,7 @@ function FloatingWindow() {
 
         // sendMessage 回调兜底：如 AI_STREAM_ERROR 消息未到达时仍能停止 loading
         if (response && !response.success && response.error) {
+          const guidance = response.meta?.aiGuidance
           setState((prev) =>
             prev.requestId === requestId &&
             activeRequestRef.current === requestId
@@ -355,6 +364,7 @@ function FloatingWindow() {
                     response.error as string,
                     tRef.current
                   ),
+                  aiGuidance: guidance,
                   statusText: ""
                 }
               : prev
@@ -437,6 +447,7 @@ function FloatingWindow() {
             visible: true,
             loading: false,
             error: "",
+            aiGuidance: undefined,
             hostedAiNotice: undefined,
             sessionId: requestId,
             createdAt: restore.createdAt ?? Date.now(),
@@ -494,6 +505,7 @@ function FloatingWindow() {
             visible: true,
             loading: hostedAiNotice ? false : true,
             error: "",
+            aiGuidance: undefined,
             hostedAiNotice,
             sessionId: appending ? prev.sessionId : requestId,
             createdAt: appending ? prev.createdAt : Date.now(),
@@ -594,12 +606,14 @@ function FloatingWindow() {
       if (message.action === "AI_STREAM_ERROR") {
         handled = true
         const { error, requestId } = message.payload
+        const guidance = message.payload.guidance
         setState((prev) =>
           prev.requestId === requestId && activeRequestRef.current === requestId
             ? {
                 ...prev,
                 loading: false,
                 error: visibleErrorText(prev.operation, error, tRef.current),
+                aiGuidance: guidance,
                 statusText: ""
               }
             : prev
@@ -736,7 +750,7 @@ function FloatingWindow() {
   }
 
   const handleFollowUp = () => {
-    if (state.hostedAiNotice) return
+    if (state.hostedAiNotice || state.aiGuidance) return
     const q = followUp.trim()
     if (!q) return
     const requestId = `req-${Date.now()}`
@@ -752,6 +766,7 @@ function FloatingWindow() {
       ...prev,
       loading: true,
       error: "",
+      aiGuidance: undefined,
       hostedAiNotice: undefined,
       requestId,
       trigger: "follow-up",
@@ -827,6 +842,9 @@ function FloatingWindow() {
   }
 
   if (!state.visible) return null
+
+  const followUpBlocked = Boolean(state.hostedAiNotice || state.aiGuidance)
+  const canSendFollowUp = !followUpBlocked && followUp.trim().length > 0
 
   return (
     <div
@@ -1004,7 +1022,21 @@ function FloatingWindow() {
               style={{ color: ui.danger, marginTop: 1 }}
             />
             <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>
-              {state.error}
+              {state.aiGuidance ? (
+                <>
+                  <strong
+                    style={{
+                      display: "block",
+                      marginBottom: 3,
+                      color: ui.text
+                    }}>
+                    {t(getAiUnavailableTitleKey(state.aiGuidance))}
+                  </strong>
+                  {t(getAiUnavailableDetailKey(state.aiGuidance))}
+                </>
+              ) : (
+                state.error
+              )}
             </span>
           </div>
         )}
@@ -1057,18 +1089,21 @@ function FloatingWindow() {
           ...(state.hostedAiNotice
             ? [
                 {
-                  label: t("floating.hostedSignInRequired.configureByok"),
-                  icon: "key" as AvisoIconName,
-                  onClick: handleClose,
-                  active: false
-                },
-                {
                   label: t("common.cancel"),
                   icon: "close" as AvisoIconName,
                   onClick: handleClose,
                   active: false
                 }
               ]
+            : state.aiGuidance
+              ? [
+                  {
+                    label: t("common.close"),
+                    icon: "close" as AvisoIconName,
+                    onClick: handleClose,
+                    active: false
+                  }
+                ]
             : [
                 {
                   label:
@@ -1142,7 +1177,7 @@ function FloatingWindow() {
           className="aviso-follow-up-input"
           rows={1}
           value={followUp}
-          disabled={Boolean(state.hostedAiNotice)}
+          disabled={followUpBlocked}
           onChange={(e) => setFollowUp(e.target.value)}
           onKeyDown={(e) => {
             if (
@@ -1179,22 +1214,25 @@ function FloatingWindow() {
           size="md"
           icon="send"
           onClick={handleFollowUp}
-          disabled={Boolean(state.hostedAiNotice)}
+          disabled={!canSendFollowUp}
           className="aviso-send-button"
           style={{
             display: "inline-flex",
             alignItems: "center",
             gap: 6,
-            background: ui.accent,
-            border: "none",
+            background: canSendFollowUp ? ui.accent : ui.disabledBg,
+            border: `1px solid ${
+              canSendFollowUp ? ui.accent : ui.disabledBg
+            }`,
             borderRadius: aviso.radiusMd,
-            color: ui.accentText,
+            color: canSendFollowUp ? ui.accentText : ui.disabledText,
             padding: "8px 14px",
             fontFamily: aviso.font,
             fontSize: "13px",
             fontWeight: 600,
             minHeight: 34,
-            cursor: "pointer",
+            cursor: canSendFollowUp ? "pointer" : "default",
+            opacity: canSendFollowUp ? 1 : 0.72,
             flex: "0 0 auto",
             whiteSpace: "nowrap"
           }}>
@@ -1257,6 +1295,15 @@ function FloatingWindow() {
         }
         .aviso-send-button:hover {
           background: ${ui.buttonHover} !important;
+        }
+        .aviso-send-button:disabled,
+        .aviso-send-button:disabled:hover,
+        .aviso-send-button:disabled:active {
+          background: ${ui.disabledBg} !important;
+          color: ${ui.disabledText} !important;
+          border-color: ${ui.disabledBg} !important;
+          cursor: default !important;
+          transform: none !important;
         }
         .aviso-icon-button {
           transition:
