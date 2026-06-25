@@ -1,7 +1,7 @@
 # V03-FE09 Hosted AI Sign-In UX Redesign
 
 Status: `implemented / local + staging-config / owner-review-pending`
-Updated: 2026-06-24
+Updated: 2026-06-25
 Linear: MON-26
 
 ## Purpose
@@ -27,7 +27,17 @@ BYOK remains first-class and usable without sign-in. Paid / subscription is out 
 - `src/utils/i18n.ts`: add `popup.account.*` and `popup.zero.*` keys (zh-CN + en). All new user-facing copy goes through i18n.
 - `tests/unit.test.ts`: add a guard test for the account chip + zero-state dual entry, and that no upgrade / subscription entry is shipped.
 
-The API / AI-service tab `Aviso AI` card (sign in / refresh / sign out / account + quota detail rows) is preserved as the settings-level surface. No change to manifest, permissions, host permissions, API key storage, providers, backend, routing, or OAuth.
+The API / AI-service tab `Aviso AI` card (sign in / refresh / sign out / account + quota detail rows) is preserved as the settings-level surface. No backend / provider / permission / API-key-storage change (manifest, host permissions, and OAuth also unchanged); only local runtime route selection consistency changed (see Runtime route consistency below).
+
+## Runtime route consistency (MON-26 follow-up)
+
+A later commit on this branch makes the hosted-vs-BYOK route decision consistent across popup, context menu, and runtime, and closes a stale-default routing gap:
+
+- `src/utils/hosted-session.ts` — `isHostedSessionUsable(session, now?)` is the single "hosted usable" judgment: a stored session counts only when it has a token AND has not expired (`expires_at` not in the past). `requiresHostedSignInForRoute` now uses it, so an expired session no longer counts as usable. New pure helper `selectConfiguredHostedRoute(...)` decides the runtime route.
+- `src/background/ai-client.ts` — when `Aviso AI` / hosted is only a saved default but the session is not usable, the runtime AI request falls back to the effective BYOK default config (routed via that config, not a stale hosted model id). Only an explicit hosted request — or hosted being the only configured option — returns sign-in required.
+- `src/background/context-menus.ts` and `src/popup/index.tsx` — the default-service judgment uses the same `isHostedSessionUsable`.
+
+Local runtime route selection consistency only: no backend / provider / permission / API-key-storage change.
 
 ## States covered
 
@@ -47,12 +57,12 @@ Maps to the State Matrix in [`../planning/v0.3/frontend-ux-states.md`](../planni
 
 ## Out of scope / deferred
 
-Paid plan, checkout, billing, upgrade CTA, Pro / subscription copy; production backend, production OAuth, host-permission changes; public website / privacy / Chrome Web Store copy; API key storage / provider / routing / backend changes. All unchanged.
+Paid plan, checkout, billing, upgrade CTA, Pro / subscription copy; production backend, production OAuth, host-permission changes; public website / privacy / Chrome Web Store copy; API key storage / provider / backend changes — all unchanged. Routing: only local runtime route selection consistency changed (no backend / provider / permission / API-key-storage change; see Runtime route consistency).
 
 ## Verification
 
 - `npx tsc --noEmit`: pass.
-- `npm test`: 190/190 pass (includes the new MON-26 guard test).
+- `npm test`: 191/191 pass (includes the MON-26 guard tests — account chip / zero-state, and runtime hosted-route fallback).
 - `npm run build:wxt`: pass.
 - `npm run build:plasmo`: pass.
 - `npm run check:manifests`: pass (Plasmo + WXT outputs consistent).
