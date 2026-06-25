@@ -29,6 +29,8 @@ type IconName =
   | "history"
   | "continue";
 
+type ProviderLogoName = "anthropic" | "deepseek" | "doubao" | "gemini" | "hunyuan" | "kimi" | "openai" | "openrouter";
+
 const iconPaths: Record<IconName, string> = {
   explain:
     '<circle cx="12" cy="12" r="8.5"/><path d="M12 11v5"/><circle cx="12" cy="7.8" r=".9" fill="currentColor" stroke="none"/>',
@@ -65,6 +67,10 @@ const iconPaths: Record<IconName, string> = {
 
 function Mark({className = ""}: {className?: string}): JSX.Element {
   return <img className={`mk ${className}`.trim()} src={useBaseUrl("/img/aviso-mark-sage.svg")} alt="" aria-hidden="true" />;
+}
+
+function ProviderLogo({name}: {name: ProviderLogoName}): JSX.Element {
+  return <img className="provider-logo" src={useBaseUrl(`/img/provider-logos/color/${name}.svg?v=2`)} alt="" aria-hidden="true" />;
 }
 
 function Icon({name, className = ""}: {name: IconName; className?: string}): JSX.Element {
@@ -614,6 +620,16 @@ export default function Home(): JSX.Element {
   const lang: Lang = currentLocale === "en" ? "en" : "zh";
   const [openFaq, setOpenFaq] = useState(0);
   const t = copy[lang];
+  const providerStrip: Array<{logo: ProviderLogoName; name: string}> = [
+    {logo: "openai", name: "OpenAI"},
+    {logo: "anthropic", name: "Anthropic"},
+    {logo: "deepseek", name: "DeepSeek"},
+    {logo: "gemini", name: "Gemini"},
+    {logo: "doubao", name: t.doubao},
+    {logo: "kimi", name: "Kimi"},
+    {logo: "openrouter", name: "OpenRouter"},
+    {logo: "hunyuan", name: lang === "zh" ? "腾讯混元" : "Tencent Hunyuan"}
+  ];
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -675,46 +691,16 @@ export default function Home(): JSX.Element {
           <div className="swrap">
             <p className="lab">{t.providerLab}</p>
             <div className="row">
-              <span className="p">
-                <span className="glyph">
-                  <GlyphOpenAI />
+              {providerStrip.map((provider) => (
+                <span className="p" key={provider.logo}>
+                  <span className="glyph logo-glyph">
+                    <ProviderLogo name={provider.logo} />
+                  </span>
+                  <span>
+                    {provider.name}
+                  </span>
                 </span>
-                OpenAI
-              </span>
-              <span className="sep" />
-              <span className="p">
-                <span className="glyph">
-                  <GlyphAnthropic />
-                </span>
-                Anthropic
-              </span>
-              <span className="sep" />
-              <span className="p">
-                <span className="glyph">
-                  <GlyphDoubao />
-                </span>
-                <span>
-                  {t.doubao}
-                  <small>{t.ark}</small>
-                </span>
-              </span>
-              <span className="sep" />
-              <span className="p">
-                <span className="glyph">
-                  <GlyphProvider />
-                </span>
-                DeepSeek
-              </span>
-              <span className="sep" />
-              <span className="p">
-                <span className="glyph">
-                  <GlyphProvider />
-                </span>
-                <span>
-                  Kimi
-                  <small>Moonshot</small>
-                </span>
-              </span>
+              ))}
             </div>
           </div>
         </section>
@@ -866,45 +852,42 @@ export default function Home(): JSX.Element {
                     </span>
                   </div>
                   <div className="provrow">
-                    <span className="glyph">
-                      <GlyphDoubao />
+                    <span className="glyph provider-card-logo">
+                      <ProviderLogo name="doubao" />
                     </span>
                     <span className="nm">
                       <b>{t.provDaily}</b>
-                      <small>{lang === "zh" ? "豆包 · 接入点已配置" : "Doubao · endpoint configured"}</small>
+                      <small>{lang === "zh" ? "豆包 · 接入点可填" : "Doubao · custom endpoint"}</small>
                     </span>
                     <span className="st def">{t.provDefault}</span>
                   </div>
                   <div className="provrow">
-                    <span className="glyph">
-                      <GlyphDoubao />
-                    </span>
-                    <span className="nm">
-                      <b>{t.provDoubao}</b>
-                      <small>{lang === "zh" ? "接入点已配置" : "endpoint configured"}</small>
-                    </span>
-                    <span className="st ok">
-                      <span className="d" />
-                      {t.provConnected}
-                    </span>
-                  </div>
-                  <div className="provrow">
-                    <span className="glyph">
-                      <GlyphOpenAI />
+                    <span className="glyph provider-card-logo">
+                      <ProviderLogo name="openai" />
                     </span>
                     <span className="nm">
                       <b>OpenAI</b>
-                      <small>{t.provUnset}</small>
+                      <small>{lang === "zh" ? "模型 ID 可填 · 待测试" : "Custom model ID · untested"}</small>
                     </span>
                     <span className="st idle">{t.provNotSet}</span>
                   </div>
                   <div className="provrow">
-                    <span className="glyph">
-                      <GlyphProvider />
+                    <span className="glyph provider-card-logo">
+                      <ProviderLogo name="deepseek" />
                     </span>
                     <span className="nm">
-                      <b>DeepSeek / Kimi</b>
-                      <small>{t.provUnset}</small>
+                      <b>DeepSeek</b>
+                      <small>{lang === "zh" ? "模型 ID 可填 · 待测试" : "Custom model ID · untested"}</small>
+                    </span>
+                    <span className="st idle">{t.provNotSet}</span>
+                  </div>
+                  <div className="provrow">
+                    <span className="glyph provider-card-logo">
+                      <ProviderLogo name="kimi" />
+                    </span>
+                    <span className="nm">
+                      <b>Kimi</b>
+                      <small>{lang === "zh" ? "Moonshot · 模型 ID 可填" : "Moonshot · custom model ID"}</small>
                     </span>
                     <span className="st idle">{t.provNotSet}</span>
                   </div>

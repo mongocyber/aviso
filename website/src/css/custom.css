@@ -746,7 +746,7 @@ select {
 .providers {
   border-bottom: 1px solid var(--line);
   border-top: 1px solid var(--line);
-  padding: 34px 0;
+  padding: 42px 0 44px;
 }
 
 .providers .lab {
@@ -754,7 +754,7 @@ select {
   font-family: var(--font-mono);
   font-size: 11px;
   letter-spacing: 0.14em;
-  margin: 0 0 22px;
+  margin: 0 0 28px;
   text-align: center;
   text-transform: uppercase;
 }
@@ -762,18 +762,25 @@ select {
 .providers .row {
   align-items: center;
   display: flex;
-  flex-wrap: wrap;
-  gap: 18px 40px;
+  flex-wrap: nowrap;
+  gap: clamp(24px, 2.6vw, 42px);
   justify-content: center;
+  margin: 0 auto;
+  max-width: 1080px;
+  width: fit-content;
 }
 
 .providers .p {
   align-items: center;
   color: var(--ink-2);
   display: inline-flex;
-  font-size: 16px;
+  font-size: clamp(13px, 1.1vw, 15px);
   font-weight: 600;
-  gap: 11px;
+  gap: 8px;
+  justify-content: center;
+  line-height: 1;
+  min-width: 0;
+  white-space: nowrap;
 }
 
 .providers .p .glyph {
@@ -786,9 +793,17 @@ select {
   width: 30px;
 }
 
-.providers .p .glyph svg {
+.providers .p .glyph.logo-glyph {
+  color: inherit;
+  height: 24px;
+  width: 24px;
+}
+
+.providers .p .glyph svg,
+.providers .p .glyph img {
   display: block;
   height: 100%;
+  object-fit: contain;
   width: 100%;
 }
 
@@ -1310,6 +1325,13 @@ select {
 .provrow .glyph svg {
   display: block;
   height: 18px;
+  width: 18px;
+}
+
+.provrow .glyph.provider-card-logo img {
+  display: block;
+  height: 18px;
+  object-fit: contain;
   width: 18px;
 }
 
@@ -2511,6 +2533,10 @@ pre {
 
   .providers .sep {
     display: none;
+  }
+
+  .providers .row {
+    flex-wrap: wrap;
   }
 
   .metrics {
