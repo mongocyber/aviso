@@ -149,11 +149,6 @@ const MESSAGES = {
     "zh-CN": "配置",
     en: "Configure"
   },
-  "popup.currentModelHelp": {
-    "zh-CN":
-      "AI 动作用当前模型；复制上下文、搜索记录、恢复对话等本地动作不受影响。",
-    en: "AI actions use this model. Local actions such as copy context, search, and restore are not affected."
-  },
   "popup.commonFeatures": {
     "zh-CN": "常用功能",
     en: "Common features"
@@ -554,14 +549,85 @@ const MESSAGES = {
     "zh-CN": "测试中...",
     en: "Testing..."
   },
-  "popup.service.title": {
-    "zh-CN": "配置和连通测试",
-    en: "Configuration and connection test"
+  "popup.account.manage": {
+    "zh-CN": "在 AI 服务中管理",
+    en: "Manage in AI services"
   },
-  "popup.service.helper": {
-    "zh-CN":
-      "在这里配置自己的 AI 服务。保存草稿不等于连接测试通过；API Key 只保存在本地浏览器，非密钥设置保存在同步设置中。",
-    en: "Configure your own AI services here. Saving a draft does not mean the connection test passed. API keys stay in local browser storage; non-secret settings use sync storage."
+  "popup.account.section": {
+    "zh-CN": "账户",
+    en: "Account"
+  },
+  "popup.zero.title": {
+    "zh-CN": "开始使用",
+    en: "Get started"
+  },
+  "popup.zero.subtitle": {
+    "zh-CN": "两种方式，选一种就能用。",
+    en: "Two ways — pick one to get going."
+  },
+  "popup.zero.or": {
+    "zh-CN": "或者",
+    en: "or"
+  },
+  "popup.zero.jump": {
+    "zh-CN": "去启用",
+    en: "Set up"
+  },
+  "popup.zero.notice.title": {
+    "zh-CN": "还没启用 AI",
+    en: "AI is not enabled yet"
+  },
+  "popup.zero.notice.badge": {
+    "zh-CN": "未配置",
+    en: "Not set up"
+  },
+  "popup.zero.notice.hint": {
+    "zh-CN": "翻译、解释等需先启用 · 本地功能照常可用",
+    en: "Translate, explain, etc. need AI · local features still work"
+  },
+  "popup.preferences": {
+    "zh-CN": "偏好",
+    en: "Preferences"
+  },
+  "popup.translationTarget.auto": {
+    "zh-CN": "自动",
+    en: "Auto"
+  },
+  "popup.zero.recommended": {
+    "zh-CN": "推荐",
+    en: "Recommended"
+  },
+  "popup.zero.hosted.desc": {
+    "zh-CN": "登录后即可免费使用，内置额度、开箱即用。",
+    en: "Sign in to use it free — built-in quota, ready to go."
+  },
+  "popup.zero.hosted.cta": {
+    "zh-CN": "登录 / 注册",
+    en: "Sign in / sign up"
+  },
+  "popup.zero.byok.title": {
+    "zh-CN": "我自己的 API Key",
+    en: "Your own API key"
+  },
+  "popup.zero.byok.badge": {
+    "zh-CN": "BYOK",
+    en: "BYOK"
+  },
+  "popup.zero.byok.heading": {
+    "zh-CN": "已经有 API Key?",
+    en: "Already have an API key?"
+  },
+  "popup.zero.byok.desc": {
+    "zh-CN": "连接 OpenAI · Claude · 豆包，浏览器直连厂商，请求不经过我们。",
+    en: "Connect OpenAI · Claude · Doubao — your browser talks to providers directly; requests don't go through us."
+  },
+  "popup.zero.byok.cta": {
+    "zh-CN": "连接自己的服务",
+    en: "Connect your own service"
+  },
+  "popup.zero.privacy": {
+    "zh-CN": "你发起请求时，内容只发往你选择的那一个服务。",
+    en: "When you send a request, the content goes only to the one service you chose."
   },
   "popup.hosted.title": {
     "zh-CN": "Aviso AI",
@@ -574,6 +640,10 @@ const MESSAGES = {
   "popup.hosted.optionHelper": {
     "zh-CN": "官方后端 · free-small",
     en: "Aviso backend · free-small"
+  },
+  "popup.hosted.compactSub": {
+    "zh-CN": "官方服务 · 登录可用",
+    en: "Official service · sign in to use"
   },
   "popup.hosted.localBackend": {
     "zh-CN": "后端",
@@ -772,8 +842,8 @@ const MESSAGES = {
     en: "Off"
   },
   "popup.service.fastHelper": {
-    "zh-CN": "仅用于短文本的翻译、解释、润色；未选择时不会自动切换模型。",
-    en: "Used only for short translate, explain, and polish tasks. When off, Aviso will not switch models automatically."
+    "zh-CN": "短文本的翻译、解释、润色走这个，省下主模型额度。",
+    en: "Short translate / explain / polish go here, saving your main-model quota."
   },
   "popup.service.configs": {
     "zh-CN": "服务配置",
@@ -786,10 +856,6 @@ const MESSAGES = {
   "popup.service.addAria": {
     "zh-CN": "选择要添加的 AI 服务",
     en: "Choose an AI service to add"
-  },
-  "popup.service.empty": {
-    "zh-CN": "暂无自己的 AI 服务配置。可继续使用 Aviso AI，或点击“添加”创建 BYOK 配置。",
-    en: "No personal AI service configured. You can keep using Aviso AI, or click Add to create a BYOK configuration."
   },
   "popup.service.ready": {
     "zh-CN": "AI 服务可以使用",
@@ -887,6 +953,22 @@ const MESSAGES = {
     "zh-CN":
       "Aviso 没有项目方服务器。你主动发起 AI 请求时，内容会由浏览器直接发送到你选择的模型厂商。",
     en: "Aviso has no project-owned server. When you start an AI request, the browser sends content directly to the model provider you choose."
+  },
+  "popup.privacy.hostedTitle": {
+    "zh-CN": "用 Aviso AI",
+    en: "With Aviso AI"
+  },
+  "popup.privacy.hostedDesc": {
+    "zh-CN": "内容先经过 Aviso 服务再转给模型厂商，我们不存储你的正文。",
+    en: "Content passes through Aviso's service to the model provider; we don't store your text."
+  },
+  "popup.privacy.byokTitle": {
+    "zh-CN": "用自己的 Key",
+    en: "With your own key"
+  },
+  "popup.privacy.byokDesc": {
+    "zh-CN": "浏览器直连厂商，请求不经过我们。",
+    en: "Your browser connects to the provider directly; requests don't go through us."
   },
   "popup.privacy.full": {
     "zh-CN":

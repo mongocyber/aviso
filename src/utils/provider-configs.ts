@@ -157,9 +157,13 @@ export function hasProviderConfigKey(
 
 export function resolveDefaultProviderConfigId(
   settings: Settings,
-  providerConfigs: ProviderConfig[]
+  providerConfigs: ProviderConfig[],
+  hostedUsable = true
 ): string {
-  if (isHostedAiProviderConfigId(settings.defaultProviderConfigId)) {
+  if (
+    isHostedAiProviderConfigId(settings.defaultProviderConfigId) &&
+    hostedUsable
+  ) {
     return HOSTED_AI_PROVIDER_CONFIG_ID
   }
 

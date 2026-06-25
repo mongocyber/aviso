@@ -22,6 +22,10 @@ import {
 } from "~utils/image-src"
 import { formatCurrentContext, truncatePageContent } from "~utils/page-content"
 import { WAITING_MODEL_RESPONSE_TEXT } from "~utils/response-guard"
+import {
+  isHostedSessionUsable,
+  readHostedSession
+} from "~utils/hosted-session"
 import { getApiKeys, getSettings, saveSettings } from "~utils/storage"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
 import { createI18n, resolveSettingsUiLanguage } from "~utils/i18n"
@@ -76,9 +80,11 @@ async function registerContextMenusNow() {
   const t = createI18n(resolveSettingsUiLanguage(settings))
   const apiKeys = await getApiKeys()
   const providerConfigs = getProviderConfigsWithLegacy(settings, apiKeys)
+  const hostedSession = await readHostedSession()
   const defaultProviderConfigId = resolveDefaultProviderConfigId(
     settings,
-    providerConfigs
+    providerConfigs,
+    isHostedSessionUsable(hostedSession)
   )
   const templates = settings.templates ?? []
   await removeAllContextMenus()
