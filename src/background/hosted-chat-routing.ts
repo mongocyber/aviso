@@ -2,6 +2,7 @@ import type { AIRequestPayload, AIStreamChunk } from "~types/messages"
 import {
   createHostedAiClient,
   HostedAiClientError,
+  type HostedAiMe,
   normalizeHostedAiError,
   type HostedAiChatContext,
   type HostedAiChatRequest,
@@ -12,7 +13,9 @@ import {
   clearHostedSession,
   HOSTED_AI_DEFAULT_MODEL,
   readHostedSession,
-  requiresHostedSignInForRoute
+  requiresHostedSignInForRoute,
+  type StoredHostedSession,
+  updateHostedSessionMe
 } from "~utils/hosted-session"
 import type { TranslationTargetLanguage } from "~utils/translation"
 
@@ -107,6 +110,20 @@ export async function runHostedChatRequest(
 
   if (!sawDone) {
     onChunk({ text: "", done: true, kind: "answer" })
+  }
+
+  await refreshHostedSessionMeAfterSuccessfulChat(session, client.me)
+}
+
+async function refreshHostedSessionMeAfterSuccessfulChat(
+  session: StoredHostedSession,
+  getMe: (sessionToken?: string) => Promise<HostedAiMe>
+): Promise<void> {
+  try {
+    const me = await getMe(session.session.session_token)
+    await updateHostedSessionMe(session, me)
+  } catch {
+    // Quota refresh is best-effort; a completed chat response should still stand.
   }
 }
 

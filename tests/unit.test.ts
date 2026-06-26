@@ -62,6 +62,7 @@ import {
   buildHostedAccountQuotaDisplay,
   clearHostedSession,
   deriveHostedAccountStatus,
+  getHostedMonthlyQuotaWindow,
   HOSTED_AI_DEFAULT_BASE_URL,
   HOSTED_AI_DEFAULT_MODEL,
   HOSTED_AI_LOCAL_BASE_URL,
@@ -1051,6 +1052,124 @@ test("hosted chat routing builds local chat payloads only when explicitly select
   )
 })
 
+test("hosted chat refreshes stored quota after a successful stream", async () => {
+  const previousFetch = globalThis.fetch
+  const storage = installHostedChromeStorageForTest()
+  const fetchCalls: string[] = []
+  const { runHostedChatRequest } = await import(
+    "../src/background/hosted-chat-routing.ts"
+  )
+
+  globalThis.fetch = (async (input, init) => {
+    fetchCalls.push(String(input))
+    const headers = new Headers(init?.headers)
+    assert.equal(headers.get("Authorization"), "Bearer session-local")
+
+    if (String(input).endsWith("/chat")) {
+      assert.equal(headers.get("Accept"), "text/event-stream")
+      return new Response(
+        `data: {"delta":"translated"}\n\ndata: {"done":true,"usage":{"tokens_in":2,"tokens_out":3}}\n\n`,
+        {
+          status: 200,
+          headers: { "Content-Type": "text/event-stream" }
+        }
+      )
+    }
+
+    if (String(input).endsWith("/me")) {
+      return Response.json(createHostedMeFixture(42))
+    }
+
+    return Response.json({ error: { code: "internal" } }, { status: 500 })
+  }) as typeof fetch
+
+  try {
+    await saveHostedSession(createHostedSessionFixture(), {
+      baseUrl: HOSTED_AI_LOCAL_BASE_URL,
+      me: createHostedMeFixture(0)
+    })
+
+    const chunks: Array<{ text: string; done: boolean; kind?: string }> = []
+    await runHostedChatRequest(
+      {
+        aiRoute: "hosted",
+        operation: "translate",
+        context: "selection",
+        selectionText: "Hello"
+      },
+      (chunk) => chunks.push(chunk)
+    )
+
+    const stored = await readHostedSession()
+    assert.deepEqual(chunks, [
+      { text: "translated", done: false, kind: "answer" },
+      { text: "", done: true, kind: "answer" }
+    ])
+    assert.deepEqual(
+      fetchCalls.map((url) => new URL(url).pathname),
+      ["/v1/chat", "/v1/me"]
+    )
+    assert.equal(getHostedMonthlyQuotaWindow(stored)?.used, 42)
+  } finally {
+    globalThis.fetch = previousFetch
+    storage.restore()
+  }
+})
+
+test("hosted quota refresh failure does not fail completed chat", async () => {
+  const previousFetch = globalThis.fetch
+  const storage = installHostedChromeStorageForTest()
+  const { runHostedChatRequest } = await import(
+    "../src/background/hosted-chat-routing.ts"
+  )
+
+  globalThis.fetch = (async (input) => {
+    if (String(input).endsWith("/chat")) {
+      return new Response(`data: {"delta":"ok"}\n\ndata: {"done":true}\n\n`, {
+        status: 200,
+        headers: { "Content-Type": "text/event-stream" }
+      })
+    }
+
+    if (String(input).endsWith("/me")) {
+      return Response.json(
+        { error: { code: "service_unavailable" } },
+        { status: 503 }
+      )
+    }
+
+    return Response.json({ error: { code: "internal" } }, { status: 500 })
+  }) as typeof fetch
+
+  try {
+    await saveHostedSession(createHostedSessionFixture(), {
+      baseUrl: HOSTED_AI_LOCAL_BASE_URL,
+      me: createHostedMeFixture(0)
+    })
+
+    const chunks: Array<{ text: string; done: boolean; kind?: string }> = []
+    await runHostedChatRequest(
+      {
+        aiRoute: "hosted",
+        operation: "translate",
+        context: "selection",
+        selectionText: "Hello"
+      },
+      (chunk) => chunks.push(chunk)
+    )
+
+    const stored = await readHostedSession()
+    assert.deepEqual(chunks, [
+      { text: "ok", done: false, kind: "answer" },
+      { text: "", done: true, kind: "answer" }
+    ])
+    assert.equal(getHostedMonthlyQuotaWindow(stored)?.used, 0)
+  } finally {
+    globalThis.fetch = previousFetch
+    storage.restore()
+  }
+})
+
 test("Aviso AI service selection stays separate from BYOK provider configs", () => {
   const providerConfigSource = readFileSync(
     new URL("../src/utils/provider-configs.ts", import.meta.url),
@@ -1148,6 +1267,69 @@ test("hosted session storage uses a separate local key from API keys", async () 
     ;(globalThis as any).chrome = previousChrome
   }
 })
+
+function installHostedChromeStorageForTest() {
+  const previousChrome = (globalThis as any).chrome
+  const localStore: Record<string, unknown> = {}
+
+  ;(globalThis as any).chrome = {
+    storage: {
+      local: {
+        get: async (key: string) => ({ [key]: localStore[key] }),
+        set: async (value: Record<string, unknown>) => {
+          Object.assign(localStore, value)
+        },
+        remove: async (key: string) => {
+          delete localStore[key]
+        }
+      }
+    }
+  }
+
+  return {
+    localStore,
+    restore: () => {
+      ;(globalThis as any).chrome = previousChrome
+    }
+  }
+}
+
+function createHostedSessionFixture() {
+  return {
+    session_token: "session-local",
+    expires_at: "2027-06-18T00:00:00.000Z",
+    user: {
+      id: "u1",
+      tier: "free" as const,
+      region: "global" as const
+    }
+  }
+}
+
+function createHostedMeFixture(monthlyUsed: number) {
+  return {
+    user: {
+      id: "u1",
+      tier: "free" as const,
+      region: "global" as const
+    },
+    quota: {
+      unit: "tokens" as const,
+      monthly: {
+        limit: 1000000,
+        used: monthlyUsed,
+        resets_at: "2026-07-01T00:00:00.000Z"
+      },
+      daily: {
+        limit: 50000,
+        used: 5,
+        resets_at: "2026-06-27T00:00:00.000Z"
+      }
+    },
+    rate_limit: { requests_per_min: 30, tokens_per_min: 30000 },
+    models: { available: ["free-small"], default: "free-small" }
+  }
+}
 
 test("hosted account quota display formats me data and missing states", () => {
   const labels = {
