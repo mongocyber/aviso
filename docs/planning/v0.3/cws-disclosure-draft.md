@@ -13,8 +13,8 @@ This draft can be used as the source checklist for the final Chrome Web Store su
 
 | Field | Current value in this draft | Final submission requirement | Status |
 | --- | --- | --- | --- |
-| Production backend origin | Not present | Exact production backend origin, if hosted AI ships publicly | `blocked` |
-| Hosted backend host permission | Staging origin only: `https://aviso-backend-staging.vercel.app/*` | Exact host permission from the final production package manifest; no broad host permission | `blocked` |
+| Production backend origin | `https://aviso-backend-production.vercel.app` | Exact production backend origin, if hosted AI ships publicly | `known / backend readiness still blocked` |
+| Hosted backend host permission | Staging origin only in current package: `https://aviso-backend-staging.vercel.app/*`; future candidate: `https://aviso-backend-production.vercel.app/*` | Exact host permission from the final production package manifest; no broad host permission | `blocked until final package evidence` |
 | Production OAuth evidence | Not present | Sanitized production Google OAuth/session smoke evidence and consent-screen confirmation | `blocked` |
 | Production provider evidence | Not present | Sanitized production provider smoke evidence with quota/cost guard confirmation | `blocked` |
 | Production package evidence | Not present in this worktree | Final zip/package filename, manifest permission list, and package boundary scan | `blocked` |

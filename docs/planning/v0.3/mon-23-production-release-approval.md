@@ -44,9 +44,9 @@ Every row below must be explicitly approved, blocked, or deferred by the owner b
 
 | Decision | Owner must confirm | Current default |
 | --- | --- | --- |
-| Production backend resources | Whether to create separate production Vercel/backend runtime, Supabase project, Upstash Redis, provider account/key, OAuth client, session secret, and any required production domains. | `approved to execute / not configured / evidence pending` |
+| Production backend resources | Whether to create separate production Vercel/backend runtime, Supabase project, Upstash Redis, provider account/key, OAuth client, session secret, and any required production domains. | `Vercel production origin configured / external resources and secrets pending / not live` |
 | Production env and secrets | Who will inject production env values, which environment they target, and how sanitized evidence will confirm readiness without exposing values. | `approved for owner-controlled injection / values must not be recorded / evidence pending` |
-| Production host permission | Exact production backend origin and exact extension `host_permissions` entry, if hosted AI is included in the production package. No broad host permission. | `approved only for exact production backend origin / no broad host / evidence pending` |
+| Production host permission | Exact production backend origin and exact extension `host_permissions` entry, if hosted AI is included in the production package. No broad host permission. | `origin established as https://aviso-backend-production.vercel.app / future exact candidate https://aviso-backend-production.vercel.app/* / package not updated` |
 | Production OAuth validation | Exact production Google OAuth client, consent screen status, redirect origin, and sanitized production auth/session smoke plan. | `approved to validate / evidence pending` |
 | Production provider validation | Approved provider account, model route, spend cap, cost guard, quota path, sanitized smoke scope, and allowed evidence fields. | `approved to validate / cost guard required / evidence pending` |
 | Production cost caps | Free quota policy, hard spend cap, abuse controls, quota reset behavior, and emergency disable path. Do not publish quota numbers unless release copy is approved. | `approved as required release gate / evidence pending` |
@@ -65,7 +65,7 @@ Do not cross these lines in MON-23 execution work:
 - Do not inject, read, print, copy, or store production secrets or `.env` values in project files or chat.
 - Do not submit Chrome Web Store disclosure, privacy updates, package updates, or store listing changes until the production package and disclosure evidence are final.
 - Do not deploy website/privacy changes or publish hosted-AI public copy until final copy and publication evidence are ready.
-- Do not add broad extension host permissions; production host permission is approved only for the exact production backend origin once established.
+- Do not add broad extension host permissions; production host permission is approved only for the exact production backend origin `https://aviso-backend-production.vercel.app`.
 - Do not run production provider, OAuth, database, cache, billing, or alerting validation without a sanitized evidence plan.
 - Do not describe hosted AI as live, production, publicly available, or release-approved until production validation, CWS/package, website, and release evidence are complete.
 - Do not add billing, subscription, checkout, upgrade, anonymous quota, or paid-plan claims unless the owner explicitly expands scope.
