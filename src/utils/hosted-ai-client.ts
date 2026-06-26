@@ -8,6 +8,33 @@ const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"])
 const STAGING_ORIGIN = new URL(HOSTED_AI_STAGING_BASE_URL).origin
 const STAGING_PATH = new URL(HOSTED_AI_STAGING_BASE_URL).pathname
 
+const HOSTED_AI_STREAM_LIMIT_ERROR_MESSAGE =
+  "AI 返回内容过大或响应超时，请缩短输入后重试。"
+
+const DEFAULT_HOSTED_AI_STREAM_RESOURCE_LIMITS = {
+  overallTimeoutMs: 120_000,
+  idleTimeoutMs: 30_000,
+  maxChunkChars: 65_536,
+  maxEventChars: 65_536,
+  maxBufferChars: 262_144,
+  maxOutputChars: 262_144
+} as const
+
+export type HostedAiStreamResourceLimits = Partial<
+  typeof DEFAULT_HOSTED_AI_STREAM_RESOURCE_LIMITS
+>
+
+class HostedAiStreamResourceLimitError extends Error {
+  constructor() {
+    super(HOSTED_AI_STREAM_LIMIT_ERROR_MESSAGE)
+    this.name = "HostedAiStreamResourceLimitError"
+  }
+}
+
+type HostedAiStreamResourceGuard = ReturnType<
+  typeof createAiStreamResourceGuard
+>
+
 export const HOSTED_AI_ERROR_CODES = [
   "bad_request",
   "unauthorized",
@@ -126,6 +153,7 @@ export type HostedAiClientOptions = {
   sessionToken?: string
   fetchImpl?: typeof fetch
   createIdempotencyKey?: () => string
+  streamLimits?: HostedAiStreamResourceLimits
 }
 
 export type HostedAiChatOptions = {
@@ -195,7 +223,7 @@ export function createHostedAiClient(options: HostedAiClientOptions = {}) {
 
   return {
     baseUrl,
-    authGoogle(body: { id_token: string }): Promise<HostedAiSession> {
+    authGoogle(body: { id_token: string; nonce: string }): Promise<HostedAiSession> {
       return requestJson<HostedAiSession>("/auth/google", {
         method: "POST",
         body: JSON.stringify(body)
@@ -238,11 +266,21 @@ export function createHostedAiClient(options: HostedAiClientOptions = {}) {
         )
       }
 
-      const parser = createHostedAiSseParser()
-      for await (const chunk of readResponseTextChunks(response.body)) {
-        for (const event of parser.push(chunk)) yield event
+      const parser = createHostedAiSseParser(options.streamLimits)
+      for await (const chunk of readResponseTextChunks(
+        response.body,
+        chatOptions.signal,
+        options.streamLimits
+      )) {
+        for (const event of parser.push(chunk)) {
+          yield event
+          if (event.type === "done" || event.type === "error") return
+        }
       }
-      for (const event of parser.finish()) yield event
+      for (const event of parser.finish()) {
+        yield event
+        if (event.type === "done" || event.type === "error") return
+      }
     }
   }
 }
@@ -272,29 +310,38 @@ export function normalizeHostedAiError(
   }
 }
 
-export function createHostedAiSseParser() {
+export function createHostedAiSseParser(limits?: HostedAiStreamResourceLimits) {
   let buffer = ""
   let dataLines: string[] = []
+  const guard = createAiStreamResourceGuard(limits)
 
   const dispatch = (): HostedAiSseEvent[] => {
     if (dataLines.length === 0) return []
     const data = dataLines.join("\n")
+    guard.recordEvent(data.length)
     dataLines = []
-    return [parseHostedAiSseData(data)]
+    const event = parseHostedAiSseData(data)
+    if (event.type === "delta") guard.recordOutput(event.delta)
+    if (event.type === "done" || event.type === "error") guard.markTerminal()
+    return [event]
   }
 
   return {
     push(chunk: string): HostedAiSseEvent[] {
+      guard.recordIncomingChunk(chunk)
       buffer += chunk
       const events: HostedAiSseEvent[] = []
       let lineEnd = buffer.search(/\r?\n/)
 
       while (lineEnd >= 0) {
         const line = buffer.slice(0, lineEnd).replace(/\r$/, "")
-        buffer = buffer.slice(buffer[lineEnd] === "\r" ? lineEnd + 2 : lineEnd + 1)
+        const consumed = buffer[lineEnd] === "\r" ? lineEnd + 2 : lineEnd + 1
+        buffer = buffer.slice(consumed)
+        guard.releaseBuffer(consumed)
 
         if (line === "") {
           events.push(...dispatch())
+          if (guard.isTerminal()) break
         } else if (line.startsWith("data:")) {
           dataLines.push(line.slice(5).trimStart())
         }
@@ -307,6 +354,7 @@ export function createHostedAiSseParser() {
     finish(): HostedAiSseEvent[] {
       if (buffer) {
         if (buffer.startsWith("data:")) dataLines.push(buffer.slice(5).trimStart())
+        guard.releaseBuffer(buffer.length)
         buffer = ""
       }
       return dispatch()
@@ -374,21 +422,149 @@ async function safeReadErrorBody(response: Response): Promise<ErrorBody | null> 
 }
 
 async function* readResponseTextChunks(
-  body: NonNullable<Response["body"]>
+  body: NonNullable<Response["body"]>,
+  signal?: AbortSignal,
+  limits?: HostedAiStreamResourceLimits
 ): AsyncGenerator<string> {
   const reader = body.getReader()
   const decoder = new TextDecoder()
+  const guard = createAiStreamResourceGuard(limits)
+  let completedNaturally = false
   try {
     while (true) {
-      const { done, value } = await reader.read()
+      const { done, value } = await readStreamStepWithTimeout(
+        () => reader.read(),
+        guard,
+        signal
+      )
       if (done) break
-      yield decoder.decode(value, { stream: true })
+      const chunk = decoder.decode(value, { stream: true })
+      guard.recordIncomingChunk(chunk)
+      yield chunk
     }
     const flushed = decoder.decode()
-    if (flushed) yield flushed
+    if (flushed) {
+      guard.recordIncomingChunk(flushed)
+      yield flushed
+    }
+    completedNaturally = true
   } finally {
+    if (!completedNaturally) {
+      try {
+        await reader.cancel()
+      } catch {
+        // Cancellation is best-effort cleanup; callers should keep the safe
+        // stream-limit or parser error instead of a raw stream cancellation error.
+      }
+    }
     reader.releaseLock()
   }
+}
+
+function createAiStreamResourceGuard(
+  limits: HostedAiStreamResourceLimits = {},
+  now: () => number = () => Date.now()
+) {
+  const resolved = { ...DEFAULT_HOSTED_AI_STREAM_RESOURCE_LIMITS, ...limits }
+  const startedAt = now()
+  let lastActivityAt = startedAt
+  let bufferedChars = 0
+  let outputChars = 0
+  let terminal = false
+
+  const fail = (): never => {
+    throw new HostedAiStreamResourceLimitError()
+  }
+  const assertActive = () => {
+    if (terminal) fail()
+  }
+  const assertWithinTime = () => {
+    const current = now()
+    if (current - startedAt > resolved.overallTimeoutMs) fail()
+    if (current - lastActivityAt > resolved.idleTimeoutMs) fail()
+  }
+
+  return {
+    limits: resolved,
+    isTerminal(): boolean {
+      return terminal
+    },
+    markTerminal(): void {
+      terminal = true
+    },
+    recordIncomingChunk(chunk: string): void {
+      assertActive()
+      assertWithinTime()
+      if (chunk.length > resolved.maxChunkChars) fail()
+      bufferedChars += chunk.length
+      if (bufferedChars > resolved.maxBufferChars) fail()
+      lastActivityAt = now()
+    },
+    recordEvent(eventChars: number): void {
+      assertActive()
+      assertWithinTime()
+      if (eventChars > resolved.maxEventChars) fail()
+    },
+    releaseBuffer(chars: number): void {
+      bufferedChars = Math.max(0, bufferedChars - chars)
+    },
+    recordOutput(text: string): void {
+      assertWithinTime()
+      outputChars += text.length
+      if (outputChars > resolved.maxOutputChars) fail()
+      lastActivityAt = now()
+    },
+    assertCanRead(): void {
+      assertActive()
+      assertWithinTime()
+    }
+  }
+}
+
+async function readStreamStepWithTimeout<T>(
+  read: () => Promise<T>,
+  guard: HostedAiStreamResourceGuard,
+  signal?: AbortSignal
+): Promise<T> {
+  guard.assertCanRead()
+  if (signal?.aborted) throw new HostedAiStreamResourceLimitError()
+
+  return await new Promise<T>((resolve, reject) => {
+    let settled = false
+    const timeoutMs = Math.max(
+      1,
+      Math.min(guard.limits.idleTimeoutMs, guard.limits.overallTimeoutMs)
+    )
+    const timeout = setTimeout(() => {
+      if (settled) return
+      settled = true
+      reject(new HostedAiStreamResourceLimitError())
+    }, timeoutMs)
+    const abort = () => {
+      if (settled) return
+      settled = true
+      clearTimeout(timeout)
+      reject(new HostedAiStreamResourceLimitError())
+    }
+
+    signal?.addEventListener("abort", abort, { once: true })
+    read().then(
+      (value) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timeout)
+        signal?.removeEventListener("abort", abort)
+        resolve(value)
+      },
+      (error) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timeout)
+        signal?.removeEventListener("abort", abort)
+        reject(error)
+      }
+    )
+  })
 }
 
 function parseHostedAiSseData(data: string): HostedAiSseEvent {

@@ -50,9 +50,14 @@ export type HostedGoogleOAuthOptions = {
   state?: string
 }
 
-export async function requestHostedGoogleIdToken(
+export type HostedGoogleOAuthResult = {
+  idToken: string
+  nonce: string
+}
+
+export async function requestHostedGoogleIdentityToken(
   options: HostedGoogleOAuthOptions = {}
-): Promise<string> {
+): Promise<HostedGoogleOAuthResult> {
   const clientId = options.clientId ?? HOSTED_GOOGLE_OAUTH_CLIENT_ID
   if (!clientId.trim()) {
     throw new HostedGoogleOAuthError("config_missing")
@@ -94,17 +99,24 @@ export async function requestHostedGoogleIdToken(
       }
 
       try {
-        resolve(
-          parseHostedGoogleOAuthRedirect(responseUrl, {
+        resolve({
+          idToken: parseHostedGoogleOAuthRedirect(responseUrl, {
             expectedRedirectUri: redirectUri,
             expectedState: state
-          })
-        )
+          }),
+          nonce
+        })
       } catch (error) {
         reject(error)
       }
     })
   })
+}
+
+export async function requestHostedGoogleIdToken(
+  options: HostedGoogleOAuthOptions = {}
+): Promise<string> {
+  return (await requestHostedGoogleIdentityToken(options)).idToken
 }
 
 export function buildHostedGoogleOAuthUrl(options: {
