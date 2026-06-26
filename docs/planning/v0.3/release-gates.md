@@ -1,6 +1,6 @@
 # Aviso v0.3 Release Gates
 
-Status: `planning / privacy-cws-source-updated / owner-gated`
+Status: `planning / privacy-cws-source-updated / mon-23-owner-approved-to-execute / not release-ready`
 Updated: 2026-06-26
 
 This file lists the gates required before v0.3 hosted AI can be described as available, submitted to Chrome Web Store, or released.
@@ -27,15 +27,15 @@ This file lists the gates required before v0.3 hosted AI can be described as ava
 | Hosted AI sign-in UX redesign | Production approval if included in v0.3 package | completed / merged to `main` / Linear Done in [`MON-26`](https://linear.app/mongocyber/issue/MON-26/v03-fe09-hosted-ai-sign-in-ux-redesign). Frontend-only; no production config, permission expansion, backend schema/provider, billing, public copy, or secrets handling |
 | AI unavailable guidance cleanup | Production approval if included in v0.3 package | merged to `main` / local validation passed in [`MON-29`](https://linear.app/mongocyber/issue/MON-29/v03-fe10-ai-unavailable-guidance-cleanup). No backend, manifest, host permission, API key storage, public copy, production, billing, telemetry, or new network scope |
 | Staging resource register | Env injection, redeploy, and staging verification | updated in [`staging-resource-register.md`](./staging-resource-register.md); resources created, env injection owner-reported, redeploy and health verified, frontend OAuth browser smoke passed, release gates pending |
-| Host / ordinary permission approval | Any backend URL or OAuth permission in extension manifest | approved only for `identity` and `https://aviso-backend-staging.vercel.app/*`; production host permission is not approved |
-| Privacy policy update | Public hosted AI claim or CWS update | source updated in `MON-22` / not deployed / not release-approved |
-| CWS data disclosure update | Store submission | draft added in [`cws-disclosure-draft.md`](./cws-disclosure-draft.md) / not submitted / owner-gated |
+| Host / ordinary permission approval | Any backend URL or OAuth permission in extension manifest | approved only for `identity` and `https://aviso-backend-staging.vercel.app/*` today; production host permission is approved only for the exact production backend origin once established, with no broad host permission |
+| Privacy policy update | Public hosted AI claim or CWS update | source updated in `MON-22` / owner-approved to prepare publication / not deployed / evidence pending |
+| CWS data disclosure update | Store submission | draft added in [`cws-disclosure-draft.md`](./cws-disclosure-draft.md) / owner-approved to prepare submission / not submitted / evidence pending |
 | Backend staging deployment | Cross-repo integration test | backend staging health verified; GLM route remediation commit `d5da17b` pushed; provider smoke passed in `MON-18C`; integration smokes remain pending |
-| Real provider validation | Staging or production hosted AI | staging provider route verified in `MON-18C` with SSE done/usage and quota/cost guard confirmation; production provider validation remains separate |
-| Auth provider validation | Staging or production sign-in | staging Google OAuth smoke verified in `MON-17`; production OAuth remains separate |
+| Real provider validation | Staging or production hosted AI | staging provider route verified in `MON-18C` with SSE done/usage and quota/cost guard confirmation; production provider validation is owner-approved to execute with sanitized evidence, but not completed |
+| Auth provider validation | Staging or production sign-in | staging Google OAuth smoke verified in `MON-17`; production OAuth validation is owner-approved to execute with sanitized evidence, but not completed |
 | Quota and cost controls | Staging hosted AI | Upstash quota/idempotency smoke verified in `MON-16`; provider quota/cost guard confirmed in `MON-18C` with positive quota delta and `admission_path_exercised` |
-| Billing provider gate | Paid hosted AI | not in first v0.3 release / later owner gate |
-| Release owner approval | Public release | not approved |
+| Billing provider gate | Paid hosted AI | approved excluded from first v0.3 hosted-AI release / later owner gate |
+| Release owner approval | Public release | MON-23 owner decisions approved to execute; final production, package, website, CWS, and live evidence pending |
 
 ## Privacy And Disclosure Gates
 
@@ -66,7 +66,7 @@ Before the extension calls hosted backend:
 - Confirm command palette still does not perform web search or remote link-body fetching.
 - Confirm screenshot/image hosted path remains out of v0.3 public scope unless separately approved.
 
-Owner confirmed `MON-20` for the exact staging backend origin, minimal host permission, and staging frontend OAuth identity-token handling. This does not approve production host permissions, public website copy, Chrome Web Store copy, production OAuth, or production release.
+Owner confirmed `MON-20` for the exact staging backend origin, minimal host permission, and staging frontend OAuth identity-token handling. Owner later approved `MON-23` execution decisions for production preparation, website/CWS preparation, production OAuth/provider validation, and billing exclusion. Production host permission is still limited to the exact production backend origin once established and verified; no broad host permission is approved.
 
 ## Backend Gates
 
@@ -123,9 +123,9 @@ v0.3 can only be considered release-ready when all of the following are true:
 - backend staging evidence exists,
 - cross-repo integration evidence exists,
 - privacy and CWS disclosure changes are approved,
-- privacy and CWS source updates are deployed/submitted only after owner approval,
-- host permission change is explicitly approved,
-- provider validation is approved and completed,
-- owner approves the release.
+- privacy and CWS source updates are deployed/submitted with matching release evidence,
+- production host permission uses only the exact approved production backend origin,
+- production provider validation is completed with sanitized evidence,
+- owner-approved MON-23 execution evidence is complete for production, package, website, CWS, and rollback.
 
 Passing local tests or mock integration is not enough.

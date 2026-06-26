@@ -1,7 +1,7 @@
 # Aviso v0.3 Planning
 
-Status: `execution-started / cross-repo / owner-gated / not release-ready`
-Updated: 2026-06-20
+Status: `execution-started / cross-repo / mon-23-owner-approved-to-execute / not release-ready`
+Updated: 2026-06-26
 
 This folder is the product-side control plane for Aviso v0.3 hosted AI. It coordinates the extension repository and the sibling backend repository without merging the two codebases.
 
@@ -41,7 +41,8 @@ This folder is the product-side control plane for Aviso v0.3 hosted AI. It coord
 - The extension has staging hosted AI integration, exact staging host permission, `identity` permission, and owner-assisted account smoke evidence.
 - BYOK direct-provider remains the default available path.
 - Hosted AI remains staging-only and not release-ready.
-- Production backend, production host permission, Chrome Web Store submission, and release approval are not approved.
+- MON-23 owner decisions are approved to execute production preparation, website/CWS preparation, production OAuth/provider validation, exact production host-permission work, and billing exclusion for the first hosted-AI release.
+- Production backend configuration, exact production host permission, Chrome Web Store submission, website deployment, and live release evidence are not complete.
 
 ## Source-Of-Truth Rules
 
@@ -56,7 +57,7 @@ This folder is the product-side control plane for Aviso v0.3 hosted AI. It coord
 ## Planning Rules
 
 - Do not update current product docs as if v0.3 has shipped.
-- MON-22 allows source-level website/privacy/CWS disclosure preparation only; do not submit Chrome Web Store copy or deploy production/public changes without owner approval.
-- Do not add backend host permissions without explicit owner approval.
+- MON-23 now allows production, website, and CWS preparation under sanitized evidence plans; do not submit Chrome Web Store copy or deploy public changes until the matching release evidence is complete.
+- Do not add broad backend host permissions; production host permission is limited to the exact production backend origin once established and verified.
 - Do not make real provider, auth, billing, or deployment claims from mock evidence.
 - Keep BYOK as a first-class path throughout v0.3.

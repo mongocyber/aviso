@@ -1,24 +1,24 @@
 # Aviso v0.3 CWS Disclosure Draft
 
-Status: `draft / source-updated / not submitted / owner-gated`
-Updated: 2026-06-23
+Status: `draft / source-updated / owner-approved-to-prepare / not submitted`
+Updated: 2026-06-26
 
-This draft is the product-side source for Chrome Web Store privacy and data-disclosure updates for v0.3 hosted AI. It does not submit the Chrome Web Store form, approve public release, approve production, or approve paid hosted AI.
+This draft is the product-side source for Chrome Web Store privacy and data-disclosure updates for v0.3 hosted AI. MON-23 owner decisions approve preparation of the final store submission package, but this file does not submit the Chrome Web Store form, prove public release, prove production validation, or approve paid hosted AI.
 
 ## Release Boundary
 
 - BYOK direct-provider remains the default available path.
 - Hosted AI is optional and requires user sign-in.
 - BYOK users are not forced through hosted AI, login, quota, or the backend.
-- Current approval covers source copy and disclosure drafting only.
-- Chrome Web Store submission, production backend, production OAuth, production provider validation, and release approval remain separate owner gates.
+- MON-23 owner approval covers final submission preparation, production backend preparation, production OAuth/provider validation, and billing exclusion for the first hosted-AI release.
+- Chrome Web Store submission, production backend validation, production package evidence, website deployment evidence, and live release evidence remain incomplete.
 
 ## Request Paths
 
 | Path | User action | Data transit | Account required | Current release meaning |
 | --- | --- | --- | --- | --- |
 | BYOK direct-provider | User triggers an AI action with a configured provider key | Browser extension -> selected provider | No | Existing/default path |
-| Hosted AI | User chooses hosted AI and signs in | Browser extension -> Aviso backend -> upstream provider | Yes | v0.3 optional path; staging verified, not production-approved |
+| Hosted AI | User chooses hosted AI and signs in | Browser extension -> Aviso backend -> upstream provider | Yes | v0.3 optional path; staging verified, production validation pending |
 
 ## Data Categories
 
@@ -76,7 +76,7 @@ https://aviso-backend-staging.vercel.app/*
 
 - Provider hosts are used for BYOK direct-provider requests.
 - `https://aviso-backend-staging.vercel.app/*` is the staging hosted AI backend origin approved for v0.3 validation.
-- Production backend host permission is not approved.
+- Production backend host permission is approved only for the exact production backend origin once established and verified.
 - No broad host permission is requested for arbitrary remote webpage-body fetching.
 
 ## CWS Form Guidance
