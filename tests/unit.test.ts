@@ -3361,7 +3361,7 @@ test("translation target language prompt supports explicit targets", () => {
   )
 })
 
-test("inline translation routing keeps short text inline and long text in result panel", () => {
+test("inline translation routing keeps selected text in the inline card", () => {
   assert.deepEqual(getInlineTranslationRoute(" hello "), {
     route: "inline",
     reason: "short_text"
@@ -3373,7 +3373,7 @@ test("inline translation routing keeps short text inline and long text in result
   assert.deepEqual(
     getInlineTranslationRoute("x".repeat(INLINE_TRANSLATION_MAX_CHARS + 1)),
     {
-      route: "result-panel",
+      route: "inline",
       reason: "too_long"
     }
   )
@@ -3384,7 +3384,7 @@ test("inline translation routing keeps short text inline and long text in result
         .join("\n")
     ),
     {
-      route: "result-panel",
+      route: "inline",
       reason: "too_many_lines"
     }
   )
@@ -4937,6 +4937,108 @@ test("inline translation uses shared two-second slow hint without fake output", 
   assert.doesNotMatch(toolbarSource, /output: SLOW_MODEL_RESPONSE_TEXT/)
 })
 
+test("long inline translations stay in the current card", () => {
+  const toolbarSource = readFileSync(
+    new URL("../src/contents/toolbar.tsx", import.meta.url),
+    "utf8"
+  )
+  const showInlineTranslationBlock =
+    toolbarSource.match(
+      /const showInlineTranslationForSelection = \([\s\S]*?\n  \}/
+    )?.[0] ?? ""
+
+  assert.match(
+    showInlineTranslationBlock,
+    /warmRuntimeConfig\(requestId\)[\s\S]*inlineRequestRef\.current = requestId[\s\S]*setInlineCard\(\{[\s\S]*visible: true/
+  )
+  assert.doesNotMatch(showInlineTranslationBlock, /openTranslationResultPanel/)
+  assert.doesNotMatch(showInlineTranslationBlock, /mode: "fallback"/)
+})
+
+test("selection toolbar lifecycle ignores stale cleared selections and keeps active cards on scroll", () => {
+  const toolbarSource = readFileSync(
+    new URL("../src/contents/toolbar.tsx", import.meta.url),
+    "utf8"
+  )
+  const i18nSource = readFileSync(
+    new URL("../src/utils/i18n.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(
+    toolbarSource,
+    /const handleScroll = \(event: Event\) => \{[\s\S]*if \(isInsideAvisoUI\(event\)\) return/
+  )
+  assert.match(
+    toolbarSource,
+    /if \(inlineCardVisibleRef\.current\) return[\s\S]*closeInlineCard\(\)/
+  )
+  assert.match(toolbarSource, /const INLINE_STALE_SELECTION_SUPPRESSION_MS = 1200/)
+  assert.match(
+    toolbarSource,
+    /const staleInlineSelectionRef = useRef\(\{ text: "", until: 0 \}\)/
+  )
+  assert.match(
+    toolbarSource,
+    /const shouldIgnoreStaleInlineSelection = \(text: string\): boolean => \{[\s\S]*return text\.trim\(\) === stale\.text/
+  )
+  assert.match(
+    toolbarSource,
+    /if \(inlineEnabled && shouldIgnoreStaleInlineSelection\(text\)\) \{[\s\S]*closeInlineCard\(\)[\s\S]*return[\s\S]*\}/
+  )
+  assert.match(
+    toolbarSource,
+    /inlineCardVisibleRef\.current &&[\s\S]*text === inlineSourceTextRef\.current\.trim\(\)[\s\S]*return/
+  )
+  assert.match(
+    toolbarSource,
+    /const selectedText = window\.getSelection\(\)\?\.toString\(\)\.trim\(\) \?\? ""[\s\S]*if \(inlineCardVisibleRef\.current && selectedText\) \{[\s\S]*rememberStaleInlineSelection\(selectedText\)/
+  )
+  assert.match(
+    toolbarSource,
+    /inlineCardVisibleRef\.current = true[\s\S]*setInlineCard\(\{[\s\S]*visible: true/
+  )
+  assert.match(
+    toolbarSource,
+    /const closeInlineCard = \(cancel = true\) => \{[\s\S]*inlineCardVisibleRef\.current = false/
+  )
+  assert.match(toolbarSource, /pageScrollAtRef\.current = Date\.now\(\)/)
+  assert.match(
+    toolbarSource,
+    /if \(Date\.now\(\) - pageScrollAtRef\.current < 500\) return/
+  )
+  assert.match(
+    toolbarSource,
+    /if \(inlineCardVisibleRef\.current\) return[\s\S]*const text = window\.getSelection\(\)\?\.toString\(\)\.trim\(\)/
+  )
+  assert.match(
+    toolbarSource,
+    /const text = window\.getSelection\(\)\?\.toString\(\)\.trim\(\) \?\? ""[\s\S]*if \(!inlineCardVisibleRef\.current\) closeInlineCard\(\)/
+  )
+  assert.match(
+    toolbarSource,
+    /document\.addEventListener\("selectionchange", handleSelectionChange\)/
+  )
+  assert.match(
+    toolbarSource,
+    /document\.removeEventListener\("selectionchange", handleSelectionChange\)/
+  )
+  assert.doesNotMatch(i18nSource, /建议点发给 AI/)
+})
+
+test("inline translation card is wider and grows before scrolling", () => {
+  const toolbarSource = readFileSync(
+    new URL("../src/contents/toolbar.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(toolbarSource, /const INLINE_CARD_WIDTH = 460/)
+  assert.match(toolbarSource, /const INLINE_CARD_ESTIMATED_HEIGHT = 300/)
+  assert.match(toolbarSource, /maxHeight: "min\(520px, calc\(100vh - 24px\)\)"/)
+  assert.match(toolbarSource, /flex: "1 1 auto"[\s\S]*minHeight: 96/)
+  assert.match(toolbarSource, /overflowY: "auto"/)
+})
+
 test("translation triggers avoid avoidable local waits without implicit command AI calls", () => {
   const toolbarSource = readFileSync(
     new URL("../src/contents/toolbar.tsx", import.meta.url),
@@ -5159,7 +5261,7 @@ test("inline AI requests warm runtime config before provider calls", () => {
   assert.match(toolbarSource, /warmRuntimeConfig\(requestId\)/)
   assert.match(
     toolbarSource,
-    /if \(route\.route === "result-panel"\)[\s\S]*return[\s\S]*warmRuntimeConfig\(requestId\)/
+    /warmRuntimeConfig\(requestId\)[\s\S]*inlineRequestRef\.current = requestId/
   )
 })
 

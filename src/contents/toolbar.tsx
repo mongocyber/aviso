@@ -1,5 +1,10 @@
 import type { PlasmoCSConfig, PlasmoGetShadowHostId } from "plasmo"
-import { useEffect, useRef, useState } from "react"
+import {
+  useEffect,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent
+} from "react"
 
 import { AvisoButton, AvisoIconButton } from "~components"
 import {
@@ -119,12 +124,13 @@ const OPERATION_ICON: Record<Operation, AvisoIconName> = {
 const VIEWPORT_MARGIN = 12
 const TOOLBAR_GAP = 20
 const TOOLBAR_ESTIMATED_HEIGHT = 52
-const INLINE_CARD_WIDTH = 324
-const INLINE_CARD_ESTIMATED_HEIGHT = 218
+const INLINE_CARD_WIDTH = 460
+const INLINE_CARD_ESTIMATED_HEIGHT = 300
 const INLINE_CARD_GAP = 12
 const INLINE_TRANSLATION_DEBOUNCE_MS = 100
 const SUPPRESS_SELECTION_TOOLBAR_EVENT = "aviso:suppress-selection-toolbar"
 const SELECTION_TOOLBAR_SUPPRESSION_MS = 700
+const INLINE_STALE_SELECTION_SUPPRESSION_MS = 1200
 
 const INITIAL_INLINE_CARD: InlineTranslationCardState = {
   visible: false,
@@ -196,6 +202,11 @@ function SelectionToolbar() {
   const inlineCopyTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const inlineSlowTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const suppressUntilRef = useRef(0)
+  const avisoPointerDownAtRef = useRef(0)
+  const pageScrollAtRef = useRef(0)
+  const inlineCardVisibleRef = useRef(false)
+  const inlineSourceTextRef = useRef("")
+  const staleInlineSelectionRef = useRef({ text: "", until: 0 })
 
   const cancelInlineRequest = (requestId: string) => {
     if (!requestId) return
@@ -205,7 +216,35 @@ function SelectionToolbar() {
     })
   }
 
+  const rememberStaleInlineSelection = (
+    text = inlineSourceTextRef.current
+  ) => {
+    const staleText = text.trim()
+    if (!staleText) return
+    staleInlineSelectionRef.current = {
+      text: staleText,
+      until: Date.now() + INLINE_STALE_SELECTION_SUPPRESSION_MS
+    }
+  }
+
+  const clearStaleInlineSelection = () => {
+    staleInlineSelectionRef.current = { text: "", until: 0 }
+  }
+
+  const shouldIgnoreStaleInlineSelection = (text: string): boolean => {
+    const stale = staleInlineSelectionRef.current
+    if (!stale.text) return false
+    if (Date.now() > stale.until) {
+      clearStaleInlineSelection()
+      return false
+    }
+    return text.trim() === stale.text
+  }
+
   const closeInlineCard = (cancel = true) => {
+    rememberStaleInlineSelection()
+    inlineCardVisibleRef.current = false
+    inlineSourceTextRef.current = ""
     clearTimeout(inlineTimer.current)
     clearTimeout(inlineCopyTimer.current)
     clearTimeout(inlineSlowTimer.current)
@@ -258,6 +297,11 @@ function SelectionToolbar() {
 
     return () => window.clearInterval(timer)
   }, [inlineCard.visible, inlineCard.mode, inlineCard.output])
+
+  useEffect(() => {
+    inlineCardVisibleRef.current = inlineCard.visible
+    inlineSourceTextRef.current = inlineCard.visible ? inlineCard.sourceText : ""
+  }, [inlineCard.visible, inlineCard.sourceText])
 
   // 读取并持续跟踪「划词工具栏」开关
   useEffect(() => {
@@ -468,28 +512,14 @@ function SelectionToolbar() {
       selectionChars: sourceText.length
     })
 
-    if (route.route === "result-panel") {
-      if (route.reason === "empty") return
-      setInlineCard({
-        visible: true,
-        mode: "fallback",
-        requestId,
-        sourceText,
-        output: "",
-        statusText: "",
-        error:
-          route.reason === "too_many_lines"
-            ? t("translation.manyLines")
-            : t("translation.longSelection"),
-        targetLabel,
-        copied: false,
-        ...position
-      })
-      return
-    }
+    if (route.reason === "empty") return
 
     warmRuntimeConfig(requestId)
+
+    clearStaleInlineSelection()
     inlineRequestRef.current = requestId
+    inlineCardVisibleRef.current = true
+    inlineSourceTextRef.current = sourceText
     setInlineCard({
       visible: true,
       mode: "loading",
@@ -516,6 +546,8 @@ function SelectionToolbar() {
     clearTimeout(inlineSlowTimer.current)
     if (inlineRequestRef.current) cancelInlineRequest(inlineRequestRef.current)
     inlineRequestRef.current = requestId
+    inlineCardVisibleRef.current = true
+    inlineSourceTextRef.current = inlineCard.sourceText
     setInlineCard((prev) => ({
       ...prev,
       mode: "loading",
@@ -554,13 +586,13 @@ function SelectionToolbar() {
     }
   }
 
-  const openInlineTranslationInResultPanel = () => {
-    const current = inlineCard
-    if (!current.sourceText.trim()) return
+  const openTranslationResultPanel = (
+    sourceText: string,
+    timing: ReturnType<typeof startTiming> = startTiming(),
+    translatedText = ""
+  ) => {
+    if (!sourceText.trim()) return
     const requestId = `req-${Date.now()}`
-    const timing = startTiming()
-    const translatedText = current.output.trim()
-    closeInlineCard(current.mode === "loading")
 
     chrome.runtime.sendMessage(
       {
@@ -571,12 +603,12 @@ function SelectionToolbar() {
               trigger: "inline-translation",
               operation: "translate",
               restore: {
-                input: formatTranslationUserBubble(current.sourceText),
+                input: formatTranslationUserBubble(sourceText),
                 output: translatedText,
                 messages: [
                   {
                     role: "user",
-                    content: formatTranslationUserBubble(current.sourceText),
+                    content: formatTranslationUserBubble(sourceText),
                     operation: "translate",
                     trigger: "inline-translation"
                   },
@@ -595,7 +627,7 @@ function SelectionToolbar() {
               requestId,
               trigger: "inline-translation",
               operation: "translate",
-              selectionText: current.sourceText,
+              selectionText: sourceText,
               timing
             }
       },
@@ -619,9 +651,30 @@ function SelectionToolbar() {
     )
   }
 
+  const openInlineTranslationInResultPanel = () => {
+    const current = inlineCard
+    if (!current.sourceText.trim()) return
+    const timing = startTiming()
+    const translatedText = current.output.trim()
+    closeInlineCard(current.mode === "loading")
+    openTranslationResultPanel(current.sourceText, timing, translatedText)
+  }
+
+  const moveInlineTranslationCard = (position: { top: number; left: number }) => {
+    setInlineCard((prev) =>
+      prev.visible
+        ? {
+            ...prev,
+            top: position.top,
+            left: position.left
+          }
+        : prev
+    )
+  }
+
   useEffect(() => {
-    const isInsideAvisoUI = (e: MouseEvent): boolean => {
-      const path = e.composedPath()
+    const isInsideAvisoUI = (event: Event): boolean => {
+      const path = event.composedPath()
       // composedPath() 穿透 Shadow DOM 边界，host.contains() 无法做到
       return HOST_IDS.some((id) => {
         const host = document.getElementById(id)
@@ -639,7 +692,10 @@ function SelectionToolbar() {
         return
       }
       // 点击工具栏自身时不重新定位
-      if (isInsideAvisoUI(e)) return
+      if (isInsideAvisoUI(e)) {
+        avisoPointerDownAtRef.current = Date.now()
+        return
+      }
 
       const sel = window.getSelection()
       const text = sel?.toString().trim() ?? ""
@@ -650,6 +706,24 @@ function SelectionToolbar() {
         return
       }
 
+      if (inlineEnabled && shouldIgnoreStaleInlineSelection(text)) {
+        clearTimeout(hideTimer.current)
+        setVisible(false)
+        closeInlineCard()
+        return
+      }
+
+      if (
+        inlineEnabled &&
+        inlineCardVisibleRef.current &&
+        text === inlineSourceTextRef.current.trim()
+      ) {
+        clearTimeout(hideTimer.current)
+        setVisible(false)
+        return
+      }
+
+      clearStaleInlineSelection()
       clearTimeout(hideTimer.current)
       setSelection(text)
 
@@ -693,9 +767,20 @@ function SelectionToolbar() {
 
     const handleMouseDown = (e: MouseEvent) => {
       // 点击工具栏内部时不触发隐藏计时器
-      if (isInsideAvisoUI(e)) return
+      if (isInsideAvisoUI(e)) {
+        avisoPointerDownAtRef.current = Date.now()
+        return
+      }
       clearTimeout(hideTimer.current)
-      hideTimer.current = setTimeout(() => setVisible(false), 200)
+      const selectedText = window.getSelection()?.toString().trim() ?? ""
+      if (inlineCardVisibleRef.current && selectedText) {
+        rememberStaleInlineSelection(selectedText)
+      }
+      hideTimer.current = setTimeout(() => {
+        setVisible(false)
+        const text = window.getSelection()?.toString().trim() ?? ""
+        if (!text) closeInlineCard()
+      }, 200)
     }
 
     const handleSuppressSelectionToolbar = () => {
@@ -712,13 +797,28 @@ function SelectionToolbar() {
       }
     }
 
-    const handleScroll = () => {
+    const handleSelectionChange = () => {
+      if (Date.now() - avisoPointerDownAtRef.current < 500) return
+      if (Date.now() - pageScrollAtRef.current < 500) return
+      if (inlineCardVisibleRef.current) return
+      const text = window.getSelection()?.toString().trim() ?? ""
+      if (text) return
+      clearTimeout(hideTimer.current)
       setVisible(false)
+      if (!inlineCardVisibleRef.current) closeInlineCard()
+    }
+
+    const handleScroll = (event: Event) => {
+      if (isInsideAvisoUI(event)) return
+      pageScrollAtRef.current = Date.now()
+      setVisible(false)
+      if (inlineCardVisibleRef.current) return
       closeInlineCard()
     }
 
     document.addEventListener("mouseup", handleMouseUp)
     document.addEventListener("mousedown", handleMouseDown)
+    document.addEventListener("selectionchange", handleSelectionChange)
     document.addEventListener("keydown", handleKeyDown)
     window.addEventListener("scroll", handleScroll, true)
     window.addEventListener(
@@ -728,6 +828,7 @@ function SelectionToolbar() {
     return () => {
       document.removeEventListener("mouseup", handleMouseUp)
       document.removeEventListener("mousedown", handleMouseDown)
+      document.removeEventListener("selectionchange", handleSelectionChange)
       document.removeEventListener("keydown", handleKeyDown)
       window.removeEventListener("scroll", handleScroll, true)
       window.removeEventListener(
@@ -947,6 +1048,7 @@ function SelectionToolbar() {
           onCopy={copyInlineTranslation}
           onRetry={retryInlineTranslation}
           onOpenResultPanel={openInlineTranslationInResultPanel}
+          onMove={moveInlineTranslationCard}
           language={language}
           t={t}
         />
@@ -962,6 +1064,7 @@ function InlineTranslationCard({
   onCopy,
   onRetry,
   onOpenResultPanel,
+  onMove,
   language,
   t
 }: {
@@ -971,10 +1074,21 @@ function InlineTranslationCard({
   onCopy: () => void
   onRetry: () => void
   onOpenResultPanel: () => void
+  onMove: (position: { top: number; left: number }) => void
   language: ReturnType<typeof useSyncedAvisoLanguage>["language"]
   t: (key: I18nKey) => string
 }) {
   const { tokens: ui } = useSyncedAvisoTheme()
+  const cardRef = useRef<HTMLDivElement>(null)
+  const dragRef = useRef<{
+    pointerId: number
+    startX: number
+    startY: number
+    startTop: number
+    startLeft: number
+    width: number
+    height: number
+  } | null>(null)
   const title =
     card.targetLabel === "自动"
       ? t("translation.autoTitle")
@@ -992,8 +1106,52 @@ function InlineTranslationCard({
         })
       : card.statusText || t("translation.fallbackWaiting"))
 
+  const stopDragging = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!dragRef.current) return
+    try {
+      event.currentTarget.releasePointerCapture(dragRef.current.pointerId)
+    } catch {}
+    dragRef.current = null
+  }
+
+  const handleDragStart = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return
+    if ((event.target as HTMLElement).closest("button")) return
+    const rect = cardRef.current?.getBoundingClientRect()
+    if (!rect) return
+    event.preventDefault()
+    event.currentTarget.setPointerCapture(event.pointerId)
+    dragRef.current = {
+      pointerId: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      startTop: card.top,
+      startLeft: card.left,
+      width: rect.width,
+      height: rect.height
+    }
+  }
+
+  const handleDragMove = (event: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current
+    if (!drag || drag.pointerId !== event.pointerId) return
+    const maxLeft = Math.max(VIEWPORT_MARGIN, window.innerWidth - drag.width - VIEWPORT_MARGIN)
+    const maxTop = Math.max(VIEWPORT_MARGIN, window.innerHeight - drag.height - VIEWPORT_MARGIN)
+    onMove({
+      left: Math.min(
+        Math.max(drag.startLeft + event.clientX - drag.startX, VIEWPORT_MARGIN),
+        maxLeft
+      ),
+      top: Math.min(
+        Math.max(drag.startTop + event.clientY - drag.startY, VIEWPORT_MARGIN),
+        maxTop
+      )
+    })
+  }
+
   return (
     <div
+      ref={cardRef}
       role="dialog"
       aria-label={t("translation.cardLabel")}
       style={{
@@ -1002,7 +1160,7 @@ function InlineTranslationCard({
         left: card.left,
         width: INLINE_CARD_WIDTH,
         maxWidth: "calc(100vw - 24px)",
-        maxHeight: "min(320px, calc(100vh - 24px))",
+        maxHeight: "min(520px, calc(100vh - 24px))",
         display: "flex",
         flexDirection: "column",
         background: ui.surface,
@@ -1016,6 +1174,10 @@ function InlineTranslationCard({
         ...visuallyStable
       }}>
       <div
+        onPointerDown={handleDragStart}
+        onPointerMove={handleDragMove}
+        onPointerUp={stopDragging}
+        onPointerCancel={stopDragging}
         style={{
           display: "flex",
           alignItems: "center",
@@ -1023,7 +1185,10 @@ function InlineTranslationCard({
           gap: 10,
           padding: "11px 12px",
           borderBottom: `1px solid ${ui.line}`,
-          minWidth: 0
+          minWidth: 0,
+          cursor: "grab",
+          touchAction: "none",
+          userSelect: "none"
         }}>
         <span
           style={{
@@ -1058,7 +1223,8 @@ function InlineTranslationCard({
       <div
         style={{
           padding: "12px 13px",
-          minHeight: 68,
+          flex: "1 1 auto",
+          minHeight: 96,
           overflowY: "auto",
           color: card.mode === "error" ? ui.danger : ui.text2,
           fontSize: 13.5,

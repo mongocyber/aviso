@@ -56,11 +56,8 @@ const TRANSLATION_TARGET_INSTRUCTIONS: Record<
 }
 
 export type InlineTranslationRoute =
-  | { route: "inline"; reason: "short_text" }
-  | {
-      route: "result-panel"
-      reason: "empty" | "too_long" | "too_many_lines"
-    }
+  | { route: "inline"; reason: "short_text" | "too_long" | "too_many_lines" }
+  | { route: "result-panel"; reason: "empty" }
 
 export function normalizeTranslationTargetLanguage(
   value: unknown
@@ -99,10 +96,10 @@ export function getInlineTranslationRoute(
   const text = sourceText.trim()
   if (!text) return { route: "result-panel", reason: "empty" }
   if (text.length > INLINE_TRANSLATION_MAX_CHARS) {
-    return { route: "result-panel", reason: "too_long" }
+    return { route: "inline", reason: "too_long" }
   }
   if (text.split(/\r?\n/).length > INLINE_TRANSLATION_MAX_LINES) {
-    return { route: "result-panel", reason: "too_many_lines" }
+    return { route: "inline", reason: "too_many_lines" }
   }
   return { route: "inline", reason: "short_text" }
 }

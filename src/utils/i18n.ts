@@ -1497,12 +1497,12 @@ const MESSAGES = {
     en: "Copy failed. Select the translation and copy it manually."
   },
   "translation.longSelection": {
-    "zh-CN": "选区较长，建议点发给 AI，在对话面板中翻译。",
-    en: "This selection is long. Send it to AI and translate in the result panel."
+    "zh-CN": "选区较长，正在当前卡片内翻译。",
+    en: "This selection is long. Translating in this card."
   },
   "translation.manyLines": {
-    "zh-CN": "选区行数较多，建议点发给 AI，在对话面板中翻译。",
-    en: "This selection has many lines. Send it to AI and translate in the result panel."
+    "zh-CN": "选区行数较多，正在当前卡片内翻译。",
+    en: "This selection has many lines. Translating in this card."
   },
   "translation.waiting": {
     "zh-CN": "正在翻译…",
