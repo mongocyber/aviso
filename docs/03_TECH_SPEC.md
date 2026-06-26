@@ -1,6 +1,6 @@
 # Aviso Tech Spec
 
-Updated: 2026-06-18
+Updated: 2026-06-25
 
 ## 技术栈
 
@@ -21,6 +21,8 @@ Updated: 2026-06-18
 | `src/background/index.ts` | Background service worker 入口。 |
 | `src/background/ai-client.ts` | Provider 调用、流式响应、连接测试和取消逻辑。 |
 | `src/background/context-menus.ts` | Chrome 原生右键菜单注册与更新。 |
+| `src/background/hosted-auth.ts` | v0.3 staging hosted AI Google OAuth / session 交换后台处理。 |
+| `src/background/hosted-chat-routing.ts` | 显式 hosted route 的 staging chat request 组装和错误处理。 |
 | `src/background/history.ts` | 本地历史相关 background 处理。 |
 | `src/contents/toolbar.tsx` | 划词工具栏。 |
 | `src/contents/command.tsx` | 命令面板。 |
@@ -33,6 +35,8 @@ Updated: 2026-06-18
 | `src/utils/i18n.ts` | 运行时 UI 文案和语言解析。 |
 | `src/utils/storage.ts` | 设置、API Key 和历史存储辅助。 |
 | `src/utils/provider-configs.ts` | AI 服务配置解析。 |
+| `src/utils/hosted-ai-client.ts` | v0.3 staging hosted AI typed client。 |
+| `src/utils/hosted-session.ts` | v0.3 staging hosted session/account 本地状态。 |
 | `src/utils/model-registry.ts` | 当前 provider / model registry。 |
 | `src/utils/translation.ts` | 翻译 payload 与目标语言处理。 |
 | `locales/zh_CN/messages.json` | Chrome manifest 中文本地化源码。 |
@@ -55,6 +59,7 @@ Updated: 2026-06-18
     "storage",
     "history",
     "bookmarks",
+    "identity",
     "clipboardWrite"
   ],
   "host_permissions": [
@@ -65,10 +70,13 @@ Updated: 2026-06-18
     "https://api.moonshot.cn/*",
     "https://openrouter.ai/*",
     "https://generativelanguage.googleapis.com/*",
-    "https://api.hunyuan.cloud.tencent.com/*"
+    "https://api.hunyuan.cloud.tencent.com/*",
+    "https://aviso-backend-staging.vercel.app/*"
   ]
 }
 ```
+
+`identity` 和 `https://aviso-backend-staging.vercel.app/*` 仅用于 v0.3 staging Aviso AI / hosted AI gate：Google 授权窗口、staging session 交换和 staging hosted chat 请求。它们不代表 production backend、production OAuth、公开发布或 Chrome Web Store disclosure 提交已经批准。
 
 命令：
 
@@ -100,6 +108,7 @@ Aviso 不自动调用 provider 的 list-models API，也不自动读取用户账
 | API Key | `chrome.storage.local/contextai_api_keys` | 不明文保存，不进入 sync；当前使用由扩展 ID 派生的口令做本地加密 / 混淆级保护，不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。 |
 | 非敏感设置 | `chrome.storage.sync/contextai_settings` | 包括功能开关、默认模型、界面语言、主题、自定义指令和 provider metadata。 |
 | 本地对话历史 | `chrome.storage.local/contextai_history` | 本地保存，不同步。 |
+| 托管 AI session/account state | `chrome.storage.local/aviso_hosted_session` | 仅用于 v0.3 staging hosted path 的登录态、账号和额度展示；退出托管账号不删除 BYOK 配置。 |
 | 运行时短缓存 | Service worker 内存 | 用于 settings、route、translation 和 page content 短期复用；不持久化。 |
 
 ## 消息流
@@ -107,9 +116,11 @@ Aviso 不自动调用 provider 的 list-models API，也不自动读取用户账
 1. 用户从右键菜单、划词工具栏、命令面板、双击菜单、剪贴板提示或 Popup 发起动作。
 2. Content script 整理用户主动触发的输入，例如选中文本、页面标题、可截断正文、截图选区或命令文本。
 3. Background 解析当前设置、默认 provider config、模型和 API Key。
-4. AI 请求由浏览器扩展直接发往所选 provider host。
+4. BYOK 请求由浏览器扩展直接发往所选 provider host。
 5. 流式结果返回到页面内结果面板。
 6. 用户可以复制、保存或继续追问；对话历史写入本地 storage。
+
+v0.3 staging hosted path 只在 request route 明确为 `hosted` 时触发：background 读取本地 hosted session，把请求发往 `https://aviso-backend-staging.vercel.app/v1`，再由后端路由到上游 provider。BYOK path 不因托管账号未登录、额度或后端状态而被全局阻断。
 
 ## 输入边界
 
@@ -123,6 +134,7 @@ Aviso 不自动调用 provider 的 list-models API，也不自动读取用户账
 - 命令面板不做联网搜索、远端链接正文抓取、自主多步浏览或自动打开危险 URL scheme。
 - 复制当前上下文只写用户剪贴板，不调用 provider。
 - 截图只在用户通过右键内部路径主动确认后用于当次图片说明请求；base64 不写入 storage、history、docs 或日志。当前不把截图作为普通用户主入口或公开卖点。
+- Hosted AI 当前不接受 image/screenshot-style request 作为公开能力；截图路径仍保留在 BYOK/右键内部边界内。
 
 ## WXT 并行构建
 
@@ -131,7 +143,7 @@ WXT 已作为并行构建路径存在，产物位于 `.output/chrome-mv3`。当�
 当前 WXT 状态：
 
 - 自动构建和 manifest parity 已通过。
-- WXT manifest host permissions 与 Plasmo 构建一致，包含 OpenAI、Anthropic、火山方舟、DeepSeek、Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan。
+- WXT manifest host permissions 与 Plasmo 构建一致，包含 OpenAI、Anthropic、火山方舟、DeepSeek、Moonshot、OpenRouter、Gemini、Tencent Hunyuan 和 v0.3 staging backend host。
 - V02-WXT-005 closeout 已记录 refreshed browser smoke 和 owner manual pass evidence，状态可进入 owner release decision；这不等于 WXT 默认构建批准、公开发布批准或 Chrome Web Store 审核通过。
 - WXT default-build migration / default-build release 已移到独立 `v0.2.1` gate；当前默认 `dev`、`build` 和 `package` 仍保持 Plasmo 路径。
 - `.output/aviso-0.1.0-chrome.zip` 是内部迁移 artifact，不是 Chrome Web Store 提交包。

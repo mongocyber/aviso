@@ -12,7 +12,7 @@ Aviso 的核心目标不是替代完整聊天工具，而是减少来回复制�
 
 ## 当前状态
 
-Aviso 当前版本为 `0.1.0`。本站是面向公开发布使用的产品官网与文档，用于介绍当前能力、隐私边界和安装说明；`0.1.0` 已提交 Chrome Web Store 审核，正式安装链接暂不可用，审核通过后会更新。核心功能已经实现，并已有内部手动验收基本通过的记录；内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用。
+Aviso 当前版本为 `0.1.0`。本站是面向公开发布使用的产品官网与文档，用于介绍当前能力、隐私边界和安装说明；`0.1.0` 已提交 Chrome Web Store 审核，正式安装链接暂不可用，审核通过后会更新。核心功能已经实现，并已有内部手动验收基本通过的记录；内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用。BYOK direct-provider 仍是当前对外主线；v0.3 Aviso AI / 托管 AI 是可选 staging 路径，不代表 production、公开发布或 Chrome Web Store 批准。
 
 当前状态：
 
@@ -20,6 +20,7 @@ Aviso 当前版本为 `0.1.0`。本站是面向公开发布使用的产品官网
 - 当前 `0.1.0` 已提交 Chrome Web Store 审核；在正式链接可用前，仅向受邀测试者和审核准备人员提供可加载的扩展构建目录。
 - 右键菜单、划词工具栏、划词翻译卡、命令面板、双击快捷菜单、剪贴板提示、页面内结果面板和 Popup 设置页已经实现。
 - 多 AI 服务配置、默认服务切换、模型 ID 手动编辑、中文 / English 界面和 Manifest 本地化已经实现。
+- BYOK direct-provider 是当前默认可用路径，不强制登录；v0.3 staging 中 Aviso AI / 托管 AI 已作为可选路径验证，只有选择托管路径才需要登录，BYOK 不受影响。
 - 内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用。
 - OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID；OpenRouter、Gemini 和 Tencent Hunyuan 的模型 ID 需要手动填写，Aviso 不自动读取模型列表。DeepSeek 已有一次 owner 手动 connectivity pass；Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 当前仍不能写成 live validated。实际可用性取决于你的 Key、模型权限和 provider 状态。
 - 本站说明当前已实现能力和使用边界；当前状态是已提交审核，不代表已经通过 Chrome Web Store。
@@ -36,11 +37,12 @@ Aviso 适合经常在浏览器里处理信息的人，例如：
 
 ## Aviso 的使用边界
 
-AI 请求由浏览器扩展直接发送给你选择的模型 provider。API Key、设置和历史优先保存在本地浏览器。
+BYOK AI 请求由浏览器扩展直接发送给你选择的模型 provider。API Key、设置和历史优先保存在本地浏览器。v0.3 Aviso AI / 托管 AI 当前仅是 staging 内部验证路径；使用该路径时，请求会经过 Aviso staging 后端和上游 provider。
 
 这意味着：
 
 - 你需要自行准备 provider API Key。
+- 只有你主动选择 Aviso AI / 托管路径时才需要登录；未登录托管 AI 不会阻止你继续使用 BYOK provider。
 - provider 的计费、数据处理和服务条款由你与 provider 之间的账户关系决定。
 - Aviso 不承诺模型响应一定很快，首段返回速度会受网络、模型、输入长度、provider 状态和 API Key 状态影响。
 - Aviso 已改善等待状态，并提供本地 summary-only 计时方法；当前不宣称真实 provider p50 / p95 目标已经达成。

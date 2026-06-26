@@ -15,7 +15,7 @@ Aviso 是一个 Chrome 浏览器扩展。它帮助用户在当前网页中调用
 Aviso 目前保留两条 AI 请求路径：
 
 - BYOK direct-provider：你提供自己的模型 API Key。你主动发起 AI 请求时，请求由浏览器扩展直接发送到你选择的模型 provider；API Key、设置和历史记录保存在浏览器扩展存储中。
-- 托管 AI：v0.3 准备中的可选路径。只有当你选择托管 AI 并登录时，请求才会经过 Aviso 后端，再路由到上游模型 provider。BYOK 不会被托管登录拦住。
+- 托管 AI：v0.3 staging 中的可选路径。只有当你选择托管 AI 并登录时，请求才会经过 Aviso 后端，再路由到上游模型 provider。BYOK 不会被托管登录拦住；这不代表 production、公开发布或 Chrome Web Store 批准。
 
 ## 本地保存的数据
 
@@ -101,7 +101,7 @@ Aviso 当前使用的主要权限包括：
 
 Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页面上显示划词工具栏、划词翻译卡、双击快捷菜单、命令面板、页面内结果面板、剪贴板提示、iframe 桥接，以及右键内部路径需要的截图框选界面。这类站点访问不会用于抓取任意远端链接正文、投放广告、遥测或分析。只有当用户主动触发需要页面内容的 AI 操作时，相关内容才会按当前选择的 BYOK 或托管 AI 路径发送。
 
-当前 host permissions 仅包含已经批准的 provider 域名：
+当前 host permissions 仅包含已经批准的 provider 域名和 v0.3 staging 托管 AI 后端域名：
 
 ```text
 https://api.openai.com/*

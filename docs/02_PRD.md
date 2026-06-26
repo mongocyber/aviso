@@ -1,12 +1,12 @@
 # Aviso PRD
 
-Updated: 2026-06-12
+Updated: 2026-06-25
 
 ## 产品目标
 
 Aviso 帮用户在当前网页内快速调用 AI。用户不需要离开页面，就可以对选中文字、当前页面、图片或自己输入的问题进行解释、翻译、润色、总结和继续追问。
 
-当前版本面向内部试用和 Chrome Web Store 审核，核心价值是提供“网页上下文 + 用户主动触发 + 页面内结果面板”的稳定工作流。它还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
+当前版本面向内部试用和 Chrome Web Store 审核，核心价值是提供“网页上下文 + 用户主动触发 + 页面内结果面板”的稳定工作流。它还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。BYOK direct-provider 仍是当前对外主线；v0.3 Aviso AI / hosted AI 是可选 staging 路径，不代表 production、公开发布或 Chrome Web Store 批准。
 
 ## 用户对象
 
@@ -44,6 +44,7 @@ Aviso 帮用户在当前网页内快速调用 AI。用户不需要离开页面�
 - 用户可以切换界面语言：自动、中文、English。
 - 用户可以切换外观主题：浅色、深色、跟随系统。
 - 用户可以管理多个 AI 服务配置，设置默认服务，手动编辑模型 ID。
+- 用户可以在 v0.3 staging 中看到 Aviso AI / hosted AI 作为可选服务；只有选择托管路径时才需要登录，BYOK provider 配置和直连请求不受托管登录状态影响。
 - 用户可以配置 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini、Tencent Hunyuan；DeepSeek 已有一次 owner 手动 connectivity pass，Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 当前只代表 BYOK direct-provider 配置支持或非 live 验证，不能写成 live validated。OpenRouter、Gemini 和 Tencent Hunyuan 模型 ID 需要手动填写，Aviso 不自动读取模型列表。
 - 用户可以手动测试单个 provider 连接，测试结果只显示脱敏摘要。
 - 用户可以管理本地历史和自定义指令。
@@ -61,9 +62,10 @@ Aviso 帮用户在当前网页内快速调用 AI。用户不需要离开页面�
 - 非敏感设置必须保存在 `chrome.storage.sync/contextai_settings`。
 - 本地 AI 对话历史保存在 `chrome.storage.local/contextai_history`。
 - AI 请求只在用户主动触发时发送到用户选择的 provider。
+- BYOK 路径不经过 Aviso 后端；v0.3 staging hosted 路径仅在用户主动选择并登录后经过 Aviso staging 后端和上游 provider。
 - 浏览历史、书签和本地 AI 对话用于命令面板本地候选展示，不自动进入 AI 请求。
 - Provider 连接测试由用户在 Popup 中手动触发，并展示脱敏摘要。
-- 当前产品不做自主浏览、联网搜索、远端链接正文抓取、项目方后端中转、遥测或分析。
+- 当前公开产品不做自主浏览、联网搜索、远端链接正文抓取、production 项目方后端中转、遥测或分析；v0.3 staging hosted AI 的 production、CWS disclosure 和 release approval 仍需单独 gate。
 
 ## 验收标准
 
