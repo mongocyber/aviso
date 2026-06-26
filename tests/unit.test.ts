@@ -2946,6 +2946,22 @@ test("background message boundary validates sender id, frame and action policy",
 
     assert.deepEqual(
       validateBackgroundMessageBoundary(
+        { action: "SEARCH_BROWSER_HISTORY", query: "private note" },
+        topFrameSender
+      ),
+      { ok: true, action: "SEARCH_BROWSER_HISTORY" }
+    )
+
+    assert.deepEqual(
+      validateBackgroundMessageBoundary(
+        { action: "SEARCH_BOOKMARKS", query: "private note" },
+        topFrameSender
+      ),
+      { ok: true, action: "SEARCH_BOOKMARKS" }
+    )
+
+    assert.deepEqual(
+      validateBackgroundMessageBoundary(
         { action: "GET_HISTORY" },
         { id: "aviso-extension-id" } as chrome.runtime.MessageSender
       ),
@@ -2982,6 +2998,22 @@ test("background message boundary validates sender id, frame and action policy",
       assert.equal(subFrameCapture.log.reason, "subframe_not_allowed")
       assert.equal(JSON.stringify(subFrameCapture).includes("private.example.com"), false)
       assert.equal(JSON.stringify(subFrameCapture).includes("token=abc"), false)
+    }
+
+    for (const action of [
+      "SEARCH_BROWSER_HISTORY",
+      "SEARCH_BOOKMARKS"
+    ] as const) {
+      const subFrameSearch = validateBackgroundMessageBoundary(
+        { action, query: "private note" },
+        { ...topFrameSender, frameId: 3 }
+      )
+      assert.equal(subFrameSearch.ok, false)
+      if (subFrameSearch.ok === false) {
+        assert.equal(subFrameSearch.log.reason, "subframe_not_allowed")
+        assert.equal(JSON.stringify(subFrameSearch).includes("private.example.com"), false)
+        assert.equal(JSON.stringify(subFrameSearch).includes("token=abc"), false)
+      }
     }
   } finally {
     ;(globalThis as any).chrome = previousChrome
