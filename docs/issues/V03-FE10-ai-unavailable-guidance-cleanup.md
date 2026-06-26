@@ -1,7 +1,7 @@
 # V03-FE10 AI Unavailable Guidance Cleanup
 
-Status: `implemented / local-validation-passed`
-Updated: 2026-06-25
+Status: `merged to main / local-validation-passed / not release-ready`
+Updated: 2026-06-26
 Linear: [`MON-29`](https://linear.app/mongocyber/issue/MON-29/v03-fe10-ai-unavailable-guidance-cleanup)
 
 ## Goal

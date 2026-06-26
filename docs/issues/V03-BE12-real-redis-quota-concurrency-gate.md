@@ -29,7 +29,7 @@ Backend implementation is prepared in `Aviso-backend`:
 - command: `corepack pnpm --filter @aviso/backend run smoke:upstash:quota-concurrency`;
 - runbook: `docs/planning/upstash-quota-concurrency-smoke-runbook.md`.
 
-Sanitized owner-assisted evidence accepted:request limit accepted/rejected `7/17`, token-window limit `5/19`, daily quota limit `5/19`, monthly quota limit `4/20`; all TTL categories were `positive`; cleanup deleted 16 synthetic `aviso:be12` keys.
+Sanitized owner-assisted evidence accepted: request limit accepted/rejected `7/17`, token-window limit `5/19`, daily quota limit `5/19`, monthly quota limit `4/20`; all TTL categories were `positive`; cleanup deleted 16 synthetic `aviso:be12` keys.
 
 No Redis URL/token, env values, full Redis keys, raw request payloads, user data, prompts, responses, screenshots, clipboard content, frontend host permission changes, billing changes, provider route changes, or public release status changes were recorded.
 
