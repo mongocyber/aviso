@@ -9,6 +9,7 @@ import {
   getPageContentMemoryCacheStatsForTests,
   setCachedPageContent
 } from "../src/background/page-content-cache.ts"
+import { validateBackgroundMessageBoundary } from "../src/background/message-boundary.ts"
 import {
   AI_CONTEXT_LIMITS,
   applyAIContextBudget
@@ -56,6 +57,7 @@ import {
   HostedGoogleOAuthError,
   HOSTED_GOOGLE_OAUTH_CLIENT_ID,
   parseHostedGoogleOAuthRedirect,
+  requestHostedGoogleIdentityToken,
   requestHostedGoogleIdToken
 } from "../src/utils/hosted-oauth.ts"
 import {
@@ -86,6 +88,7 @@ import {
   resolveUiLanguage
 } from "../src/utils/i18n.ts"
 import {
+  MAX_DATA_IMAGE_URL_CHARS,
   parseSupportedImageSrc,
   UNSUPPORTED_IMAGE_SRC_MESSAGE
 } from "../src/utils/image-src.ts"
@@ -117,6 +120,11 @@ import {
   MAX_PAGE_CONTENT_CHARS,
   truncatePageContent
 } from "../src/utils/page-content.ts"
+import {
+  AI_STREAM_LIMIT_ERROR_MESSAGE,
+  AiStreamResourceLimitError,
+  limitAsyncIterableStream
+} from "../src/utils/stream-limits.ts"
 import {
   buildConnectivityPreflightSummary,
   buildConnectivityTestPayload,
@@ -217,6 +225,14 @@ test("detectType 识别 URL", () => {
 test("browser URL opening only allows http and https", () => {
   assert.equal(isSafeBrowserOpenUrl("https://example.com/path?q=1"), true)
   assert.equal(isSafeBrowserOpenUrl("http://example.com/path"), true)
+  assert.equal(
+    isSafeBrowserOpenUrl("https://accounts.google.com@evil.tld"),
+    false
+  )
+  assert.equal(
+    isSafeBrowserOpenUrl("https://user:pass@example.com/path"),
+    false
+  )
   assert.equal(
     normalizeSafeBrowserOpenUrl("example.com/docs"),
     "https://example.com/docs"
@@ -791,6 +807,22 @@ test("hosted Google OAuth parses redirect id token and sanitizes failures", asyn
   assert.equal(token, "header.payload.sig")
   assert.match(launchedUrl, /response_type=id_token/)
   assert.doesNotMatch(launchedUrl, /client_secret/)
+
+  const identity = await requestHostedGoogleIdentityToken({
+    getRedirectUrl: () => "https://extension-id.chromiumapp.org/",
+    nonce: "nonce-2",
+    state: "state-2",
+    getLastError: () => undefined,
+    launchWebAuthFlow: (_details, callback) => {
+      callback(
+        "https://extension-id.chromiumapp.org/#id_token=identity.payload.sig&state=state-2"
+      )
+    }
+  })
+  assert.deepEqual(identity, {
+    idToken: "identity.payload.sig",
+    nonce: "nonce-2"
+  })
 })
 
 test("hosted AI client exposes auth, logout, me, and chat with scoped headers", async () => {
@@ -850,7 +882,10 @@ test("hosted AI client exposes auth, logout, me, and chat with scoped headers", 
     createIdempotencyKey: () => "idem-local"
   })
 
-  await client.authGoogle({ id_token: "mock-id-token" })
+  await client.authGoogle({
+    id_token: "mock-id-token",
+    nonce: "nonce-1234567890"
+  })
   await client.logout()
   await client.me()
   const events = []
@@ -870,6 +905,14 @@ test("hosted AI client exposes auth, logout, me, and chat with scoped headers", 
 
   const chatCall = calls.find((call) => String(call.input).endsWith("/chat"))
   assert.ok(chatCall)
+  const authCall = calls.find((call) =>
+    String(call.input).endsWith("/auth/google")
+  )
+  assert.ok(authCall)
+  assert.deepEqual(JSON.parse(String(authCall.init?.body)), {
+    id_token: "mock-id-token",
+    nonce: "nonce-1234567890"
+  })
   const headers = new Headers(chatCall.init?.headers)
   assert.equal(headers.get("Authorization"), "Bearer session-local")
   assert.equal(headers.get("Idempotency-Key"), "idem-local")
@@ -881,8 +924,12 @@ test("hosted AI SSE parser handles chunked delta, done, and error events", () =>
   const parser = createHostedAiSseParser()
   assert.deepEqual(parser.push('data: {"delta":"hel'), [])
   assert.deepEqual(parser.push('lo"}\n\n'), [{ type: "delta", delta: "hello" }])
+  assert.deepEqual(parser.push('data: {"done":true}\n\n'), [{ type: "done" }])
+  assert.deepEqual(parser.finish(), [])
+
+  const errorParser = createHostedAiSseParser()
   assert.deepEqual(
-    parser.push(
+    errorParser.push(
       'data: {"error":{"code":"quota_exceeded","message":"raw backend detail"},"done":true}\n\n'
     ),
     [
@@ -892,8 +939,157 @@ test("hosted AI SSE parser handles chunked delta, done, and error events", () =>
       }
     ]
   )
-  assert.deepEqual(parser.push('data: {"done":true}\n\n'), [{ type: "done" }])
-  assert.deepEqual(parser.finish(), [])
+  assert.throws(
+    () => errorParser.push('data: {"done":true}\n\n'),
+    (err) => {
+      assert.ok(err instanceof Error)
+      assert.equal(err.message, AI_STREAM_LIMIT_ERROR_MESSAGE)
+      return true
+    }
+  )
+})
+
+test("hosted AI SSE parser rejects oversized chunks and accumulated output safely", () => {
+  const chunkLimitedParser = createHostedAiSseParser({ maxChunkChars: 8 })
+  assert.throws(
+    () => chunkLimitedParser.push('data: {"delta":"too-large"}\n\n'),
+    (err) => {
+      assert.ok(err instanceof Error)
+      assert.equal(err.message, AI_STREAM_LIMIT_ERROR_MESSAGE)
+      return true
+    }
+  )
+
+  const outputLimitedParser = createHostedAiSseParser({ maxOutputChars: 4 })
+  assert.throws(
+    () => outputLimitedParser.push('data: {"delta":"hello"}\n\n'),
+    (err) => {
+      assert.ok(err instanceof Error)
+      assert.equal(err.message, AI_STREAM_LIMIT_ERROR_MESSAGE)
+      assert.doesNotMatch(err.message, /hello|data:|base64|https?:\/\//)
+      return true
+    }
+  )
+})
+
+test("hosted AI stream times out and stops reading after done", async () => {
+  const hangingClient = createHostedAiClient({
+    baseUrl: "http://127.0.0.1:3000/v1",
+    streamLimits: { idleTimeoutMs: 5, overallTimeoutMs: 20 },
+    fetchImpl: async () =>
+      new Response(
+        new ReadableStream({
+          start(controller) {
+            controller.enqueue(new TextEncoder().encode('data: {"delta":"h'))
+          }
+        }),
+        { status: 200, headers: { "Content-Type": "text/event-stream" } }
+      )
+  })
+
+  await assert.rejects(
+    async () => {
+      for await (const _event of hangingClient.chatStream({
+        operation: "translate",
+        input: "hello"
+      })) {
+        // The stream never completes the first event.
+      }
+    },
+    (err) => {
+      assert.ok(err instanceof Error)
+      assert.equal(err.message, AI_STREAM_LIMIT_ERROR_MESSAGE)
+      assert.doesNotMatch(err.message, /hello|data:/)
+      return true
+    }
+  )
+
+  let pullCount = 0
+  let cancelCalled = false
+  const client = createHostedAiClient({
+    baseUrl: "http://127.0.0.1:3000/v1",
+    fetchImpl: async () =>
+      new Response(
+        new ReadableStream({
+          pull(controller) {
+            pullCount += 1
+            if (pullCount === 1) {
+              controller.enqueue(
+                new TextEncoder().encode(
+                  'data: {"delta":"ok"}\n\ndata: {"done":true}\n\n'
+                )
+              )
+              return
+            }
+            controller.enqueue(
+              new TextEncoder().encode('data: {"delta":"ignored"}\n\n')
+            )
+          },
+          cancel() {
+            cancelCalled = true
+          }
+        }),
+        { status: 200, headers: { "Content-Type": "text/event-stream" } }
+      )
+  })
+
+  const events = []
+  for await (const event of client.chatStream({
+    operation: "translate",
+    input: "hello"
+  })) {
+    events.push(event)
+  }
+
+  assert.deepEqual(events, [
+    { type: "delta", delta: "ok" },
+    { type: "done" }
+  ])
+  assert.equal(events.some((event) => event.type === "delta" && event.delta === "ignored"), false)
+  assert.ok(pullCount <= 2)
+  assert.equal(cancelCalled, true)
+})
+
+test("BYOK async stream guard rejects oversized events and idle reads safely", async () => {
+  async function* oversizedStream() {
+    yield { text: "small" }
+    yield { text: "raw provider payload".repeat(20) }
+  }
+
+  await assert.rejects(
+    async () => {
+      for await (const _event of limitAsyncIterableStream(oversizedStream(), {
+        limits: { maxEventChars: 32 },
+        getEventChars: (event) => JSON.stringify(event).length,
+        getOutputText: (event) => event.text
+      })) {
+        // Guarded stream should reject before yielding the oversized event.
+      }
+    },
+    (err) => {
+      assert.ok(err instanceof AiStreamResourceLimitError)
+      assert.equal(err.message, AI_STREAM_LIMIT_ERROR_MESSAGE)
+      assert.doesNotMatch(err.message, /raw provider payload/)
+      return true
+    }
+  )
+
+  async function* idleStream() {
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    yield { text: "late" }
+  }
+
+  await assert.rejects(
+    async () => {
+      for await (const _event of limitAsyncIterableStream(idleStream(), {
+        limits: { idleTimeoutMs: 5, overallTimeoutMs: 20 },
+        getEventChars: (event) => JSON.stringify(event).length
+      })) {
+        // The first read should time out before any event is yielded.
+      }
+    },
+    AiStreamResourceLimitError
+  )
 })
 
 test("hosted AI errors normalize to safe frontend categories", async () => {
@@ -1731,7 +1927,7 @@ test("hosted sign-in slice keeps staging backend and permission boundaries", () 
   assert.match(messageSource, /HOSTED_GOOGLE_SIGN_IN/)
   assert.match(popupSource, /HOSTED_GOOGLE_SIGN_IN/)
   assert.doesNotMatch(popupSource, /requestHostedGoogleIdToken/)
-  assert.match(hostedAuthSource, /requestHostedGoogleIdToken/)
+  assert.match(hostedAuthSource, /requestHostedGoogleIdentityToken/)
   assert.match(hostedAuthSource, /HOSTED_AI_DEFAULT_BASE_URL/)
   assert.match(
     hostedAuthSource,
@@ -2708,6 +2904,7 @@ test("background global error logging uses safe error summaries", () => {
 
   assert.match(backgroundSource, /buildSafeErrorLog\(err\)/)
   assert.match(backgroundSource, /const error = normalizeError\(err\)/)
+  assert.match(backgroundSource, /validateBackgroundMessageBoundary/)
   assert.match(backgroundSource, /error: "Unknown action"/)
   assert.doesNotMatch(backgroundSource, /Unknown action: \$\{/)
   assert.doesNotMatch(
@@ -2718,6 +2915,109 @@ test("background global error logging uses safe error summaries", () => {
     backgroundSource,
     /console\.error\("\[Aviso\] Unhandled error in message handler:", error\)/
   )
+})
+
+test("background message boundary validates sender id, frame and action policy", () => {
+  const previousChrome = (globalThis as any).chrome
+  ;(globalThis as any).chrome = { runtime: { id: "aviso-extension-id" } }
+
+  const topFrameSender = {
+    id: "aviso-extension-id",
+    tab: {
+      id: 42,
+      url: "https://private.example.com/path?token=abc"
+    },
+    frameId: 0,
+    url: "https://private.example.com/path?token=abc"
+  } as chrome.runtime.MessageSender
+
+  try {
+    assert.deepEqual(
+      validateBackgroundMessageBoundary(
+        {
+          action: "AI_REQUEST",
+          requestId: "req-test",
+          payload: { operation: "translate", selectionText: "hello" }
+        },
+        topFrameSender
+      ),
+      { ok: true, action: "AI_REQUEST" }
+    )
+
+    assert.deepEqual(
+      validateBackgroundMessageBoundary(
+        { action: "SEARCH_BROWSER_HISTORY", query: "private note" },
+        topFrameSender
+      ),
+      { ok: true, action: "SEARCH_BROWSER_HISTORY" }
+    )
+
+    assert.deepEqual(
+      validateBackgroundMessageBoundary(
+        { action: "SEARCH_BOOKMARKS", query: "private note" },
+        topFrameSender
+      ),
+      { ok: true, action: "SEARCH_BOOKMARKS" }
+    )
+
+    assert.deepEqual(
+      validateBackgroundMessageBoundary(
+        { action: "GET_HISTORY" },
+        { id: "aviso-extension-id" } as chrome.runtime.MessageSender
+      ),
+      { ok: true, action: "GET_HISTORY" }
+    )
+
+    const unknown = validateBackgroundMessageBoundary(
+      { action: "https://private.example.com/do-not-log?token=abc" },
+      topFrameSender
+    )
+    assert.equal(unknown.ok, false)
+    if (unknown.ok === false) {
+      assert.equal(unknown.log.action, "unknown")
+      assert.equal(unknown.log.reason, "unknown_action")
+      assert.equal(JSON.stringify(unknown).includes("private.example.com"), false)
+      assert.equal(JSON.stringify(unknown).includes("token=abc"), false)
+    }
+
+    const wrongExtension = validateBackgroundMessageBoundary(
+      { action: "AI_REQUEST", requestId: "req-test", payload: {} },
+      { ...topFrameSender, id: "other-extension-id" }
+    )
+    assert.equal(wrongExtension.ok, false)
+    if (wrongExtension.ok === false) {
+      assert.equal(wrongExtension.log.reason, "wrong_extension_id")
+    }
+
+    const subFrameCapture = validateBackgroundMessageBoundary(
+      { action: "CAPTURE_VISIBLE_TAB", payload: { requestId: "req-test" } },
+      { ...topFrameSender, frameId: 3 }
+    )
+    assert.equal(subFrameCapture.ok, false)
+    if (subFrameCapture.ok === false) {
+      assert.equal(subFrameCapture.log.reason, "subframe_not_allowed")
+      assert.equal(JSON.stringify(subFrameCapture).includes("private.example.com"), false)
+      assert.equal(JSON.stringify(subFrameCapture).includes("token=abc"), false)
+    }
+
+    for (const action of [
+      "SEARCH_BROWSER_HISTORY",
+      "SEARCH_BOOKMARKS"
+    ] as const) {
+      const subFrameSearch = validateBackgroundMessageBoundary(
+        { action, query: "private note" },
+        { ...topFrameSender, frameId: 3 }
+      )
+      assert.equal(subFrameSearch.ok, false)
+      if (subFrameSearch.ok === false) {
+        assert.equal(subFrameSearch.log.reason, "subframe_not_allowed")
+        assert.equal(JSON.stringify(subFrameSearch).includes("private.example.com"), false)
+        assert.equal(JSON.stringify(subFrameSearch).includes("token=abc"), false)
+      }
+    }
+  } finally {
+    ;(globalThis as any).chrome = previousChrome
+  }
 })
 
 test("background warning logs outside global handler use safe error summaries", () => {
@@ -2802,6 +3102,27 @@ test("parseSupportedImageSrc 拦截 SVG/blob/file/chrome-extension 和无效 bas
   assert.equal(parseSupportedImageSrc("chrome-extension://id/a.png"), null)
   assert.equal(parseSupportedImageSrc("data:image/png;base64,not base64"), null)
   assert.equal(parseSupportedImageSrc("data:image/png;base64,aGVsbG8="), null)
+})
+
+test("parseSupportedImageSrc rejects oversized base64 before decode", () => {
+  const previousAtob = globalThis.atob
+  let atobCalled = false
+  globalThis.atob = ((data: string) => {
+    atobCalled = true
+    return previousAtob(data)
+  }) as typeof atob
+
+  try {
+    const tooLargePng = `data:image/png;base64,${"A".repeat(MAX_DATA_IMAGE_URL_CHARS)}`
+    assert.equal(parseSupportedImageSrc(tooLargePng), null)
+    assert.equal(atobCalled, false)
+
+    const error = normalizeError(new Error(UNSUPPORTED_IMAGE_SRC_MESSAGE))
+    assert.equal(error, UNSUPPORTED_IMAGE_SRC_MESSAGE)
+    assert.doesNotMatch(error, /data:image|base64|AAAA/)
+  } finally {
+    globalThis.atob = previousAtob
+  }
 })
 
 test("parseIntentLocally 识别常见中文命令", () => {

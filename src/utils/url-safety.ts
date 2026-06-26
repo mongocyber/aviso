@@ -18,6 +18,7 @@ export function normalizeSafeBrowserOpenUrl(value: string): string | null {
   try {
     const url = new URL(candidate)
     if (url.protocol !== "http:" && url.protocol !== "https:") return null
+    if (url.username || url.password) return null
     return url.href
   } catch {
     return null

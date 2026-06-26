@@ -49,6 +49,10 @@ import {
   searchHistory
 } from "./history"
 import { handleHostedGoogleSignIn } from "./hosted-auth"
+import {
+  getSafeMessageActionLabel,
+  validateBackgroundMessageBoundary
+} from "./message-boundary"
 
 const MAX_BOOKMARK_RESULTS = 12
 const MAX_BROWSER_HISTORY_RESULTS = 12
@@ -363,6 +367,13 @@ async function handleMessage(
   sender: chrome.runtime.MessageSender,
   sendResponse: (response: MessageResponse) => void
 ): Promise<void> {
+  const boundary = validateBackgroundMessageBoundary(request, sender)
+  if (boundary.ok === false) {
+    console.warn("[Aviso] Rejected background message", boundary.log)
+    sendResponse({ success: false, error: boundary.error })
+    return
+  }
+
   // content script 发来的消息可从 sender.tab.id 获取发送方标签页
   const senderTabId = sender.tab?.id
 
@@ -747,7 +758,7 @@ async function handleMessage(
   } catch (err) {
     const error = normalizeError(err)
     console.error(
-      `[Aviso] Unhandled error in message handler action=${request.action}`,
+      `[Aviso] Unhandled error in message handler action=${getSafeMessageActionLabel(request)}`,
       buildSafeErrorLog(err)
     )
     sendResponse({ success: false, error })

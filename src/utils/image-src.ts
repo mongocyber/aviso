@@ -1,6 +1,9 @@
 export const UNSUPPORTED_IMAGE_SRC_MESSAGE =
   "这张图片的地址格式暂不支持，请换网页中的 JPG/PNG/WebP 图片再试。"
 
+export const MAX_DATA_IMAGE_URL_CHARS = 8 * 1024 * 1024
+export const MAX_DATA_IMAGE_DECODED_BYTES = 6 * 1024 * 1024
+
 export type SupportedDataImageMediaType =
   | "image/png"
   | "image/jpeg"
@@ -26,6 +29,7 @@ export function parseSupportedImageSrc(
 ): SupportedImageSrc | null {
   const url = srcUrl?.trim()
   if (!url) return null
+  if (url.length > MAX_DATA_IMAGE_URL_CHARS && /^data:/i.test(url)) return null
 
   if (/^https?:\/\//i.test(url)) {
     try {
@@ -43,6 +47,7 @@ export function parseSupportedImageSrc(
 
   const mediaType = normalizeDataImageMediaType(match[1])
   const data = match[2].replace(/\s/g, "")
+  if (!isBase64ImageWithinPreDecodeLimit(data)) return null
   const imageBytes = decodeBase64(data)
   if (!imageBytes || !hasImageSignature(imageBytes, mediaType)) return null
 
@@ -82,6 +87,14 @@ function decodeBase64(data: string): string | null {
   } catch {
     return null
   }
+}
+
+function isBase64ImageWithinPreDecodeLimit(data: string): boolean {
+  if (!data) return false
+  if (data.length > MAX_DATA_IMAGE_URL_CHARS) return false
+  const padding = data.endsWith("==") ? 2 : data.endsWith("=") ? 1 : 0
+  const decodedBytes = Math.floor((data.length * 3) / 4) - padding
+  return decodedBytes > 0 && decodedBytes <= MAX_DATA_IMAGE_DECODED_BYTES
 }
 
 function hasImageSignature(

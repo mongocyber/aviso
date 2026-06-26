@@ -7,7 +7,7 @@ import {
 } from "~utils/hosted-ai-client"
 import {
   HostedGoogleOAuthError,
-  requestHostedGoogleIdToken,
+  requestHostedGoogleIdentityToken,
   type HostedGoogleOAuthErrorCode
 } from "~utils/hosted-oauth"
 import {
@@ -19,13 +19,13 @@ import {
 
 type HostedAuthClient = {
   baseUrl: string
-  authGoogle: (body: { id_token: string }) => Promise<HostedAiSession>
+  authGoogle: (body: { id_token: string; nonce: string }) => Promise<HostedAiSession>
   me: (sessionToken?: string) => Promise<HostedAiMe>
 }
 
 type HostedGoogleSignInDependencies = {
   client?: HostedAuthClient
-  requestGoogleIdToken?: () => Promise<string>
+  requestGoogleIdentityToken?: () => Promise<{ idToken: string; nonce: string }>
   saveSession?: typeof saveHostedSession
 }
 
@@ -39,14 +39,18 @@ export async function handleHostedGoogleSignIn(
     const client =
       dependencies.client ??
       createHostedAiClient({ baseUrl: HOSTED_AI_DEFAULT_BASE_URL })
-    const requestGoogleIdToken =
-      dependencies.requestGoogleIdToken ?? requestHostedGoogleIdToken
+    const requestGoogleIdentity =
+      dependencies.requestGoogleIdentityToken ?? requestHostedGoogleIdentityToken
     const persistSession = dependencies.saveSession ?? saveHostedSession
 
     stage = "oauth"
-    googleIdToken = await requestGoogleIdToken()
+    const googleIdentity = await requestGoogleIdentity()
+    googleIdToken = googleIdentity.idToken
     stage = "auth_google"
-    const session = await client.authGoogle({ id_token: googleIdToken })
+    const session = await client.authGoogle({
+      id_token: googleIdToken,
+      nonce: googleIdentity.nonce
+    })
     googleIdToken = null
     stage = "me"
     const me = await client.me(session.session_token)

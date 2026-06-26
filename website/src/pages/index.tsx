@@ -191,7 +191,7 @@ const copy = {
     byokTitleEm: "不挡 BYOK",
     byokLede: "BYOK 路径使用你自己的 API Key,浏览器直连你选的模型厂商,不要求 Aviso 账号。v0.3 正在 staging 中验证可选 Aviso AI / 托管路径；只有你选择托管并登录时,请求才会经过 Aviso 后端和上游模型服务。",
     provCardTitle: "AI 服务",
-    provCardTag: "本地加密",
+    provCardTag: "本地保护",
     provDaily: "Volcengine Ark",
     provDoubao: "豆包接入点",
     provDefault: "可配置",
@@ -205,7 +205,7 @@ const copy = {
     compareThem: "多数 AI 助手扩展",
     compareUs: "Aviso",
     privacyNote:
-      "这不是空话:Aviso 的隐私边界写进了实现本身。API Key 在本地加密保存,对话历史只存在你的浏览器里,命令面板搜历史和书签都在本地完成。BYOK 只由浏览器直连你选择的 provider；v0.3 staging 托管 AI 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板、API Key 或完整 URL。",
+      "这不是空话:Aviso 的隐私边界写进了实现本身。API Key 不明文保存,对话历史只存在你的浏览器里,命令面板搜历史和书签都在本地完成。BYOK 只由浏览器直连你选择的 provider；v0.3 staging 托管 AI 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板、API Key 或完整 URL。",
     metricBackendNum: "BYOK",
     metricBackend: "直连路径不经过 Aviso 后端",
     metricTelemetryNum: "0",
@@ -276,7 +276,7 @@ const copy = {
     byokLede:
       "The BYOK path uses your own API key and connects your browser straight to the provider you choose, with no Aviso account required. v0.3 is validating optional Aviso AI / hosted AI in staging; only when you choose hosted AI and sign in does the request pass through the Aviso backend and upstream model services.",
     provCardTitle: "AI services",
-    provCardTag: "local · encrypted",
+    provCardTag: "local protection",
     provDaily: "Volcengine Ark",
     provDoubao: "Doubao endpoint",
     provDefault: "configurable",
@@ -291,7 +291,7 @@ const copy = {
     compareThem: "Most AI assistant extensions",
     compareUs: "Aviso",
     privacyNote:
-      "This isn't a slogan — Aviso's privacy boundary is built into the implementation. API keys are encrypted locally, chat history stays in your browser, and command-palette searches over history and bookmarks run locally. BYOK goes browser-direct to your selected provider; the v0.3 staging hosted backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, API keys, or full URLs.",
+      "This isn't a slogan — Aviso's privacy boundary is built into the implementation. API keys are not stored in plaintext, chat history stays in your browser, and command-palette searches over history and bookmarks run locally. BYOK goes browser-direct to your selected provider; the v0.3 staging hosted backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, API keys, or full URLs.",
     metricBackendNum: "BYOK",
     metricBackend: "direct path does not pass through the Aviso backend",
     metricTelemetryNum: "0",

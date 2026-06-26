@@ -1,3 +1,5 @@
+import type { MessageStreamEvent } from "@anthropic-ai/sdk/resources/messages"
+
 import type { PromptTemplate } from "~types/history"
 import type {
   AIRequestPayload,
@@ -64,6 +66,10 @@ import {
   TRANSLATION_EMPTY_INPUT_ERROR,
   TRANSLATION_SYSTEM_PROMPT
 } from "~utils/translation"
+import {
+  getJsonEventCharLength,
+  limitAsyncIterableStream
+} from "~utils/stream-limits"
 
 import {
   getProviderClientCacheKey,
@@ -437,6 +443,13 @@ async function callOpenAI(
       inputChars: estimatePayloadChars(payload)
     })
 
+    type OpenAIStreamChunk = {
+      choices: Array<{
+        delta?: { content?: string | null }
+        finish_reason?: unknown
+      }>
+    }
+
     const stream = (await client.chat.completions.create(
       {
         model,
@@ -448,14 +461,14 @@ async function callOpenAI(
         ...reasoningParams
       } as Parameters<typeof client.chat.completions.create>[0],
       opts?.signal ? { signal: opts.signal } : undefined
-    )) as AsyncIterable<{
-      choices: Array<{
-        delta?: { content?: string | null }
-        finish_reason?: unknown
-      }>
-    }>
+    )) as AsyncIterable<OpenAIStreamChunk>
 
-    for await (const chunk of stream) {
+    for await (const chunk of limitAsyncIterableStream<OpenAIStreamChunk>(stream, {
+      signal: opts?.signal,
+      getEventChars: getJsonEventCharLength,
+      getOutputText: (event) =>
+        `${extractReasoningDeltaText(event)}${event.choices[0]?.delta?.content ?? ""}`
+    })) {
       throwIfAborted(opts?.signal)
       const reasoningText = extractReasoningDeltaText(chunk)
       const text = chunk.choices[0]?.delta?.content ?? ""
@@ -649,7 +662,15 @@ async function callAnthropic(
       opts.signal ? { signal: opts.signal } : undefined
     )
 
-    for await (const event of stream) {
+    for await (const event of limitAsyncIterableStream<MessageStreamEvent>(stream, {
+      signal: opts.signal,
+      getEventChars: getJsonEventCharLength,
+      getOutputText: (event) =>
+        event.type === "content_block_delta" &&
+        event.delta.type === "text_delta"
+          ? event.delta.text
+          : ""
+    })) {
       throwIfAborted(opts.signal)
       if (
         event.type === "content_block_delta" &&

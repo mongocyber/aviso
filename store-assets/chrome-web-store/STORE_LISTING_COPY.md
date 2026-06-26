@@ -101,7 +101,7 @@ These host permissions are limited to approved provider API domains. They are no
 - Aviso does not use user data for advertising.
 - Aviso does not use user data for credit, lending, or similar eligibility decisions.
 - Aviso does not send user content to an Aviso-owned backend, because there is no project-owned backend in the current product scope.
-- API keys are encrypted in `chrome.storage.local/contextai_api_keys`.
+- API keys are not stored in plaintext; they remain in `chrome.storage.local/contextai_api_keys` with local encryption / obfuscation-level protection.
 - Non-secret settings are stored in `chrome.storage.sync/contextai_settings`.
 - Local history is stored in `chrome.storage.local/contextai_history`.
 - When the user actively triggers an AI action, required content is sent directly from the browser extension to the user-selected provider.
