@@ -25,3 +25,4 @@ This folder holds local issue contracts for agent execution when a task needs a 
 | [`V03-FE05-hosted-chat-routing.md`](./V03-FE05-hosted-chat-routing.md) | completed / CTO accepted / local-only / build sandbox-blocked | [`MON-6`](https://linear.app/mongocyber/issue/MON-6/v03-fe05-hosted-chat-routing) |
 | [`V03-FE06-error-and-fallback-handling.md`](./V03-FE06-error-and-fallback-handling.md) | completed / CTO accepted / local-only / build sandbox-blocked | [`MON-7`](https://linear.app/mongocyber/issue/MON-7/v03-fe06-error-and-fallback-handling) |
 | [`V03-FE10-ai-unavailable-guidance-cleanup.md`](./V03-FE10-ai-unavailable-guidance-cleanup.md) | implemented / local-validation-passed | [`MON-29`](https://linear.app/mongocyber/issue/MON-29/v03-fe10-ai-unavailable-guidance-cleanup) |
+| [`V03-BE12-real-redis-quota-concurrency-gate.md`](./V03-BE12-real-redis-quota-concurrency-gate.md) | planned / owner-gated / not verified | not synced |
