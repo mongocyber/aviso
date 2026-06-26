@@ -1,6 +1,6 @@
 # V03-BE12 Real Redis Quota Concurrency Gate
 
-Status: `backend harness prepared / owner-gated secure env blocked / not verified`
+Status: `real Redis verified / sanitized evidence accepted / not live`
 Updated: 2026-06-26
 Linear: `not synced`
 
@@ -29,7 +29,9 @@ Backend implementation is prepared in `Aviso-backend`:
 - command: `corepack pnpm --filter @aviso/backend run smoke:upstash:quota-concurrency`;
 - runbook: `docs/planning/upstash-quota-concurrency-smoke-runbook.md`.
 
-Current blocker: the active process does not have `UPSTASH_REDIS_URL` / `UPSTASH_REDIS_TOKEN`, so the gate is not real Redis verified yet. A missing-env `blocked` result is expected and is not a code failure.
+Sanitized owner-assisted evidence accepted:request limit accepted/rejected `7/17`, token-window limit `5/19`, daily quota limit `5/19`, monthly quota limit `4/20`; all TTL categories were `positive`; cleanup deleted 16 synthetic `aviso:be12` keys.
+
+No Redis URL/token, env values, full Redis keys, raw request payloads, user data, prompts, responses, screenshots, clipboard content, frontend host permission changes, billing changes, provider route changes, or public release status changes were recorded.
 
 ## Owner Repo
 
@@ -83,7 +85,7 @@ Verify against real Redis-compatible script execution:
 - Concurrent reserve attempts prove no double-spend beyond configured request/token/monthly/daily limits.
 - Evidence records only sanitized metadata: test name, environment class, synthetic namespace, accepted count, rejected count, TTL presence, cleanup result, and command/check status.
 - Backend checks pass after the change.
-- `Aviso` release-gate docs are updated from `planned / not verified` only after evidence exists.
+- `Aviso` release-gate docs are updated from `planned / not verified` only after evidence exists. Completed with sanitized owner-assisted evidence on 2026-06-26.
 
 ## Checks
 

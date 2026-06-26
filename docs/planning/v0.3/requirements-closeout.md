@@ -61,7 +61,7 @@ Current normalized backend status across both repositories:
 - Usage, cost, and alerting seams: `implemented with mocks / real ops integrations owner-gated`.
 - Device signal and abuse enforcement: `implemented with mocks / frontend install-id signal and staging validation pending`.
 - Staging readiness guard: `implemented / CTO accepted in Linear MON-8 / not deployed`.
-- Staging persistence adapters: `implemented / CTO accepted in Linear MON-9 / real staging resources not verified`.
+- Staging persistence adapters: `implemented / CTO accepted in Linear MON-9 / Supabase and Upstash staging persistence verified for current gates / not production live`.
 - Staging deployment: `blocked / owner-gated` until real Supabase schema/migration validation, Upstash instance validation, secrets, provider validation, deployment target, and owner deploy approval are ready.
 
 ## Frontend Flow Coverage
