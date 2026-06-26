@@ -1,9 +1,29 @@
 # Aviso v0.3 CWS Disclosure Draft
 
-Status: `draft / source-updated / owner-approved-to-prepare / not submitted`
+Status: `draft / source-updated / owner-approved-to-prepare / blocked-on-production-evidence / not submitted`
 Updated: 2026-06-26
 
 This draft is the product-side source for Chrome Web Store privacy and data-disclosure updates for v0.3 hosted AI. MON-23 owner decisions approve preparation of the final store submission package, but this file does not submit the Chrome Web Store form, prove public release, prove production validation, or approve paid hosted AI.
+
+## Final Submission Readiness
+
+Current conclusion: `blocked`.
+
+This draft can be used as the source checklist for the final Chrome Web Store submission, but it is not yet a final submission packet. The final packet must wait for production evidence from the MON-23 production/package tracks.
+
+| Field | Current value in this draft | Final submission requirement | Status |
+| --- | --- | --- | --- |
+| Production backend origin | Not present | Exact production backend origin, if hosted AI ships publicly | `blocked` |
+| Hosted backend host permission | Staging origin only: `https://aviso-backend-staging.vercel.app/*` | Exact host permission from the final production package manifest; no broad host permission | `blocked` |
+| Production OAuth evidence | Not present | Sanitized production Google OAuth/session smoke evidence and consent-screen confirmation | `blocked` |
+| Production provider evidence | Not present | Sanitized production provider smoke evidence with quota/cost guard confirmation | `blocked` |
+| Production package evidence | Not present in this worktree | Final zip/package filename, manifest permission list, and package boundary scan | `blocked` |
+| Website privacy URL | Source copy exists only | Deployed privacy-policy URL reviewed against the final package | `blocked` |
+| Support URL | Source copy exists only | Deployed support/feedback URL safe to cite in CWS | `blocked` |
+| Store listing copy | v0.1 BYOK copy exists separately | Final hosted-AI listing copy, or explicit decision to keep BYOK-only listing | `blocked` |
+| Billing / paid plan | Excluded from first v0.3 release | Keep financial/payment disclosure as not collected; no paid-plan or checkout copy | `ready if scope unchanged` |
+
+Do not paste the staging backend host permission into a production Chrome Web Store submission unless the exact submitted extension package still contains that staging-only permission and the owner explicitly chooses a staging-only submission. For the intended hosted-AI production release, replace the staging origin with the exact verified production backend origin from the final package evidence.
 
 ## Release Boundary
 
@@ -78,6 +98,8 @@ https://aviso-backend-staging.vercel.app/*
 - `https://aviso-backend-staging.vercel.app/*` is the staging hosted AI backend origin approved for v0.3 validation.
 - Production backend host permission is approved only for the exact production backend origin once established and verified.
 - No broad host permission is requested for arbitrary remote webpage-body fetching.
+
+Final submission note: the host-permission list must match the exact manifest in the final uploaded package. If the final package includes production hosted AI, this section must be updated from staging to the verified production backend origin before CWS submission.
 
 ## CWS Form Guidance
 

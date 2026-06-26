@@ -8,6 +8,8 @@ Updated: 2026-06-10
 - Supported languages: `Chinese (Simplified)`, `English`
 - Current release posture: public website/docs are intended as the official launch-facing product materials; Chrome Web Store listing is still in submission preparation and is not yet approved
 
+Scope note: this file remains the v0.1 BYOK direct-provider listing copy. It is not the final v0.3 hosted-AI Chrome Web Store submission source. For v0.3 hosted-AI disclosure preparation, use `docs/planning/v0.3/cws-disclosure-draft.md` and replace any staging-only fields with final production/package evidence before submission.
+
 ## Short Description
 
 ### 中文
