@@ -1,6 +1,6 @@
 # V03-BE12 Real Redis Quota Concurrency Gate
 
-Status: `planned / owner-gated / not verified`
+Status: `backend harness prepared / owner-gated secure env blocked / not verified`
 Updated: 2026-06-26
 Linear: `not synced`
 
@@ -19,6 +19,17 @@ Labels: `v0.3`, `backend`, `quota`, `redis`, `release-gate`, `owner-gated`
 Turn the quota reserve Lua atomicity claim into executable regression evidence before hosted AI is opened to real or untrusted users.
 
 The current backend unit tests verify TypeScript wiring and Lua script invocation. Existing Upstash staging smoke verifies Redis metadata paths, positive TTLs, idempotency, association sets, and cleanup. This issue specifically covers concurrent `reserveAdmission` behavior against a real Redis-compatible runtime so double-spend protection is tested, not only reviewed.
+
+## Current Backend State
+
+Backend implementation is prepared in `Aviso-backend`:
+
+- harness: `apps/backend/src/persistence/upstash-quota-concurrency-smoke.ts`;
+- local fake coverage: `apps/backend/src/persistence/__tests__/upstash-quota-concurrency-smoke.test.ts`;
+- command: `corepack pnpm --filter @aviso/backend run smoke:upstash:quota-concurrency`;
+- runbook: `docs/planning/upstash-quota-concurrency-smoke-runbook.md`.
+
+Current blocker: the active process does not have `UPSTASH_REDIS_URL` / `UPSTASH_REDIS_TOKEN`, so the gate is not real Redis verified yet. A missing-env `blocked` result is expected and is not a code failure.
 
 ## Owner Repo
 
