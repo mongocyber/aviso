@@ -1,6 +1,6 @@
 # Aviso MON-23 Production Release Approval Gate
 
-Status: `owner-approved-to-execute / production-backend-smoke-passed / production-frontend-package-built / not submitted / not live`
+Status: `owner-approved-to-execute / production-backend-smoke-passed / production-frontend-package-built / production-loaded-extension-smoke-attempted-blocked / not submitted / not live`
 Updated: 2026-06-27
 
 This file records the owner decision package for `MON-23`: production environment and release approval. Owner approval was recorded in the CTO control thread on 2026-06-26, which authorizes execution threads for production preparation and release validation. It is not Chrome Web Store submission, website publication, production verification, or live evidence by itself.
@@ -17,7 +17,7 @@ This file records the owner decision package for `MON-23`: production environmen
 
 v0.3 hosted AI has staging evidence that can support production execution, and the owner has approved the MON-23 decision set. This approval authorizes production resource preparation, production host-permission work, production OAuth/provider validation, website publication preparation, Chrome Web Store submission preparation, release copy finalization, rollback readiness work, and keeping billing excluded from the first hosted-AI release unless separately expanded.
 
-Production backend smoke and frontend candidate-package evidence now exist, but until website deployment, Chrome Web Store submission, final loaded-extension production smoke, owner release approval, and live release evidence are complete, BYOK direct-provider remains the default available path, hosted AI remains not live, and public copy must not imply hosted AI is available before the release evidence exists.
+Production backend smoke and frontend candidate-package evidence now exist. A local final loaded-extension production smoke attempt was blocked because official Chrome did not register the unpacked candidate through command-line loading, and a local unpacked extension ID cannot prove the Chrome Web Store production extension ID's OAuth redirect path without a CWS-ID-preserving validation path. Until website deployment, Chrome Web Store submission, final loaded-extension production smoke, owner release approval, and live release evidence are complete, BYOK direct-provider remains the default available path, hosted AI remains not live, and public copy must not imply hosted AI is available before the release evidence exists.
 
 ## Verified Evidence Available For Review
 
@@ -39,6 +39,7 @@ Use this section as the evidence index for owner review. Do not expand it with s
 | Hosted sign-in UX and local unavailable guidance | Hosted sign-in UX redesign was merged and local unavailable-state guidance validation passed; public release approval remains separate. | [`status.md`](./status.md), `MON-26`, `MON-29` |
 | Production backend smoke | Authenticated production HTTP smoke passed with `auth_google`, `me_before_chat`, `chat_provider_stream`, `me_after_chat`, and `logout` all `2xx`; SSE `delta` / `done` / `usage`, positive quota delta, and cost guard were confirmed with sanitized owner-assisted evidence. | [`release-gates.md`](./release-gates.md), [`status.md`](./status.md) |
 | Frontend production package | Production hosted base URL, exact production host permission, and production Google OAuth client ID are aligned; WXT/Plasmo builds, zips, manifest guard, zip manifest inspection, and focused forbidden-boundary scan passed. | [`release-gates.md`](./release-gates.md), [`status.md`](./status.md) |
+| Final loaded-extension production smoke | Attempted locally on 2026-06-27 but blocked as release evidence by official Chrome unpacked-extension CLI loading and CWS extension-ID constraints; not a pass and not live. | [`release-gates.md`](./release-gates.md), [`status.md`](./status.md) |
 
 ## Owner Approval Checklist
 
@@ -49,7 +50,7 @@ Every row below must be explicitly approved, blocked, or deferred by the owner b
 | Production backend resources | Whether to create separate production Vercel/backend runtime, Supabase project, Upstash Redis, provider account/key, OAuth client, session secret, and any required production domains. | `Vercel production origin configured / external resources and secrets pending / not live` |
 | Production env and secrets | Who will inject production env values, which environment they target, and how sanitized evidence will confirm readiness without exposing values. | `approved for owner-controlled injection / values must not be recorded / evidence pending` |
 | Production host permission | Exact production backend origin and exact extension `host_permissions` entry, if hosted AI is included in the production package. No broad host permission. | `completed for candidate package: https://aviso-backend-production.vercel.app/* / no staging backend host / no localhost host / not submitted` |
-| Production OAuth validation | Exact production Google OAuth client, consent screen status, redirect origin, and sanitized production auth/session smoke plan. | `authenticated HTTP smoke passed / final loaded-extension smoke pending` |
+| Production OAuth validation | Exact production Google OAuth client, consent screen status, redirect origin, and sanitized production auth/session smoke plan. | `authenticated HTTP smoke passed / local final loaded-extension smoke attempted-blocked / CWS-ID-preserving smoke pending` |
 | Production provider validation | Approved provider account, model route, spend cap, cost guard, quota path, sanitized smoke scope, and allowed evidence fields. | `authenticated HTTP smoke passed with cost guard / final loaded-extension smoke pending` |
 | Production cost caps | Free quota policy, hard spend cap, abuse controls, quota reset behavior, and emergency disable path. Do not publish quota numbers unless release copy is approved. | `approved as required release gate / evidence pending` |
 | Observability and alerts | Which alerts must exist before production, who receives them, what log fields are allowed, and how sensitive-data exclusions are verified. | `approved as required release gate / evidence pending` |

@@ -1,6 +1,6 @@
 # Aviso v0.3 Release Gates
 
-Status: `planning / privacy-cws-source-updated / mon-23-owner-approved-to-execute / production-backend-smoke-passed / production-frontend-package-built / not release-ready`
+Status: `planning / privacy-cws-source-updated / mon-23-owner-approved-to-execute / production-backend-smoke-passed / production-frontend-package-built / production-loaded-extension-smoke-attempted-blocked / not release-ready`
 Updated: 2026-06-27
 
 This file lists the gates required before v0.3 hosted AI can be described as available, submitted to Chrome Web Store, or released.
@@ -29,6 +29,7 @@ This file lists the gates required before v0.3 hosted AI can be described as ava
 | Staging resource register | Env injection, redeploy, and staging verification | updated in [`staging-resource-register.md`](./staging-resource-register.md); resources created, env injection owner-reported, redeploy and health verified, frontend OAuth browser smoke passed, release gates pending |
 | Production backend HTTP smoke | Frontend production package and CWS package evidence | passed with sanitized owner-assisted evidence: `auth_google`, `me_before_chat`, `chat_provider_stream`, `me_after_chat`, and `logout` all `2xx`; SSE `delta`, `done`, and `usage` seen; positive quota delta and cost guard confirmed |
 | Frontend production host permission package | CWS package evidence and final release review | completed locally on 2026-06-27. Default hosted base URL is `https://aviso-backend-production.vercel.app/v1`; exact host permission is `https://aviso-backend-production.vercel.app/*`; production Google OAuth client ID is aligned; `npm test`, `npx tsc --noEmit`, `git diff --check`, WXT/Plasmo production builds, WXT/Plasmo zip packaging, manifest guard, zip manifest inspection, and focused forbidden-boundary scan passed. Candidate artifacts: `build/chrome-mv3-prod.zip` and `.output/aviso-0.1.0-chrome.zip`. Not submitted and not live. |
+| Final loaded-extension production smoke | CWS submission and final release review | attempted locally on 2026-06-27 / blocked as release evidence. Official Google Chrome ignored command-line unpacked extension loading in an isolated profile, and the candidate manifest has no fixed `key`, so a local unpacked extension ID cannot stand in for the Chrome Web Store production extension ID. Requires a CWS-ID-preserving validation path or owner-assisted browser evidence before pass. |
 | Host / ordinary permission approval | Any backend URL or OAuth permission in extension manifest | approved and verified for `identity` plus exact production hosted backend host `https://aviso-backend-production.vercel.app/*`; no broad backend host permission, staging backend host permission, or localhost host permission is present in the candidate manifests |
 | Privacy policy update | Public hosted AI claim or CWS update | source updated in `MON-22` / owner-approved to prepare publication / not deployed / evidence pending |
 | CWS data disclosure update | Store submission | draft added in [`cws-disclosure-draft.md`](./cws-disclosure-draft.md) / owner-approved to prepare submission / not submitted / evidence pending |
@@ -92,6 +93,7 @@ Before frontend staging integration:
 - `MON-20` frontend staging config, OAuth code, manifest checks, and loaded-extension account smoke are verified: local/staging base URL allowlist, exact staging host permission, `identity` permission, background Google `launchWebAuthFlow` with `response_type=id_token`, popup-lifecycle remediation after the first browser smoke opened the authorization window but did not persist the session, hosted account signed in, account identifier present, free-tier quota displayed, hosted session saved, no `client_secret`, no `getAuthToken`, no production URL, BYOK default preserved, no public copy, `npm test`, `npx tsc --noEmit`, `npm run build:wxt`, `npm run build:plasmo`, and `npm run check:manifests` all passed.
 - `MON-21` release build and manifest verification passed locally for the staging-approved boundary. `npm test` (`187/187`), `npx tsc --noEmit`, `npm run build:wxt`, `npm run build:plasmo`, `npm run package:plasmo`, `npm run zip:wxt`, and `npm run check:manifests` passed. The historical artifacts were `build/chrome-mv3-prod.zip` and `.output/aviso-0.1.0-chrome.zip`.
 - 2026-06-27 production candidate package verification passed locally. `npm test` (`202/202`), `npx tsc --noEmit`, `git diff --check`, `npm run build:wxt`, `npm run build:plasmo`, `npm run package:plasmo`, `npm run zip:wxt`, and `npm run check:manifests` passed. Current zip artifacts are `build/chrome-mv3-prod.zip` and `.output/aviso-0.1.0-chrome.zip`; both zip manifests were inspected and contain `https://aviso-backend-production.vercel.app/*` with no staging backend host permission, no localhost host permission, and no broad backend host permission. Focused boundary scan found no staging backend pattern, `api.aviso`, `client_secret`, `getAuthToken`, `X-Install-Id`, telemetry, analytics, Sentry, PostHog, Paddle, or LemonSqueezy pattern in source/config/build outputs.
+- 2026-06-27 final loaded-extension production smoke was attempted locally and is blocked as release evidence. The isolated Google Chrome launch did not register the unpacked candidate extension from command-line loading, and without a fixed manifest `key`, any local unpacked extension ID would not prove the Chrome Web Store production extension ID's OAuth redirect path.
 - Public hosted-AI copy, website deployment, Chrome Web Store submission, final loaded-extension production smoke, and release owner approval remain separate gates. Current production package evidence does not make hosted AI live.
 
 Before production:
@@ -110,7 +112,8 @@ Before production:
 
 Before production:
 
-- Loaded-extension browser OAuth account smoke has sanitized pass evidence and project records do not save id token, session token, email/profile payload, full URL, prompts, responses, env values, or raw logs.
+- Staging loaded-extension browser OAuth account smoke has sanitized pass evidence and project records do not save id token, session token, email/profile payload, full URL, prompts, responses, env values, or raw logs.
+- Production loaded-extension smoke remains pending. The 2026-06-27 local attempt was blocked by Chrome CLI loading and CWS extension-ID constraints, so it cannot be counted as production pass evidence.
 - Hosted/BYOK mode selection is clear.
 - Login prompt is just-in-time and does not block BYOK.
 - Quota and error states are understandable.
