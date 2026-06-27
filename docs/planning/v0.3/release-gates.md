@@ -1,7 +1,7 @@
 # Aviso v0.3 Release Gates
 
-Status: `planning / privacy-cws-source-updated / mon-23-owner-approved-to-execute / not release-ready`
-Updated: 2026-06-26
+Status: `planning / privacy-cws-source-updated / mon-23-owner-approved-to-execute / production-backend-smoke-passed / production-frontend-package-built / not release-ready`
+Updated: 2026-06-27
 
 This file lists the gates required before v0.3 hosted AI can be described as available, submitted to Chrome Web Store, or released.
 
@@ -27,12 +27,14 @@ This file lists the gates required before v0.3 hosted AI can be described as ava
 | Hosted AI sign-in UX redesign | Production approval if included in v0.3 package | completed / merged to `main` / Linear Done in [`MON-26`](https://linear.app/mongocyber/issue/MON-26/v03-fe09-hosted-ai-sign-in-ux-redesign). Frontend-only; no production config, permission expansion, backend schema/provider, billing, public copy, or secrets handling |
 | AI unavailable guidance cleanup | Production approval if included in v0.3 package | merged to `main` / local validation passed in [`MON-29`](https://linear.app/mongocyber/issue/MON-29/v03-fe10-ai-unavailable-guidance-cleanup). No backend, manifest, host permission, API key storage, public copy, production, billing, telemetry, or new network scope |
 | Staging resource register | Env injection, redeploy, and staging verification | updated in [`staging-resource-register.md`](./staging-resource-register.md); resources created, env injection owner-reported, redeploy and health verified, frontend OAuth browser smoke passed, release gates pending |
-| Host / ordinary permission approval | Any backend URL or OAuth permission in extension manifest | approved only for `identity` and `https://aviso-backend-staging.vercel.app/*` today; production backend origin is now established as `https://aviso-backend-production.vercel.app`, so the exact future host permission candidate is `https://aviso-backend-production.vercel.app/*`; production package not updated |
+| Production backend HTTP smoke | Frontend production package and CWS package evidence | passed with sanitized owner-assisted evidence: `auth_google`, `me_before_chat`, `chat_provider_stream`, `me_after_chat`, and `logout` all `2xx`; SSE `delta`, `done`, and `usage` seen; positive quota delta and cost guard confirmed |
+| Frontend production host permission package | CWS package evidence and final release review | completed locally on 2026-06-27. Default hosted base URL is `https://aviso-backend-production.vercel.app/v1`; exact host permission is `https://aviso-backend-production.vercel.app/*`; production Google OAuth client ID is aligned; `npm test`, `npx tsc --noEmit`, `git diff --check`, WXT/Plasmo production builds, WXT/Plasmo zip packaging, manifest guard, zip manifest inspection, and focused forbidden-boundary scan passed. Candidate artifacts: `build/chrome-mv3-prod.zip` and `.output/aviso-0.1.0-chrome.zip`. Not submitted and not live. |
+| Host / ordinary permission approval | Any backend URL or OAuth permission in extension manifest | approved and verified for `identity` plus exact production hosted backend host `https://aviso-backend-production.vercel.app/*`; no broad backend host permission, staging backend host permission, or localhost host permission is present in the candidate manifests |
 | Privacy policy update | Public hosted AI claim or CWS update | source updated in `MON-22` / owner-approved to prepare publication / not deployed / evidence pending |
 | CWS data disclosure update | Store submission | draft added in [`cws-disclosure-draft.md`](./cws-disclosure-draft.md) / owner-approved to prepare submission / not submitted / evidence pending |
 | Backend staging deployment | Cross-repo integration test | backend staging health verified; GLM route remediation commit `d5da17b` pushed; provider smoke passed in `MON-18C`; integration smokes remain pending |
-| Real provider validation | Staging or production hosted AI | staging provider route verified in `MON-18C` with SSE done/usage and quota/cost guard confirmation; production provider validation is owner-approved to execute with sanitized evidence, but not completed |
-| Auth provider validation | Staging or production sign-in | staging Google OAuth smoke verified in `MON-17`; production OAuth validation is owner-approved to execute with sanitized evidence, but not completed |
+| Real provider validation | Staging or production hosted AI | staging provider route verified in `MON-18C`; production authenticated HTTP smoke also passed with SSE done/usage and quota/cost guard confirmation; final loaded-extension production smoke remains separate |
+| Auth provider validation | Staging or production sign-in | staging Google OAuth smoke verified in `MON-17`; production authenticated HTTP smoke verified auth/session/logout path with sanitized owner-assisted evidence; final loaded-extension production smoke remains separate |
 | Quota and cost controls | Staging hosted AI | Upstash quota/idempotency smoke verified in `MON-16`; provider quota/cost guard confirmed in `MON-18C` with positive quota delta and `admission_path_exercised` |
 | Billing provider gate | Paid hosted AI | approved excluded from first v0.3 hosted-AI release / later owner gate |
 | Release owner approval | Public release | MON-23 owner decisions approved to execute; final production, package, website, CWS, and live evidence pending |
@@ -60,13 +62,13 @@ Owner-confirmed first-slice boundary:
 
 Before the extension calls hosted backend:
 
-- Decide backend domain. Staging is approved only as `https://aviso-backend-staging.vercel.app/v1`.
-- Review exact `host_permissions`. Staging is approved only as `https://aviso-backend-staging.vercel.app/*`.
+- Decide backend domain. The production candidate backend base URL is `https://aviso-backend-production.vercel.app/v1`.
+- Review exact `host_permissions`. The production candidate host permission is `https://aviso-backend-production.vercel.app/*`.
 - Confirm no broad host permission is added.
 - Confirm command palette still does not perform web search or remote link-body fetching.
 - Confirm screenshot/image hosted path remains out of v0.3 public scope unless separately approved.
 
-Owner confirmed `MON-20` for the exact staging backend origin, minimal host permission, and staging frontend OAuth identity-token handling. Owner later approved `MON-23` execution decisions for production preparation, website/CWS preparation, production OAuth/provider validation, and billing exclusion. Production backend origin is established as `https://aviso-backend-production.vercel.app`; any production package may only use the exact host permission `https://aviso-backend-production.vercel.app/*`, and no broad host permission is approved.
+Owner confirmed `MON-20` for the exact staging backend origin, minimal host permission, and staging frontend OAuth identity-token handling. Owner later approved `MON-23` execution decisions for production preparation, website/CWS preparation, production OAuth/provider validation, and billing exclusion. The 2026-06-27 production candidate package uses only the exact production backend host permission `https://aviso-backend-production.vercel.app/*`, and no broad host permission is approved.
 
 ## Backend Gates
 
@@ -88,8 +90,9 @@ Before frontend staging integration:
 - `.env.example` and configuration docs are current.
 - Secrets are not committed or printed.
 - `MON-20` frontend staging config, OAuth code, manifest checks, and loaded-extension account smoke are verified: local/staging base URL allowlist, exact staging host permission, `identity` permission, background Google `launchWebAuthFlow` with `response_type=id_token`, popup-lifecycle remediation after the first browser smoke opened the authorization window but did not persist the session, hosted account signed in, account identifier present, free-tier quota displayed, hosted session saved, no `client_secret`, no `getAuthToken`, no production URL, BYOK default preserved, no public copy, `npm test`, `npx tsc --noEmit`, `npm run build:wxt`, `npm run build:plasmo`, and `npm run check:manifests` all passed.
-- `MON-21` release build and manifest verification passed locally. `npm test` (`187/187`), `npx tsc --noEmit`, `npm run build:wxt`, `npm run build:plasmo`, `npm run package:plasmo`, `npm run zip:wxt`, and `npm run check:manifests` passed. Current zip artifacts are `build/chrome-mv3-prod.zip` and `.output/aviso-0.1.0-chrome.zip`; both zip manifests were inspected and match the approved permission boundary. No broad host permission, localhost host permission, production host permission, `client_secret`, `getAuthToken`, `X-Install-Id`, telemetry, analytics, Sentry, PostHog, Paddle, LemonSqueezy, or production backend pattern was found in the focused boundary scan.
-- Production provider validation and public hosted-AI copy remain separate gates. Current `MON-18`, `MON-19`, and `MON-20` approvals do not approve production provider validation or public release.
+- `MON-21` release build and manifest verification passed locally for the staging-approved boundary. `npm test` (`187/187`), `npx tsc --noEmit`, `npm run build:wxt`, `npm run build:plasmo`, `npm run package:plasmo`, `npm run zip:wxt`, and `npm run check:manifests` passed. The historical artifacts were `build/chrome-mv3-prod.zip` and `.output/aviso-0.1.0-chrome.zip`.
+- 2026-06-27 production candidate package verification passed locally. `npm test` (`202/202`), `npx tsc --noEmit`, `git diff --check`, `npm run build:wxt`, `npm run build:plasmo`, `npm run package:plasmo`, `npm run zip:wxt`, and `npm run check:manifests` passed. Current zip artifacts are `build/chrome-mv3-prod.zip` and `.output/aviso-0.1.0-chrome.zip`; both zip manifests were inspected and contain `https://aviso-backend-production.vercel.app/*` with no staging backend host permission, no localhost host permission, and no broad backend host permission. Focused boundary scan found no staging backend pattern, `api.aviso`, `client_secret`, `getAuthToken`, `X-Install-Id`, telemetry, analytics, Sentry, PostHog, Paddle, or LemonSqueezy pattern in source/config/build outputs.
+- Public hosted-AI copy, website deployment, Chrome Web Store submission, final loaded-extension production smoke, and release owner approval remain separate gates. Current production package evidence does not make hosted AI live.
 
 Before production:
 
@@ -125,7 +128,7 @@ v0.3 can only be considered release-ready when all of the following are true:
 - privacy and CWS disclosure changes are approved,
 - privacy and CWS source updates are deployed/submitted with matching release evidence,
 - production host permission uses only the exact approved production backend origin,
-- production provider validation is completed with sanitized evidence,
+- production provider validation has sanitized HTTP-smoke evidence and any required final loaded-extension smoke evidence is complete,
 - owner-approved MON-23 execution evidence is complete for production, package, website, CWS, and rollback.
 
 Passing local tests or mock integration is not enough.

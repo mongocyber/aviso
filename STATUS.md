@@ -1,6 +1,6 @@
 # Aviso Status
 
-Updated: 2026-06-26
+Updated: 2026-06-27
 
 ## 结论
 
@@ -10,7 +10,7 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 
 ## v0.3 开发态说明
 
-v0.3 hosted AI 正在独立门禁下开发，不代表当前 Chrome Web Store 版本已经上线托管 AI。当前工作树已为 staging 开发加入托管后端配置、`identity` 权限、精确 staging host permission `https://aviso-backend-staging.vercel.app/*`、以及 Google OAuth `launchWebAuthFlow` id-token 后台登录代码；BYOK direct-provider 仍保持默认可用路径。2026-06-23 的首次 loaded-extension smoke 已确认 Google 授权窗口可打开、BYOK 仍可用，但发现 popup 生命周期会中断登录收口；当前已改为后台完成 OAuth、调用 staging 后端并保存 session。重新加载修复后的扩展后，owner-assisted browser smoke 已确认托管账户登录、账号标识存在、免费层和额度显示、托管 session 已保存；项目记录不保存 id token、session token、邮箱/profile 原文、prompt、response、env 值或完整 URL。随后完成了 P0 前端 UX 调整：Aviso AI 作为默认模型和快速任务服务的可选项出现，并作为“服务配置”列表中的一项与 BYOK provider 并列；选择 BYOK 时仍不需要登录，选择 Aviso AI 时才走 staging hosted 路线。`MON-26` hosted AI 登录体验重设计和运行时路由一致性修复已合入 `main` 并在 Linear Done；`MON-29 / V03-FE10` AI 不可用引导清理已合入 `main` 并通过本地验证；`V03-BE12` 已通过真实 staging Upstash Redis 并发 quota smoke，记录为 sanitized evidence accepted / not live。MON-21 release build / manifest gate 已在本地通过：`npm test`、`npx tsc --noEmit`、WXT/Plasmo production build、WXT/Plasmo zip 重新打包、manifest guard、zip 内 manifest 复核和禁止项扫描均通过；`MON-23` owner decisions 已批准进入生产发布执行门，production backend origin 已建立为 `https://aviso-backend-production.vercel.app`，未来精确 host permission 候选为 `https://aviso-backend-production.vercel.app/*`，但 production secrets/resources、网站部署、CWS 提交、final package、live 发布证据仍未完成；billing 已批准排除在首个 hosted-AI release 之外。
+v0.3 hosted AI 正在独立门禁下开发，不代表当前 Chrome Web Store 版本已经上线托管 AI。staging 阶段已完成托管后端配置、`identity` 权限、精确 staging host permission、Google OAuth `launchWebAuthFlow` id-token 后台登录代码、loaded-extension 账号 smoke、真实 Upstash Redis 并发 quota smoke、provider smoke、敏感日志审查和 release build / manifest gate；BYOK direct-provider 仍保持默认可用路径。当前已进入 production candidate gate：production backend origin 为 `https://aviso-backend-production.vercel.app`，authenticated production HTTP smoke 已通过 `auth_google`、`me_before_chat`、`chat_provider_stream`、`me_after_chat` 和 `logout`，SSE `delta` / `done` / `usage`、正向 quota delta 和 cost guard 均已确认。前端候选包已切换到 production hosted base URL `https://aviso-backend-production.vercel.app/v1`、精确 host permission `https://aviso-backend-production.vercel.app/*`，并同步 production Google OAuth client ID；旧 staging hosted session 会被 URL allowlist 拒绝。2026-06-27 本地验证通过：`npm test`、`npx tsc --noEmit`、`git diff --check`、WXT/Plasmo production build、WXT/Plasmo zip 重新打包、manifest guard、zip 内 manifest 复核和禁止项扫描均通过；候选包为 `build/chrome-mv3-prod.zip` 和 `.output/aviso-0.1.0-chrome.zip`。这仍不是 CWS 提交、网站部署、正式上架或 live 发布证据；billing 已批准排除在首个 hosted-AI release 之外。
 
 ## 当前能力
 
@@ -23,7 +23,7 @@ v0.3 hosted AI 正在独立门禁下开发，不代表当前 Chrome Web Store �
 | 双击快捷菜单 | 已实现，默认关闭；避开输入框、可编辑区域、常见代码编辑器和 Aviso 自身 UI。 |
 | 剪贴板提示 | 已实现普通文本提示和敏感内容跳过。 |
 | 结果面板 | 已实现流式结果、复制、保存、继续追问和本地对话历史。 |
-| Popup 设置 | 已实现界面语言、外观主题、默认模型、功能开关、AI 服务配置、手动连接测试、历史和自定义指令；v0.3 staging 中 Aviso AI 可作为默认模型或快速任务服务选择项。 |
+| Popup 设置 | 已实现界面语言、外观主题、默认模型、功能开关、AI 服务配置、手动连接测试、历史和自定义指令；v0.3 candidate 中 Aviso AI 可作为默认模型或快速任务服务选择项。 |
 | 多 AI 服务配置 | 已实现；支持同 provider 多配置、默认配置切换、模型 ID 手动编辑。 |
 | v0.2 provider 配置扩展 | DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 已支持配置；DeepSeek 已有 owner 手动 live connectivity pass 记录；Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 仍不能写成 live validated。 |
 | v0.2 命令面板本地意图 | 已实现本地确定性候选、危险 URL 拦截、打开/页面动作 confirm-first、本地对话恢复；不包含自主浏览、联网搜索或远端链接正文抓取。 |
@@ -82,15 +82,15 @@ v0.3 hosted AI 正在独立门禁下开发，不代表当前 Chrome Web Store �
 | Tencent Hunyuan | 支持在设置中配置 API Key 和模型 ID；provider id 为 `hunyuan`，base URL 为 `https://api.hunyuan.cloud.tencent.com/v1`；模型 ID 需用户手动填写；V02-018 已完成非 live 验证，未做真实 provider live validation。 |
 | 英文界面 | 用户 smoke check 未发现明显问题。 |
 | 模型 ID 编辑 | 用户确认可以编辑。 |
-| 权限边界 | 当前普通权限为 `contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`clipboardWrite`；host permissions 仅限已批准 provider host。 |
+| 权限边界 | 当前普通权限为 `contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`identity`、`clipboardWrite`；host permissions 仅限已批准 provider host 和精确 production hosted backend host `https://aviso-backend-production.vercel.app/*`。 |
 | v0.2 loaded-extension smoke | V02-WXT-005 closeout ready_for_owner_release_decision：WXT 内容脚本注入、划词工具栏、命令面板打开、双击菜单无截图入口、iframe 划词工具栏、iframe 快捷键桥接和控制台隐私摘要通过；Owner-assisted Chrome refresh 进一步确认 Popup Settings 主界面、功能开关、命令面板本地历史搜索和双击快捷菜单可见。Popup AI 服务/记录/指令二级页、clipboard toast、native right-click screenshot/context-menu、readability extraction 和 provider-safe floating action open 已记录 owner manual pass evidence；这不代表 WXT 默认构建批准、公开发布批准或 Chrome Web Store 审核通过。 |
 
 ## 当前边界
 
 - BYOK direct-provider：用户提供自己的 API Key，扩展直连所选 provider。
-- 无项目方后端、无 provider proxy、无托管模型服务。
-- 无账号、登录、订阅、支付、匿名额度。
-- 无遥测、分析 SDK、远端日志。
+- v0.3 production candidate hosted AI：用户主动选择 Aviso AI 并登录后，请求经过 Aviso production backend 和上游 provider；该路径已进入候选包，但不是 CWS 上线或 public live。
+- 当前公开/已提交审核的 v0.1 口径仍不包含已上线的项目方后端、登录、订阅、支付或匿名额度。
+- 前端不新增遥测或分析 SDK；hosted backend 只允许按后端门禁记录脱敏运行 metadata，不记录 raw prompt、raw response、页面正文、截图/base64、剪贴板、BYOK API Key 或完整 URL。
 - 不做远端链接正文抓取，不做联网搜索。
 - 不自动读取 provider 账号里的模型列表。
 - OpenRouter、Gemini 和 Tencent Hunyuan 模型 ID 仍需手动填写。

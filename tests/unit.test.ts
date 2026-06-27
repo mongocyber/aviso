@@ -68,9 +68,9 @@ import {
   HOSTED_AI_DEFAULT_BASE_URL,
   HOSTED_AI_DEFAULT_MODEL,
   HOSTED_AI_LOCAL_BASE_URL,
+  HOSTED_AI_PRODUCTION_BASE_URL,
+  HOSTED_AI_PRODUCTION_HOST_PERMISSION,
   HOSTED_AI_PROVIDER_CONFIG_ID,
-  HOSTED_AI_STAGING_BASE_URL,
-  HOSTED_AI_STAGING_HOST_PERMISSION,
   HOSTED_SESSION_STORAGE_KEY,
   isByokBlockedByHostedSignIn,
   isHostedAiProviderConfigId,
@@ -715,22 +715,26 @@ test("popup surfaces explicit account chip and zero-state dual entry (MON-26)", 
   )
 })
 
-test("hosted AI base URL is explicit and limited to local or staging", () => {
+test("hosted AI base URL is explicit and limited to local or production", () => {
   assert.equal(resolveHostedAiBaseUrl(), null)
   assert.equal(resolveHostedAiBaseUrl(""), null)
   assert.equal(resolveHostedAiBaseUrl("https://api.aviso.app/v1"), null)
   assert.equal(resolveHostedAiBaseUrl("http://example.com/v1"), null)
   assert.equal(
-    resolveHostedAiBaseUrl("https://aviso-backend-staging.vercel.app"),
+    resolveHostedAiBaseUrl("https://aviso-backend-production.vercel.app"),
     null
   )
   assert.equal(
-    resolveHostedAiBaseUrl("http://aviso-backend-staging.vercel.app/v1"),
+    resolveHostedAiBaseUrl("http://aviso-backend-production.vercel.app/v1"),
     null
   )
   assert.equal(
     resolveHostedAiBaseUrl("https://aviso-backend-staging.vercel.app/v1/"),
-    HOSTED_AI_STAGING_BASE_URL
+    null
+  )
+  assert.equal(
+    resolveHostedAiBaseUrl("https://aviso-backend-production.vercel.app/v1/"),
+    HOSTED_AI_PRODUCTION_BASE_URL
   )
   assert.equal(
     resolveHostedAiBaseUrl("http://127.0.0.1:3000/v1/"),
@@ -1640,7 +1644,7 @@ test("runtime hosted route falls back to BYOK unless hosted is explicitly chosen
       expires_at: expiresAt,
       user: { id: "u", tier: "free", region: "global" }
     },
-    baseUrl: HOSTED_AI_STAGING_BASE_URL,
+    baseUrl: HOSTED_AI_PRODUCTION_BASE_URL,
     updatedAt: 0
   })
   const valid = makeSession("tok", "2099-01-01T00:00:00.000Z")
@@ -1861,7 +1865,7 @@ test("popup hosted quota display stays internal and keeps public copy clean", ()
   )
 })
 
-test("hosted sign-in slice keeps staging backend and permission boundaries", () => {
+test("hosted sign-in slice keeps production backend and permission boundaries", () => {
   const hostedSessionSource = readFileSync(
     new URL("../src/utils/hosted-session.ts", import.meta.url),
     "utf8"
@@ -1917,12 +1921,12 @@ test("hosted sign-in slice keeps staging backend and permission boundaries", () 
     )
     assert.match(
       source,
-      /HOSTED_AI_STAGING_BASE_URL =\s*"https:\/\/aviso-backend-staging\.vercel\.app\/v1"/
+      /HOSTED_AI_PRODUCTION_BASE_URL =\s*"https:\/\/aviso-backend-production\.vercel\.app\/v1"/
     )
   }
   assert.match(
     hostedSessionSource,
-    /HOSTED_AI_DEFAULT_BASE_URL = HOSTED_AI_STAGING_BASE_URL/
+    /HOSTED_AI_DEFAULT_BASE_URL = HOSTED_AI_PRODUCTION_BASE_URL/
   )
   assert.match(messageSource, /HOSTED_GOOGLE_SIGN_IN/)
   assert.match(popupSource, /HOSTED_GOOGLE_SIGN_IN/)
@@ -1944,7 +1948,7 @@ test("hosted sign-in slice keeps staging backend and permission boundaries", () 
   assert.doesNotMatch(hostedOAuthSource, /client_secret/)
   assert.doesNotMatch(
     `${hostedClientSource}\n${hostedSessionSource}\n${hostedChatRoutingSource}\n${hostedOAuthSource}\n${hostedAuthSource}\n${popupSource}`,
-    /api\.aviso|production/i
+    /api\.aviso|aviso-backend-staging/i
   )
   assert.doesNotMatch(
     `${hostedClientSource}\n${hostedSessionSource}\n${hostedChatRoutingSource}\n${hostedOAuthSource}\n${hostedAuthSource}\n${popupSource}`,
@@ -1963,7 +1967,7 @@ test("hosted sign-in slice keeps staging backend and permission boundaries", () 
     [...packageJson.manifest.host_permissions].sort(),
     [
       ...APPROVED_PROVIDER_HOST_PERMISSIONS,
-      HOSTED_AI_STAGING_HOST_PERMISSION
+      HOSTED_AI_PRODUCTION_HOST_PERMISSION
     ].sort()
   )
   assert.doesNotMatch(wxtConfigSource, /127\.0\.0\.1|localhost/)
@@ -4349,7 +4353,7 @@ test("package host_permissions 精确匹配批准 provider 边界", () => {
     [...pkg.manifest.host_permissions].sort(),
     [
       ...APPROVED_PROVIDER_HOST_PERMISSIONS,
-      HOSTED_AI_STAGING_HOST_PERMISSION
+      HOSTED_AI_PRODUCTION_HOST_PERMISSION
     ].sort()
   )
 })
@@ -4368,7 +4372,7 @@ test("WXT host_permissions 与批准 provider 边界保持一致", () => {
     [...hostPermissions].sort(),
     [
       ...APPROVED_PROVIDER_HOST_PERMISSIONS,
-      HOSTED_AI_STAGING_HOST_PERMISSION
+      HOSTED_AI_PRODUCTION_HOST_PERMISSION
     ].sort()
   )
 })

@@ -1,6 +1,6 @@
 # Aviso Privacy and Security
 
-Updated: 2026-06-23
+Updated: 2026-06-27
 
 ## 核心原则
 
@@ -43,9 +43,9 @@ Host permissions：
 - `https://openrouter.ai/*`
 - `https://generativelanguage.googleapis.com/*`
 - `https://api.hunyuan.cloud.tencent.com/*`
-- `https://aviso-backend-staging.vercel.app/*`
+- `https://aviso-backend-production.vercel.app/*`
 
-`identity` 和 `https://aviso-backend-staging.vercel.app/*` 仅在 v0.3 staging 托管 AI gate 中批准。它们不代表 production backend、production OAuth、公开发布或 Chrome Web Store 提交已经批准。
+`identity` 和 `https://aviso-backend-production.vercel.app/*` 仅在 v0.3 production candidate 托管 AI gate 中批准。它们不代表公开发布、Chrome Web Store 提交或 hosted AI live 已经批准。
 
 ## 数据流
 
@@ -61,7 +61,7 @@ Host permissions：
 
 1. 用户主动选择托管 AI 路径。
 2. 若未登录，用户通过 Chrome identity / Google 授权窗口登录托管账号；BYOK 路径不需要该登录。
-3. Background 使用临时 id token 与 staging 后端交换托管 session，并只保存托管 session/account state。
+3. Background 使用临时 id token 与 production 后端交换托管 session，并只保存托管 session/account state。
 4. 请求发送到 Aviso 后端，再路由到上游 provider。
 5. 后端返回流式结果，页面内结果面板展示。
 

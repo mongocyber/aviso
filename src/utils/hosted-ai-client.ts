@@ -1,12 +1,12 @@
 // Mirrors the V03 first-slice @aviso/contract shapes until the package is
 // available in this repo without changing package dependencies.
 const HOSTED_AI_LOCAL_BASE_URL = "http://127.0.0.1:3000/v1"
-const HOSTED_AI_STAGING_BASE_URL =
-  "https://aviso-backend-staging.vercel.app/v1"
+const HOSTED_AI_PRODUCTION_BASE_URL =
+  "https://aviso-backend-production.vercel.app/v1"
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"])
-const STAGING_ORIGIN = new URL(HOSTED_AI_STAGING_BASE_URL).origin
-const STAGING_PATH = new URL(HOSTED_AI_STAGING_BASE_URL).pathname
+const PRODUCTION_ORIGIN = new URL(HOSTED_AI_PRODUCTION_BASE_URL).origin
+const PRODUCTION_PATH = new URL(HOSTED_AI_PRODUCTION_BASE_URL).pathname
 
 const HOSTED_AI_STREAM_LIMIT_ERROR_MESSAGE =
   "AI 返回内容过大或响应超时，请缩短输入后重试。"
@@ -185,12 +185,12 @@ export function resolveHostedAiBaseUrl(baseUrl?: string | null): string | null {
     return parsed.toString().replace(/\/$/, "")
   }
 
-  if (parsed.origin !== STAGING_ORIGIN) return null
+  if (parsed.origin !== PRODUCTION_ORIGIN) return null
   if (parsed.protocol !== "https:") return null
   if (parsed.search || parsed.hash) return null
-  if (parsed.pathname.replace(/\/$/, "") !== STAGING_PATH) return null
+  if (parsed.pathname.replace(/\/$/, "") !== PRODUCTION_PATH) return null
 
-  return HOSTED_AI_STAGING_BASE_URL
+  return HOSTED_AI_PRODUCTION_BASE_URL
 }
 
 export function createHostedAiClient(options: HostedAiClientOptions = {}) {

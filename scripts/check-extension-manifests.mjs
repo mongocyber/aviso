@@ -20,7 +20,7 @@ const expectedHostPermissions = [
   "https://openrouter.ai/*",
   "https://generativelanguage.googleapis.com/*",
   "https://api.hunyuan.cloud.tencent.com/*",
-  "https://aviso-backend-staging.vercel.app/*"
+  "https://aviso-backend-production.vercel.app/*"
 ]
 
 const expectedContentScripts = [

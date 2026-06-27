@@ -1,16 +1,16 @@
 export const HOSTED_AI_LOCAL_BASE_URL = "http://127.0.0.1:3000/v1"
-export const HOSTED_AI_STAGING_BASE_URL =
-  "https://aviso-backend-staging.vercel.app/v1"
-export const HOSTED_AI_DEFAULT_BASE_URL = HOSTED_AI_STAGING_BASE_URL
-export const HOSTED_AI_STAGING_HOST_PERMISSION =
-  "https://aviso-backend-staging.vercel.app/*"
+export const HOSTED_AI_PRODUCTION_BASE_URL =
+  "https://aviso-backend-production.vercel.app/v1"
+export const HOSTED_AI_DEFAULT_BASE_URL = HOSTED_AI_PRODUCTION_BASE_URL
+export const HOSTED_AI_PRODUCTION_HOST_PERMISSION =
+  "https://aviso-backend-production.vercel.app/*"
 export const HOSTED_AI_PROVIDER_CONFIG_ID = "aviso-hosted-ai"
 export const HOSTED_AI_DEFAULT_MODEL = "free-small"
 export const HOSTED_SESSION_STORAGE_KEY = "aviso_hosted_session"
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"])
-const STAGING_ORIGIN = new URL(HOSTED_AI_STAGING_BASE_URL).origin
-const STAGING_PATH = new URL(HOSTED_AI_STAGING_BASE_URL).pathname
+const PRODUCTION_ORIGIN = new URL(HOSTED_AI_PRODUCTION_BASE_URL).origin
+const PRODUCTION_PATH = new URL(HOSTED_AI_PRODUCTION_BASE_URL).pathname
 
 type HostedAiErrorCode =
   | "bad_request"
@@ -99,12 +99,12 @@ export function resolveLocalHostedBaseUrl(
     return parsed.toString().replace(/\/$/, "")
   }
 
-  if (parsed.origin !== STAGING_ORIGIN) return null
+  if (parsed.origin !== PRODUCTION_ORIGIN) return null
   if (parsed.protocol !== "https:") return null
   if (parsed.search || parsed.hash) return null
-  if (parsed.pathname.replace(/\/$/, "") !== STAGING_PATH) return null
+  if (parsed.pathname.replace(/\/$/, "") !== PRODUCTION_PATH) return null
 
-  return HOSTED_AI_STAGING_BASE_URL
+  return HOSTED_AI_PRODUCTION_BASE_URL
 }
 
 export async function readHostedSession(): Promise<StoredHostedSession | null> {
@@ -118,7 +118,7 @@ export async function saveHostedSession(
 ): Promise<StoredHostedSession> {
   const baseUrl = resolveLocalHostedBaseUrl(options.baseUrl)
   if (!baseUrl) {
-    throw new Error("Hosted AI base URL must be local or staging.")
+    throw new Error("Hosted AI base URL must be local or production.")
   }
 
   const value: StoredHostedSession = {
