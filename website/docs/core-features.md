@@ -12,7 +12,7 @@ Aviso 当前重点是把常见网页对象接入 AI，并把结果留在当前�
 
 Aviso 保留 BYOK direct-provider 作为默认可用路径：用户填写自己的模型 API Key，浏览器扩展直接请求所选 provider，不强制登录。
 
-v0.3 准备中的托管 AI 是可选路径。只有用户选择托管 AI 并登录后，请求才会经过 Aviso 后端和上游模型 provider；BYOK 配置和直连请求不受托管登录状态影响。
+v0.3 托管 AI 是 production candidate 中的可选路径。只有用户选择托管 AI 并登录后，请求才会经过 Aviso production 后端和上游模型 provider；BYOK 配置和直连请求不受托管登录状态影响。它已有 production backend smoke 和候选包证据，但仍不是公开发布或 Chrome Web Store 批准。
 
 ## 右键菜单
 

@@ -55,9 +55,9 @@ Aviso 仅在右键内部路径中，对支持的图片 URL 或支持格式的 ba
 
 ## 托管 AI 发布前状态
 
-v0.3 托管 AI 当前仍是发布前 gate，不代表 production、公开发布、付费托管 AI 或 Chrome Web Store 披露提交已经批准。
+v0.3 托管 AI 当前仍是发布前 gate，不代表公开发布、付费托管 AI、hosted AI live 或 Chrome Web Store 披露提交已经批准。
 
-已验证的是 staging 范围：登录、额度、provider smoke、敏感日志边界、前端账号展示、release build 和 manifest 检查已经通过。production 后端、production OAuth、生产 provider 验证、公开上线文案、商店提交和 owner release approval 仍是后续 gate。
+已验证的是分层证据：staging 登录、额度、provider smoke、敏感日志边界、前端账号展示、release build 和 manifest 检查已经通过；production backend authenticated smoke 已通过；production frontend candidate package 已切到 `https://aviso-backend-production.vercel.app/*`。最终 loaded-extension production smoke、Chrome Web Store 提交、website deployment 和 owner release approval 仍是后续 gate。
 
 BYOK direct-provider 仍是默认可用路径；未登录托管 AI 不会阻止用户继续使用自己的 API Key。
 

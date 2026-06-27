@@ -17,7 +17,7 @@ Aviso 的权限设计遵循最小可用原则：只申请当前功能需要的�
 5. provider 返回结果后，Aviso 在当前页面浮窗中展示。
 6. 如果用户保存结果，历史记录保存在浏览器本地。
 
-BYOK 是默认可用路径，不强制登录。托管 AI 是 v0.3 staging 中的可选路径，需要用户主动登录后使用；它不代表 production、公开发布或 Chrome Web Store 批准。
+BYOK 是默认可用路径，不强制登录。托管 AI 是 v0.3 production candidate 中的可选路径，需要用户主动登录后使用；production 后端 HTTP smoke 和候选包已有证据，但它不代表公开发布、Chrome Web Store 批准或 hosted AI live。
 
 ## 本地数据
 
@@ -64,7 +64,7 @@ Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页�
 
 ## Host permissions
 
-当前 host permissions 仅包含已经批准的 provider 域名和 v0.3 staging 托管 AI 后端域名：
+当前 host permissions 仅包含已经批准的 provider 域名和 v0.3 production candidate 托管 AI 后端域名：
 
 ```text
 https://api.openai.com/*
@@ -75,12 +75,12 @@ https://api.moonshot.cn/*
 https://openrouter.ai/*
 https://generativelanguage.googleapis.com/*
 https://api.hunyuan.cloud.tencent.com/*
-https://aviso-backend-staging.vercel.app/*
+https://aviso-backend-production.vercel.app/*
 ```
 
-它们分别用于 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini、Tencent Hunyuan 的 BYOK provider 请求，以及 v0.3 staging 托管 AI 后端请求。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID；OpenRouter、Gemini 和 Tencent Hunyuan 的模型 ID 需要用户手动填写，Aviso 不自动读取模型列表。DeepSeek 已有一次 owner 手动 connectivity pass；Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 仍不能写成 live validated。
+它们分别用于 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini、Tencent Hunyuan 的 BYOK provider 请求，以及 v0.3 production candidate 托管 AI 后端请求。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID；OpenRouter、Gemini 和 Tencent Hunyuan 的模型 ID 需要用户手动填写，Aviso 不自动读取模型列表。DeepSeek 已有一次 owner 手动 connectivity pass；Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 仍不能写成 live validated。
 
-`https://aviso-backend-staging.vercel.app/*` 只代表 staging 托管 AI 验证域名，不代表 production 后端、公开发布或 Chrome Web Store 提交已经批准。当前 host permissions 仍保持在已批准 provider 域名和已批准 staging 后端域名范围内。
+`https://aviso-backend-production.vercel.app/*` 只代表 production candidate 托管 AI 后端域名，不代表公开发布、Chrome Web Store 提交或 hosted AI live 已经批准。当前 host permissions 仍保持在已批准 provider 域名和已批准 production candidate 后端域名范围内。
 
 ## 敏感内容处理
 

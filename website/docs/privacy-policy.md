@@ -15,7 +15,7 @@ Aviso 是一个 Chrome 浏览器扩展。它帮助用户在当前网页中调用
 Aviso 目前保留两条 AI 请求路径：
 
 - BYOK direct-provider：你提供自己的模型 API Key。你主动发起 AI 请求时，请求由浏览器扩展直接发送到你选择的模型 provider；API Key、设置和历史记录保存在浏览器扩展存储中。
-- 托管 AI：v0.3 staging 中的可选路径。只有当你选择托管 AI 并登录时，请求才会经过 Aviso 后端，再路由到上游模型 provider。BYOK 不会被托管登录拦住；这不代表 production、公开发布或 Chrome Web Store 批准。
+- 托管 AI：v0.3 production candidate 中的可选路径。只有当你选择托管 AI 并登录时，请求才会经过 Aviso production 后端，再路由到上游模型 provider。BYOK 不会被托管登录拦住；这不代表公开发布、Chrome Web Store 批准或 hosted AI live。
 
 ## 本地保存的数据
 
@@ -101,7 +101,7 @@ Aviso 当前使用的主要权限包括：
 
 Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页面上显示划词工具栏、划词翻译卡、双击快捷菜单、命令面板、页面内结果面板、剪贴板提示、iframe 桥接，以及右键内部路径需要的截图框选界面。这类站点访问不会用于抓取任意远端链接正文、投放广告、遥测或分析。只有当用户主动触发需要页面内容的 AI 操作时，相关内容才会按当前选择的 BYOK 或托管 AI 路径发送。
 
-当前 host permissions 仅包含已经批准的 provider 域名和 v0.3 staging 托管 AI 后端域名：
+当前 host permissions 仅包含已经批准的 provider 域名和 v0.3 production candidate 托管 AI 后端域名：
 
 ```text
 https://api.openai.com/*
@@ -112,10 +112,10 @@ https://api.moonshot.cn/*
 https://openrouter.ai/*
 https://generativelanguage.googleapis.com/*
 https://api.hunyuan.cloud.tencent.com/*
-https://aviso-backend-staging.vercel.app/*
+https://aviso-backend-production.vercel.app/*
 ```
 
-`https://aviso-backend-staging.vercel.app/*` 是 v0.3 staging 托管 AI 验证使用的后端域名，不代表 production 后端、公开发布或 Chrome Web Store 提交已经批准。Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文。
+`https://aviso-backend-production.vercel.app/*` 是 v0.3 production candidate 托管 AI 使用的后端域名；production backend authenticated smoke 已通过，但这不代表公开发布、Chrome Web Store 提交或 hosted AI live 已经批准。Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文。
 
 ## 用户控制
 
@@ -139,4 +139,4 @@ Aviso 支持配置 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kim
 
 当前内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持配置，但实际可用性取决于用户自己的 Key、模型权限和 provider 状态；DeepSeek 已有一次 owner 手动 connectivity pass，本站不把它扩大成所有 DeepSeek 模型或账号都已完成真实可用验收。Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 仍不能写成 live validated。
 
-托管 AI 路径仍处于 v0.3 发布前 gate。staging 已完成登录、额度、provider smoke 和前端账号展示验证，但这不等于 production、公开发布、付费托管 AI 或 Chrome Web Store 披露提交已经批准。
+托管 AI 路径仍处于 v0.3 发布前 gate。staging 已完成登录、额度、provider smoke 和前端账号展示验证；production backend authenticated smoke 已通过，候选包已切到 production backend。最终 loaded-extension production smoke、公开发布、付费托管 AI、website deployment 和 Chrome Web Store 披露提交仍未批准。

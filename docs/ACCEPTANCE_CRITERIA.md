@@ -65,7 +65,7 @@ Updated: 2026-06-27
 - v0.2 命令面板本地意图：功能验证已通过；相关 loaded-extension surface 已纳入 V02-WXT-005 closeout / owner manual pass 记录，不代表公开发布批准。
 - v0.2 速度体验：等待态和 summary-only 本地 TTFT 方法已实现；未做真实 provider live sampling，不宣称 p50 / p95 达标。
 - WXT：自动构建和 manifest parity 已通过；V02-WXT-005 closeout 已记录 refreshed browser smoke 和 owner manual pass evidence，可进入 owner release decision；默认构建仍未切换，WXT default-build migration / default-build release 移到独立 `v0.2.1` gate。
-- v0.3 hosted AI：staging 登录、session/account state、额度展示、provider smoke、敏感日志边界、release build 和 manifest 检查已有验证记录；production backend authenticated smoke 已通过；production frontend package、公开上线文案、商店提交和 owner release approval 仍需最终证据。
+- v0.3 hosted AI：staging 登录、session/account state、额度展示、provider smoke、敏感日志边界、release build 和 manifest 检查已有验证记录；production backend authenticated smoke 已通过；production frontend package 已构建并切到 `https://aviso-backend-production.vercel.app/*`；最终 loaded-extension production smoke、商店提交、website deployment 和 owner release approval 仍需最终证据。
 - Reasoning / thinking request-parameter control：已从当前 v0.2 scope 移除；不作为实现项、延期项或发布口径前置条件。
 - Custom OpenAI-compatible base URL：当前 v0.2 明确不做；不是当前待办或延期项。
 - 英文界面：用户 smoke check 未发现明显问题。
@@ -91,4 +91,4 @@ Updated: 2026-06-27
 - `V02-017`：CTO accepted as non-live configuration support for Gemini / Tencent Hunyuan；继续保持 fixed preset / fixed base URL / fixed host permission。
 - `V02-018`：CTO accepted as non-live validation evidence for Gemini / Tencent Hunyuan；没有真实 API 调用授权时不能写成 live validation。
 
-这些记录只代表当前内部试用 / basic-launch hardening / v0.2 实现证据、v0.3 staging gate 和 production gate 的分层证据；DeepSeek owner 手动 connectivity pass 只覆盖该次手动配置可用性，v0.3 hosted evidence 不代表公开发布批准、Chrome Web Store 审核通过、正式商店链接、GitHub Release、全 provider live validation、hosted AI live 或 WXT 默认构建切换批准。
+这些记录只代表当前内部试用 / basic-launch hardening / v0.2 实现证据、v0.3 staging gate 和 production candidate gate 的分层证据；DeepSeek owner 手动 connectivity pass 只覆盖该次手动配置可用性，v0.3 hosted evidence 不代表公开发布批准、Chrome Web Store 审核通过、正式商店链接、GitHub Release、全 provider live validation、hosted AI live 或 WXT 默认构建切换批准。

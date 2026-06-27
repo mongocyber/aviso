@@ -1,6 +1,6 @@
 # Aviso Project Charter
 
-Updated: 2026-06-25
+Updated: 2026-06-27
 
 ## 定位
 
@@ -13,8 +13,8 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它把用户在网页上的当前�
 - 让用户在当前网页里通过右键菜单、划词工具栏、命令面板、剪贴板提示和双击快捷菜单触发 AI 操作。
 - 让用户在 Popup 中管理界面语言、外观主题、功能开关、AI 服务配置、默认模型、历史和自定义指令。
 - 让 BYOK direct-provider 保持当前对外主线：用户自己的 API Key 不明文保存，浏览器直连所选 provider，不强制登录。
-- 让 v0.3 可选 Aviso AI / hosted AI 继续按 staging gate 分层记录：只有用户选择托管路径时才登录并经过 Aviso staging 后端；该路径不代表 production、公开发布或 Chrome Web Store 批准。
-- 让数据和权限边界保持清楚：用户主动触发、浏览器本地保存设置，BYOK 直连 provider，托管路径仅按 v0.3 staging gate 披露。
+- 让 v0.3 可选 Aviso AI / hosted AI 按 production candidate gate 分层记录：只有用户选择托管路径时才登录并经过 Aviso production 后端；production 后端 HTTP smoke 和前端候选包已有证据，但该路径仍不代表公开发布、Chrome Web Store 批准或 hosted AI live。
+- 让数据和权限边界保持清楚：用户主动触发、浏览器本地保存设置，BYOK 直连 provider，托管路径按 v0.3 production candidate gate 披露。
 
 ## 当前范围
 
@@ -29,7 +29,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它把用户在网页上的当前�
 | 剪贴板提示 | 已实现。 |
 | 结果面板和本地历史 | 已实现。 |
 | AI 服务配置 | 已实现多配置、默认服务切换、模型 ID 手动编辑和手动连接测试。 |
-| v0.3 Aviso AI / hosted AI | staging 已实现可选登录、session/account/额度状态和显式 hosted route；不是 production/live/public release。 |
+| v0.3 Aviso AI / hosted AI | production candidate 已实现可选登录、session/account/额度状态和显式 hosted route；production backend authenticated smoke 已通过，前端候选包已切到 production backend；不是 public/live release。 |
 | UI 语言本地化 | 已实现中文 / English。 |
 | Manifest 本地化 | 已实现 `zh_CN` / `en`。 |
 
@@ -41,7 +41,7 @@ v0.2 记录的是当前内部试用版本上的 hardening 和实现证据，不�
 
 v0.2.1 当前只作为 WXT default-build migration / rebaseline 的独立工程 gate。WXT 已有并行构建和 closeout 证据，但默认构建仍保持 Plasmo；任何默认构建切换、重新打包提交或公开发布都需要单独 owner decision。
 
-这些记录不改变当前公开产品边界：BYOK direct-provider 仍是默认路径，未登录托管 AI 不会阻止 BYOK。v0.3 staging 已加入 Aviso AI / hosted AI、`identity` 权限和精确 staging host permission，但它仍不是 production 后端、公开发布、付费托管 AI、订阅支付、公开匿名额度或 Chrome Web Store 批准。
+这些记录不改变当前公开产品边界：BYOK direct-provider 仍是默认路径，未登录托管 AI 不会阻止 BYOK。v0.3 production candidate 已加入 Aviso AI / hosted AI、`identity` 权限和精确 production host permission `https://aviso-backend-production.vercel.app/*`，并已有 production backend authenticated smoke 证据；但它仍不是公开发布、付费托管 AI、订阅支付、公开匿名额度或 Chrome Web Store 批准。
 
 ## 质量状态
 
@@ -49,7 +49,7 @@ v0.2.1 当前只作为 WXT default-build migration / rebaseline 的独立工程 
 - 豆包 / 火山方舟：用户确认可用。
 - OpenAI / Anthropic：支持在设置中配置 API Key 和模型 ID，请求由浏览器直连对应 provider。
 - DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan：支持在设置中配置 API Key 和模型 ID；除 DeepSeek 的一次 owner 手动 connectivity pass 外，这是 BYOK direct-provider 配置支持，不代表真实 provider live validation。
-- v0.3 hosted AI：staging 登录、账号状态、额度展示、provider smoke 和 manifest/release-build 检查已有验证记录；production OAuth、production backend、production provider validation、CWS disclosure 提交和 owner release approval 仍是后续 gate。
+- v0.3 hosted AI：staging 登录、账号状态、额度展示、provider smoke 和 manifest/release-build 检查已有验证记录；production backend authenticated smoke 已通过，production frontend package 已构建并包含精确 production host permission。最终 loaded-extension production smoke、CWS disclosure 提交、website deployment 和 owner release approval 仍是后续 gate。
 - 英文界面：用户 smoke check 未发现明显问题。
 - 自动检查：以 `git diff --check`、`npm test`、`npx tsc --noEmit`、`npm run build` 为当前基础检查。
 
