@@ -651,7 +651,7 @@ const HOSTED_AI_ERROR_MAP: Record<
   unauthorized: {
     category: "auth_required",
     action: "sign_in_again",
-    userMessage: "托管登录状态已失效，请在 AI 服务页重新本地登录。"
+    userMessage: "托管登录状态已失效，请在 AI 服务页重新登录。"
   },
   quota_exceeded: {
     category: "quota_exhausted",
@@ -671,7 +671,7 @@ const HOSTED_AI_ERROR_MAP: Record<
   service_unavailable: {
     category: "service_unavailable",
     action: "retry_or_switch_to_byok",
-    userMessage: "本地托管服务暂不可用，请确认本地后端已启动，或切换到自己的 API Key。"
+    userMessage: "托管服务暂不可用，请稍后重试，或切换到自己的 API Key。"
   },
   provider_error: {
     category: "provider_unavailable",

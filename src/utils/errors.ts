@@ -31,11 +31,11 @@ const USER_MESSAGES: Record<SafeErrorCategory, string> = {
 
 const HOSTED_AI_SAFE_USER_MESSAGES = new Set([
   "托管请求格式不可用，请检查本地集成配置。",
-  "托管登录状态已失效，请在 AI 服务页重新本地登录。",
+  "托管登录状态已失效，请在 AI 服务页重新登录。",
   "托管额度暂不可用，可切换到自己的 API Key。",
   "当前托管模型不可用，请重试默认模型或切换到自己的 API Key。",
   "托管请求过于频繁，请稍后重试或切换到自己的 API Key。",
-  "本地托管服务暂不可用，请确认本地后端已启动，或切换到自己的 API Key。",
+  "托管服务暂不可用，请稍后重试，或切换到自己的 API Key。",
   "托管上游服务失败，请稍后重试或切换到自己的 API Key。",
   "托管服务异常，请稍后重试或切换到自己的 API Key。"
 ])

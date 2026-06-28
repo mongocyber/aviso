@@ -1,7 +1,7 @@
 # Aviso v0.3 Planning
 
-Status: `execution-started / cross-repo / mon-23-owner-approved-to-execute / not release-ready`
-Updated: 2026-06-26
+Status: `execution-started / cross-repo / production-backend-smoke-passed / production-frontend-package-built / production-loaded-extension-smoke-attempted-blocked / not release-ready`
+Updated: 2026-06-28
 
 This folder is the product-side control plane for Aviso v0.3 hosted AI. It coordinates the extension repository and the sibling backend repository without merging the two codebases.
 
@@ -40,9 +40,10 @@ This folder is the product-side control plane for Aviso v0.3 hosted AI. It coord
 - The backend repository has staging backend logic deployed and verified through the current v0.3 gates.
 - The extension has staging hosted AI integration, exact staging host permission, `identity` permission, and owner-assisted account smoke evidence.
 - BYOK direct-provider remains the default available path.
-- Hosted AI remains staging-only and not release-ready.
-- MON-23 owner decisions are approved to execute production preparation, website/CWS preparation, production OAuth/provider validation, exact production host-permission work, and billing exclusion for the first hosted-AI release.
-- Production backend configuration, exact production host permission, Chrome Web Store submission, website deployment, and live release evidence are not complete.
+- Hosted AI has moved from staging-only evidence into production candidate packaging, but it remains not release-ready.
+- MON-23 owner decisions approved production preparation, website/CWS preparation, production OAuth/provider validation, exact production host-permission work, and billing exclusion for the first hosted-AI release.
+- Production backend authenticated HTTP smoke passed, and the frontend production candidate package now uses the exact production host permission `https://aviso-backend-production.vercel.app/*`.
+- Chrome Web Store submission, website deployment, final loaded-extension production smoke, owner release approval, and live release evidence are not complete.
 
 ## Source-Of-Truth Rules
 
@@ -52,12 +53,12 @@ This folder is the product-side control plane for Aviso v0.3 hosted AI. It coord
 - API contract: backend repository `docs/api-contract.md` and `docs/openapi.yaml`.
 - Backend data model: backend repository `docs/data-model.md`.
 - Backend deployment and operations: backend repository `docs/deploy.md`, `docs/ops-runbook.md`, and `docs/security.md`.
-- Release readiness: this folder's [`release-gates.md`](./release-gates.md) plus root [`../../RELEASE_CHECKLIST.md`](../../RELEASE_CHECKLIST.md) once implementation exists.
+- Release readiness: this folder's [`release-gates.md`](./release-gates.md) plus root [`../../../RELEASE_CHECKLIST.md`](../../../RELEASE_CHECKLIST.md).
 
 ## Planning Rules
 
 - Do not update current product docs as if v0.3 has shipped.
-- MON-23 now allows production, website, and CWS preparation under sanitized evidence plans; do not submit Chrome Web Store copy or deploy public changes until the matching release evidence is complete.
-- Do not add broad backend host permissions; production host permission is limited to the exact production backend origin once established and verified.
+- MON-23 allows production, website, and CWS preparation under sanitized evidence plans; do not submit Chrome Web Store copy or deploy public changes until the matching release evidence is complete.
+- Do not add broad backend host permissions; the production candidate host permission is limited to the exact production backend origin already established and verified.
 - Do not make real provider, auth, billing, or deployment claims from mock evidence.
 - Keep BYOK as a first-class path throughout v0.3.

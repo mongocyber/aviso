@@ -782,8 +782,8 @@ const MESSAGES = {
     en: "Hosted backend configuration is unavailable. Reload Aviso and retry."
   },
   "popup.hosted.status.authRejected": {
-    "zh-CN": "后端未接受这次 Google 登录；请重试或检查 staging OAuth 配置。",
-    en: "The backend did not accept this Google sign-in. Retry or check staging OAuth configuration."
+    "zh-CN": "后端未接受这次 Google 登录；请重试，或切换到自己的 AI 服务配置。",
+    en: "The backend did not accept this Google sign-in. Retry, or switch to your own AI service configuration."
   },
   "popup.hosted.status.accountReadFailed": {
     "zh-CN": "登录后读取账户状态失败；请稍后刷新。",

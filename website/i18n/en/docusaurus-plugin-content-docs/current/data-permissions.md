@@ -17,7 +17,7 @@ Aviso follows a minimum-use permission design: it requests only the permissions 
 5. After the provider returns a result, Aviso shows it in the current page.
 6. If the user saves the result, history is stored locally in the browser.
 
-BYOK remains the default available path and does not force sign-in. Hosted AI is an optional v0.3 staging path and requires user-initiated sign-in before use; it does not mean production, public release, or Chrome Web Store approval.
+BYOK remains the default available path and does not force sign-in. Hosted AI is an optional v0.3 production candidate path and requires user-initiated sign-in before use; production backend HTTP smoke and candidate package evidence exist, but this does not mean public release, Chrome Web Store approval, or hosted AI live.
 
 ## Local Data
 
@@ -64,7 +64,7 @@ Command-palette browsing history, bookmark, and local AI conversation results ar
 
 ## Host Permissions
 
-Current host permissions are limited to approved provider domains and the v0.3 staging hosted AI backend origin:
+Current host permissions are limited to approved provider domains and the v0.3 production candidate hosted AI backend origin:
 
 ```text
 https://api.openai.com/*
@@ -75,12 +75,12 @@ https://api.moonshot.cn/*
 https://openrouter.ai/*
 https://generativelanguage.googleapis.com/*
 https://api.hunyuan.cloud.tencent.com/*
-https://aviso-backend-staging.vercel.app/*
+https://aviso-backend-production.vercel.app/*
 ```
 
-They are used for OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan BYOK provider requests, plus the v0.3 staging hosted AI backend request path. OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan can be configured with API key and model ID; OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually, and Aviso does not automatically read model lists. DeepSeek has one owner-manual connectivity pass; Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan should not be described as live-provider validated.
+They are used for OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan BYOK provider requests, plus the v0.3 production candidate hosted AI backend request path. OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan can be configured with API key and model ID; OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually, and Aviso does not automatically read model lists. DeepSeek has one owner-manual connectivity pass; Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan should not be described as live-provider validated.
 
-`https://aviso-backend-staging.vercel.app/*` is only the approved staging hosted AI backend origin. It does not approve a production backend, public release, or Chrome Web Store submission. Host permissions remain limited to approved provider domains and the approved staging backend origin.
+`https://aviso-backend-production.vercel.app/*` is only the v0.3 production candidate hosted AI backend origin. It does not approve public release, Chrome Web Store submission, or hosted AI live. Host permissions remain limited to approved provider domains and the approved production candidate backend origin.
 
 ## Sensitive Content Handling
 

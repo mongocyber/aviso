@@ -6,8 +6,9 @@
 
 - Aviso 是 Chrome MV3 扩展，技术栈为 Plasmo、React 18、TypeScript。
 - 当前状态是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Chrome Web Store 审核，等待审核结果；还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
-- 当前产品模型是 BYOK direct-provider：用户提供自己的 API Key，浏览器扩展直连模型厂商。
-- 当前没有项目方后端、provider proxy、账号、登录、订阅、支付、匿名额度、遥测、分析 SDK、远端链接正文抓取或联网搜索。
+- 当前默认可用产品模型仍是 BYOK direct-provider：用户提供自己的 API Key，浏览器扩展直连模型厂商。
+- v0.3 production candidate 已加入可选 Aviso AI / hosted AI 路径：只有用户主动选择托管路径时才需要 Google 登录，请求才会经过 Aviso production 后端。该路径已有 production backend authenticated HTTP smoke 和候选包证据，但还不是公开发布、Chrome Web Store 批准、hosted AI live 或网站部署。
+- 当前没有 provider proxy 公开 live、订阅、支付、公开匿名额度、遥测、分析 SDK、远端链接正文抓取或联网搜索。
 - API Key 不明文保存，保存在 `chrome.storage.local/contextai_api_keys`；当前口令由扩展 ID 派生，属于本地加密 / 混淆级保护，不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。非敏感设置保存在 `chrome.storage.sync/contextai_settings`；本地对话历史保存在 `chrome.storage.local/contextai_history`。
 
 ## 先读再改
@@ -42,7 +43,7 @@
 
 - Chrome Web Store 已经公开可安装、已通过审核或已有正式商店链接。
 - OpenAI / Anthropic 真实调用已验收。
-- 项目方托管 AI、provider proxy、登录、订阅、支付、匿名额度。
+- 项目方托管 AI 已经公开 live、Chrome Web Store 已批准、所有用户都可用、订阅支付已上线、公开匿名额度已发布。
 - 联网搜索、远端链接正文抓取、全页 DOM 翻译、第三方翻译 fallback。
 - 本地模型、浏览器会话 Agent、多 Tab 聚合、语音输入。
 - 截图能力作为普通用户主入口或公开卖点。

@@ -10,6 +10,8 @@
 
 当前构建用于内部试用和 Chrome Web Store 审核。用户已验证 A-G 手动验收基本通过，豆包 / 火山方舟 API 可用。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID；DeepSeek 已有一次 owner 手动 connectivity pass，OpenRouter 最近一次手动测试失败类别为 `unauthorized`，Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 当前仍不能写成 live validated。
 
+v0.3 production candidate 已加入可选 Aviso AI / hosted AI 路径，并已通过 production backend authenticated HTTP smoke 与候选包构建/manifest 证据；但这仍不代表 Chrome Web Store 提交、公开发布、hosted AI live、网站部署或 owner release approval。
+
 本清单用于记录当前内部试用质量、发布候选准备和已提交审核状态，不代表 Chrome Web Store 审核通过、正式上架或发布批准。
 
 ## 功能验收
@@ -48,13 +50,13 @@ Provider 连接测试只能由用户在 Popup 手动触发，一次只测一个 
 
 ## 权限与隐私
 
-- [x] 普通权限只包含当前功能需要的 `contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`clipboardWrite`。
-- [x] Host permissions 只包含 `https://api.openai.com/*`、`https://api.anthropic.com/*`、`https://ark.cn-beijing.volces.com/*`、`https://api.deepseek.com/*`、`https://api.moonshot.cn/*`、`https://openrouter.ai/*`、`https://generativelanguage.googleapis.com/*`、`https://api.hunyuan.cloud.tencent.com/*`。
+- [x] 普通权限只包含当前功能需要的 `contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`clipboardWrite`；v0.3 production candidate 还包含 `identity`，仅用于用户主动登录 Aviso AI / hosted AI。
+- [x] Host permissions 只包含 `https://api.openai.com/*`、`https://api.anthropic.com/*`、`https://ark.cn-beijing.volces.com/*`、`https://api.deepseek.com/*`、`https://api.moonshot.cn/*`、`https://openrouter.ai/*`、`https://generativelanguage.googleapis.com/*`、`https://api.hunyuan.cloud.tencent.com/*`，以及 v0.3 production candidate 的精确托管后端域名 `https://aviso-backend-production.vercel.app/*`。
 - [x] API Key 不明文保存，保存在 `chrome.storage.local/contextai_api_keys`，不进入 sync。
 - [x] 当前 API Key 保护属于由扩展 ID 派生口令的本地加密 / 混淆级保护，不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。
 - [x] 非敏感设置保存在 `chrome.storage.sync/contextai_settings`。
 - [x] 本地对话历史保存在 `chrome.storage.local/contextai_history`。
-- [x] 无项目方后端、provider proxy、遥测、分析 SDK 或远端日志。
+- [x] BYOK 路径无项目方后端或 provider proxy；v0.3 production candidate 的可选托管路径会经过 Aviso production 后端，但仍未公开发布、未提交 Chrome Web Store、未标记 live。项目仍无遥测、分析 SDK 或远端用户内容日志。
 - [x] 浏览历史和书签只用于命令面板本地关键词搜索，不进入 AI 请求或远端服务。
 - [x] 截图/base64 不写入 history、storage、docs、console、telemetry 或 release artifacts。
 
@@ -152,5 +154,5 @@ Chrome 版本、操作系统、截图或录屏未补录；当前记录只作为�
 - 当前状态不是 Chrome Web Store 审核通过。
 - 当前状态是已提交审核 / 待审核，不是审核通过。
 - OpenAI / Anthropic / Kimi / Moonshot / OpenRouter / Gemini / Tencent Hunyuan 当前只描述为支持配置的 provider，不描述为 live validated 可用状态；DeepSeek 只能描述为已有一次 owner 手动 connectivity pass，不能扩大成全 provider、全模型或 release-ready 证明。
-- 当前没有项目方后端、登录、订阅、支付、匿名额度、托管 AI、联网搜索或远端链接正文抓取。
+- 当前公开/已提交审核的 v0.1 口径没有项目方后端、登录、订阅、支付、匿名额度、托管 AI、联网搜索或远端链接正文抓取；v0.3 production candidate 有可选 Aviso AI / hosted AI 路径，但不代表公开发布、Chrome Web Store 批准、hosted AI live、订阅支付或公开匿名额度。
 - GitHub push、构建通过或内部手动 QA 不等于 Chrome Web Store 发布批准。

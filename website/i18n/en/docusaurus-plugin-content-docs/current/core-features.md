@@ -12,7 +12,7 @@ Aviso currently focuses on connecting common webpage objects to AI and keeping t
 
 Aviso keeps BYOK direct-provider as the default available path: users enter their own model API key, and the browser extension calls the selected provider directly without forcing sign-in.
 
-The hosted AI path prepared for v0.3 is optional. Only when the user chooses hosted AI and signs in does the request pass through the Aviso backend and upstream model providers. BYOK configuration and direct-provider requests are not blocked by hosted sign-in state.
+The v0.3 hosted AI path is optional in the production candidate. Only when the user chooses hosted AI and signs in does the request pass through the Aviso production backend and upstream model providers. BYOK configuration and direct-provider requests are not blocked by hosted sign-in state. Production backend smoke and candidate package evidence exist, but this is still not public release or Chrome Web Store approval.
 
 ## Right-Click Menu
 

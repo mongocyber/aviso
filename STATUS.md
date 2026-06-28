@@ -1,6 +1,6 @@
 # Aviso Status
 
-Updated: 2026-06-27
+Updated: 2026-06-28
 
 ## 结论
 
@@ -10,7 +10,7 @@ Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Ch
 
 ## v0.3 开发态说明
 
-v0.3 hosted AI 正在独立门禁下开发，不代表当前 Chrome Web Store 版本已经上线托管 AI。staging 阶段已完成托管后端配置、`identity` 权限、精确 staging host permission、Google OAuth `launchWebAuthFlow` id-token 后台登录代码、loaded-extension 账号 smoke、真实 Upstash Redis 并发 quota smoke、provider smoke、敏感日志审查和 release build / manifest gate；BYOK direct-provider 仍保持默认可用路径。当前已进入 production candidate gate：production backend origin 为 `https://aviso-backend-production.vercel.app`，authenticated production HTTP smoke 已通过 `auth_google`、`me_before_chat`、`chat_provider_stream`、`me_after_chat` 和 `logout`，SSE `delta` / `done` / `usage`、正向 quota delta 和 cost guard 均已确认。前端候选包已切换到 production hosted base URL `https://aviso-backend-production.vercel.app/v1`、精确 host permission `https://aviso-backend-production.vercel.app/*`，并同步 production Google OAuth client ID；旧 staging hosted session 会被 URL allowlist 拒绝。2026-06-27 本地验证通过：`npm test`、`npx tsc --noEmit`、`git diff --check`、WXT/Plasmo production build、WXT/Plasmo zip 重新打包、manifest guard、zip 内 manifest 复核和禁止项扫描均通过；候选包为 `build/chrome-mv3-prod.zip` 和 `.output/aviso-0.1.0-chrome.zip`。这仍不是 CWS 提交、网站部署、正式上架或 live 发布证据；billing 已批准排除在首个 hosted-AI release 之外。
+v0.3 hosted AI 正在独立门禁下开发，不代表当前 Chrome Web Store 版本已经上线托管 AI。staging 阶段已完成托管后端配置、`identity` 权限、精确 staging host permission、Google OAuth `launchWebAuthFlow` id-token 后台登录代码、loaded-extension 账号 smoke、真实 Upstash Redis 并发 quota smoke、provider smoke、敏感日志审查和 release build / manifest gate；BYOK direct-provider 仍保持默认可用路径。当前已进入 production candidate gate：production backend origin 为 `https://aviso-backend-production.vercel.app`，authenticated production HTTP smoke 已通过 `auth_google`、`me_before_chat`、`chat_provider_stream`、`me_after_chat` 和 `logout`，SSE `delta` / `done` / `usage`、正向 quota delta 和 cost guard 均已确认。前端候选包已切换到 production hosted base URL `https://aviso-backend-production.vercel.app/v1`、精确 host permission `https://aviso-backend-production.vercel.app/*`，并同步 production Google OAuth client ID；旧 staging hosted session 会被 URL allowlist 拒绝。2026-06-27 本地验证通过：`npm test`、`npx tsc --noEmit`、`git diff --check`、WXT/Plasmo production build、WXT/Plasmo zip 重新打包、manifest guard、zip 内 manifest 复核和禁止项扫描均通过；候选包为 `build/chrome-mv3-prod.zip` 和 `.output/aviso-0.1.0-chrome.zip`。2026-06-28 文档/文案收口同步了 README、release checklist、agent context、v0.3 planning、英文官网镜像和 hosted AI 候选包错误文案；这仍不是 CWS 提交、网站部署、正式上架或 live 发布证据；billing 已批准排除在首个 hosted-AI release 之外。
 
 ## 当前能力
 

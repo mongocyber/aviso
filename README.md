@@ -14,8 +14,8 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它在当前网页内提供右键�
 - 主要功能已经实现，并已有用户 A-G 手动验收“基本通过”的内部记录。
 - 豆包 / 火山方舟已由用户确认可用；OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID，请求由浏览器直连用户选择的 provider。DeepSeek 已有一次 owner 手动 connectivity pass；Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 当前仍不能写成 live validated。
 - UI 支持中文和英文：默认跟随 Chrome 界面语言，Popup 设置里可以手动切换。
-- BYOK direct-provider 仍是当前对外主线，不要求 Aviso 账号，也不经过 Aviso 后端；v0.3 已在 staging gate 中加入可选 Aviso AI / hosted AI 路径，只有用户主动选择托管路径时才需要登录。该路径仍不是 production、公开发布或 Chrome Web Store 批准。
-- Aviso 没有 production 托管 AI、订阅支付、公开匿名额度、遥测、分析 SDK、远端链接正文抓取或联网搜索。
+- BYOK direct-provider 仍是当前默认可用路径，不要求 Aviso 账号，也不经过 Aviso 后端；v0.3 production candidate 中已经加入可选 Aviso AI / hosted AI 路径，只有用户主动选择托管路径时才需要登录。该路径已有 production backend authenticated HTTP smoke 和候选包证据，但仍不是公开发布、Chrome Web Store 批准或 hosted AI live。
+- Aviso 没有公开 live 的 production 托管 AI、订阅支付、公开匿名额度、遥测、分析 SDK、远端链接正文抓取或联网搜索。
 - v0.2 的命令面板本地意图、等待态和 WXT 并行构建路径已有实现证据；v0.2 仍未公开发布，WXT 也未切换为默认构建。
 
 更细状态见 [STATUS.md](./STATUS.md) 和 [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)。
@@ -29,7 +29,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它在当前网页内提供右键�
 - 双击快捷菜单：默认关闭；开启后在安全网页区域双击显示紧凑入口，复用现有本地动作和 AI 动作。
 - 剪贴板提示：复制普通文本后显示提示，敏感页面和敏感内容会跳过。
 - 结果面板：流式展示结果，支持复制、保存、继续追问和本地对话历史。
-- Popup 设置页：界面语言、外观主题、默认模型、本地功能开关、AI 服务配置、手动连接测试、历史、自定义指令；v0.3 staging 中还包含可选 Aviso AI 账号/session/额度状态。
+- Popup 设置页：界面语言、外观主题、默认模型、本地功能开关、AI 服务配置、手动连接测试、历史、自定义指令；v0.3 production candidate 中还包含可选 Aviso AI 账号/session/额度状态。
 
 截图入口当前只保留在用户主动触发的右键内部路径中，不作为普通用户主入口或公开卖点。
 
@@ -103,12 +103,12 @@ npm run build
 
 ## API Key 与隐私
 
-BYOK 路径下，Aviso 的 AI 请求由浏览器扩展直接发往用户选择的模型厂商。v0.3 staging 的可选 Aviso AI 路径会经过 Aviso staging 后端和上游 provider，但它不改变 BYOK 默认路径，也不构成 production 托管 AI 批准。
+BYOK 路径下，Aviso 的 AI 请求由浏览器扩展直接发往用户选择的模型厂商。v0.3 production candidate 的可选 Aviso AI 路径会经过 Aviso production 后端和上游 provider，但它不改变 BYOK 默认路径，也不构成公开发布、Chrome Web Store 批准或 hosted AI live。
 
 - API Key 不明文保存，保存在 `chrome.storage.local/contextai_api_keys`，不进入 Chrome sync。
 - 当前保护方式使用由扩展 ID 派生的口令，属于本地加密 / 混淆级保护；它能避免普通配置同步和直接明文暴露，但不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。
 - 非敏感设置保存在 `chrome.storage.sync/contextai_settings`。
 - 本地 AI 对话历史保存在 `chrome.storage.local/contextai_history`。
-- 允许访问的 host 仅限已批准 provider host：OpenAI、Anthropic、火山方舟北京网关、DeepSeek、Moonshot、OpenRouter、Gemini、Tencent Hunyuan，以及 v0.3 staging 托管 AI 验证域名 `https://aviso-backend-staging.vercel.app/*`。
+- 允许访问的 host 仅限已批准 provider host：OpenAI、Anthropic、火山方舟北京网关、DeepSeek、Moonshot、OpenRouter、Gemini、Tencent Hunyuan，以及 v0.3 production candidate 托管 AI 后端域名 `https://aviso-backend-production.vercel.app/*`。
 - 连接测试只能由用户在 Popup 中手动触发，一次只测一个 provider，并只展示脱敏摘要。
 - 项目不添加遥测、分析 SDK、production 模型中转服务或远端日志；任何 production backend、CWS disclosure 提交或公开发布仍需 owner 单独批准。

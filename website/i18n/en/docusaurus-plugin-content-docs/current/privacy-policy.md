@@ -15,7 +15,7 @@ Aviso is a Chrome extension. It helps users call AI inside the current webpage t
 Aviso currently has two AI request paths:
 
 - BYOK direct-provider: you bring your own model API key. When you actively trigger an AI request, the browser extension sends the request directly to the model provider you selected. API keys, settings, and history are stored in Chrome extension storage.
-- Hosted AI: an optional v0.3 staging path. Only when you choose hosted AI and sign in does the request pass through the Aviso backend and then to upstream model providers. BYOK remains available without hosted sign-in; this does not mean production, public release, or Chrome Web Store approval.
+- Hosted AI: an optional v0.3 production candidate path. Only when you choose hosted AI and sign in does the request pass through the Aviso production backend and then to upstream model providers. BYOK remains available without hosted sign-in; production backend HTTP smoke and candidate package evidence exist, but this does not mean public release, Chrome Web Store approval, or hosted AI live.
 
 ## Data Stored Locally
 
@@ -101,7 +101,7 @@ Aviso currently uses these permissions:
 
 Aviso content scripts match webpage URLs to show the selection toolbar, selection translation card, double-click quick menu, command palette, in-page result panel, clipboard prompt, iframe bridge, and the screenshot selection UI used by the internal right-click path. This site access is not used to fetch arbitrary remote link bodies, serve ads, run telemetry, or run analytics. Only when the user actively triggers an AI action that requires page content does Aviso send relevant content through the selected BYOK or hosted AI path.
 
-Current host permissions are limited to approved provider domains and the v0.3 staging hosted AI backend origin:
+Current host permissions are limited to approved provider domains and the v0.3 production candidate hosted AI backend origin:
 
 ```text
 https://api.openai.com/*
@@ -112,10 +112,10 @@ https://api.moonshot.cn/*
 https://openrouter.ai/*
 https://generativelanguage.googleapis.com/*
 https://api.hunyuan.cloud.tencent.com/*
-https://aviso-backend-staging.vercel.app/*
+https://aviso-backend-production.vercel.app/*
 ```
 
-`https://aviso-backend-staging.vercel.app/*` is the v0.3 staging backend origin used for hosted AI validation. It does not mean production backend, public release, or Chrome Web Store submission has been approved. Aviso does not request broad host permissions to fetch arbitrary remote webpage bodies.
+`https://aviso-backend-production.vercel.app/*` is the v0.3 production candidate backend origin used for hosted AI. Production backend authenticated smoke has passed, but this does not mean public release, Chrome Web Store submission, or hosted AI live has been approved. Aviso does not request broad host permissions to fetch arbitrary remote webpage bodies.
 
 ## User Control
 
@@ -139,4 +139,4 @@ Aviso supports configurable OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek
 
 Current internal testing and user feedback confirm the Doubao / Volcengine Ark path works. OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan are configurable, but actual availability depends on the user's own key, model access, and provider status. DeepSeek has one owner-manual connectivity pass; this site does not expand it into proof that every DeepSeek model or account has completed real availability acceptance. Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan should not be described as live-provider validated.
 
-Hosted AI remains in the v0.3 pre-release gate. Staging has completed sign-in, quota, provider smoke, and frontend account-display validation, but this does not approve production, public release, paid hosted AI, or Chrome Web Store disclosure submission.
+Hosted AI remains in the v0.3 pre-release gate. Staging sign-in, quota, provider smoke, and frontend account-display validation have passed; production backend authenticated HTTP smoke and production frontend candidate package evidence also exist. This still does not approve public release, paid hosted AI, website deployment, final loaded-extension production smoke, owner release approval, or Chrome Web Store disclosure submission.

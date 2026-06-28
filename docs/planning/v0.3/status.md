@@ -1,7 +1,7 @@
 # Aviso v0.3 Status
 
 Status: `execution-started / cross-repo / staging-deployed / readiness-guard-deployed / health-verified / supabase-migration-applied / supabase-smoke-verified / upstash-smoke-verified / redis-quota-concurrency-verified / oauth-smoke-verified / provider-smoke-verified / glm-backend-smoke-passed / quota-cost-guard-confirmed / sensitive-log-review-completed / mon-20-frontend-oauth-browser-smoke-passed / mon-21-release-build-manifest-verified / mon-22-privacy-cws-source-updated / hosted-service-selection-ux-code-verified / mon-27-ui-smoke-passed / mon-26-complete / mon-29-main-merged / mon-29-local-validation-passed / mon-23-owner-approved-to-execute / production-backend-smoke-passed / production-frontend-package-built / production-loaded-extension-smoke-attempted-blocked / not release-ready`
-Updated: 2026-06-27
+Updated: 2026-06-28
 
 ## Current Conclusion
 
@@ -35,7 +35,7 @@ v0.3 hosted AI has moved from staging evidence into production candidate packagi
 | Real provider validation | `MON-18C` completed: backend `/v1/chat` smoke passed for `free-small` through GLM 5.2-backed route with SSE delta/done/usage seen, positive quota delta, and cost guard confirmed |
 | Frontend staging integration | `MON-20` config / host permission / background OAuth remediation / browser runtime OAuth account smoke passed; `MON-21` release build / zip / manifest gate passed and synced Done; hosted service selection UX code/tests/build passed; `MON-27` loaded-extension UI smoke passed and synced Done; `MON-26` merged and Done; `MON-29` merged to main / local validation passed |
 | Frontend production package | production hosted base URL / exact host permission / Google OAuth client ID aligned; WXT + Plasmo build and zip passed; manifest guard and zip inspection passed; local loaded-extension smoke attempted but blocked by Chrome CLI loading / CWS extension-ID boundary; not submitted and not live |
-| Public privacy / CWS wording | source updated for hosted AI in `MON-22` / not deployed / CWS draft not submitted |
+| Public privacy / CWS wording | source updated for hosted AI in `MON-22`; 2026-06-28 docs/site copy drift closeout synced README, release checklist, agent context, v0.3 planning, English i18n docs, and hosted AI candidate error copy / not deployed / CWS draft not submitted |
 | MON-23 owner decisions | approved to execute / production, website, CWS, and final release evidence pending |
 
 ## Next Recommended Gates

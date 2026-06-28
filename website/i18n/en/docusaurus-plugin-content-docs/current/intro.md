@@ -12,7 +12,7 @@ Aviso is not trying to replace a full chat app. Its goal is to reduce copy-paste
 
 ## Current Status
 
-Aviso is currently version `0.1.0`. This site is the public product website and documentation, covering current capabilities, privacy boundaries, and installation guidance. Version `0.1.0` has been submitted for Chrome Web Store review. The official install link is not available yet and will be updated after review approval. Core features are implemented, internal manual acceptance has a basic-pass record, and internal testing plus user feedback confirm the Doubao / Volcengine Ark path works. BYOK direct-provider remains the current public path; v0.3 Aviso AI / hosted AI is an optional staging path, not production, public release, or Chrome Web Store approval.
+Aviso is currently version `0.1.0`. This site is the public product website and documentation, covering current capabilities, privacy boundaries, and installation guidance. Version `0.1.0` has been submitted for Chrome Web Store review. The official install link is not available yet and will be updated after review approval. Core features are implemented, internal manual acceptance has a basic-pass record, and internal testing plus user feedback confirm the Doubao / Volcengine Ark path works. BYOK direct-provider remains the current public path; v0.3 Aviso AI / hosted AI has moved into production candidate evidence, but it is still not public release, Chrome Web Store approval, or hosted AI live.
 
 Current facts:
 
@@ -20,7 +20,7 @@ Current facts:
 - Version `0.1.0` has been submitted for Chrome Web Store review. Before the official link is available, the build directory is provided only to invited testers and review-preparation maintainers.
 - Right-click menu, selection toolbar, selection translation card, command palette, double-click quick menu, clipboard prompt, in-page result panel, and Popup settings are implemented.
 - Multiple AI service configs, default service switching, editable model IDs, Chinese / English UI, and Manifest localization are implemented.
-- BYOK direct-provider is the default available path and does not force sign-in; v0.3 staging has validated Aviso AI / hosted AI as an optional path, sign-in is required only for that hosted path, and BYOK remains unaffected.
+- BYOK direct-provider is the default available path and does not force sign-in; v0.3 production candidate has validated Aviso AI / hosted AI as an optional path, sign-in is required only for that hosted path, and BYOK remains unaffected.
 - Internal testing and user feedback confirm the Doubao / Volcengine Ark path works.
 - OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan can be configured with an API key and model ID. OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually, and Aviso does not automatically read model lists. DeepSeek has one owner-manual connectivity pass; Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan should not be described as live-provider validated. Actual availability depends on your key, model access, and provider status.
 - This site explains the current implemented capabilities and boundaries. The extension has been submitted for review, but it has not been approved by the Chrome Web Store yet.
@@ -37,7 +37,7 @@ Aviso is useful if you often process information in the browser:
 
 ## Product Boundaries
 
-BYOK AI requests are sent directly from the browser extension to the model provider you select. API keys, settings, and history are stored primarily in your browser. v0.3 Aviso AI / hosted AI is currently a staging internal-validation path; when that path is used, requests pass through the Aviso staging backend and upstream providers.
+BYOK AI requests are sent directly from the browser extension to the model provider you select. API keys, settings, and history are stored primarily in your browser. v0.3 Aviso AI / hosted AI is currently a production candidate path; when that path is used, requests pass through the Aviso production backend and upstream providers. Production backend HTTP smoke and frontend candidate package evidence exist, but final loaded-extension production smoke, Chrome Web Store submission, website deployment, and owner release approval remain incomplete.
 
 This means:
 

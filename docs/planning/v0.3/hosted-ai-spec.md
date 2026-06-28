@@ -74,7 +74,7 @@ Accepted on 2026-06-18 in [`../../decisions/0003-v0.3-owner-closeout-decisions.m
 
 ## Privacy Position
 
-Current product privacy says Aviso has no project-owned backend. That remains true until v0.3 is implemented, deployed, approved, and public docs are updated.
+Current public/live product privacy must keep BYOK and hosted AI separate. BYOK requests still do not pass through Aviso backend. v0.3 production candidate hosted AI does pass through Aviso backend after the user chooses Aviso AI and signs in, but this is still not public release, Chrome Web Store approval, or hosted AI live.
 
 For v0.3 hosted AI, the approved privacy wording must change before release:
 

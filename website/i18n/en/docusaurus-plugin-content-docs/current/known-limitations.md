@@ -55,9 +55,9 @@ Screenshot questions also depend on whether the selected model supports visual i
 
 ## Hosted AI Pre-Release Status
 
-v0.3 hosted AI is still a pre-release gate. It does not mean production, public release, paid hosted AI, or Chrome Web Store disclosure submission has been approved.
+v0.3 hosted AI is still a pre-release gate. It does not mean public release, paid hosted AI, hosted AI live, or Chrome Web Store disclosure submission has been approved.
 
-The verified evidence is staging-scoped: sign-in, quota, provider smoke, sensitive-log boundary, frontend account display, release build, and manifest checks have passed. Production backend, production OAuth, production provider validation, public launch copy, store submission, and owner release approval remain later gates.
+The verified evidence is layered: staging sign-in, quota, provider smoke, sensitive-log boundary, frontend account display, release build, and manifest checks have passed; production backend authenticated smoke has passed; and the production frontend candidate package now points to `https://aviso-backend-production.vercel.app/*`. Final loaded-extension production smoke, Chrome Web Store submission, website deployment, and owner release approval remain later gates.
 
 BYOK direct-provider remains the default available path. Being signed out of hosted AI does not prevent users from continuing with their own API key.
 
