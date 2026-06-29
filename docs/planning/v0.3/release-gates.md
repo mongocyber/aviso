@@ -71,6 +71,30 @@ Before the extension calls hosted backend:
 
 Owner confirmed `MON-20` for the exact staging backend origin, minimal host permission, and staging frontend OAuth identity-token handling. Owner later approved `MON-23` execution decisions for production preparation, website/CWS preparation, production OAuth/provider validation, and billing exclusion. The 2026-06-27 production candidate package uses only the exact production backend host permission `https://aviso-backend-production.vercel.app/*`, and no broad host permission is approved.
 
+## Release Candidate Verification Entrypoint
+
+Run the reproducible local package gate before treating production candidate package evidence as current:
+
+```bash
+npm run verify:release-candidate
+```
+
+The command runs `npm test`, `npx tsc --noEmit`, `npm run build:wxt`, `npm run build:plasmo`, `npm run package`, and `npm run check:manifests`, then performs a focused forbidden-claim scan and basic secret/artifact hygiene scan. `npm run package` is the canonical production package entrypoint: it builds WXT, replaces `build/chrome-mv3-prod` with `.output/chrome-mv3`, injects the Chrome Web Store public key into `build/chrome-mv3-prod/manifest.json`, and writes `build/chrome-mv3-prod.zip`.
+
+The only owner-loaded release candidate directory is `build/chrome-mv3-prod`; the only canonical zip is `build/chrome-mv3-prod.zip`. `.output/chrome-mv3` is an intermediate WXT build output, not the directory a smoke tester should load. The gate fails if the canonical manifest has `background.service_worker` set to `static/background/index.js`, lacks `key`, derives an unexpected Chrome Web Store extension ID, or otherwise looks like stale/direct Plasmo output.
+
+Smoke testers should confirm they are loading the regenerated canonical directory, without printing public key contents:
+
+```bash
+npm run package
+node -e 'const m=require("./build/chrome-mv3-prod/manifest.json"); console.log({loadDir:"build/chrome-mv3-prod", keyPresent:Boolean(m.key), background:m.background?.service_worker})'
+npm run check:manifests
+```
+
+Expected shape: `loadDir` is `build/chrome-mv3-prod`, `keyPresent` is `true`, `background` is `background.js`, and `npm run check:manifests` passes. Do not load `.output/chrome-mv3` for release smoke.
+
+This entrypoint does not deploy the website, submit Chrome Web Store changes, call real providers, read `.env` values, inspect production secrets, print the public key, or turn hosted AI into a live/public claim. If it fails on `Operation not permitted`, dependency registry/DNS errors, or missing build artifacts, classify that as an environment or artifact-preparation blocker until rerun in an allowed local environment.
+
 ## Backend Gates
 
 Before frontend staging integration:

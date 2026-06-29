@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto"
 import { existsSync, readFileSync } from "node:fs"
 import { basename } from "node:path"
 
@@ -34,13 +35,16 @@ const expectedContentScripts = [
   "toolbar"
 ]
 
+const chromeWebStorePublicKeyPath = "config/chrome-web-store-public-key.txt"
+const expectedChromeWebStoreExtensionId = "phigblobbahhecgbcifmkamglcdnghcg"
+
 const manifests = [
   {
-    label: "Plasmo",
+    label: "Canonical release candidate",
     path: "build/chrome-mv3-prod/manifest.json"
   },
   {
-    label: "WXT",
+    label: "Intermediate WXT build",
     path: ".output/chrome-mv3/manifest.json"
   }
 ]
@@ -59,7 +63,7 @@ if (failures.length) {
   process.exit(1)
 }
 
-console.log("Manifest checks passed for Plasmo and WXT outputs.")
+console.log("Manifest checks passed for canonical release candidate and intermediate WXT output.")
 
 function checkManifest({ label, path }) {
   if (!existsSync(path)) {
@@ -112,6 +116,20 @@ function checkManifest({ label, path }) {
     failures.push(`${label}: missing background service_worker`)
   }
 
+  if (label === "Canonical release candidate") {
+    expectEqual(
+      `${label}: background service_worker`,
+      manifest.background?.service_worker,
+      "background.js"
+    )
+    if (manifest.background?.service_worker === "static/background/index.js") {
+      failures.push(
+        `${label}: stale Plasmo background static/background/index.js; run npm run package to regenerate from WXT`
+      )
+    }
+    checkCanonicalManifestKey(manifest)
+  }
+
   const scripts = contentScriptNames(manifest)
   for (const script of expectedContentScripts) {
     if (!scripts.includes(script)) {
@@ -141,6 +159,61 @@ function checkManifest({ label, path }) {
       "document_start"
     )
   }
+}
+
+function checkCanonicalManifestKey(manifest) {
+  const publicKey = readChromeWebStorePublicKey()
+  if (!manifest.key) {
+    failures.push(
+      "Canonical release candidate: missing manifest key; run npm run package to inject the Chrome Web Store public key"
+    )
+    return
+  }
+  if (manifest.key !== publicKey) {
+    failures.push(
+      "Canonical release candidate: manifest key is present but does not match the configured Chrome Web Store public key"
+    )
+  }
+
+  const extensionId = extensionIdFromPublicKey(publicKey)
+  expectEqual(
+    "Canonical release candidate: derived extension ID",
+    extensionId,
+    expectedChromeWebStoreExtensionId
+  )
+}
+
+function readChromeWebStorePublicKey() {
+  if (!existsSync(chromeWebStorePublicKeyPath)) {
+    failures.push(
+      `Canonical release candidate: missing ${chromeWebStorePublicKeyPath}; required for stable extension ID`
+    )
+    return ""
+  }
+
+  const publicKey = readFileSync(chromeWebStorePublicKeyPath, "utf8").replace(
+    /\s+/g,
+    ""
+  )
+  if (!publicKey) {
+    failures.push(`Canonical release candidate: ${chromeWebStorePublicKeyPath} is empty`)
+  }
+  return publicKey
+}
+
+function extensionIdFromPublicKey(publicKey) {
+  if (!publicKey) {
+    return ""
+  }
+
+  const der = Buffer.from(publicKey, "base64")
+  const hash = createHash("sha256").update(der).digest()
+  const alphabet = "abcdefghijklmnop"
+  let id = ""
+  for (const byte of hash.subarray(0, 16)) {
+    id += alphabet[byte >> 4] + alphabet[byte & 15]
+  }
+  return id
 }
 
 function contentScriptNames(manifest) {

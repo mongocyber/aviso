@@ -66,7 +66,7 @@ import {
   isLegacyProviderConfigId,
   markProviderConfigTestResult,
   requiresProviderConfigModel,
-  resolveDefaultProviderConfigId,
+  resolvePopupCurrentModelProviderConfigId,
   shouldClearProviderConfigTestResult
 } from "~utils/provider-configs"
 import {
@@ -84,6 +84,7 @@ import {
   saveProviderConfigApiKey,
   saveSettings
 } from "~utils/storage"
+import type { ApiKeys } from "~utils/storage"
 import { TRANSLATION_TARGET_OPTIONS } from "~utils/translation"
 
 const TEMPLATE_CONTEXTS: { value: string; labelKey: I18nKey }[] = [
@@ -500,6 +501,7 @@ function Popup() {
   // 自动保存：首屏加载完成前不触发保存，避免把默认值写回覆盖已存设置
   const loaded = useRef(false)
   const persistedSettingsSignature = useRef("")
+  const explicitDefaultProviderConfigId = useRef<string | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout>>()
   const modelDropdownRef = useRef<HTMLDivElement>(null)
   const fastServiceDropdownRef = useRef<HTMLDivElement>(null)
@@ -856,10 +858,13 @@ function Popup() {
           hunyuan: false
         })
         const configs = getProviderConfigsWithLegacy(normalizedSettings, keys)
-        const nextDefaultProviderConfigId = resolveDefaultProviderConfigId(
-          normalizedSettings,
-          configs
-        )
+        const nextDefaultProviderConfigId =
+          resolvePopupCurrentModelProviderConfigId({
+            settings: normalizedSettings,
+            providerConfigs: configs,
+            apiKeys: keys,
+            hostedUsable: isHostedSessionUsable(session)
+          })
         setProviderConfigs(configs)
         setProviderConfigConnectivityResults(
           buildLastConnectivityTestSummaryMap(configs)
@@ -1265,6 +1270,7 @@ function Popup() {
 
   const setDefaultProviderConfig = async (config: ProviderConfig) => {
     setConfirmingDeleteProviderConfigId(null)
+    explicitDefaultProviderConfigId.current = config.id
     const nextConfigs = providerConfigs.map((item) => ({
       ...item,
       isDefault: item.id === config.id
@@ -1276,6 +1282,7 @@ function Popup() {
 
   const setDefaultHostedAiService = async () => {
     setConfirmingDeleteProviderConfigId(null)
+    explicitDefaultProviderConfigId.current = HOSTED_AI_PROVIDER_CONFIG_ID
     const nextConfigs = providerConfigs.map((item) => ({
       ...item,
       isDefault: false
@@ -1739,11 +1746,32 @@ function Popup() {
     })
   }
 
-  const defaultProviderConfigId = resolveDefaultProviderConfigId(
+  const popupApiKeyPresence: ApiKeys = {
+    openai: savedProviderKeys.openai ? "configured" : "",
+    anthropic: savedProviderKeys.anthropic ? "configured" : "",
+    doubao: savedProviderKeys.doubao ? "configured" : "",
+    deepseek: savedProviderKeys.deepseek ? "configured" : "",
+    moonshot: savedProviderKeys.moonshot ? "configured" : "",
+    openrouter: savedProviderKeys.openrouter ? "configured" : "",
+    gemini: savedProviderKeys.gemini ? "configured" : "",
+    hunyuan: savedProviderKeys.hunyuan ? "configured" : "",
+    providerConfigKeys: Object.fromEntries(
+      providerConfigs.map((config) => {
+        const keyValue =
+          providerConfigKeyInputs[config.id] ??
+          providerConfigKeys[config.id] ??
+          ""
+        return [config.id, keyValue.trim() ? "configured" : ""]
+      })
+    )
+  }
+  const defaultProviderConfigId = resolvePopupCurrentModelProviderConfigId({
     settings,
     providerConfigs,
-    isHostedSessionUsable(hostedSession)
-  )
+    apiKeys: popupApiKeyPresence,
+    hostedUsable: isHostedSessionUsable(hostedSession),
+    explicitByokDefaultId: explicitDefaultProviderConfigId.current
+  })
   const isHostedDefaultSelected = isHostedAiProviderConfigId(
     defaultProviderConfigId
   )
