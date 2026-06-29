@@ -146,17 +146,17 @@ function GlyphProvider(): JSX.Element {
 
 const copy = {
   zh: {
-    pageDescription: "Aviso 是一个在当前网页就地调用 AI 的 Chrome 扩展。BYOK 是当前对外主线；v0.3 Aviso AI / 托管 AI 已进入 production candidate，但尚未公开发布。",
+    pageDescription: "Aviso 是一个在当前网页就地调用 AI 的 Chrome 扩展。BYOK 是当前默认可用路径；v0.3 Aviso AI / 托管 AI 仍是候选路径，release gate 完成后才会公开。",
     badge: "内部试用 · Chrome 扩展",
     heroLine1: "在你正看的网页里,",
     heroLine2Pre: "就地调用 ",
     heroEm: "AI",
-    sub: "一个快捷键唤起命令面板,搜本地历史与书签,或把问题直接交给 AI。解释、翻译、润色、总结,结果就浮在原文旁边 —— 不跳转、不复制粘贴。BYOK 路径默认直连模型厂商；v0.3 Aviso AI 是可选托管路径,已进入 production candidate,但尚未公开发布。",
-    install: "添加到 Chrome",
+    sub: "一个快捷键唤起命令面板,搜本地历史与书签,或把问题直接交给 AI。解释、翻译、润色、总结,结果就浮在原文旁边 —— 不跳转、不复制粘贴。BYOK 路径默认直连模型厂商；v0.3 Aviso AI 是可选托管候选路径,只有 release gate 完成后才会公开。",
+    install: "查看安装指南",
     readDocs: "产品文档",
     viewDocs: "查看文档",
     micro: "BYOK 无需登录 · Aviso AI production candidate · Chrome 桌面版",
-    statusNote: "0.1.0 已提交 Chrome Web Store 审核,正式链接暂不可用；v0.3 Aviso AI 已通过 production backend smoke 并完成候选包构建,但仍未公开发布或提交新版商店披露。",
+    statusNote: "0.1.0 正在 Chrome Web Store 审核中,目前没有正式商店链接；v0.3 Aviso AI 已通过 production backend smoke 并完成候选包构建,但还没有公开、部署网站或提交新版商店披露。",
     shortcutPre: "在任意网页按下",
     cmdPlaceholder: "搜索浏览历史、书签、AI 对话…",
     cmdStatus: "AI 可用",
@@ -179,7 +179,7 @@ const copy = {
     winModel: "解释",
     winUser: "清理函数会在组件卸载前…",
     winAnswerStrong: "清理函数",
-    winAnswer1: "用来撤销上一次 effect 的副作用 —— 取消订阅、清掉定时器、断开连接,避免内存泄漏。",
+    winAnswer1: "用来撤销上一次 effect 的副作用 —— 取消监听、清掉定时器、断开连接,避免内存泄漏。",
     winAnswer2: "它在两个时机执行:组件卸载前,以及下一次 effect 运行前。",
     copyLabel: "复制",
     saveLabel: "保存",
@@ -189,7 +189,7 @@ const copy = {
     byokTitlePre: "你的 Key,直连厂商。",
     byokTitleMid: "托管 AI 可选,",
     byokTitleEm: "不挡 BYOK",
-    byokLede: "BYOK 路径使用你自己的 API Key,浏览器直连你选的模型厂商,不要求 Aviso 账号。v0.3 production candidate 已验证可选 Aviso AI / 托管路径；只有你选择托管并登录时,请求才会经过 Aviso production 后端和上游模型服务。",
+    byokLede: "BYOK 路径使用你自己的 API Key,浏览器直连你选的模型厂商,不要求 Aviso 账号。v0.3 Aviso AI / 托管 AI 仍是候选路径；只有你选择托管并登录时,请求才会经过 Aviso production 后端和上游模型服务,公开前还需要完成剩余 release gate。",
     provCardTitle: "AI 服务",
     provCardTag: "本地保护",
     provDaily: "Volcengine Ark",
@@ -201,11 +201,11 @@ const copy = {
     privacyTag: "04 — 隐私边界",
     privacyTitlePre: "别让扩展悄悄收走你的对话。",
     privacyTitleEm: "每条路径都说清楚",
-    privacyLede: "Aviso 把 BYOK 直连和 v0.3 production candidate 托管 AI 分开披露。BYOK 请求不经过 Aviso 后端；托管 AI 只在你主动选择并登录后使用,请求会经过 Aviso production 后端和上游模型服务。",
+    privacyLede: "Aviso 把 BYOK 直连和 v0.3 候选托管路径分开披露。BYOK 请求不经过 Aviso 后端；托管 AI 只在你主动选择并登录后使用,请求会经过 Aviso production 后端和上游模型服务。",
     compareThem: "多数 AI 助手扩展",
     compareUs: "Aviso",
     privacyNote:
-      "这不是空话:Aviso 的隐私边界写进了实现本身。API Key 不明文保存,对话历史只存在你的浏览器里,命令面板搜历史和书签都在本地完成。BYOK 只由浏览器直连你选择的 provider；v0.3 production candidate 托管 AI 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板、API Key 或完整 URL。",
+      "这不是空话:Aviso 的隐私边界写进了实现本身。API Key 不明文保存,对话历史只存在你的浏览器里,命令面板搜历史和书签都在本地完成。BYOK 只由浏览器直连你选择的 provider；v0.3 候选托管后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板、API Key 或完整 URL。",
     metricBackendNum: "BYOK",
     metricBackend: "直连路径不经过 Aviso 后端",
     metricTelemetryNum: "0",
@@ -219,7 +219,7 @@ const copy = {
     faqTag: "常见问题",
     faqTitle: "还有疑问?",
     finalTitle: "把 AI 留在你需要它的那一刻",
-    finalLede: "BYOK 无需登录。v0.3 Aviso AI 已进入 production candidate,但还不是公开发布路径。装好,按 ⌘⇧Space,就能开始。",
+    finalLede: "BYOK 无需登录。v0.3 Aviso AI 仍是候选路径,release gate 完成后才会公开。按指南装好后,按 ⌘⇧Space,就能开始。",
     badgeKey: "自备 API Key",
     badgeNoData: "不持久化正文",
     badgeNoAccount: "BYOK 无需登录",
@@ -227,18 +227,18 @@ const copy = {
   },
   en: {
     pageDescription:
-      "Aviso is a Chrome extension for calling AI inside the current page. BYOK is the current public path; v0.3 Aviso AI / hosted AI is now a production candidate, but it is not publicly released yet.",
+      "Aviso is a Chrome extension for calling AI inside the current page. BYOK is the current available path; v0.3 Aviso AI / hosted AI is still a candidate path and will be public only after the release gates are complete.",
     badge: "Internal trial · Chrome extension",
     heroLine1: "Call AI right",
     heroLine2Pre: "inside the page ",
     heroEm: "you're on",
-    sub: "One shortcut opens the command palette — search your history and bookmarks, or hand a question straight to the AI. Explain, translate, refine, summarize; the answer floats right beside the text. BYOK stays browser-direct by default; v0.3 Aviso AI is optional and now a production candidate, but it is not publicly released yet.",
-    install: "Add to Chrome",
+    sub: "One shortcut opens the command palette — search your history and bookmarks, or hand a question straight to the AI. Explain, translate, refine, summarize; the answer floats right beside the text. BYOK stays browser-direct by default; v0.3 Aviso AI is an optional hosted candidate path and will be public only after the release gates are complete.",
+    install: "View install guide",
     readDocs: "Read the docs",
     viewDocs: "View docs",
     micro: "BYOK no login · Aviso AI production candidate · Chrome desktop",
     statusNote:
-      "0.1.0 has been submitted for Chrome Web Store review, with no official install link yet; v0.3 Aviso AI has passed production backend smoke and candidate packaging, but it is not publicly released or submitted as a new store disclosure yet.",
+      "0.1.0 is under Chrome Web Store review, with no official store link yet; v0.3 Aviso AI has passed production backend smoke and candidate packaging, but it is not public, website-deployed, or submitted as a new store disclosure yet.",
     shortcutPre: "On any page, press",
     cmdPlaceholder: "Search browser history, bookmarks, AI chats…",
     cmdStatus: "AI ready",
@@ -274,7 +274,7 @@ const copy = {
     byokTitleMid: "Hosted AI is optional, ",
     byokTitleEm: "BYOK remains open",
     byokLede:
-      "The BYOK path uses your own API key and connects your browser straight to the provider you choose, with no Aviso account required. v0.3 production candidate validates optional Aviso AI / hosted AI; only when you choose hosted AI and sign in does the request pass through the Aviso production backend and upstream model services.",
+      "The BYOK path uses your own API key and connects your browser straight to the provider you choose, with no Aviso account required. v0.3 Aviso AI / hosted AI is still a candidate path; only when you choose hosted AI and sign in does the request pass through the Aviso production backend and upstream model services, and remaining release gates must pass before it is public.",
     provCardTitle: "AI services",
     provCardTag: "local protection",
     provDaily: "Volcengine Ark",
@@ -287,11 +287,11 @@ const copy = {
     privacyTitlePre: "Don't let extensions quietly take your chats.",
     privacyTitleEm: "Every path is explicit",
     privacyLede:
-      "Aviso discloses BYOK and v0.3 production-candidate hosted AI as separate paths. BYOK requests do not pass through the Aviso backend; hosted AI is used only after you choose it and sign in, and requests pass through the Aviso production backend and upstream model services.",
+      "Aviso discloses BYOK and the v0.3 hosted candidate path separately. BYOK requests do not pass through the Aviso backend; hosted AI is used only after you choose it and sign in, and requests pass through the Aviso production backend and upstream model services.",
     compareThem: "Most AI assistant extensions",
     compareUs: "Aviso",
     privacyNote:
-      "This isn't a slogan — Aviso's privacy boundary is built into the implementation. API keys are not stored in plaintext, chat history stays in your browser, and command-palette searches over history and bookmarks run locally. BYOK goes browser-direct to your selected provider; the v0.3 production-candidate hosted backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, API keys, or full URLs.",
+      "This isn't a slogan — Aviso's privacy boundary is built into the implementation. API keys are not stored in plaintext, chat history stays in your browser, and command-palette searches over history and bookmarks run locally. BYOK goes browser-direct to your selected provider; the v0.3 hosted candidate backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, API keys, or full URLs.",
     metricBackendNum: "BYOK",
     metricBackend: "direct path does not pass through the Aviso backend",
     metricTelemetryNum: "0",
@@ -306,7 +306,7 @@ const copy = {
     faqTag: "FAQ",
     faqTitle: "Still wondering?",
     finalTitle: "Keep AI for the moment you need it",
-    finalLede: "BYOK needs no login. v0.3 Aviso AI is a production candidate, but not a public release path yet. Install, press ⌘⇧Space, and go.",
+    finalLede: "BYOK needs no login. v0.3 Aviso AI is still a candidate path and will be public only after the release gates are complete. Follow the install guide, press ⌘⇧Space, and go.",
     badgeKey: "Bring your own key",
     badgeNoData: "No raw content persisted",
     badgeNoAccount: "BYOK no login",
@@ -441,8 +441,8 @@ const compareRows = [
     enCrit: "How it's billed",
     zhThem: "在模型费之外再收月费,按信用点限额,成本难预估",
     enThem: "A monthly fee on top of model cost, credit caps, unpredictable spend",
-    zhUs: "BYOK 按厂商计费;v0.3 首轮不正式上线付费",
-    enUs: "BYOK is billed by your provider; paid hosted AI is out of the first v0.3 release"
+    zhUs: "BYOK 按厂商规则结算;v0.3 托管计费不在首轮公开范围",
+    enUs: "BYOK is billed by your provider; hosted billing is out of the first v0.3 public scope"
   },
   {
     zhCrit: "要不要账号",
@@ -504,8 +504,8 @@ const faqs = [
   {
     zhQ: "Aviso 收费吗?",
     enQ: "Does Aviso cost money?",
-    zhA: "扩展本身当前不收费。BYOK 路径使用你自己的 provider Key,费用按厂商规则结算。v0.3 首轮不正式上线付费托管 AI；免费额度和付费策略不会在发布前当成公开承诺。",
-    enA: "The extension itself currently does not charge. The BYOK path uses your own provider key and is billed by that provider. The first v0.3 slice does not launch paid hosted AI; quota and paid-plan details are not public promises before release approval."
+    zhA: "扩展本身当前不收费。BYOK 路径使用你自己的 provider Key,费用按厂商规则结算。v0.3 Aviso AI / 托管 AI 仍是候选路径；任何额度、价格或付费方案都不会在发布前作为公开承诺。",
+    enA: "The extension itself currently does not charge. The BYOK path uses your own provider key and is billed by that provider. v0.3 Aviso AI / hosted AI is still a candidate path; any quota, pricing, or paid-plan detail is not a public promise before release approval."
   },
   {
     zhQ: "必须自己准备 API Key 吗?",
