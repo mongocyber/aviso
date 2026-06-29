@@ -212,6 +212,18 @@ export async function resolve(specifier, context, nextResolve) {
     )
   }
 
+  if (
+    specifier.startsWith(".") &&
+    !/\\.[cm]?[tj]sx?$/.test(specifier) &&
+    context.parentURL?.includes("/src/")
+  ) {
+    try {
+      return await nextResolve(specifier + ".ts", context)
+    } catch {
+      return nextResolve(specifier, context)
+    }
+  }
+
   return nextResolve(specifier, context)
 }
 `
@@ -1404,6 +1416,8 @@ test("popup exposes Aviso AI in default and fast service selectors", () => {
   assert.match(popupSource, /isHostedDefaultSelected/)
   assert.match(popupSource, /HOSTED_AI_PROVIDER_CONFIG_ID/)
   assert.match(popupSource, /popup\.hosted\.optionHelper/)
+  assert.match(popupSource, /resolvePopupCurrentModelProviderConfigId/)
+  assert.match(popupSource, /explicitDefaultProviderConfigId/)
   assert.match(popupSource, /fastServiceDropdownOpen/)
   assert.match(popupSource, /fastServiceDropdownOption/)
   assert.match(popupSource, /isHostedFastSelected/)
@@ -1414,6 +1428,111 @@ test("popup exposes Aviso AI in default and fast service selectors", () => {
   )
   assert.match(aiClientSource, /fastByokConfigSelected/)
   assert.match(aiClientSource, /payload\.aiRoute !== "byok"/)
+})
+
+test("popup current model prefers signed-in Aviso AI when BYOK default lacks a key", async () => {
+  const { buildProviderConfig, resolvePopupCurrentModelProviderConfigId } =
+    await import("../src/utils/provider-configs.ts")
+  const byokDefault = buildProviderConfig({
+    id: "cfg-openai-default",
+    provider: "openai",
+    model: "gpt-4o-mini",
+    isDefault: true,
+    now: 1
+  })
+  const settings = {
+    defaultModel: "gpt-4o-mini",
+    defaultProviderConfigId: byokDefault.id,
+    fastProviderConfigId: "",
+    providerConfigs: [byokDefault],
+    appearanceTheme: "system" as const,
+    uiLanguage: "auto" as const,
+    enableClipboardSense: true,
+    enableToolbar: true,
+    enableCommandPalette: true,
+    enableDoubleClickMenu: false,
+    enableInlineTranslation: false,
+    inlineTranslationTargetLanguage: "auto" as const,
+    templates: []
+  }
+  const apiKeys = {
+    openai: "",
+    anthropic: "",
+    doubao: "",
+    deepseek: "",
+    moonshot: "",
+    openrouter: "",
+    gemini: "",
+    hunyuan: "",
+    providerConfigKeys: {}
+  }
+
+  assert.equal(
+    resolvePopupCurrentModelProviderConfigId({
+      settings,
+      providerConfigs: [byokDefault],
+      apiKeys,
+      hostedUsable: true
+    }),
+    HOSTED_AI_PROVIDER_CONFIG_ID
+  )
+  assert.equal(
+    resolvePopupCurrentModelProviderConfigId({
+      settings,
+      providerConfigs: [byokDefault],
+      apiKeys,
+      hostedUsable: true,
+      explicitByokDefaultId: byokDefault.id
+    }),
+    byokDefault.id
+  )
+})
+
+test("popup current model keeps configured BYOK defaults ahead of Aviso AI", async () => {
+  const { buildProviderConfig, resolvePopupCurrentModelProviderConfigId } =
+    await import("../src/utils/provider-configs.ts")
+  const byokDefault = buildProviderConfig({
+    id: "cfg-openai-ready",
+    provider: "openai",
+    model: "gpt-4o-mini",
+    isDefault: true,
+    now: 1
+  })
+  const settings = {
+    defaultModel: "gpt-4o-mini",
+    defaultProviderConfigId: byokDefault.id,
+    fastProviderConfigId: "",
+    providerConfigs: [byokDefault],
+    appearanceTheme: "system" as const,
+    uiLanguage: "auto" as const,
+    enableClipboardSense: true,
+    enableToolbar: true,
+    enableCommandPalette: true,
+    enableDoubleClickMenu: false,
+    enableInlineTranslation: false,
+    inlineTranslationTargetLanguage: "auto" as const,
+    templates: []
+  }
+
+  assert.equal(
+    resolvePopupCurrentModelProviderConfigId({
+      settings,
+      providerConfigs: [byokDefault],
+      apiKeys: {
+        openai: "",
+        anthropic: "",
+        doubao: "",
+        deepseek: "",
+        moonshot: "",
+        openrouter: "",
+        gemini: "",
+        hunyuan: "",
+        providerConfigKeys: { [byokDefault.id]: "configured" }
+      },
+      hostedUsable: true
+    }),
+    byokDefault.id
+  )
 })
 
 test("hosted session storage uses a separate local key from API keys", async () => {
