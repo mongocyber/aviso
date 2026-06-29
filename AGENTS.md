@@ -16,9 +16,10 @@
 ## Current Aviso Scope
 
 - Aviso is a Chrome MV3 extension built with Plasmo, React, and TypeScript.
-- Current product state is `v0.1 internal dogfood / 内部试用版` entering Chrome Web Store listing preparation / release-candidate review; it is not publicly listed, has not passed Chrome Web Store review, and has no official store URL yet.
-- The current usable model is BYOK direct-provider: users provide their own API Keys and the browser extension calls approved model provider hosts directly.
-- Do not add or imply a project-owned backend, hosted Aviso AI, anonymous quota, login, subscription, payment, provider proxy, telemetry, analytics, remote link-body fetching, web search, broad new permissions, or storage key migration unless the owner explicitly approves that scope again.
+- Before deciding current product status, read `docs/ai/CURRENT_GATE.md`, then cross-check `STATUS.md`, `RELEASE_CHECKLIST.md`, `docs/ai/PROJECT_CONTEXT.md`, `docs/planning/v0.3/status.md`, and `docs/planning/v0.3/release-gates.md`.
+- The current usable/submitted line remains BYOK direct-provider: users provide their own API Keys and the browser extension calls approved model provider hosts directly.
+- v0.3 hosted AI is an owner-approved production-candidate track with production backend and candidate package evidence; it is not live, not Chrome Web Store approved, not website-deployed, and not release-ready until the release gates say so.
+- Do not add or imply anonymous quota, subscription, payment, telemetry, analytics, remote link-body fetching, web search, broad new permissions, storage key migration, production publication, Chrome Web Store approval, or hosted AI live status unless the owner explicitly approves that scope and the evidence is recorded.
 - API Key boundary is strict: API Keys are not saved as plaintext and stay in `chrome.storage.local/contextai_api_keys`; the current passphrase is derived from the extension ID, so this is local encryption / obfuscation-level protection and does not defend against an attacker who can read the local browser profile or control the machine. Non-secret settings stay in `chrome.storage.sync/contextai_settings`.
 - Screenshot boundary is decided for the current release candidate: keep only the right-click internal path; do not expose screenshot entry points in the command palette or double-click menu, and do not present screenshot as an ordinary-user primary entry or public selling point.
 
@@ -32,7 +33,7 @@
 - If checks cannot be run, explain why and list the exact command the user should run.
 - Do not leave temporary debug code, unused files, dead imports, or commented-out experiments.
 - Do not create new versions, new product directions, or expanded scope unless explicitly requested.
-- When working from PRD, README, CLAUDE.md, STATUS, RELEASE_CHECKLIST, or project docs, treat them as source material but resolve conflicts using current owner decisions, `STATUS.md`, `RELEASE_CHECKLIST.md`, and actual source.
+- When working from PRD, README, CLAUDE.md, STATUS, RELEASE_CHECKLIST, or project docs, treat them as source material but resolve conflicts using `docs/ai/CURRENT_GATE.md`, current owner decisions, `STATUS.md`, `RELEASE_CHECKLIST.md`, and actual source.
 
 ## Git And Review Discipline
 

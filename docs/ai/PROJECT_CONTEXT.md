@@ -19,6 +19,8 @@ It does not own backend API implementation, database schema, deployment, or prov
 
 ## Current Product Truth
 
+Start with [`CURRENT_GATE.md`](./CURRENT_GATE.md) for the current execution gate, then use this file for broader context.
+
 Aviso is a Chrome MV3 extension with BYOK direct-provider as the default available path. Users can provide their own API keys and the browser extension calls approved provider hosts directly.
 
 Current public/product truth:
@@ -69,4 +71,4 @@ Ask the owner before:
 
 ## Agent Working Rule
 
-Use this repository for product and frontend decisions. Use the backend repository API contract for backend fields and response shapes. Do not invent API fields in frontend work.
+Use [`CURRENT_GATE.md`](./CURRENT_GATE.md) first for current gate decisions. Use this repository for product and frontend decisions. Use the backend repository API contract for backend fields and response shapes. Do not invent API fields in frontend work.
