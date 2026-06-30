@@ -32,6 +32,7 @@ import {
   HOSTED_AI_DEFAULT_BASE_URL,
   HOSTED_AI_DEFAULT_MODEL,
   HOSTED_AI_PROVIDER_CONFIG_ID,
+  HOSTED_SESSION_STORAGE_KEY,
   isHostedAiProviderConfigId,
   isHostedSessionUsable,
   readHostedSession,
@@ -724,6 +725,21 @@ function Popup() {
       sessionToken: session?.session.session_token
     })
 
+  const refreshHostedSessionStateFromStorage = async (
+    signedInMessageKey?: I18nKey
+  ) => {
+    const stored = await readHostedSession()
+    const status = deriveHostedAccountStatus({ session: stored })
+    setHostedAccountResult(
+      status,
+      status === "signed_in" && signedInMessageKey
+        ? signedInMessageKey
+        : getHostedAccountStatusMessageKey(status),
+      stored
+    )
+    return stored
+  }
+
   const signInHosted = async () => {
     setHostedBusy(true)
     setHostedAccountResult("signing_in", "popup.hosted.status.signingIn")
@@ -731,21 +747,29 @@ function Popup() {
       const response = await sendRuntimeMessage<HostedGoogleSignInData>({
         action: "HOSTED_GOOGLE_SIGN_IN"
       })
-      const stored = await readHostedSession()
-      if (!response.success || !stored) {
+      const stored = await refreshHostedSessionStateFromStorage(
+        "popup.hosted.status.signedIn"
+      )
+      if (stored) return
+      if (response.success) {
+        setHostedAccountResult("signing_in", "popup.hosted.status.signingIn", null)
+        window.setTimeout(() => {
+          void refreshHostedSessionStateFromStorage(
+            "popup.hosted.status.signedIn"
+          )
+        }, 100)
+        return
+      }
+      if (!response.success) {
         const result = response.data
         const status = result?.status ?? "local_backend_unavailable"
         setHostedAccountResult(
           status,
-          getHostedSignInFailureMessageKey(result, Boolean(stored))
+          getHostedSignInFailureMessageKey(result, false),
+          null
         )
         return
       }
-      setHostedAccountResult(
-        deriveHostedAccountStatus({ session: stored }),
-        "popup.hosted.status.signedIn",
-        stored
-      )
     } catch (error) {
       const status =
         error instanceof HostedAiClientError
@@ -764,6 +788,20 @@ function Popup() {
       setHostedBusy(false)
     }
   }
+
+  useEffect(() => {
+    const onHostedSessionStorageChange = (
+      changes: Record<string, chrome.storage.StorageChange>,
+      areaName: string
+    ) => {
+      if (areaName !== "local" || !changes[HOSTED_SESSION_STORAGE_KEY]) return
+      void refreshHostedSessionStateFromStorage()
+    }
+
+    chrome.storage.onChanged.addListener(onHostedSessionStorageChange)
+    return () =>
+      chrome.storage.onChanged.removeListener(onHostedSessionStorageChange)
+  }, [])
 
   const refreshHostedAccount = async () => {
     if (!hostedSession) {
@@ -858,13 +896,6 @@ function Popup() {
           hunyuan: false
         })
         const configs = getProviderConfigsWithLegacy(normalizedSettings, keys)
-        const nextDefaultProviderConfigId =
-          resolvePopupCurrentModelProviderConfigId({
-            settings: normalizedSettings,
-            providerConfigs: configs,
-            apiKeys: keys,
-            hostedUsable: isHostedSessionUsable(session)
-          })
         setProviderConfigs(configs)
         setProviderConfigConnectivityResults(
           buildLastConnectivityTestSummaryMap(configs)
@@ -881,16 +912,6 @@ function Popup() {
         setProviderConfigModes(
           Object.fromEntries(configs.map((config) => [config.id, "view"]))
         )
-        if (
-          nextDefaultProviderConfigId &&
-          nextDefaultProviderConfigId !==
-            normalizedSettings.defaultProviderConfigId
-        ) {
-          setSettings((prev) => ({
-            ...prev,
-            defaultProviderConfigId: nextDefaultProviderConfigId
-          }))
-        }
         // 显示掩码
         if (keys.openai) setOpenaiKey("••••••••" + keys.openai.slice(-4))
         if (keys.anthropic)

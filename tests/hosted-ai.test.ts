@@ -838,6 +838,64 @@ test("popup exposes Aviso AI in default and fast service selectors", () => {
   assert.match(aiClientSource, /payload\.aiRoute !== "byok"/)
 })
 
+test("popup hosted current-model fallback does not rewrite the saved BYOK default on load", () => {
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+  const loadBlock =
+    popupSource.match(
+      /useEffect\(\(\) => \{[\s\S]*?Promise\.all\(\[getSettings\(\), getApiKeys\(\), readHostedSession\(\)\]\)[\s\S]*?\n  \}, \[\]\)/
+    )?.[0] ?? ""
+  const currentModelBlock =
+    popupSource.match(
+      /const defaultProviderConfigId = resolvePopupCurrentModelProviderConfigId\(\{[\s\S]*?\n  \}\)/
+    )?.[0] ?? ""
+
+  assert.match(loadBlock, /setSettings\(normalizedSettings\)/)
+  assert.doesNotMatch(loadBlock, /nextDefaultProviderConfigId/)
+  assert.doesNotMatch(
+    loadBlock,
+    /defaultProviderConfigId:\s*nextDefaultProviderConfigId/
+  )
+  assert.match(
+    currentModelBlock,
+    /hostedUsable: isHostedSessionUsable\(hostedSession\)/
+  )
+  assert.match(
+    currentModelBlock,
+    /explicitByokDefaultId: explicitDefaultProviderConfigId\.current/
+  )
+})
+
+test("popup refreshes hosted state in the same open instance after sign-in storage changes", () => {
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+  const storageListenerBlock =
+    popupSource.match(
+      /const onHostedSessionStorageChange = \([\s\S]*?chrome\.storage\.onChanged\.addListener\(onHostedSessionStorageChange\)[\s\S]*?removeListener\(onHostedSessionStorageChange\)/
+    )?.[0] ?? ""
+  const signInBlock =
+    popupSource.match(
+      /const signInHosted = async \(\) => \{[\s\S]*?\n  \}\n\n  useEffect/
+    )?.[0] ?? ""
+  const currentModelBlock =
+    popupSource.match(
+      /const defaultProviderConfigId = resolvePopupCurrentModelProviderConfigId\(\{[\s\S]*?\n  \}\)/
+    )?.[0] ?? ""
+
+  assert.match(popupSource, /HOSTED_SESSION_STORAGE_KEY/)
+  assert.match(storageListenerBlock, /areaName !== "local"/)
+  assert.match(storageListenerBlock, /changes\[HOSTED_SESSION_STORAGE_KEY\]/)
+  assert.match(storageListenerBlock, /refreshHostedSessionStateFromStorage/)
+  assert.match(signInBlock, /HOSTED_GOOGLE_SIGN_IN/)
+  assert.match(signInBlock, /refreshHostedSessionStateFromStorage/)
+  assert.match(signInBlock, /window\.setTimeout/)
+  assert.match(currentModelBlock, /hostedUsable: isHostedSessionUsable\(hostedSession\)/)
+})
+
 test("popup current model prefers signed-in Aviso AI when BYOK default lacks a key", async () => {
   const { buildProviderConfig, resolvePopupCurrentModelProviderConfigId } =
     await import("../src/utils/provider-configs.ts")
