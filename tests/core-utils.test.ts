@@ -42,6 +42,7 @@ import {
   INLINE_TRANSLATION_MAX_CHARS,
   INLINE_TRANSLATION_MAX_LINES,
   normalizeTranslationTargetLanguage,
+  resolveTranslationTargetLanguageForText,
   sanitizeTranslationPayload,
   TRANSLATION_EMPTY_INPUT_ERROR,
   TRANSLATION_SYSTEM_PROMPT,
@@ -731,6 +732,21 @@ test("translation target language prompt supports explicit targets", () => {
   assert.equal(buildTranslationSystemPrompt("auto"), TRANSLATION_SYSTEM_PROMPT)
   assert.match(buildTranslationSystemPrompt("en"), /翻译成自然、准确的英文/)
   assert.match(buildTranslationSystemPrompt("ja"), /翻译成自然、准确的日文/)
+  assert.equal(
+    resolveTranslationTargetLanguageForText(
+      "auto",
+      "Today we are introducing new ways to work."
+    ),
+    "zh-CN"
+  )
+  assert.equal(
+    resolveTranslationTargetLanguageForText("auto", "今天我们发布新的工作方式。"),
+    "en"
+  )
+  assert.equal(
+    resolveTranslationTargetLanguageForText("fr", "Hello world"),
+    "fr"
+  )
   assert.doesNotMatch(
     buildTranslationSystemPrompt("fr"),
     /Google|百度|有道|fallback/i

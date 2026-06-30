@@ -90,6 +90,31 @@ export function buildTranslationSystemPrompt(
   ].join("\n")
 }
 
+export function resolveTranslationTargetLanguageForText(
+  targetLanguage: unknown,
+  sourceText: string
+): Exclude<TranslationTargetLanguage, "auto"> {
+  const normalized = normalizeTranslationTargetLanguage(targetLanguage)
+  if (normalized !== "auto") return normalized
+
+  return isPrimarilyChineseText(sourceText) ? "en" : "zh-CN"
+}
+
+function isPrimarilyChineseText(text: string): boolean {
+  let cjkCount = 0
+  let latinCount = 0
+
+  for (const char of text) {
+    if (/[\u3400-\u9fff]/u.test(char)) {
+      cjkCount += 1
+    } else if (/[A-Za-z]/.test(char)) {
+      latinCount += 1
+    }
+  }
+
+  return cjkCount > 0 && cjkCount >= latinCount
+}
+
 export function getInlineTranslationRoute(
   sourceText: string
 ): InlineTranslationRoute {

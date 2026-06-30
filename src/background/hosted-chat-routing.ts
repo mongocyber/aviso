@@ -17,7 +17,10 @@ import {
   type StoredHostedSession,
   updateHostedSessionMe
 } from "~utils/hosted-session"
-import type { TranslationTargetLanguage } from "~utils/translation"
+import {
+  resolveTranslationTargetLanguageForText,
+  type TranslationTargetLanguage
+} from "~utils/translation"
 
 export const HOSTED_CHAT_DEFAULT_MODEL = HOSTED_AI_DEFAULT_MODEL
 
@@ -51,8 +54,8 @@ export function buildHostedChatRequest(
     input,
     context: getHostedChatContext(payload),
     target_lang:
-      operation === "translate" && options.targetLanguage !== "auto"
-        ? options.targetLanguage
+      operation === "translate"
+        ? resolveTranslationTargetLanguageForText(options.targetLanguage, input)
         : undefined,
     model: HOSTED_CHAT_DEFAULT_MODEL,
     messages: messages.length ? messages : undefined

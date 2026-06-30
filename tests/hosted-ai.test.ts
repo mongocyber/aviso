@@ -639,6 +639,31 @@ test("hosted chat routing builds local chat payloads only when explicitly select
     }
   )
 
+  assert.equal(
+    buildHostedChatRequest(
+      {
+        aiRoute: "hosted",
+        operation: "translate",
+        context: "selection",
+        selectionText: "Today we are introducing new ways to work."
+      },
+      { targetLanguage: "auto" }
+    ).target_lang,
+    "zh-CN"
+  )
+  assert.equal(
+    buildHostedChatRequest(
+      {
+        aiRoute: "hosted",
+        operation: "translate",
+        context: "selection",
+        selectionText: "今天我们发布新的工作方式。"
+      },
+      { targetLanguage: "auto" }
+    ).target_lang,
+    "en"
+  )
+
   assert.deepEqual(
     buildHostedChatRequest({
       aiRoute: "hosted",
