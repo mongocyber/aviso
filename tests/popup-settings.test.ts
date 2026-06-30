@@ -218,7 +218,7 @@ test("ui language setting uses existing settings object and rebuilds context men
   )
 })
 
-test("popup language mini dropdown chooses direction instead of fixed upward only", () => {
+test("popup translation target dropdown opens downward without clipping", () => {
   const popupSource = readFileSync(
     new URL("../src/popup/index.tsx", import.meta.url),
     "utf8"
@@ -232,16 +232,16 @@ test("popup language mini dropdown chooses direction instead of fixed upward onl
 
   assert.match(popupSource, /type MiniDropdownDirection = "down" \| "up"/)
   assert.match(popupSource, /resolveMiniDropdownDirection/)
-  assert.match(popupSource, /setLanguageDropdownDirection/)
-  assert.match(
-    popupSource,
-    /data-dropdown-direction=\{languageDropdownDirection\}/
-  )
-  assert.match(popupSource, /styles\.miniDropdownMenuDown/)
-  assert.match(popupSource, /styles\.miniDropdownMenuUp/)
+  assert.match(popupSource, /setUiLangDropdownDirection/)
+  assert.doesNotMatch(popupSource, /setLanguageDropdownDirection/)
+  assert.match(popupSource, /data-language-dropdown/)
+  assert.match(popupSource, /data-dropdown-direction="down"/)
+  assert.match(popupSource, /setLanguageDropdownOpen\(\(open\) => !open\)/)
   assert.match(popupSource, /top: "calc\(100% \+ 7px\)"/)
-  assert.match(popupSource, /bottom: "calc\(100% \+ 7px\)"/)
+  assert.match(popupSource, /styles\.miniDropdownMenuUp/)
   assert.doesNotMatch(menuBlock, /bottom: "calc\(100% \+ 7px\)"/)
+  assert.match(menuBlock, /maxHeight: 248/)
+  assert.match(menuBlock, /overflowY: "auto"/)
   assert.match(settingListBlock, /overflow: "hidden"/)
   assert.match(settingListOpenBlock, /overflow: "visible"/)
   assert.match(

@@ -433,8 +433,6 @@ function Popup() {
   const [fastServiceDropdownOpen, setFastServiceDropdownOpen] = useState(false)
   const [providerDropdownOpen, setProviderDropdownOpen] = useState(false)
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false)
-  const [languageDropdownDirection, setLanguageDropdownDirection] =
-    useState<MiniDropdownDirection>("down")
   const [uiLangDropdownOpen, setUiLangDropdownOpen] = useState(false)
   const [uiLangDropdownDirection, setUiLangDropdownDirection] =
     useState<MiniDropdownDirection>("down")
@@ -2879,7 +2877,7 @@ function Popup() {
                           <span
                             ref={languageDropdownRef}
                             data-language-dropdown
-                            data-dropdown-direction={languageDropdownDirection}
+                            data-dropdown-direction="down"
                             style={{
                               ...styles.miniDropdown,
                               ...(languageDropdownOpen
@@ -2894,17 +2892,7 @@ function Popup() {
                               disabled={!settings.enableInlineTranslation}
                               onClick={() => {
                                 if (!settings.enableInlineTranslation) return
-                                setLanguageDropdownOpen((open) => {
-                                  const nextOpen = !open
-                                  if (nextOpen) {
-                                    setLanguageDropdownDirection(
-                                      resolveMiniDropdownDirection(
-                                        languageDropdownRef.current
-                                      )
-                                    )
-                                  }
-                                  return nextOpen
-                                })
+                                setLanguageDropdownOpen((open) => !open)
                               }}
                               style={{
                                 ...styles.miniDropdownTrigger,
@@ -2937,9 +2925,7 @@ function Popup() {
                                   aria-label={t("popup.translationTargetAria")}
                                   style={{
                                     ...styles.miniDropdownMenu,
-                                    ...(languageDropdownDirection === "down"
-                                      ? styles.miniDropdownMenuDown
-                                      : styles.miniDropdownMenuUp),
+                                    ...styles.miniDropdownMenuDown,
                                     background: ui.surface2,
                                     borderColor: ui.line
                                   }}>
@@ -6141,6 +6127,9 @@ const styles: Record<string, React.CSSProperties> = {
     display: "grid",
     gap: 4,
     width: 118,
+    maxHeight: 248,
+    overflowY: "auto",
+    overscrollBehavior: "contain",
     padding: 6,
     border: `1px solid var(--aviso-line)`,
     borderRadius: aviso.radiusMd,
