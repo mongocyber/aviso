@@ -21,6 +21,15 @@ import {
 } from "~utils/settings-change"
 import { getSettings } from "~utils/storage"
 import { logTiming, markTiming, type PerfSummary } from "~utils/timing"
+import {
+  isHostedAiProviderConfigId,
+  isHostedSessionUsable,
+  readHostedSession
+} from "~utils/hosted-session"
+import {
+  getProviderConfigsWithLegacy,
+  resolvePopupCurrentModelProviderConfigId
+} from "~utils/provider-configs"
 
 import { handleAIRequest, handleProviderConnectivityTest } from "./ai-client"
 import {
@@ -77,6 +86,28 @@ type BookmarkSearchMeta = {
 type StreamChunkDispatcher = {
   push: (chunk: AIStreamChunk) => void
   flush: () => Promise<void>
+}
+
+async function resolveRuntimeAiRouteForPayload(
+  payload: AIRequestPayload
+): Promise<AIRequestPayload> {
+  if (payload.aiRoute) return payload
+
+  const hostedSession = await readHostedSession()
+  const hostedUsable = isHostedSessionUsable(hostedSession)
+  if (!hostedUsable) return payload
+
+  const { settings, apiKeys } = await getRuntimeConfigSnapshot()
+  const providerConfigs = getProviderConfigsWithLegacy(settings, apiKeys)
+  const currentProviderConfigId = resolvePopupCurrentModelProviderConfigId({
+    settings,
+    providerConfigs,
+    apiKeys,
+    hostedUsable
+  })
+
+  if (!isHostedAiProviderConfigId(currentProviderConfigId)) return payload
+  return { ...payload, aiRoute: "hosted" }
 }
 
 function createStreamChunkDispatcher(input: {
@@ -385,6 +416,9 @@ async function handleMessage(
           const shouldRunAIInBackground =
             !request.payload.deferAiRequest && !request.payload.restore
           const requestId = request.payload.requestId ?? `req-${Date.now()}`
+          const routedPayload = shouldRunAIInBackground
+            ? await resolveRuntimeAiRouteForPayload(request.payload)
+            : request.payload
           const runtimeWarmup = shouldRunAIInBackground
             ? getRuntimeConfigSnapshot().catch((err) => {
                 console.warn("[Aviso] Runtime config warmup failed", {
@@ -395,11 +429,11 @@ async function handleMessage(
             : undefined
           const displayPayload = shouldRunAIInBackground
             ? {
-                ...request.payload,
+                ...routedPayload,
                 requestId,
                 deferAiRequest: true
               }
-            : request.payload
+            : routedPayload
 
           const result = await sendMessageToDisplayFrame(
             senderTabId,
@@ -433,7 +467,7 @@ async function handleMessage(
               responseFrameId: result.frameId ?? TOP_FRAME_ID,
               requestId,
               payload: aiPayload,
-              pageUrl: request.payload.pageUrl ?? sender.tab?.url ?? sender.url
+              pageUrl: routedPayload.pageUrl ?? sender.tab?.url ?? sender.url
             })
             sendResponse(aiResponse)
             break
@@ -451,12 +485,15 @@ async function handleMessage(
 
       // ── 流式 AI 请求：用 sender.tab.id 路由 chunk 回当前页面 ────────────
       case "AI_REQUEST": {
+        const routedPayload = await resolveRuntimeAiRouteForPayload(
+          request.payload
+        )
         const response = await runAIRequestToFrame({
           tabId: senderTabId,
           responseFrameId: sender.frameId ?? TOP_FRAME_ID,
           requestId: request.requestId,
-          payload: request.payload,
-          pageUrl: request.payload.pageUrl ?? sender.tab?.url ?? sender.url
+          payload: routedPayload,
+          pageUrl: routedPayload.pageUrl ?? sender.tab?.url ?? sender.url
         })
         sendResponse(response)
         break

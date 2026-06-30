@@ -853,6 +853,37 @@ test("floating toolbar requests run AI directly from background after display op
   assert.match(showFloatingBlock, /sendResponse\(aiResponse\)/)
 })
 
+test("background routes floating requests through hosted current-model fallback", () => {
+  const backgroundSource = readFileSync(
+    new URL("../src/background/index.ts", import.meta.url),
+    "utf8"
+  )
+  const routeResolverBlock =
+    backgroundSource.match(
+      /async function resolveRuntimeAiRouteForPayload[\s\S]*?\n\}/
+    )?.[0] ?? ""
+  const showFloatingBlock =
+    backgroundSource.match(
+      /case "SHOW_FLOATING_WINDOW": \{[\s\S]*?case "WARM_RUNTIME_CONFIG"/
+    )?.[0] ?? ""
+  const aiRequestBlock =
+    backgroundSource.match(
+      /case "AI_REQUEST": \{[\s\S]*?case "SAVE_HISTORY"/
+    )?.[0] ?? ""
+
+  assert.match(routeResolverBlock, /readHostedSession\(\)/)
+  assert.match(routeResolverBlock, /isHostedSessionUsable\(hostedSession\)/)
+  assert.match(
+    routeResolverBlock,
+    /resolvePopupCurrentModelProviderConfigId\(\{/
+  )
+  assert.match(routeResolverBlock, /aiRoute: "hosted"/)
+  assert.match(showFloatingBlock, /const routedPayload = shouldRunAIInBackground/)
+  assert.match(showFloatingBlock, /payload: aiPayload/)
+  assert.match(aiRequestBlock, /const routedPayload = await resolveRuntimeAiRouteForPayload/)
+  assert.match(aiRequestBlock, /payload: routedPayload/)
+})
+
 test("floating conversation persistence waits for stream completion", () => {
   const floatingSource = readFileSync(
     new URL("../src/contents/floating.tsx", import.meta.url),
@@ -916,7 +947,7 @@ test("short translation memory cache is service-worker only and hashed", () => {
   assert.match(aiClientSource, /getTranslationCacheKey\(\{[\s\S]*route,/)
   assert.match(
     backgroundSource,
-    /pageUrl: request\.payload\.pageUrl \?\? sender\.tab\?\.url \?\? sender\.url/
+    /pageUrl: routedPayload\.pageUrl \?\? sender\.tab\?\.url \?\? sender\.url/
   )
 })
 
