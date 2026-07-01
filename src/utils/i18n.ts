@@ -1210,12 +1210,13 @@ const MESSAGES = {
     en: "History or bookmark search failed. Check extension permissions or reload Aviso."
   },
   "command.unsafeUrlBlocked": {
-    "zh-CN": "链接未打开",
-    en: "Link not opened"
+    "zh-CN": "已拦截不安全链接",
+    en: "Unsafe link blocked"
   },
   "command.unsafeUrlBlockedDetail": {
-    "zh-CN": "Aviso 只会打开 http 或 https 链接。",
-    en: "Aviso only opens http or https links."
+    "zh-CN":
+      "只支持从候选列表确认打开 http(s) 链接；javascript、data、file、chrome-extension 等协议不会打开。",
+    en: "Only confirmed http(s) link candidates can open. javascript, data, file, and chrome-extension protocols are blocked."
   },
   "command.openUrl": {
     "zh-CN": "打开链接",
@@ -1451,6 +1452,22 @@ const MESSAGES = {
   "aiUnavailable.hostedSignIn.detail": {
     "zh-CN": "请先登录 Aviso AI；如果想继续用自己的服务，可以在 AI 服务页切换。",
     en: "Sign in to Aviso AI first. To keep using your own service, switch from AI services."
+  },
+  "aiUnavailable.hostedQuotaExhausted.title": {
+    "zh-CN": "Aviso AI 额度暂不可用",
+    en: "Aviso AI quota is unavailable"
+  },
+  "aiUnavailable.hostedQuotaExhausted.detail": {
+    "zh-CN": "当前 Aviso AI 额度不可用。可以稍后再试，或切换到自己的 API Key。",
+    en: "Aviso AI quota is unavailable right now. Retry later, or switch to your own API key."
+  },
+  "aiUnavailable.hostedRateLimited.title": {
+    "zh-CN": "Aviso AI 请求过于频繁",
+    en: "Aviso AI is rate limited"
+  },
+  "aiUnavailable.hostedRateLimited.detail": {
+    "zh-CN": "请求太频繁了，请稍后重试；急用时可以切换到自己的 API Key。",
+    en: "Requests are too frequent. Retry later, or switch to your own API key if needed."
   },
   "aiUnavailable.hostedServiceUnavailable.title": {
     "zh-CN": "Aviso AI 暂不可用",

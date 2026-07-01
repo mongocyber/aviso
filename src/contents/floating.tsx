@@ -467,7 +467,9 @@ function FloatingWindow() {
 
         // inputText 优先级：选中文字 > 用户输入 > 链接/资源URL > 页面URL
         const inputText =
-          selectionText || userMessage || linkUrl || srcUrl || pageUrl || ""
+          context === "editable"
+            ? selectionText || userMessage || ""
+            : selectionText || userMessage || linkUrl || srcUrl || pageUrl || ""
 
         const bubble = userBubbleText(
           operation,
@@ -1177,7 +1179,6 @@ function FloatingWindow() {
           className="aviso-follow-up-input"
           rows={1}
           value={followUp}
-          disabled={followUpBlocked}
           onChange={(e) => setFollowUp(e.target.value)}
           onKeyDown={(e) => {
             if (

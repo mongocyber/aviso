@@ -1459,17 +1459,30 @@ test("floating window exposes hosted sign-in required only as a request state", 
   assert.doesNotMatch(floatingSource, /chrome\.identity/)
 })
 
-test("floating follow-up send stays disabled during AI unavailable guidance", () => {
+test("floating follow-up input stays editable while send is disabled during AI unavailable guidance", () => {
   const floatingSource = readFileSync(
     new URL("../src/contents/floating.tsx", import.meta.url),
     "utf8"
   )
+  const followUpTextarea =
+    floatingSource.match(
+      /<textarea[\s\S]*?className="aviso-follow-up-input"[\s\S]*?\/>/
+    )?.[0] ?? ""
 
   assert.match(floatingSource, /const followUpBlocked = Boolean/)
+  assert.match(floatingSource, /message\.action === "AI_STREAM_ERROR"/)
+  assert.match(floatingSource, /aiGuidance: guidance/)
   assert.match(
     floatingSource,
     /const canSendFollowUp = !followUpBlocked && followUp\.trim\(\)\.length > 0/
   )
+  assert.match(followUpTextarea, /value=\{followUp\}/)
+  assert.match(
+    followUpTextarea,
+    /onChange=\{\(e\) => setFollowUp\(e\.target\.value\)\}/
+  )
+  assert.doesNotMatch(followUpTextarea, /disabled=/)
+  assert.doesNotMatch(followUpTextarea, /readOnly=/)
   assert.match(floatingSource, /disabled=\{!canSendFollowUp\}/)
   assert.match(floatingSource, /canSendFollowUp \? ui\.accent : ui\.disabledBg/)
   assert.match(floatingSource, /\.aviso-send-button:disabled/)

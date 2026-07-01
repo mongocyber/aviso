@@ -48,6 +48,7 @@ import {
   TRANSLATION_SYSTEM_PROMPT,
   TRANSLATION_WAITING_TEXT
 } from "../src/utils/translation.ts"
+import { isBlockedBrowserOpenUrlInput } from "../src/utils/url-safety.ts"
 import "./helpers/register-aliases.ts"
 
 test("detectType 识别多行代码", () => {
@@ -627,6 +628,17 @@ test("parseIntentLocally 识别 command palette 本地意图", () => {
     target: "what is TTFT",
     params: {}
   })
+})
+
+test("command palette URL safety marks unsafe open inputs", () => {
+  assert.equal(isBlockedBrowserOpenUrlInput("javascript:alert(1)"), true)
+  assert.equal(isBlockedBrowserOpenUrlInput("data:text/html,hi"), true)
+  assert.equal(isBlockedBrowserOpenUrlInput("file:///etc/passwd"), true)
+  assert.equal(isBlockedBrowserOpenUrlInput("chrome-extension://id/a.html"), true)
+  assert.equal(isBlockedBrowserOpenUrlInput("https://user:pass@example.com"), true)
+  assert.equal(isBlockedBrowserOpenUrlInput("https://example.com"), false)
+  assert.equal(isBlockedBrowserOpenUrlInput("example.com"), false)
+  assert.equal(isBlockedBrowserOpenUrlInput("YouTube"), false)
 })
 
 test("parseIntentLocally 未命中时降级为搜索", () => {

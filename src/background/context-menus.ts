@@ -424,6 +424,11 @@ export async function handleContextMenuClick(
       return
     }
 
+    const editableText =
+      menuItemId === MENU_ID_POLISH_EDITABLE
+        ? await requestEditableText(tabId, sourceFrameId, sourceFrameUrl)
+        : ""
+
     void getRuntimeConfigSnapshot().catch((err) => {
       console.warn("[Aviso] Runtime config warmup failed", {
         requestId,
@@ -437,6 +442,10 @@ export async function handleContextMenuClick(
         action: "SHOW_FLOATING_WINDOW",
         payload: {
           ...basePayload,
+          selectionText:
+            menuItemId === MENU_ID_POLISH_EDITABLE
+              ? editableText
+              : basePayload.selectionText,
           pageContent: ""
         }
       },
@@ -709,6 +718,29 @@ function resolveContext(
   if (info.mediaType === "video") return "video"
   if (info.editable) return "editable"
   return "page"
+}
+
+async function requestEditableText(
+  tabId: number,
+  frameId: number,
+  frameUrl?: string
+): Promise<string> {
+  const result = await sendMessageToFrame<MessageResponse>(
+    tabId,
+    { action: "EXTRACT_EDITABLE_TEXT" },
+    {
+      frameId,
+      frameUrl,
+      label: "context-menu-extract-editable-text"
+    }
+  )
+
+  if (result.ok === false) return ""
+
+  const data = result.response?.data
+  if (!data || typeof data !== "object" || !("text" in data)) return ""
+  const text = (data as { text?: unknown }).text
+  return typeof text === "string" ? text : ""
 }
 
 async function handleModelSwitch(providerConfigId: string) {

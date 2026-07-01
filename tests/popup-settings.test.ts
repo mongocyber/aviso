@@ -709,6 +709,35 @@ test("context-menu selection titles are static and keep selection payload", () =
   assert.match(contextMenuSource, /selectionText: info\.selectionText \?\? ""/)
 })
 
+test("context-menu editable polish extracts active editable text", () => {
+  const contextMenuSource = readFileSync(
+    new URL("../src/background/context-menus.ts", import.meta.url),
+    "utf8"
+  )
+  const readabilitySource = readFileSync(
+    new URL("../src/contents/readability.ts", import.meta.url),
+    "utf8"
+  )
+  const messageSource = readFileSync(
+    new URL("../src/types/messages.ts", import.meta.url),
+    "utf8"
+  )
+  const floatingSource = readFileSync(
+    new URL("../src/contents/floating.tsx", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(contextMenuSource, /MENU_ID_POLISH_EDITABLE/)
+  assert.match(contextMenuSource, /requestEditableText/)
+  assert.match(contextMenuSource, /EXTRACT_EDITABLE_TEXT/)
+  assert.match(readabilitySource, /extractEditableText/)
+  assert.match(readabilitySource, /getTextControlSelectionOrValue/)
+  assert.match(readabilitySource, /TEXT_INPUT_TYPES/)
+  assert.match(messageSource, /action: "EXTRACT_EDITABLE_TEXT"/)
+  assert.match(floatingSource, /context === "editable"/)
+  assert.match(floatingSource, /selectionText \|\| userMessage \|\| ""/)
+})
+
 test("context-menu image explain marks remote image source", () => {
   const contextMenuSource = readFileSync(
     new URL("../src/background/context-menus.ts", import.meta.url),

@@ -3402,23 +3402,22 @@ function Popup() {
                     <div style={{ ...styles.acardQuotaRow, color: ui.text2 }}>
                       <span
                         style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 7,
+                          ...styles.acardQuotaLabel,
                           fontSize: 12
                         }}>
                         {t("popup.hosted.monthlyQuota")}
-                        <span
-                          style={{
-                            ...styles.tagMono,
-                            background: ui.pill,
-                            color: ui.text2
-                          }}>
-                          {hostedQuotaDisplay.tierLabel}
-                        </span>
                       </span>
                       <span
                         style={{
+                          ...styles.tagMono,
+                          background: ui.pill,
+                          color: ui.text2
+                        }}>
+                        {hostedQuotaDisplay.tierLabel}
+                      </span>
+                      <span
+                        style={{
+                          ...styles.acardQuotaValue,
                           fontFamily: aviso.mono,
                           fontSize: 12,
                           color: ui.text
@@ -5406,10 +5405,21 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 9
   },
   acardQuotaRow: {
-    display: "flex",
+    display: "grid",
+    gridTemplateColumns: "minmax(76px, 1fr) auto minmax(152px, auto)",
     alignItems: "baseline",
-    justifyContent: "space-between",
+    gap: 8,
     marginBottom: 7
+  },
+  acardQuotaLabel: {
+    minWidth: 0,
+    fontFamily: aviso.font,
+    lineHeight: 1.2
+  },
+  acardQuotaValue: {
+    minWidth: 0,
+    textAlign: "right",
+    whiteSpace: "nowrap"
   },
   acardMeta: {
     fontFamily: aviso.font,

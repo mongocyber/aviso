@@ -28,6 +28,7 @@ import { getLegacyProviderFromConfigId } from "~utils/provider-configs"
 import { getSettings } from "~utils/storage"
 import { logTiming, startTiming } from "~utils/timing"
 import {
+  isBlockedBrowserOpenUrlInput,
   isSafeBrowserOpenUrl,
   normalizeSafeBrowserOpenUrl
 } from "~utils/url-safety"
@@ -354,6 +355,20 @@ function CommandPalette() {
     try {
       const intent = parseIntentLocally(q)
       const searchTarget = intent.target.trim() || q
+      if (
+        intent.action === "navigate" &&
+        isBlockedBrowserOpenUrlInput(searchTarget)
+      ) {
+        setResults([])
+        setAiNotice({
+          title: t("command.unsafeUrlBlocked"),
+          detail: t("command.unsafeUrlBlockedDetail"),
+          type: "error"
+        })
+        setSearchNotice({ type: "error", text: t("command.unsafeUrlBlocked") })
+        return
+      }
+
       const intentResults = buildIntentResults(intent, q)
       const shouldSearchOpenTarget =
         intent.action === "navigate" &&

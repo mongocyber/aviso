@@ -2,6 +2,8 @@ import type { I18nKey } from "./i18n"
 
 export type AiUnavailableGuidanceReason =
   | "hosted_sign_in_required"
+  | "hosted_quota_exhausted"
+  | "hosted_rate_limited"
   | "hosted_service_unavailable"
   | "hosted_provider_unavailable"
   | "byok_api_key_missing"
@@ -18,6 +20,18 @@ export function deriveAiUnavailableGuidance(
   if (/托管登录状态已失效|Aviso AI.*登录|hosted.*sign|sign in/i.test(error)) {
     return {
       reason: "hosted_sign_in_required"
+    }
+  }
+
+  if (/托管额度暂不可用/i.test(error)) {
+    return {
+      reason: "hosted_quota_exhausted"
+    }
+  }
+
+  if (/托管请求过于频繁/i.test(error)) {
+    return {
+      reason: "hosted_rate_limited"
     }
   }
 
@@ -64,6 +78,10 @@ export function getAiUnavailableTitleKey(
   switch (guidance.reason) {
     case "hosted_sign_in_required":
       return "aiUnavailable.hostedSignIn.title"
+    case "hosted_quota_exhausted":
+      return "aiUnavailable.hostedQuotaExhausted.title"
+    case "hosted_rate_limited":
+      return "aiUnavailable.hostedRateLimited.title"
     case "hosted_service_unavailable":
       return "aiUnavailable.hostedServiceUnavailable.title"
     case "hosted_provider_unavailable":
@@ -83,6 +101,10 @@ export function getAiUnavailableDetailKey(
   switch (guidance.reason) {
     case "hosted_sign_in_required":
       return "aiUnavailable.hostedSignIn.detail"
+    case "hosted_quota_exhausted":
+      return "aiUnavailable.hostedQuotaExhausted.detail"
+    case "hosted_rate_limited":
+      return "aiUnavailable.hostedRateLimited.detail"
     case "hosted_service_unavailable":
       return "aiUnavailable.hostedServiceUnavailable.detail"
     case "hosted_provider_unavailable":

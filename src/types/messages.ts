@@ -153,6 +153,7 @@ export type MessageRequest =
       }
     }
   | { action: "EXTRACT_PAGE_CONTENT" }
+  | { action: "EXTRACT_EDITABLE_TEXT" }
   | {
       action: "AI_STREAM_CHUNK"
       payload: { chunk: AIStreamChunk; requestId: string }

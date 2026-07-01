@@ -208,6 +208,23 @@ test("command palette no-result Enter does not silently call AI", () => {
   assert.doesNotMatch(commandSource, /ask-ai-fallback/)
 })
 
+test("command palette shows explicit unsafe URL blocking", () => {
+  const commandSource = readFileSync(
+    new URL("../src/contents/command.tsx", import.meta.url),
+    "utf8"
+  )
+  const i18nSource = readFileSync(
+    new URL("../src/utils/i18n.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(commandSource, /isBlockedBrowserOpenUrlInput\(searchTarget\)/)
+  assert.match(commandSource, /command\.unsafeUrlBlocked/)
+  assert.match(i18nSource, /已拦截不安全链接/)
+  assert.match(i18nSource, /javascript、data、file、chrome-extension/)
+  assert.match(i18nSource, /Only confirmed http\(s\) link candidates can open/)
+})
+
 test("command palette AI actions are visible candidates with disconnected guard", () => {
   const commandSource = readFileSync(
     new URL("../src/contents/command.tsx", import.meta.url),
