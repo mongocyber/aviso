@@ -1,6 +1,11 @@
 import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
 import { test } from "node:test"
+import {
+  deriveAiUnavailableGuidance,
+  getAiUnavailableDetailKey,
+  getAiUnavailableTitleKey
+} from "../src/utils/ai-unavailable-guidance.ts"
 import { buildSafeErrorLog, normalizeError } from "../src/utils/errors.ts"
 import {
   createHostedAiClient,
@@ -594,6 +599,30 @@ test("hosted AI fallback messages stay safe through global error handling", () =
   }
 })
 
+test("hosted unavailable guidance stays specific after sign-in", () => {
+  const serviceGuidance = deriveAiUnavailableGuidance(
+    "托管服务暂不可用，请稍后重试，或切换到自己的 API Key。"
+  )
+  const providerGuidance = deriveAiUnavailableGuidance(
+    "托管上游服务失败，请稍后重试或切换到自己的 API Key。"
+  )
+
+  assert.deepEqual(serviceGuidance, {
+    reason: "hosted_service_unavailable"
+  })
+  assert.deepEqual(providerGuidance, {
+    reason: "hosted_provider_unavailable"
+  })
+  assert.equal(
+    getI18nMessage(getAiUnavailableTitleKey(serviceGuidance!), "zh-CN"),
+    "Aviso AI 暂不可用"
+  )
+  assert.equal(
+    getI18nMessage(getAiUnavailableDetailKey(providerGuidance!), "zh-CN"),
+    "Aviso AI 已收到请求，但上游模型暂时失败。请稍后重试，或切换到自己的服务。"
+  )
+})
+
 test("hosted chat routing builds local chat payloads only when explicitly selected", async () => {
   const {
     buildHostedChatRequest,
@@ -735,14 +764,21 @@ test("hosted chat refreshes stored quota after a successful stream", async () =>
     })
 
     const chunks: Array<{ text: string; done: boolean; kind?: string }> = []
-    await runHostedChatRequest(
+    const perfSummaries: unknown[] = []
+    const perfSummary = await runHostedChatRequest(
       {
         aiRoute: "hosted",
+        trigger: "inline-translation",
         operation: "translate",
         context: "selection",
-        selectionText: "Hello"
+        selectionText: "Hello",
+        timing: { triggerAt: 1000 }
       },
-      (chunk) => chunks.push(chunk)
+      (chunk) => chunks.push(chunk),
+      {
+        requestId: "hosted-success",
+        onPerfSummary: (summary) => perfSummaries.push(summary)
+      }
     )
 
     const stored = await readHostedSession()
@@ -750,6 +786,12 @@ test("hosted chat refreshes stored quota after a successful stream", async () =>
       { text: "translated", done: false, kind: "answer" },
       { text: "", done: true, kind: "answer" }
     ])
+    assert.deepEqual(perfSummary, perfSummaries[0])
+    assert.equal(perfSummary?.provider, "hosted")
+    assert.equal(perfSummary?.model_or_endpoint, "free-small")
+    assert.equal(perfSummary?.operation, "translate")
+    assert.equal(perfSummary?.context_type, "selection")
+    assert.equal(perfSummary?.error_category, "none")
     assert.deepEqual(
       fetchCalls.map((url) => new URL(url).pathname),
       ["/v1/chat", "/v1/me"]
@@ -1572,7 +1614,10 @@ test("hosted sign-in slice keeps production backend and permission boundaries", 
   assert.match(floatingSource, /aiRoute,/)
   assert.match(aiClientSource, /shouldUseHostedChatRoute\(payload\)/)
   assert.match(aiClientSource, /payload\.aiRoute !== "byok"/)
-  assert.match(aiClientSource, /runHostedChatRequest\(\{ \.\.\.payload, aiRoute: "hosted" \}, onChunk/)
+  assert.match(aiClientSource, /runHostedChatRequest\(/)
+  assert.match(aiClientSource, /aiRoute: "hosted"/)
+  assert.match(aiClientSource, /session: hostedSession/)
+  assert.match(aiClientSource, /firstRequestReason: options\.hostedFirstRequestReason/)
   assert.deepEqual(
     [...packageJson.manifest.host_permissions].sort(),
     [

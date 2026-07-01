@@ -775,7 +775,8 @@ test("page summary paths parallelize page extraction and runtime warmup", () => 
     assert.match(source, /page_content_cache_hit/)
     assert.match(source, /AI_CONTEXT_LIMITS\.pageSummaryChars/)
   }
-  assert.match(backgroundSource, /getRuntimeConfigSnapshot\(\)\.catch/)
+  assert.match(backgroundSource, /hostedWarmupStartedAt/)
+  assert.match(backgroundSource, /hostedWarmupDoneAt/)
   assert.match(runtimeCacheSource, /clearPageContentMemoryCache/)
 })
 
@@ -795,7 +796,10 @@ test("inline AI requests warm runtime config before provider calls", () => {
 
   assert.match(messageTypesSource, /action: "WARM_RUNTIME_CONFIG"/)
   assert.match(backgroundSource, /case "WARM_RUNTIME_CONFIG"/)
-  assert.match(backgroundSource, /await getRuntimeConfigSnapshot\(\)/)
+  assert.match(
+    backgroundSource,
+    /await Promise\.all\(\[getRuntimeConfigSnapshot\(\), readHostedSession\(\)\]\)/
+  )
   assert.match(toolbarSource, /function warmRuntimeConfig\(requestId: string\)/)
   assert.match(toolbarSource, /action: "WARM_RUNTIME_CONFIG"/)
   assert.match(toolbarSource, /warmRuntimeConfig\(requestId\)/)
@@ -844,7 +848,12 @@ test("floating toolbar requests run AI directly from background after display op
     /const shouldRunAIInBackground =[\s\S]*!request\.payload\.deferAiRequest && !request\.payload\.restore/
   )
   assert.match(showFloatingBlock, /deferAiRequest: true/)
-  assert.match(showFloatingBlock, /await runtimeWarmup/)
+  assert.match(showFloatingBlock, /const result = await sendMessageToDisplayFrame/)
+  assert.match(
+    showFloatingBlock,
+    /const routed = await resolveRuntimeAiRouteForPayload/
+  )
+  assert.match(showFloatingBlock, /hostedWarmupDoneAt/)
   assert.match(showFloatingBlock, /await runAIRequestToFrame\(/)
   assert.match(
     showFloatingBlock,
@@ -858,10 +867,6 @@ test("background routes floating requests through hosted current-model fallback"
     new URL("../src/background/index.ts", import.meta.url),
     "utf8"
   )
-  const routeResolverBlock =
-    backgroundSource.match(
-      /async function resolveRuntimeAiRouteForPayload[\s\S]*?\n\}/
-    )?.[0] ?? ""
   const showFloatingBlock =
     backgroundSource.match(
       /case "SHOW_FLOATING_WINDOW": \{[\s\S]*?case "WARM_RUNTIME_CONFIG"/
@@ -871,17 +876,18 @@ test("background routes floating requests through hosted current-model fallback"
       /case "AI_REQUEST": \{[\s\S]*?case "SAVE_HISTORY"/
     )?.[0] ?? ""
 
-  assert.match(routeResolverBlock, /readHostedSession\(\)/)
-  assert.match(routeResolverBlock, /isHostedSessionUsable\(hostedSession\)/)
+  assert.match(backgroundSource, /readHostedSession\(\)/)
+  assert.match(backgroundSource, /isHostedSessionUsable\(hostedSession\)/)
   assert.match(
-    routeResolverBlock,
+    backgroundSource,
     /resolvePopupCurrentModelProviderConfigId\(\{/
   )
-  assert.match(routeResolverBlock, /aiRoute: "hosted"/)
-  assert.match(showFloatingBlock, /const routedPayload = shouldRunAIInBackground/)
-  assert.match(showFloatingBlock, /payload: aiPayload/)
-  assert.match(aiRequestBlock, /const routedPayload = await resolveRuntimeAiRouteForPayload/)
-  assert.match(aiRequestBlock, /payload: routedPayload/)
+  assert.match(backgroundSource, /aiRoute: "hosted"/)
+  assert.match(showFloatingBlock, /runtimeConfigSnapshot/)
+  assert.match(showFloatingBlock, /hostedSession/)
+  assert.match(showFloatingBlock, /payload: routedPayload/)
+  assert.match(aiRequestBlock, /const routed = await resolveRuntimeAiRouteForPayload/)
+  assert.match(aiRequestBlock, /payload: routed\.payload/)
 })
 
 test("floating conversation persistence waits for stream completion", () => {

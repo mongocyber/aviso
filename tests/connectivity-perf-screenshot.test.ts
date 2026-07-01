@@ -43,6 +43,7 @@ import {
 } from "../src/utils/screenshot.ts"
 import {
   bucketInputSize,
+  buildHostedFirstRequestPerfSummary,
   buildPerfSummary,
   buildSelectionTtftAggregate,
   buildSelectionTtftDogfoodRow,
@@ -304,6 +305,45 @@ test("perf summary 字段固定且按 trigger 计算阶段耗时", () => {
     t_provider_start_ms: 300,
     t_first_chunk_ms: 900,
     t_done_ms: 1600,
+    error_category: "none"
+  })
+})
+
+test("hosted first request perf summary separates local and provider timing", () => {
+  const summary = buildHostedFirstRequestPerfSummary({
+    reason: "session_written",
+    trigger: "inline-translation",
+    operation: "translate",
+    inputChars: 320,
+    contextType: "selection",
+    timing: {
+      triggerAt: 1000,
+      aiRequestSentAt: 1050,
+      hostedWarmupStartedAt: 1010,
+      hostedWarmupDoneAt: 1060,
+      hostedRouteResolutionStartedAt: 1060,
+      hostedRouteResolvedAt: 1085,
+      providerRequestStartedAt: 1120,
+      firstChunkAt: 1700,
+      doneAt: 2100
+    },
+    errorCategory: "none"
+  })
+
+  assert.deepEqual(summary, {
+    metric: "hosted_first_request",
+    reason: "session_written",
+    trigger: "inline-translation",
+    operation: "translate",
+    input_size_bucket: "0-500",
+    context_type: "selection",
+    hosted_first_request_ttft_ms: 700,
+    hosted_first_request_total_ms: 1100,
+    hosted_first_request_error_ms: null,
+    hosted_warmup_ms: 50,
+    hosted_route_resolution_ms: 25,
+    hosted_frontend_to_chat_request_ms: 120,
+    hosted_network_provider_ttft_ms: 580,
     error_category: "none"
   })
 })

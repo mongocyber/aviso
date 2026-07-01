@@ -40,7 +40,8 @@ import {
   isHostedAiProviderConfigId,
   isHostedSessionUsable,
   readHostedSession,
-  selectConfiguredHostedRoute
+  selectConfiguredHostedRoute,
+  type StoredHostedSession
 } from "~utils/hosted-session"
 import { getImageInputBlockReason } from "~utils/screenshot"
 import { getTemplates } from "~utils/storage"
@@ -48,6 +49,7 @@ import { expandTemplate } from "~utils/template"
 import {
   buildPerfSummary,
   categorizePerfError,
+  type HostedFirstRequestReason,
   logPerfSummary,
   logTiming,
   markTiming,
@@ -197,10 +199,14 @@ export async function handleAIRequest(
     requestId?: string
     signal?: AbortSignal
     pageUrl?: string
+    runtimeConfigSnapshot?: Awaited<ReturnType<typeof getRuntimeConfigSnapshot>>
+    hostedSession?: StoredHostedSession | null
+    hostedFirstRequestReason?: HostedFirstRequestReason
     onPerfSummary?: (summary: PerfSummary) => void
   } = {}
 ): Promise<PerfSummary | undefined> {
-  const { settings, apiKeys } = await getRuntimeConfigSnapshot()
+  const { settings, apiKeys } =
+    options.runtimeConfigSnapshot ?? (await getRuntimeConfigSnapshot())
   let finalPerfSummary: PerfSummary | undefined
   const recordPerfSummary = (summary: PerfSummary) => {
     finalPerfSummary = summary
@@ -246,7 +252,7 @@ export async function handleAIRequest(
       !isHostedAiProviderConfigId(settings.fastProviderConfigId) &&
       getProviderConfigById(providerConfigs, settings.fastProviderConfigId)
   )
-  const hostedSession = await readHostedSession()
+  const hostedSession = options.hostedSession ?? (await readHostedSession())
   const hostedUsable = isHostedSessionUsable(hostedSession)
   const hostedIsSavedDefault =
     (isHostedAiProviderConfigId(settings.fastProviderConfigId) &&
@@ -270,11 +276,19 @@ export async function handleAIRequest(
 
   if (shouldUseConfiguredHostedRoute) {
     try {
-      await runHostedChatRequest({ ...payload, aiRoute: "hosted" }, onChunk, {
-        signal: options.signal,
-        targetLanguage: settings.inlineTranslationTargetLanguage
-      })
-      return
+      const hostedPerfSummary = await runHostedChatRequest(
+        { ...payload, aiRoute: "hosted" },
+        onChunk,
+        {
+          requestId: options.requestId,
+          signal: options.signal,
+          session: hostedSession,
+          targetLanguage: settings.inlineTranslationTargetLanguage,
+          firstRequestReason: options.hostedFirstRequestReason,
+          onPerfSummary: recordPerfSummary
+        }
+      )
+      return hostedPerfSummary
     } catch (err) {
       throw new Error(normalizeError(err))
     }

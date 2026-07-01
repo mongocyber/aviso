@@ -21,6 +21,19 @@ import {
   resolveTranslationTargetLanguageForText,
   type TranslationTargetLanguage
 } from "~utils/translation"
+import {
+  categorizePerfError,
+  logHostedFirstRequestPerfSummary,
+  logPerfSummary,
+  logTiming,
+  markTiming,
+  type HostedFirstRequestPerfSummary,
+  type HostedFirstRequestReason,
+  type PerfContextType,
+  type PerfErrorCategory,
+  type PerfSummary,
+  type RequestTiming
+} from "~utils/timing"
 
 export const HOSTED_CHAT_DEFAULT_MODEL = HOSTED_AI_DEFAULT_MODEL
 
@@ -67,10 +80,18 @@ export async function runHostedChatRequest(
   onChunk: (chunk: AIStreamChunk) => void,
   options: {
     signal?: AbortSignal
+    requestId?: string
+    session?: StoredHostedSession | null
     targetLanguage?: TranslationTargetLanguage
+    firstRequestReason?: HostedFirstRequestReason
+    onPerfSummary?: (summary: PerfSummary) => void
+    onHostedFirstRequestPerfSummary?: (
+      summary: HostedFirstRequestPerfSummary
+    ) => void
   } = {}
-): Promise<void> {
-  const session = await readHostedSession()
+): Promise<PerfSummary | undefined> {
+  const requestId = options.requestId ?? "unknown"
+  const session = options.session ?? (await readHostedSession())
   if (requiresHostedSignInForRoute({ route: "hosted", session })) {
     throw new HostedAiClientError(normalizeHostedAiError("unauthorized"))
   }
@@ -80,9 +101,20 @@ export async function runHostedChatRequest(
     baseUrl: session.baseUrl,
     sessionToken: session.session.session_token
   })
+  let timing: RequestTiming | undefined = payload.timing
+  let sawFirstChunk = false
   let sawDone = false
+  let errorCategory: PerfErrorCategory = "none"
+  let finalPerfSummary: PerfSummary | undefined
 
   try {
+    timing = markTiming(timing, "providerRequestStartedAt")
+    payload = { ...payload, timing }
+    logTiming("hosted_chat_request_start", requestId, timing, {
+      operation: payload.operation,
+      inputChars: estimateHostedPayloadChars(payload)
+    })
+
     for await (const event of client.chatStream(
       buildHostedChatRequest(payload, {
         targetLanguage: options.targetLanguage
@@ -93,15 +125,52 @@ export async function runHostedChatRequest(
       }
     )) {
       if (event.type === "delta") {
+        if (!sawFirstChunk) {
+          sawFirstChunk = true
+          timing = markTiming(timing, "firstChunkAt")
+          payload = { ...payload, timing }
+          logTiming("hosted_chat_first_chunk", requestId, timing, {
+            operation: payload.operation,
+            model: HOSTED_CHAT_DEFAULT_MODEL
+          })
+        }
         onChunk({ text: event.delta, done: false, kind: "answer" })
       } else if (event.type === "done") {
         sawDone = true
+        timing = markTiming(timing, "doneAt")
+        payload = { ...payload, timing }
+        logTiming("hosted_chat_done", requestId, timing, {
+          operation: payload.operation,
+          model: HOSTED_CHAT_DEFAULT_MODEL
+        })
+        if (!sawFirstChunk && errorCategory === "none") {
+          errorCategory = "missing_first_chunk"
+        }
         onChunk({ text: "", done: true, kind: "answer" })
       } else if (event.type === "error") {
         throw new HostedAiClientError(event.error)
       }
     }
+
+    if (!sawDone) {
+      errorCategory = "missing_done"
+      timing = markTiming(timing, "doneAt")
+      payload = { ...payload, timing }
+      logTiming("hosted_chat_done", requestId, timing, {
+        operation: payload.operation,
+        model: HOSTED_CHAT_DEFAULT_MODEL,
+        reason: "stream-ended"
+      })
+      onChunk({ text: "", done: true, kind: "answer" })
+    }
   } catch (error) {
+    errorCategory = categorizeHostedPerfError(error)
+    timing = markTiming(timing, "doneAt")
+    payload = { ...payload, timing }
+    logTiming("hosted_chat_error", requestId, timing, {
+      operation: payload.operation,
+      errorCategory
+    })
     if (
       error instanceof HostedAiClientError &&
       error.normalized.code === "unauthorized"
@@ -109,13 +178,35 @@ export async function runHostedChatRequest(
       await clearHostedSession()
     }
     throw error
-  }
+  } finally {
+    finalPerfSummary = logPerfSummary({
+      trigger: payload.trigger,
+      provider: "hosted",
+      modelOrEndpoint: HOSTED_CHAT_DEFAULT_MODEL,
+      operation: payload.operation,
+      inputChars: estimateHostedPayloadChars(payload),
+      contextType: inferHostedPerfContextType(payload),
+      timing,
+      errorCategory
+    })
+    options.onPerfSummary?.(finalPerfSummary)
 
-  if (!sawDone) {
-    onChunk({ text: "", done: true, kind: "answer" })
+    if (options.firstRequestReason) {
+      const hostedSummary = logHostedFirstRequestPerfSummary({
+        reason: options.firstRequestReason,
+        trigger: payload.trigger,
+        operation: payload.operation,
+        inputChars: estimateHostedPayloadChars(payload),
+        contextType: inferHostedPerfContextType(payload),
+        timing,
+        errorCategory
+      })
+      options.onHostedFirstRequestPerfSummary?.(hostedSummary)
+    }
   }
 
   await refreshHostedSessionMeAfterSuccessfulChat(session, client.me)
+  return finalPerfSummary
 }
 
 async function refreshHostedSessionMeAfterSuccessfulChat(
@@ -168,4 +259,49 @@ function buildHostedChatMessages(
     messages.push({ role: "user", content: payload.userMessage.trim() })
   }
   return messages
+}
+
+function estimateHostedPayloadChars(payload: AIRequestPayload): number {
+  return [
+    payload.selectionText,
+    payload.pageContent,
+    payload.userMessage,
+    payload.priorContext,
+    payload.systemPrompt
+  ].reduce((sum, value) => sum + (value?.length ?? 0), 0)
+}
+
+function inferHostedPerfContextType(payload: AIRequestPayload): PerfContextType {
+  if (payload.trigger === "follow-up") return "follow_up"
+  if (payload.operation === "summarize" && payload.pageContent) {
+    return "page_summary"
+  }
+  if (payload.trigger === "command-palette" || payload.userMessage) {
+    return "command"
+  }
+  if (payload.context === "selection" || payload.selectionText) {
+    return "selection"
+  }
+  return "unknown"
+}
+
+function categorizeHostedPerfError(error: unknown): PerfErrorCategory {
+  if (error instanceof HostedAiClientError) {
+    switch (error.normalized.code) {
+      case "unauthorized":
+        return "unauthorized"
+      case "rate_limited":
+      case "quota_exceeded":
+        return "rate_limited"
+      case "provider_error":
+      case "forbidden_model":
+      case "internal":
+        return "provider_error"
+      case "service_unavailable":
+        return "network_error"
+      case "bad_request":
+        return "unknown_error"
+    }
+  }
+  return categorizePerfError(error)
 }

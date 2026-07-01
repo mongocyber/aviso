@@ -1452,6 +1452,22 @@ const MESSAGES = {
     "zh-CN": "请先登录 Aviso AI；如果想继续用自己的服务，可以在 AI 服务页切换。",
     en: "Sign in to Aviso AI first. To keep using your own service, switch from AI services."
   },
+  "aiUnavailable.hostedServiceUnavailable.title": {
+    "zh-CN": "Aviso AI 暂不可用",
+    en: "Aviso AI is temporarily unavailable"
+  },
+  "aiUnavailable.hostedServiceUnavailable.detail": {
+    "zh-CN": "Aviso AI 服务暂时没有响应，请稍后重试；也可以切换到自己的服务。",
+    en: "Aviso AI is not responding right now. Retry later, or switch to your own service."
+  },
+  "aiUnavailable.hostedProviderUnavailable.title": {
+    "zh-CN": "Aviso AI 上游暂不可用",
+    en: "Aviso AI provider is temporarily unavailable"
+  },
+  "aiUnavailable.hostedProviderUnavailable.detail": {
+    "zh-CN": "Aviso AI 已收到请求，但上游模型暂时失败。请稍后重试，或切换到自己的服务。",
+    en: "Aviso AI received the request, but the upstream model failed. Retry later, or switch to your own service."
+  },
   "aiUnavailable.apiKeyMissing.title": {
     "zh-CN": "AI 服务还不能使用",
     en: "AI service is not ready"

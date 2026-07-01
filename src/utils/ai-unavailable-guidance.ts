@@ -2,6 +2,8 @@ import type { I18nKey } from "./i18n"
 
 export type AiUnavailableGuidanceReason =
   | "hosted_sign_in_required"
+  | "hosted_service_unavailable"
+  | "hosted_provider_unavailable"
   | "byok_api_key_missing"
   | "byok_model_missing"
   | "ai_service_unavailable"
@@ -16,6 +18,18 @@ export function deriveAiUnavailableGuidance(
   if (/托管登录状态已失效|Aviso AI.*登录|hosted.*sign|sign in/i.test(error)) {
     return {
       reason: "hosted_sign_in_required"
+    }
+  }
+
+  if (/托管服务暂不可用|托管服务异常/i.test(error)) {
+    return {
+      reason: "hosted_service_unavailable"
+    }
+  }
+
+  if (/托管上游服务失败|当前托管模型不可用/i.test(error)) {
+    return {
+      reason: "hosted_provider_unavailable"
     }
   }
 
@@ -50,6 +64,10 @@ export function getAiUnavailableTitleKey(
   switch (guidance.reason) {
     case "hosted_sign_in_required":
       return "aiUnavailable.hostedSignIn.title"
+    case "hosted_service_unavailable":
+      return "aiUnavailable.hostedServiceUnavailable.title"
+    case "hosted_provider_unavailable":
+      return "aiUnavailable.hostedProviderUnavailable.title"
     case "byok_api_key_missing":
       return "aiUnavailable.apiKeyMissing.title"
     case "byok_model_missing":
@@ -65,6 +83,10 @@ export function getAiUnavailableDetailKey(
   switch (guidance.reason) {
     case "hosted_sign_in_required":
       return "aiUnavailable.hostedSignIn.detail"
+    case "hosted_service_unavailable":
+      return "aiUnavailable.hostedServiceUnavailable.detail"
+    case "hosted_provider_unavailable":
+      return "aiUnavailable.hostedProviderUnavailable.detail"
     case "byok_api_key_missing":
       return "aiUnavailable.apiKeyMissing.detail"
     case "byok_model_missing":

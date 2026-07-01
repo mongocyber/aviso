@@ -20,11 +20,21 @@ import {
   haveTemplatesChanged
 } from "~utils/settings-change"
 import { getSettings } from "~utils/storage"
-import { logTiming, markTiming, type PerfSummary } from "~utils/timing"
 import {
+  logTiming,
+  markTiming,
+  startTiming,
+  type HostedFirstRequestReason,
+  type PerfSummary
+} from "~utils/timing"
+import { createHostedAiClient } from "~utils/hosted-ai-client"
+import {
+  HOSTED_SESSION_STORAGE_KEY,
   isHostedAiProviderConfigId,
   isHostedSessionUsable,
-  readHostedSession
+  readHostedSession,
+  updateHostedSessionMe,
+  type StoredHostedSession
 } from "~utils/hosted-session"
 import {
   getProviderConfigsWithLegacy,
@@ -88,16 +98,55 @@ type StreamChunkDispatcher = {
   flush: () => Promise<void>
 }
 
-async function resolveRuntimeAiRouteForPayload(
+type RuntimeConfigSnapshot = Awaited<ReturnType<typeof getRuntimeConfigSnapshot>>
+type MaybePromise<T> = T | Promise<T>
+
+type RuntimeAiRouteResolution = {
   payload: AIRequestPayload
-): Promise<AIRequestPayload> {
-  if (payload.aiRoute) return payload
+  runtimeConfigSnapshot?: RuntimeConfigSnapshot
+  hostedSession?: StoredHostedSession | null
+}
 
-  const hostedSession = await readHostedSession()
+let hostedFirstRequestReason: HostedFirstRequestReason | null =
+  "service_worker_cold_start"
+
+async function resolveRuntimeAiRouteForPayload(
+  payload: AIRequestPayload,
+  options: {
+    requestId?: string
+    runtimeConfigSnapshot?: MaybePromise<RuntimeConfigSnapshot>
+    hostedSession?: MaybePromise<StoredHostedSession | null>
+  } = {}
+): Promise<RuntimeAiRouteResolution> {
+  if (payload.aiRoute) {
+    const [runtimeConfigSnapshot, hostedSession] = await Promise.all([
+      options.runtimeConfigSnapshot,
+      options.hostedSession
+    ])
+    return { payload, runtimeConfigSnapshot, hostedSession }
+  }
+
+  let timing = markTiming(payload.timing, "hostedRouteResolutionStartedAt")
+  const [hostedSession, runtimeConfigSnapshot] = await Promise.all([
+    options.hostedSession ?? readHostedSession(),
+    options.runtimeConfigSnapshot ?? getRuntimeConfigSnapshot()
+  ])
   const hostedUsable = isHostedSessionUsable(hostedSession)
-  if (!hostedUsable) return payload
+  if (!hostedUsable) {
+    timing = markTiming(timing, "hostedRouteResolvedAt")
+    logTiming("hosted_route_resolution", options.requestId ?? "unknown", timing, {
+      hostedUsable,
+      routedHosted: false,
+      reason: "hosted_session_unusable"
+    })
+    return {
+      payload: { ...payload, timing },
+      runtimeConfigSnapshot,
+      hostedSession
+    }
+  }
 
-  const { settings, apiKeys } = await getRuntimeConfigSnapshot()
+  const { settings, apiKeys } = runtimeConfigSnapshot
   const providerConfigs = getProviderConfigsWithLegacy(settings, apiKeys)
   const currentProviderConfigId = resolvePopupCurrentModelProviderConfigId({
     settings,
@@ -106,8 +155,29 @@ async function resolveRuntimeAiRouteForPayload(
     hostedUsable
   })
 
-  if (!isHostedAiProviderConfigId(currentProviderConfigId)) return payload
-  return { ...payload, aiRoute: "hosted" }
+  const routedHosted = isHostedAiProviderConfigId(currentProviderConfigId)
+  timing = markTiming(timing, "hostedRouteResolvedAt")
+  logTiming("hosted_route_resolution", options.requestId ?? "unknown", timing, {
+    hostedUsable,
+    routedHosted
+  })
+
+  return {
+    payload: routedHosted
+      ? { ...payload, timing, aiRoute: "hosted" }
+      : { ...payload, timing },
+    runtimeConfigSnapshot,
+    hostedSession
+  }
+}
+
+function consumeHostedFirstRequestReason(
+  payload: AIRequestPayload
+): HostedFirstRequestReason | undefined {
+  if (payload.aiRoute !== "hosted" || !hostedFirstRequestReason) return undefined
+  const reason = hostedFirstRequestReason
+  hostedFirstRequestReason = null
+  return reason
 }
 
 function createStreamChunkDispatcher(input: {
@@ -187,8 +257,18 @@ async function runAIRequestToFrame(input: {
   requestId: string
   payload: AIRequestPayload
   pageUrl?: string
+  runtimeConfigSnapshot?: RuntimeConfigSnapshot
+  hostedSession?: StoredHostedSession | null
 }): Promise<MessageResponse> {
-  const { tabId, responseFrameId, requestId, payload, pageUrl } = input
+  const {
+    tabId,
+    responseFrameId,
+    requestId,
+    payload,
+    pageUrl,
+    runtimeConfigSnapshot,
+    hostedSession
+  } = input
   const streamChunks = createStreamChunkDispatcher({
     tabId,
     requestId,
@@ -219,6 +299,9 @@ async function runAIRequestToFrame(input: {
         requestId,
         signal: abortController.signal,
         pageUrl,
+        runtimeConfigSnapshot,
+        hostedSession,
+        hostedFirstRequestReason: consumeHostedFirstRequestReason(payload),
         onPerfSummary: (summary) => {
           perfSummary = summary
         }
@@ -309,6 +392,49 @@ function ensureContextMenusRegistered(reason: string) {
   })
 }
 
+async function warmHostedRuntimeAfterSessionWrite(
+  reason: HostedFirstRequestReason
+): Promise<void> {
+  const requestId = `hosted-warmup-${Date.now()}`
+  let timing = markTiming(startTiming(), "hostedWarmupStartedAt")
+
+  try {
+    const runtimeWarmup = getRuntimeConfigSnapshot()
+    const sessionPromise = readHostedSession()
+    await runtimeWarmup
+    const session = await sessionPromise
+    const hostedUsable = isHostedSessionUsable(session)
+
+    if (session && hostedUsable) {
+      const client = createHostedAiClient({
+        baseUrl: session.baseUrl,
+        sessionToken: session.session.session_token
+      })
+      const me = await client.me(session.session.session_token)
+      await updateHostedSessionMe(session, me)
+    }
+
+    timing = markTiming(timing, "hostedWarmupDoneAt")
+    logTiming("hosted_warmup_done", requestId, timing, {
+      reason,
+      hostedUsable
+    })
+  } catch (err) {
+    timing = markTiming(timing, "hostedWarmupDoneAt")
+    logTiming("hosted_warmup_failed", requestId, timing, {
+      reason,
+      error: buildSafeErrorLog(err)
+    })
+  }
+}
+
+function getStoredHostedSessionToken(value: unknown): string {
+  if (!value || typeof value !== "object") return ""
+  const token = (value as { session?: { session_token?: unknown } }).session
+    ?.session_token
+  return typeof token === "string" ? token : ""
+}
+
 chrome.runtime.onInstalled.addListener(() => {
   contextMenusInitialized = false
   ensureContextMenusRegistered("installed")
@@ -330,6 +456,20 @@ chrome.storage.onChanged.addListener((changes, area) => {
     (area === "local" && changes.contextai_api_keys)
   ) {
     clearAIRuntimeCaches()
+  }
+
+  if (area === "local" && changes[HOSTED_SESSION_STORAGE_KEY]) {
+    const previousToken = getStoredHostedSessionToken(
+      changes[HOSTED_SESSION_STORAGE_KEY].oldValue
+    )
+    const nextToken = getStoredHostedSessionToken(
+      changes[HOSTED_SESSION_STORAGE_KEY].newValue
+    )
+
+    if (nextToken && nextToken !== previousToken) {
+      hostedFirstRequestReason = "session_written"
+      void warmHostedRuntimeAfterSessionWrite("session_written")
+    }
   }
 
   if (area === "local" && changes.contextai_api_keys) {
@@ -416,24 +556,28 @@ async function handleMessage(
           const shouldRunAIInBackground =
             !request.payload.deferAiRequest && !request.payload.restore
           const requestId = request.payload.requestId ?? `req-${Date.now()}`
-          const routedPayload = shouldRunAIInBackground
-            ? await resolveRuntimeAiRouteForPayload(request.payload)
-            : request.payload
-          const runtimeWarmup = shouldRunAIInBackground
-            ? getRuntimeConfigSnapshot().catch((err) => {
-                console.warn("[Aviso] Runtime config warmup failed", {
-                  requestId,
-                  error: buildSafeErrorLog(err)
-                })
-              })
+          const runtimeConfigSnapshot = shouldRunAIInBackground
+            ? getRuntimeConfigSnapshot()
             : undefined
+          const hostedSession = shouldRunAIInBackground
+            ? readHostedSession()
+            : undefined
+          const warmedPayload = shouldRunAIInBackground
+            ? {
+                ...request.payload,
+                timing: markTiming(
+                  request.payload.timing,
+                  "hostedWarmupStartedAt"
+                )
+              }
+            : request.payload
           const displayPayload = shouldRunAIInBackground
             ? {
-                ...routedPayload,
+                ...warmedPayload,
                 requestId,
                 deferAiRequest: true
               }
-            : routedPayload
+            : warmedPayload
 
           const result = await sendMessageToDisplayFrame(
             senderTabId,
@@ -449,12 +593,14 @@ async function handleMessage(
           )
 
           if (result.ok === false) {
+            if (shouldRunAIInBackground) {
+              await Promise.allSettled([runtimeConfigSnapshot, hostedSession])
+            }
             sendResponse({ success: false, error: result.error })
             break
           }
 
           if (shouldRunAIInBackground) {
-            await runtimeWarmup
             const {
               requestId: _requestId,
               deferAiRequest: _deferAiRequest,
@@ -462,11 +608,25 @@ async function handleMessage(
               statusText: _statusText,
               ...aiPayload
             } = displayPayload
+            const routed = await resolveRuntimeAiRouteForPayload(aiPayload, {
+              requestId,
+              runtimeConfigSnapshot,
+              hostedSession
+            })
+            const routedPayload = {
+              ...routed.payload,
+              timing: markTiming(
+                routed.payload.timing,
+                "hostedWarmupDoneAt"
+              )
+            }
             const aiResponse = await runAIRequestToFrame({
               tabId: senderTabId,
               responseFrameId: result.frameId ?? TOP_FRAME_ID,
               requestId,
-              payload: aiPayload,
+              payload: routedPayload,
+              runtimeConfigSnapshot: routed.runtimeConfigSnapshot,
+              hostedSession: routed.hostedSession,
               pageUrl: routedPayload.pageUrl ?? sender.tab?.url ?? sender.url
             })
             sendResponse(aiResponse)
@@ -478,22 +638,34 @@ async function handleMessage(
       }
 
       case "WARM_RUNTIME_CONFIG": {
-        await getRuntimeConfigSnapshot()
+        const requestId = request.payload?.requestId ?? `warm-${Date.now()}`
+        let timing = markTiming(startTiming(), "hostedWarmupStartedAt")
+        await Promise.all([getRuntimeConfigSnapshot(), readHostedSession()])
+        timing = markTiming(timing, "hostedWarmupDoneAt")
+        logTiming("hosted_warmup_done", requestId, timing, {
+          reason: "runtime_config_message"
+        })
         sendResponse({ success: true })
         break
       }
 
       // ── 流式 AI 请求：用 sender.tab.id 路由 chunk 回当前页面 ────────────
       case "AI_REQUEST": {
-        const routedPayload = await resolveRuntimeAiRouteForPayload(
-          request.payload
-        )
+        const runtimeConfigSnapshot = getRuntimeConfigSnapshot()
+        const hostedSession = readHostedSession()
+        const routed = await resolveRuntimeAiRouteForPayload(request.payload, {
+          requestId: request.requestId,
+          runtimeConfigSnapshot,
+          hostedSession
+        })
         const response = await runAIRequestToFrame({
           tabId: senderTabId,
           responseFrameId: sender.frameId ?? TOP_FRAME_ID,
           requestId: request.requestId,
-          payload: routedPayload,
-          pageUrl: routedPayload.pageUrl ?? sender.tab?.url ?? sender.url
+          payload: routed.payload,
+          runtimeConfigSnapshot: routed.runtimeConfigSnapshot,
+          hostedSession: routed.hostedSession,
+          pageUrl: routed.payload.pageUrl ?? sender.tab?.url ?? sender.url
         })
         sendResponse(response)
         break
