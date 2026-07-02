@@ -34,7 +34,7 @@ Current public/product truth:
 - no remote link-body fetching or web search,
 - screenshot remains only in the internal right-click path.
 
-2026-07-02 maintenance closeout: frontend `main` includes `9bfe1ae` for clearer API key obfuscation / hosted permission wording and `4c99f82` for splitting pure i18n logic into `src/utils/i18n-core.ts` so logic tests do not load React. Checks rerun in the frontend repo: `git diff --check`, `npm test` (212/212), and `npx tsc --noEmit`. This did not rebuild/package, submit CWS, deploy the website, or mark hosted AI live.
+2026-07-02 maintenance closeout: frontend `main` includes `9bfe1ae` for clearer API key obfuscation / hosted permission wording, `4c99f82` for splitting pure i18n logic into `src/utils/i18n-core.ts`, and `6f41513` for using the backend OAuth challenge before hosted Google sign-in. Backend `main` includes `3b69e3d` for the server-side OAuth challenge gate. Checks rerun: frontend `git diff --check`, `npm test` (214/214), and `npx tsc --noEmit`; backend `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm test` (387/387), and `git diff --check`. Chrome Web Store listing copy and v0.3 disclosure draft have been updated for BYOK + optional Aviso AI candidate wording. `npm run verify:release-candidate` regenerated and verified `build/chrome-mv3-prod.zip`; `website` `npm run build` passed. This did not upload CWS, deploy the website, or mark hosted AI live.
 
 ## v0.3 Planning Truth
 
@@ -69,6 +69,7 @@ Ask the owner before:
 - deploying backend,
 - changing public privacy policy to claim hosted AI is live,
 - updating Chrome Web Store data disclosure,
+- uploading Chrome Web Store changes,
 - enabling auth, billing, subscription, or payment in production.
 
 ## Agent Working Rule

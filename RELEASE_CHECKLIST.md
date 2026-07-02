@@ -10,7 +10,7 @@
 
 当前构建用于内部试用和 Chrome Web Store 审核。用户已验证 A-G 手动验收基本通过，豆包 / 火山方舟 API 可用。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID；DeepSeek 已有一次 owner 手动 connectivity pass，OpenRouter 最近一次手动测试失败类别为 `unauthorized`，Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 当前仍不能写成 live validated。
 
-v0.3 production candidate 已加入可选 Aviso AI / hosted AI 路径，并已通过 production backend authenticated HTTP smoke 与候选包构建/manifest 证据；但这仍不代表 Chrome Web Store 提交、公开发布、hosted AI live、网站部署或 owner release approval。
+v0.3 production candidate 已加入可选 Aviso AI / hosted AI 路径，并已通过 production backend authenticated HTTP smoke 与候选包构建/manifest 证据；2026-07-02 前后端 OAuth challenge gate 已合入并推送到对应 `main`，Chrome Web Store listing copy 和 disclosure draft 已更新；但这仍不代表 Chrome Web Store 上传、公开发布、hosted AI live、网站部署或 owner release approval。
 
 本清单用于记录当前内部试用质量、发布候选准备和已提交审核状态，不代表 Chrome Web Store 审核通过、正式上架或发布批准。
 
@@ -77,7 +77,7 @@ npm run package
 
 2026-06-13 CTO 自动门禁复跑通过：`git diff --check`、`npm test`（159 passed）、`npx tsc --noEmit`、`npx tsc --noEmit -p tsconfig.wxt.json`、`npm run build`、`npm run build:wxt`、`npm run check:manifests`。其中 `npm run build` 在沙箱内会遇到 `Operation not permitted`，非沙箱复跑通过；这不关闭任何 loaded-extension manual release gate。
 
-2026-07-02 maintenance pass 通过：`git diff --check`、`npm test`（212/212）、`npx tsc --noEmit`。本次只覆盖前端安全口径收口和纯逻辑 i18n 测试解耦；未重新 build、package、提交 CWS、部署网站或标记 hosted AI live。
+2026-07-02 maintenance pass 通过：前端 `git diff --check`、`npm test`（214/214）、`npx tsc --noEmit`；后端 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（387/387）、`git diff --check`。本次覆盖前端安全口径收口、纯逻辑 i18n 测试解耦、frontend hosted OAuth challenge 接入、backend OAuth challenge gate、CWS listing copy 和 disclosure draft 更新；`npm run verify:release-candidate` 已重新生成并验证 `build/chrome-mv3-prod.zip`，`website` `npm run build` 通过；未上传 CWS、未部署网站或标记 hosted AI live。最终上传前仍需 owner final loaded-extension validation。
 
 ## 上线前安全扫描
 
@@ -156,5 +156,5 @@ Chrome 版本、操作系统、截图或录屏未补录；当前记录只作为�
 - 当前状态不是 Chrome Web Store 审核通过。
 - 当前状态是已提交审核 / 待审核，不是审核通过。
 - OpenAI / Anthropic / Kimi / Moonshot / OpenRouter / Gemini / Tencent Hunyuan 当前只描述为支持配置的 provider，不描述为 live validated 可用状态；DeepSeek 只能描述为已有一次 owner 手动 connectivity pass，不能扩大成全 provider、全模型或 release-ready 证明。
-- 当前公开默认路径仍是 BYOK direct-provider，不要求后端、登录、订阅、支付、公开匿名额度、联网搜索或远端链接正文抓取；候选包已包含 v0.3 hosted AI 所需的 `identity` 权限和精确 production backend host permission，默认休眠且仅在用户主动选择托管路径并登录时使用；这不代表公开发布、Chrome Web Store 批准、hosted AI live、订阅支付或公开匿名额度。
+- 当前公开默认路径仍是 BYOK direct-provider，不要求后端、登录、订阅、支付、公开匿名额度、联网搜索或远端链接正文抓取；候选包已包含 v0.3 hosted AI 所需的 `identity` 权限和精确 production backend host permission，默认休眠且仅在用户主动选择托管路径并登录时使用；这不代表公开发布、Chrome Web Store 批准、hosted AI live、订阅支付或公开匿名额度。CWS listing copy 可以解释该可选路径，但不能写成已经上架、已批准或公开 live。
 - GitHub push、构建通过或内部手动 QA 不等于 Chrome Web Store 发布批准。

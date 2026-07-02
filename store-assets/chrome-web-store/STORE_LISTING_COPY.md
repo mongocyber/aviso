@@ -1,24 +1,24 @@
 # Aviso Chrome Web Store Listing Copy
 
-Updated: 2026-06-10
+Updated: 2026-07-02
 
 ## Listing Basics
 
 - Recommended category: `Productivity`
 - Supported languages: `Chinese (Simplified)`, `English`
-- Current release posture: public website/docs are intended as the official launch-facing product materials; Chrome Web Store listing is still in submission preparation and is not yet approved
+- Current release posture: final-prep listing source for the current production candidate package; not uploaded in this thread, not approved by Chrome Web Store, and not public live
 
-Scope note: this file remains the v0.1 BYOK direct-provider listing copy. It is not the final v0.3 hosted-AI Chrome Web Store submission source. For v0.3 hosted-AI disclosure preparation, use `docs/planning/v0.3/cws-disclosure-draft.md` and replace any staging-only fields with final production/package evidence before submission.
+Scope note: this file is the Chrome Web Store listing copy source for owner final validation. It describes the current package boundary: BYOK direct-provider remains the default path, while optional Aviso AI / hosted AI uses Google sign-in and the approved production-candidate backend only when the user chooses it. This file does not upload the listing, prove Chrome Web Store approval, or mark hosted AI live.
 
 ## Short Description
 
 ### 中文
 
-用你自己的 API Key，在当前网页里就地解释、翻译、润色、总结和提问。
+在当前网页里解释、翻译、润色、总结和提问。支持自备 API Key，也可选择登录 Aviso AI。
 
 ### English
 
-Use your own API key to explain, translate, refine, summarize, and ask AI in the page you are viewing.
+Explain, translate, refine, summarize, and ask AI in the current page. Use your own API key or sign in to Aviso AI.
 
 ## Detailed Description
 
@@ -26,20 +26,22 @@ Use your own API key to explain, translate, refine, summarize, and ask AI in the
 
 Aviso 是一个 Chrome 扩展，帮助你在当前网页里直接调用 AI，而不是在网页和聊天工具之间来回复制粘贴。
 
-你可以在选中文字后使用轻量工具栏，也可以通过右键菜单、命令面板和页面内结果面板完成常见操作。Aviso 当前已实现：
+你可以在选中文字后使用轻量工具栏，也可以通过右键菜单、命令面板和页面内结果面板完成常见操作。Aviso 当前支持：
 
 - 划词工具栏：解释、翻译、润色、总结、发给 AI
 - 右键菜单：选中文本、当前页面、链接、图片内部路径、复制当前上下文、模型切换、自定义模板
 - 命令面板：搜索本地 AI 对话、Chrome 浏览历史、Chrome 书签；无结果时可直接把输入发给 AI
 - 页面内结果面板：流式结果、复制、保存、继续追问
-- Popup 设置页：多 AI 服务配置、API Key、默认模型、功能开关、模板、历史、界面语言
+- Popup 设置页：多 AI 服务配置、API Key、Aviso AI 登录、默认模型、功能开关、模板、历史、界面语言
 - 中文 / English 界面
 
-Aviso 采用 BYOK direct-provider 模式：用户自己提供 API Key，扩展从浏览器直接连接到已批准的 provider host。项目方不提供托管 AI、账号登录、订阅支付、匿名额度或 provider 代理服务。
+Aviso 保留 BYOK direct-provider 作为默认路径：用户自己提供 API Key，扩展从浏览器直接连接到已批准的 provider host。用户也可以主动选择 Aviso AI / hosted AI 路径并使用 Google 登录；只有选择该路径时，请求才会经过 Aviso 后端和上游模型 provider。BYOK 不需要登录，也不会被 Aviso AI 登录状态拦住。
 
-当前用户可用反馈已覆盖豆包 / 火山方舟。OpenAI 和 Anthropic 当前只描述为支持配置 API Key 和模型 ID；实际可用性取决于用户自己的 Key、模型权限和 provider 状态。
+当前用户可用反馈已覆盖豆包 / 火山方舟。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持配置 API Key 和模型 ID；实际可用性取决于用户自己的 Key、模型权限和 provider 状态。OpenRouter、Gemini 和 Tencent Hunyuan 的模型 ID 需要用户手动填写，Aviso 不自动读取模型列表。
 
 截图能力只保留在用户主动触发的右键内部路径中，不作为普通用户主入口或公开卖点。
+
+当前不包含订阅支付、公开匿名额度、联网搜索、远端链接正文抓取、广告、遥测或分析 SDK。
 
 ### English
 
@@ -51,14 +53,16 @@ Current features include:
 - Right-click actions for selected text, current page, links, image internal path, copy current context, model switching, and custom templates
 - Command palette for local AI conversation search, Chrome browsing history search, Chrome bookmarks search, and direct ask when no local result matches
 - In-page result panel with streaming output, copy, save, and follow-up
-- Popup settings for multiple AI service configs, API keys, default model, feature switches, templates, history, and UI language
+- Popup settings for multiple AI service configs, API keys, Aviso AI sign-in, default model, feature switches, templates, history, and UI language
 - Chinese and English UI
 
-Aviso uses a BYOK direct-provider model: users bring their own API keys, and the extension connects directly from the browser to approved provider hosts. There is no project-owned backend, hosted Aviso AI, login, subscription, payment, anonymous quota, or provider proxy.
+Aviso keeps BYOK direct-provider as the default path: users bring their own API keys, and the extension connects directly from the browser to approved provider hosts. Users may also choose Aviso AI / hosted AI and sign in with Google; only that optional path sends requests through the Aviso backend and upstream model providers. BYOK does not require sign-in and is not blocked by Aviso AI account state.
 
-Doubao / Volcengine Ark already has user-usable feedback. For OpenAI and Anthropic, the store copy should only say that users can configure their own API key and model ID; actual usability depends on the user's key, model access, and provider status.
+Doubao / Volcengine Ark already has user-usable feedback. OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan can be configured with the user's own API key and model ID; actual usability depends on the user's key, model access, and provider status. OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually; Aviso does not automatically read model lists.
 
 Screenshot capability remains an internal right-click path and is not presented as a main public entry or promotional feature.
+
+This release does not include subscription payment, public anonymous quota, web search, remote link-body fetching, advertising, telemetry, or analytics SDKs.
 
 ## Single Purpose Description
 
@@ -79,6 +83,7 @@ Aviso has a single purpose: provide user-triggered AI reading, translation, summ
 | `storage` | Saves local settings, encrypted API keys, templates, and local conversation history in Chrome extension storage. |
 | `history` | Lets the command palette search the user's local Chrome browsing history on-device. These searches are local only. |
 | `bookmarks` | Lets the command palette search the user's local Chrome bookmarks on-device. |
+| `identity` | Opens the Google authorization window only when the user chooses Aviso AI / hosted AI sign-in. BYOK use does not require this permission. |
 | `clipboardWrite` | Supports copy actions such as copying AI output or copying the current page context into the user's clipboard. |
 
 ## Host Permissions Justification
@@ -88,8 +93,14 @@ Aviso has a single purpose: provide user-triggered AI reading, translation, summ
 | `https://api.openai.com/*` | Allows direct browser-to-provider API requests when the user configures an OpenAI-compatible service with their own API key. |
 | `https://api.anthropic.com/*` | Allows direct browser-to-provider API requests when the user configures Anthropic with their own API key. |
 | `https://ark.cn-beijing.volces.com/*` | Allows direct browser-to-provider API requests for Doubao / Volcengine Ark when the user configures their own key and endpoint. |
+| `https://api.deepseek.com/*` | Allows direct browser-to-provider API requests when the user configures DeepSeek with their own API key and model ID. |
+| `https://api.moonshot.cn/*` | Allows direct browser-to-provider API requests when the user configures Kimi / Moonshot with their own API key and model ID. |
+| `https://openrouter.ai/*` | Allows direct browser-to-provider API requests when the user configures OpenRouter with their own API key and model ID. |
+| `https://generativelanguage.googleapis.com/*` | Allows direct browser-to-provider API requests when the user configures Gemini with their own API key and model ID. |
+| `https://api.hunyuan.cloud.tencent.com/*` | Allows direct browser-to-provider API requests when the user configures Tencent Hunyuan with their own API key and model ID. |
+| `https://aviso-backend-production.vercel.app/*` | Allows the optional Aviso AI / hosted AI path to reach the approved production-candidate backend after the user signs in. BYOK requests do not use this backend. |
 
-These host permissions are limited to approved provider API domains. They are not used for remote webpage scraping, project-owned servers, analytics, or remote logging.
+These host permissions are limited to approved provider API domains and the exact Aviso hosted AI backend origin. They are not used for remote webpage scraping, analytics, or remote logging.
 
 ## Remote Code Declaration Suggestion
 
@@ -102,12 +113,13 @@ These host permissions are limited to approved provider API domains. They are no
 - Aviso does not sell user data.
 - Aviso does not use user data for advertising.
 - Aviso does not use user data for credit, lending, or similar eligibility decisions.
-- Aviso does not send user content to an Aviso-owned backend, because there is no project-owned backend in the current product scope.
+- BYOK user content is not sent to an Aviso-owned backend.
+- Optional Aviso AI / hosted AI requests pass through the Aviso backend only after the user chooses hosted AI and signs in.
 - API keys are not stored in plaintext; they remain in `chrome.storage.local/contextai_api_keys` with local encryption / obfuscation-level protection.
 - Non-secret settings are stored in `chrome.storage.sync/contextai_settings`.
 - Local history is stored in `chrome.storage.local/contextai_history`.
 - When the user actively triggers an AI action, required content is sent directly from the browser extension to the user-selected provider.
-- Provider handling of request content depends on the user's relationship with that provider, its service terms, and its privacy policy.
+- Provider handling of request content depends on the user's relationship with that provider, its service terms, and its privacy policy. For Aviso AI / hosted AI, upstream provider handling depends on the provider account and policy used by the Aviso backend.
 
 This wording should stay aligned with `website/docs/privacy-policy.md` and `website/docs/data-permissions.md`.
 
@@ -126,9 +138,10 @@ Reviewers can still verify these non-provider flows without any external API key
 
 ### With a provider key
 
-- Aviso is BYOK: the reviewer must use their own valid provider key
+- For BYOK review, the reviewer must use their own valid provider key
+- For Aviso AI review, the reviewer signs in only through the user-initiated Google sign-in flow
 - Doubao / Volcengine Ark has existing user-usable feedback
-- OpenAI / Anthropic should be reviewed as configurable provider paths, not as previously live-certified providers
+- OpenAI / Anthropic / DeepSeek / Kimi / Moonshot / OpenRouter / Gemini / Tencent Hunyuan should be reviewed as configurable provider paths, not as broadly live-certified providers
 - If a reviewer chooses to test a provider call, they should supply their own key and model access
 
 ## Store Asset Checklist And Current Gaps
@@ -139,21 +152,19 @@ Reviewers can still verify these non-provider flows without any external API key
 - Small promo tile: `store-assets/chrome-web-store/output/promo-small-440x280.png`
 - Marquee promo tile: `store-assets/chrome-web-store/output/promo-marquee-1400x560.png`
 
-### Still missing
+### Still needs owner final validation before upload
 
-- 1280x800 localized screenshot set for Chrome Web Store listing
-- Chinese screenshots: pending
-- English screenshots: pending
-
-Per `store-assets/chrome-web-store/GENERATION_REPORT.md`, screenshot generation is still blocked and should be replaced with real runtime capture or another reference-preserving process.
+- Confirm the exact package uploaded to Chrome Web Store is the final package produced by the release gate.
+- Confirm the final manifest permission list matches this file.
+- Confirm the final privacy/support URLs after website deployment.
+- Confirm localized screenshot set and promotional assets are the owner-approved assets for upload.
+- Confirm no public copy claims Chrome Web Store approval, hosted AI live, subscription payment, or anonymous public quota before those gates are actually complete.
 
 ## Website / Store Switches Needed Before And After Approval
 
 - Before Chrome Web Store submission, deploy the current website docs and verify the final homepage, support, and privacy URLs.
 - Replace the website `Add to Chrome` CTA target with the real Chrome Web Store listing URL
 - Replace the placeholder text in `website/docs/install.md` with the real Chrome Web Store listing URL and store-install steps
-- Confirm the support URL used in the store listing points to the hosted support page. If the current Vercel domain remains the production homepage, the target URL is:
-  - `https://aviso-nine.vercel.app/docs/support-feedback/`
-- Confirm the privacy policy URL used in the store listing points to the hosted privacy page. If the current Vercel domain remains the production homepage, the target URL is:
-  - `https://aviso-nine.vercel.app/docs/privacy-policy/`
+- Confirm the support URL used in the store listing points to the deployed support page.
+- Confirm the privacy policy URL used in the store listing points to the deployed privacy page.
 - Re-check that website wording still says store availability only after approval, not before

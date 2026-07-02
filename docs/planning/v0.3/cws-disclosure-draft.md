@@ -1,26 +1,26 @@
 # Aviso v0.3 CWS Disclosure Draft
 
-Status: `draft / source-updated / owner-approved-to-prepare / blocked-on-production-evidence / not submitted`
-Updated: 2026-06-27
+Status: `draft / source-updated / backend-main-pushed / final-package-verified / not submitted`
+Updated: 2026-07-02
 
-This draft is the product-side source for Chrome Web Store privacy and data-disclosure updates for v0.3 hosted AI. MON-23 owner decisions approve preparation of the final store submission package, but this file does not submit the Chrome Web Store form, prove public release, prove production validation, or approve paid hosted AI.
+This draft is the product-side source for Chrome Web Store privacy and data-disclosure updates for the current production-candidate package. The backend and frontend OAuth challenge contract has been merged to main on both repositories, but this file does not submit the Chrome Web Store form, prove Chrome Web Store approval, mark hosted AI live, or approve paid hosted AI.
 
 ## Final Submission Readiness
 
-Current conclusion: `blocked`.
+Current conclusion: `ready for owner final validation before upload`.
 
-This draft can be used as the source checklist for the final Chrome Web Store submission, but it is not yet a final submission packet. The final packet must wait for production evidence from the MON-23 production/package tracks.
+This draft can be used as the source checklist for the final Chrome Web Store submission. The current package has been regenerated and verified locally, but the final packet must still be tied to the exact package uploaded to Chrome Web Store and to owner-reviewed deployed website privacy/support URLs.
 
 | Field | Current value in this draft | Final submission requirement | Status |
 | --- | --- | --- | --- |
-| Production backend origin | `https://aviso-backend-production.vercel.app` | Exact production backend origin, if hosted AI ships publicly | `known / backend smoke passed / not live` |
-| Hosted backend host permission | Production candidate origin in source package config: `https://aviso-backend-production.vercel.app/*` | Exact host permission from the final production package manifest; no broad host permission | `source updated / final package evidence pending` |
-| Production OAuth evidence | Authenticated production HTTP smoke passed with sanitized owner-assisted Google OAuth evidence | Sanitized production Google OAuth/session smoke evidence and consent-screen confirmation | `partial / final frontend package smoke pending` |
-| Production provider evidence | Authenticated production HTTP smoke passed with SSE `delta`, `done`, `usage`, positive quota delta, and cost guard exercised | Sanitized production provider smoke evidence with quota/cost guard confirmation | `partial / final frontend package smoke pending` |
-| Production package evidence | Candidate artifacts `build/chrome-mv3-prod.zip` and `.output/aviso-0.1.0-chrome.zip` regenerated and inspected on 2026-06-27 | Final uploaded package filename, manifest permission list, and package boundary scan | `candidate evidence present / final upload pending` |
-| Website privacy URL | Source copy exists only | Deployed privacy-policy URL reviewed against the final package | `blocked` |
-| Support URL | Source copy exists only | Deployed support/feedback URL safe to cite in CWS | `blocked` |
-| Store listing copy | v0.1 BYOK copy exists separately | Final hosted-AI listing copy, or explicit decision to keep BYOK-only listing | `blocked` |
+| Production backend origin | `https://aviso-backend-production.vercel.app` | Exact production backend origin, if hosted AI ships publicly | `known / backend main pushed / not live` |
+| Hosted backend host permission | Production candidate origin in source package config: `https://aviso-backend-production.vercel.app/*` | Exact host permission from the final production package manifest; no broad host permission | `verified in regenerated package` |
+| Production OAuth evidence | Backend OAuth challenge gate merged and pushed; frontend challenge client merged and pushed | Final loaded-extension sign-in smoke using the exact package | `code merged / owner final smoke pending` |
+| Production provider evidence | Authenticated production HTTP smoke previously passed with SSE `delta`, `done`, `usage`, positive quota delta, and cost guard exercised | Sanitized production provider smoke evidence with quota/cost guard confirmation on the final package | `partial / final package smoke pending` |
+| Production package evidence | `build/chrome-mv3-prod.zip` regenerated and verified after the 2026-07-02 frontend/backend changes | Final uploaded package filename, manifest permission list, and package boundary scan | `local package verified / not uploaded` |
+| Website privacy URL | Source copy exists and owner has reviewed website content | Deployed privacy-policy URL reviewed against the final package | `source reviewed / deployment URL confirmation pending` |
+| Support URL | Source copy exists | Deployed support/feedback URL safe to cite in CWS | `deployment URL confirmation pending` |
+| Store listing copy | `store-assets/chrome-web-store/STORE_LISTING_COPY.md` updated for BYOK + optional Aviso AI | Final owner-approved store copy pasted into CWS | `source updated / not uploaded` |
 | Billing / paid plan | Excluded from first v0.3 release | Keep financial/payment disclosure as not collected; no paid-plan or checkout copy | `ready if scope unchanged` |
 
 Do not paste the staging backend host permission into a production Chrome Web Store submission. For the intended hosted-AI production release, the host-permission list must come from the exact verified production package manifest.
@@ -31,14 +31,14 @@ Do not paste the staging backend host permission into a production Chrome Web St
 - Hosted AI is optional and requires user sign-in.
 - BYOK users are not forced through hosted AI, login, quota, or the backend.
 - MON-23 owner approval covers final submission preparation, production backend preparation, production OAuth/provider validation, and billing exclusion for the first hosted-AI release.
-- Chrome Web Store submission, production backend validation, production package evidence, website deployment evidence, and live release evidence remain incomplete.
+- Chrome Web Store submission, final package evidence, website deployment evidence, final loaded-extension smoke, and live release evidence remain incomplete.
 
 ## Request Paths
 
 | Path | User action | Data transit | Account required | Current release meaning |
 | --- | --- | --- | --- | --- |
 | BYOK direct-provider | User triggers an AI action with a configured provider key | Browser extension -> selected provider | No | Existing/default path |
-| Hosted AI | User chooses hosted AI and signs in | Browser extension -> Aviso backend -> upstream provider | Yes | v0.3 optional path; production backend smoke passed, final package / CWS / live evidence pending |
+| Hosted AI | User chooses hosted AI and signs in | Browser extension -> Aviso backend -> upstream provider | Yes | Optional production-candidate path; backend/frontend challenge contract merged, final package / CWS / live evidence pending |
 
 ## Data Categories
 
@@ -100,6 +100,10 @@ https://aviso-backend-production.vercel.app/*
 
 Final submission note: the host-permission list must match the exact manifest in the final uploaded package. This draft still does not submit Chrome Web Store changes or mark hosted AI live.
 
+## OAuth / Hosted Sign-In Disclosure Note
+
+The current package requests `identity` only for the user-initiated Aviso AI / hosted AI sign-in flow. BYOK direct-provider use does not require login. The sign-in flow now uses a backend-issued OAuth challenge: the frontend requests a short-lived `state` / `nonce`, passes those values through Google OAuth, and exchanges the resulting id token with the backend. The backend consumes the challenge before issuing a hosted session. Raw id tokens, hosted session tokens, raw profile payloads, raw prompts, raw provider responses, screenshots/base64, clipboard content, API keys, and full URLs must not be included in public evidence or logs.
+
 ## CWS Form Guidance
 
 Recommended disclosure posture for the v0.3 package:
@@ -119,6 +123,7 @@ Before Chrome Web Store disclosure submission:
 
 - Confirm the final uploaded package manifest still matches the production backend domain and host permission recorded here.
 - Confirm production OAuth client and consent screen wording.
+- Confirm the final loaded extension can complete user-initiated hosted sign-in after the OAuth challenge update.
 - Confirm upstream provider account data-retention/logging settings.
 - Confirm metadata schema and 30-day retention policy still match implementation.
 - Confirm website privacy policy has been reviewed in the deployed copy.
