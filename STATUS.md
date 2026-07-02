@@ -1,6 +1,6 @@
 # Aviso Status
 
-Updated: 2026-06-28
+Updated: 2026-07-02
 
 ## 结论
 
@@ -56,6 +56,7 @@ v0.3 hosted AI 正在独立门禁下开发，不代表当前 Chrome Web Store �
 ## 发布候选状态
 
 - 主线检查已通过：`git diff --check`、`npm test`、`npx tsc --noEmit`、`npm run build`、`cd website && npm run build`、`npm run package`。
+- 2026-07-02 maintenance pass：前端安全口径收口和纯逻辑 i18n 测试解耦已合入 `main`（`9bfe1ae`、`4c99f82`）；本次实际复跑 `git diff --check`、`npm test`（212/212）和 `npx tsc --noEmit` 通过。本次未重新 build、package、提交 CWS 或部署网站。
 - 最终 Chrome Web Store 提交包路径：`build/chrome-mv3-prod.zip`。
 - Chrome Web Store 提交状态：已人工提交审核，Git tag 为 `v0.1.0-cws-submitted`。
 - GitHub CI：`CI` workflow 已在 `597391b` 通过。

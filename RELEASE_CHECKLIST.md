@@ -4,7 +4,7 @@
 
 状态：`v0.1 internal dogfood / 内部试用版`，Chrome Web Store 已提交审核 / 待审核
 
-日期：2026-06-13
+日期：2026-07-02
 
 ## 当前结论
 
@@ -76,6 +76,8 @@ npm run package
 检查通过只说明代码和构建基线可用；真实 Chrome 加载体验和真实 provider 调用仍以手动验收为准。
 
 2026-06-13 CTO 自动门禁复跑通过：`git diff --check`、`npm test`（159 passed）、`npx tsc --noEmit`、`npx tsc --noEmit -p tsconfig.wxt.json`、`npm run build`、`npm run build:wxt`、`npm run check:manifests`。其中 `npm run build` 在沙箱内会遇到 `Operation not permitted`，非沙箱复跑通过；这不关闭任何 loaded-extension manual release gate。
+
+2026-07-02 maintenance pass 通过：`git diff --check`、`npm test`（212/212）、`npx tsc --noEmit`。本次只覆盖前端安全口径收口和纯逻辑 i18n 测试解耦；未重新 build、package、提交 CWS、部署网站或标记 hosted AI live。
 
 ## 上线前安全扫描
 

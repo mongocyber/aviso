@@ -1,6 +1,6 @@
 # Aviso Project Context For Agents
 
-Updated: 2026-06-28
+Updated: 2026-07-02
 
 ## Repository Role
 
@@ -33,6 +33,8 @@ Current public/product truth:
 - no telemetry or analytics SDK,
 - no remote link-body fetching or web search,
 - screenshot remains only in the internal right-click path.
+
+2026-07-02 maintenance closeout: frontend `main` includes `9bfe1ae` for clearer API key obfuscation / hosted permission wording and `4c99f82` for splitting pure i18n logic into `src/utils/i18n-core.ts` so logic tests do not load React. Checks rerun in the frontend repo: `git diff --check`, `npm test` (212/212), and `npx tsc --noEmit`. This did not rebuild/package, submit CWS, deploy the website, or mark hosted AI live.
 
 ## v0.3 Planning Truth
 
