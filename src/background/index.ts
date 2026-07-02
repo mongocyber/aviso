@@ -7,7 +7,7 @@ import type {
 } from "~types/messages"
 import { deriveAiUnavailableGuidance } from "~utils/ai-unavailable-guidance"
 import { buildSafeErrorLog, normalizeError } from "~utils/errors"
-import { createI18n, resolveSettingsUiLanguage } from "~utils/i18n"
+import { createI18n, resolveSettingsUiLanguage } from "~utils/i18n-core"
 import { parseIntentLocally } from "~utils/intent"
 import {
   bucketScreenshotDataUrl,

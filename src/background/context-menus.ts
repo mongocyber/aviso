@@ -28,7 +28,7 @@ import {
 } from "~utils/hosted-session"
 import { getApiKeys, getSettings, saveSettings } from "~utils/storage"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
-import { createI18n, resolveSettingsUiLanguage } from "~utils/i18n"
+import { createI18n, resolveSettingsUiLanguage } from "~utils/i18n-core"
 
 import { getRuntimeConfigSnapshot } from "./ai-runtime-cache"
 import {

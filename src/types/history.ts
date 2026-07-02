@@ -1,5 +1,5 @@
 import type { TranslationTargetLanguage } from "~utils/translation"
-import type { UiLanguageSetting } from "~utils/i18n"
+import type { UiLanguageSetting } from "~utils/i18n-core"
 
 export type ProviderConfigProvider =
   | "openai"

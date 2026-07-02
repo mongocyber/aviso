@@ -3,7 +3,7 @@ import type {
   ConnectivityErrorCategory,
   ConnectivityValidationSummary
 } from "./provider-connectivity"
-import type { ResolvedUiLanguage } from "./i18n"
+import type { ResolvedUiLanguage } from "./i18n-core"
 
 export type ModelAvailabilityTone = "ok" | "warning" | "danger" | "muted"
 

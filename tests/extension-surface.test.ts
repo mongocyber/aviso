@@ -214,7 +214,7 @@ test("command palette shows explicit unsafe URL blocking", () => {
     "utf8"
   )
   const i18nSource = readFileSync(
-    new URL("../src/utils/i18n.ts", import.meta.url),
+    new URL("../src/utils/i18n-core.ts", import.meta.url),
     "utf8"
   )
 

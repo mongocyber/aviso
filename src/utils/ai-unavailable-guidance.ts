@@ -1,4 +1,4 @@
-import type { I18nKey } from "./i18n"
+import type { I18nKey } from "./i18n-core"
 
 export type AiUnavailableGuidanceReason =
   | "hosted_sign_in_required"

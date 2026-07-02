@@ -1,5 +1,5 @@
 import type { ContextMenuContext } from "~types/messages"
-import type { ResolvedUiLanguage } from "~utils/i18n"
+import type { ResolvedUiLanguage } from "~utils/i18n-core"
 
 import {
   SLOW_MODEL_RESPONSE_TEXT,

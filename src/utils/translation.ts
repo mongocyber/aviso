@@ -1,5 +1,5 @@
 import type { AIRequestPayload } from "~types/messages"
-import type { ResolvedUiLanguage } from "./i18n"
+import type { ResolvedUiLanguage } from "./i18n-core"
 
 export type TranslationTargetLanguage =
   | "auto"

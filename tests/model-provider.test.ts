@@ -31,7 +31,7 @@ import {
   getI18nMessage,
   normalizeUiLanguageSetting,
   resolveUiLanguage
-} from "../src/utils/i18n.ts"
+} from "../src/utils/i18n-core.ts"
 import {
   getModelAvailability,
   isProviderKeyConfigured
