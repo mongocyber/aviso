@@ -236,6 +236,9 @@ test("hosted Google OAuth parses redirect id token and sanitizes failures", asyn
   assert.equal(token, "header.payload.sig")
   assert.match(launchedUrl, /response_type=id_token/)
   assert.doesNotMatch(launchedUrl, /client_secret/)
+  const launchedAuthUrl = new URL(launchedUrl)
+  assert.equal(launchedAuthUrl.searchParams.get("state"), "state-1")
+  assert.equal(launchedAuthUrl.searchParams.get("nonce"), "nonce-1")
 
   const identity = await requestHostedGoogleIdentityToken({
     getRedirectUrl: () => "https://extension-id.chromiumapp.org/",
@@ -254,6 +257,141 @@ test("hosted Google OAuth parses redirect id token and sanitizes failures", asyn
   })
 })
 
+test("hosted Google sign-in binds backend challenge through OAuth and exchange", async () => {
+  const { handleHostedGoogleSignIn } = await import(
+    "../src/background/hosted-auth.ts"
+  )
+  const calls: string[] = []
+  let savedPayload = ""
+
+  const result = await handleHostedGoogleSignIn({
+    client: {
+      baseUrl: HOSTED_AI_LOCAL_BASE_URL,
+      createGoogleAuthChallenge: async () => {
+        calls.push("challenge")
+        return {
+          state: "backend-state",
+          nonce: "backend-nonce",
+          expires_at: "2026-06-18T00:05:00.000Z"
+        }
+      },
+      authGoogle: async (body) => {
+        calls.push("auth_google")
+        assert.deepEqual(body, {
+          id_token: "mock-id-token",
+          state: "backend-state",
+          nonce: "backend-nonce"
+        })
+        return createHostedSessionFixture()
+      },
+      me: async (sessionToken) => {
+        calls.push("me")
+        assert.equal(sessionToken, "session-local")
+        return createHostedMeFixture(0)
+      }
+    },
+    requestGoogleIdentityToken: async (challenge) => {
+      calls.push("oauth")
+      assert.deepEqual(challenge, {
+        state: "backend-state",
+        nonce: "backend-nonce"
+      })
+      return { idToken: "mock-id-token", nonce: "backend-nonce" }
+    },
+    saveSession: async (session, options) => {
+      calls.push("storage")
+      savedPayload = JSON.stringify({ session, options })
+      return {
+        session,
+        me: options.me,
+        baseUrl: options.baseUrl ?? HOSTED_AI_LOCAL_BASE_URL,
+        updatedAt: 1
+      }
+    }
+  })
+
+  assert.deepEqual(result, {
+    status: "signed_in",
+    stage: "done"
+  })
+  assert.deepEqual(calls, [
+    "challenge",
+    "oauth",
+    "auth_google",
+    "me",
+    "storage"
+  ])
+  assert.doesNotMatch(savedPayload, /backend-state|backend-nonce|mock-id-token/)
+})
+
+test("hosted Google sign-in stops safely when backend challenge fails", async () => {
+  const { handleHostedGoogleSignIn } = await import(
+    "../src/background/hosted-auth.ts"
+  )
+  const scenarios = [
+    {
+      error: new HostedAiClientError(normalizeHostedAiError("unauthorized", 401)),
+      expectedStatus: "hosted_route_unavailable" as const,
+      expectedHttpStatusClass: "4xx" as const
+    },
+    {
+      error: new HostedAiClientError(
+        normalizeHostedAiError("service_unavailable")
+      ),
+      expectedStatus: "local_backend_unavailable" as const,
+      expectedHttpStatusClass: "unknown" as const
+    }
+  ]
+
+  for (const scenario of scenarios) {
+    let oauthStarted = false
+    let exchangeStarted = false
+    let storageStarted = false
+    const result = await handleHostedGoogleSignIn({
+      client: {
+        baseUrl: HOSTED_AI_LOCAL_BASE_URL,
+        createGoogleAuthChallenge: async () => {
+          throw scenario.error
+        },
+        authGoogle: async () => {
+          exchangeStarted = true
+          return createHostedSessionFixture()
+        },
+        me: async () => createHostedMeFixture(0)
+      },
+      requestGoogleIdentityToken: async () => {
+        oauthStarted = true
+        return { idToken: "mock-id-token", nonce: "backend-nonce" }
+      },
+      saveSession: async (session, options) => {
+        storageStarted = true
+        return {
+          session,
+          me: options.me,
+          baseUrl: options.baseUrl ?? HOSTED_AI_LOCAL_BASE_URL,
+          updatedAt: 1
+        }
+      }
+    })
+
+    assert.equal(result.status, scenario.expectedStatus)
+    assert.equal(result.stage, "challenge")
+    assert.equal(result.error?.source, "backend")
+    assert.equal(result.error?.code, scenario.error.normalized.code)
+    assert.equal(
+      result.error?.httpStatusClass,
+      scenario.expectedHttpStatusClass
+    )
+    assert.equal(oauthStarted, false)
+    assert.equal(exchangeStarted, false)
+    assert.equal(storageStarted, false)
+    assert.doesNotMatch(
+      JSON.stringify(result),
+      /backend-state|backend-nonce|mock-id-token|https?:\/\//
+    )
+  }
+})
+
 test("hosted AI client exposes auth, logout, me, and chat with scoped headers", async () => {
   const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = []
   const responseBody = `data: {"delta":"hello"}\n\ndata: {"done":true,"usage":{"tokens_in":1,"tokens_out":2}}\n\n`
@@ -262,6 +400,14 @@ test("hosted AI client exposes auth, logout, me, and chat with scoped headers", 
 
     if (String(input).endsWith("/auth/logout")) {
       return new Response(null, { status: 204 })
+    }
+
+    if (String(input).endsWith("/auth/google/challenge")) {
+      return Response.json({
+        state: "backend-state",
+        nonce: "backend-nonce",
+        expires_at: "2026-06-18T00:05:00.000Z"
+      })
     }
 
     if (String(input).endsWith("/chat")) {
@@ -311,9 +457,11 @@ test("hosted AI client exposes auth, logout, me, and chat with scoped headers", 
     createIdempotencyKey: () => "idem-local"
   })
 
+  const challenge = await client.createGoogleAuthChallenge()
   await client.authGoogle({
     id_token: "mock-id-token",
-    nonce: "nonce-1234567890"
+    state: challenge.state,
+    nonce: challenge.nonce
   })
   await client.logout()
   await client.me()
@@ -340,8 +488,15 @@ test("hosted AI client exposes auth, logout, me, and chat with scoped headers", 
   assert.ok(authCall)
   assert.deepEqual(JSON.parse(String(authCall.init?.body)), {
     id_token: "mock-id-token",
-    nonce: "nonce-1234567890"
+    state: "backend-state",
+    nonce: "backend-nonce"
   })
+  const challengeCall = calls.find((call) =>
+    String(call.input).endsWith("/auth/google/challenge")
+  )
+  assert.ok(challengeCall)
+  assert.equal(challengeCall.init?.method, "POST")
+  assert.equal(challengeCall.init?.body, undefined)
   const headers = new Headers(chatCall.init?.headers)
   assert.equal(headers.get("Authorization"), "Bearer session-local")
   assert.equal(headers.get("Idempotency-Key"), "idem-local")
@@ -1602,6 +1757,10 @@ test("hosted sign-in slice keeps production backend and permission boundaries", 
     hostedAuthSource,
     /createHostedAiClient\(\{\s*baseUrl: HOSTED_AI_DEFAULT_BASE_URL\s*\}\)/
   )
+  assert.match(hostedClientSource, /\/auth\/google\/challenge/)
+  assert.match(hostedAuthSource, /createGoogleAuthChallenge/)
+  assert.match(hostedAuthSource, /state: challenge\.state/)
+  assert.match(hostedAuthSource, /nonce: challenge\.nonce/)
   assert.match(hostedAuthSource, /googleIdToken = null/)
   assert.equal(
     getI18nMessage("popup.hosted.status.authClientUnavailable", "zh-CN"),
@@ -1609,8 +1768,14 @@ test("hosted sign-in slice keeps production backend and permission boundaries", 
   )
   assert.match(hostedOAuthSource, /launchWebAuthFlow/)
   assert.match(hostedOAuthSource, /response_type: "id_token"/)
+  assert.doesNotMatch(hostedOAuthSource, /createHostedGoogleOAuthNonce/)
+  assert.doesNotMatch(hostedOAuthSource, /getRandomValues/)
   assert.doesNotMatch(hostedOAuthSource, /getAuthToken/)
   assert.doesNotMatch(hostedOAuthSource, /client_secret/)
+  assert.doesNotMatch(
+    `${hostedClientSource}\n${hostedOAuthSource}\n${hostedAuthSource}`,
+    /console\.(log|debug|info|warn|error)/
+  )
   assert.doesNotMatch(
     `${hostedClientSource}\n${hostedSessionSource}\n${hostedChatRoutingSource}\n${hostedOAuthSource}\n${hostedAuthSource}\n${popupSource}`,
     /api\.aviso|aviso-backend-staging/i

@@ -81,8 +81,12 @@ export async function requestHostedGoogleIdentityToken(
     throw new HostedGoogleOAuthError("identity_unavailable")
   }
 
-  const state = options.state ?? createHostedGoogleOAuthNonce()
-  const nonce = options.nonce ?? createHostedGoogleOAuthNonce()
+  const state = options.state
+  const nonce = options.nonce
+  if (!isNonEmptyOAuthParam(state) || !isNonEmptyOAuthParam(nonce)) {
+    throw new HostedGoogleOAuthError("config_missing")
+  }
+
   const url = buildHostedGoogleOAuthUrl({
     clientId,
     redirectUri,
@@ -126,7 +130,11 @@ export function buildHostedGoogleOAuthUrl(options: {
   state: string
 }): string {
   const clientId = options.clientId ?? HOSTED_GOOGLE_OAUTH_CLIENT_ID
-  if (!clientId.trim()) {
+  if (
+    !clientId.trim() ||
+    !isNonEmptyOAuthParam(options.nonce) ||
+    !isNonEmptyOAuthParam(options.state)
+  ) {
     throw new HostedGoogleOAuthError("config_missing")
   }
 
@@ -196,12 +204,6 @@ export function parseHostedGoogleOAuthRedirect(
   return idToken
 }
 
-export function createHostedGoogleOAuthNonce(): string {
-  const bytes = new Uint8Array(16)
-  globalThis.crypto.getRandomValues(bytes)
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("")
-}
-
 function classifyChromeIdentityError(
   message?: string
 ): HostedGoogleOAuthError {
@@ -214,4 +216,8 @@ function classifyChromeIdentityError(
     return new HostedGoogleOAuthError("user_cancelled")
   }
   return new HostedGoogleOAuthError("identity_unavailable")
+}
+
+function isNonEmptyOAuthParam(value: unknown): value is string {
+  return typeof value === "string" && value.trim().length > 0
 }

@@ -47,7 +47,14 @@ export type ProviderConnectivityPayload = {
 
 export type HostedGoogleSignInData = {
   status: HostedAccountStatus
-  stage: "client" | "oauth" | "auth_google" | "me" | "storage" | "done"
+  stage:
+    | "client"
+    | "challenge"
+    | "oauth"
+    | "auth_google"
+    | "me"
+    | "storage"
+    | "done"
   error?: {
     source: "oauth" | "backend" | "storage" | "unknown"
     code: string

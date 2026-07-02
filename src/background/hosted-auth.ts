@@ -2,6 +2,7 @@ import type { HostedGoogleSignInData } from "~types/messages"
 import {
   createHostedAiClient,
   HostedAiClientError,
+  type HostedAiGoogleChallenge,
   type HostedAiMe,
   type HostedAiSession
 } from "~utils/hosted-ai-client"
@@ -19,13 +20,20 @@ import {
 
 type HostedAuthClient = {
   baseUrl: string
-  authGoogle: (body: { id_token: string; nonce: string }) => Promise<HostedAiSession>
+  createGoogleAuthChallenge: () => Promise<HostedAiGoogleChallenge>
+  authGoogle: (body: {
+    id_token: string
+    state: string
+    nonce: string
+  }) => Promise<HostedAiSession>
   me: (sessionToken?: string) => Promise<HostedAiMe>
 }
 
 type HostedGoogleSignInDependencies = {
   client?: HostedAuthClient
-  requestGoogleIdentityToken?: () => Promise<{ idToken: string; nonce: string }>
+  requestGoogleIdentityToken?: (
+    challenge: Pick<HostedAiGoogleChallenge, "state" | "nonce">
+  ) => Promise<{ idToken: string; nonce: string }>
   saveSession?: typeof saveHostedSession
 }
 
@@ -43,13 +51,19 @@ export async function handleHostedGoogleSignIn(
       dependencies.requestGoogleIdentityToken ?? requestHostedGoogleIdentityToken
     const persistSession = dependencies.saveSession ?? saveHostedSession
 
+    stage = "challenge"
+    const challenge = await client.createGoogleAuthChallenge()
     stage = "oauth"
-    const googleIdentity = await requestGoogleIdentity()
+    const googleIdentity = await requestGoogleIdentity({
+      state: challenge.state,
+      nonce: challenge.nonce
+    })
     googleIdToken = googleIdentity.idToken
     stage = "auth_google"
     const session = await client.authGoogle({
       id_token: googleIdToken,
-      nonce: googleIdentity.nonce
+      state: challenge.state,
+      nonce: challenge.nonce
     })
     googleIdToken = null
     stage = "me"
@@ -85,10 +99,7 @@ function normalizeHostedGoogleSignInFailure(
 
   if (error instanceof HostedAiClientError) {
     return {
-      status: deriveHostedAccountStatus({
-        session: null,
-        errorCode: error.normalized.code
-      }),
+      status: getHostedBackendFailureStatus(error, stage),
       stage,
       error: {
         source: "backend",
@@ -116,6 +127,23 @@ function getHostedOAuthFailureStatus(
     return "request_invalid"
   }
   return "hosted_route_unavailable"
+}
+
+function getHostedBackendFailureStatus(
+  error: HostedAiClientError,
+  stage: HostedGoogleSignInData["stage"]
+): HostedAccountStatus {
+  if (stage === "challenge") {
+    if (error.normalized.code === "service_unavailable") {
+      return "local_backend_unavailable"
+    }
+    return "hosted_route_unavailable"
+  }
+
+  return deriveHostedAccountStatus({
+    session: null,
+    errorCode: error.normalized.code
+  })
 }
 
 function toHttpStatusClass(
