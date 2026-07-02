@@ -154,5 +154,5 @@ Chrome 版本、操作系统、截图或录屏未补录；当前记录只作为�
 - 当前状态不是 Chrome Web Store 审核通过。
 - 当前状态是已提交审核 / 待审核，不是审核通过。
 - OpenAI / Anthropic / Kimi / Moonshot / OpenRouter / Gemini / Tencent Hunyuan 当前只描述为支持配置的 provider，不描述为 live validated 可用状态；DeepSeek 只能描述为已有一次 owner 手动 connectivity pass，不能扩大成全 provider、全模型或 release-ready 证明。
-- 当前公开/已提交审核的 v0.1 口径没有项目方后端、登录、订阅、支付、匿名额度、托管 AI、联网搜索或远端链接正文抓取；v0.3 production candidate 有可选 Aviso AI / hosted AI 路径，但不代表公开发布、Chrome Web Store 批准、hosted AI live、订阅支付或公开匿名额度。
+- 当前公开默认路径仍是 BYOK direct-provider，不要求后端、登录、订阅、支付、公开匿名额度、联网搜索或远端链接正文抓取；候选包已包含 v0.3 hosted AI 所需的 `identity` 权限和精确 production backend host permission，默认休眠且仅在用户主动选择托管路径并登录时使用；这不代表公开发布、Chrome Web Store 批准、hosted AI live、订阅支付或公开匿名额度。
 - GitHub push、构建通过或内部手动 QA 不等于 Chrome Web Store 发布批准。

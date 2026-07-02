@@ -45,7 +45,7 @@ v0.3 hosted AI 正在独立门禁下开发，不代表当前 Chrome Web Store �
 
 当前 owner 确认的 v0.2 要求边界还包括：
 
-- 不做 Aviso 后端、provider proxy、登录、订阅、支付、匿名额度。
+- BYOK 默认路径不要求 Aviso 后端、provider proxy、登录、订阅、支付或匿名额度；当前候选包已包含 v0.3 hosted AI 所需的 `identity` 权限和精确 production backend host permission，但该路径默认休眠、需用户主动选择托管路径并登录，且不代表 public live、Chrome Web Store 批准、订阅支付或公开匿名额度。
 - 不做遥测、分析 SDK、远端日志。
 - 不做 custom base URL，不做自动读取模型列表；`V02-015` 已关闭为当前 v0.2 明确不做 custom OpenAI-compatible base URL，后续只能作为 future-backlog / 新版本新 issue 重新开启。
 - 不把 provider configuration support 写成 live validation。

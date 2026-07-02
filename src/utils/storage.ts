@@ -1,7 +1,9 @@
 import CryptoJS from "crypto-js"
 import type { PromptTemplate, ProviderConfig, Settings } from "~types/history"
 
-// AES 加密的固定盐（结合扩展 ID 增强隔离性）
+// API key storage is local obfuscation, not a confidentiality boundary.
+// The release extension id is public/stable, so code that can read the local
+// browser profile or chrome.storage.local can derive the same AES passphrase.
 const getEncryptionKey = (): string => {
   // Keep the legacy namespace after the Aviso rename so existing local keys decrypt.
   return `contextai-${chrome.runtime.id}-aes256`
@@ -56,7 +58,7 @@ export async function saveSettings(settings: Partial<Settings>): Promise<void> {
   })
 }
 
-// ── API Keys（加密存 local）────────────────────────────────────────────────
+// ── API Keys（本地混淆后存 local）────────────────────────────────────────────
 
 export type ApiKeys = {
   openai: string
