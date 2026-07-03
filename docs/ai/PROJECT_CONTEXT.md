@@ -27,7 +27,7 @@ Current public/product truth:
 
 - the released/submitted v0.1 public line remains BYOK direct-provider,
 - v0.3 production candidate includes an optional Aviso AI / hosted AI path, production backend smoke, exact production backend host permission, and candidate package evidence,
-- hosted AI is still not public, not Chrome Web Store approved, not website-deployed, and not live,
+- hosted AI is still not Chrome Web Store approved and not release-approved/live through Chrome Web Store; public website deployment evidence exists,
 - no login requirement for BYOK,
 - no subscription or payment,
 - no telemetry or analytics SDK,
@@ -36,7 +36,7 @@ Current public/product truth:
 
 2026-07-02 maintenance closeout: frontend `main` includes `9bfe1ae` for clearer API key obfuscation / hosted permission wording, `4c99f82` for splitting pure i18n logic into `src/utils/i18n-core.ts`, and `6f41513` for using the backend OAuth challenge before hosted Google sign-in. Backend `main` includes `3b69e3d` for the server-side OAuth challenge gate. Checks rerun: frontend `git diff --check`, `npm test` (214/214), and `npx tsc --noEmit`; backend `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm test` (387/387), and `git diff --check`. Chrome Web Store listing copy and v0.3 disclosure draft have been updated for BYOK + optional Aviso AI candidate wording. `npm run verify:release-candidate` regenerated and verified `build/chrome-mv3-prod.zip`; `website` `npm run build` passed. This did not upload CWS, deploy the website, or mark hosted AI live.
 
-2026-07-03 production validation closeout: backend `main` includes `40c8c37` for backend-issued OAuth client ID, `b2b0b65` for secret-safe Google auth rejection diagnostics and Google `email_verified` compatibility, and `c60b895` for parsing Upstash JSON records returned as strings or objects. Backend checks passed `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm test` (392/392), and `git diff --check`; production deployment completed and sanitized challenge smoke passed. Owner-loaded extension validation then confirmed Aviso AI login, translation, and send-to-AI flow work. The remaining latency issue is tracked as a next-version optimization, not a release blocker for the current candidate. Website page review, website deployment, Chrome Web Store submission/disclosure, and owner release approval remain pending.
+2026-07-03 production validation closeout: backend `main` includes `40c8c37` for backend-issued OAuth client ID, `b2b0b65` for secret-safe Google auth rejection diagnostics and Google `email_verified` compatibility, and `c60b895` for parsing Upstash JSON records returned as strings or objects. Backend checks passed `corepack pnpm lint`, `corepack pnpm typecheck`, `corepack pnpm test` (392/392), and `git diff --check`; production deployment completed and sanitized challenge smoke passed. Owner-loaded extension validation then confirmed Aviso AI login, translation, and send-to-AI flow work. The remaining latency issue is tracked as a next-version optimization, not a release blocker for the current candidate. Website page review passed, Vercel production deployment for frontend commit `b6d7b65` is ready, and the public project domain returned the updated homepage/docs. Chrome Web Store submission/disclosure and owner release approval remain pending.
 
 ## v0.3 Planning Truth
 

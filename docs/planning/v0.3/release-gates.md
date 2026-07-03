@@ -1,6 +1,6 @@
 # Aviso v0.3 Release Gates
 
-Status: `planning / privacy-cws-source-updated / mon-23-owner-approved-to-execute / production-backend-smoke-passed / oauth-challenge-gate-merged / upstash-json-parse-fix-deployed / owner-hosted-ai-smoke-passed / cws-listing-disclosure-source-updated / production-frontend-package-verified / website-build-verified / website-review-pending / cws-submission-pending / release-approval-pending / not release-ready`
+Status: `planning / privacy-cws-source-updated / mon-23-owner-approved-to-execute / production-backend-smoke-passed / oauth-challenge-gate-merged / upstash-json-parse-fix-deployed / owner-hosted-ai-smoke-passed / cws-listing-disclosure-source-updated / production-frontend-package-verified / website-build-verified / website-review-passed / website-deployed / cws-submission-pending / release-approval-pending / not release-ready`
 Updated: 2026-07-03
 
 This file lists the gates required before v0.3 hosted AI can be described as available, submitted to Chrome Web Store, or released.
@@ -29,9 +29,9 @@ This file lists the gates required before v0.3 hosted AI can be described as ava
 | Staging resource register | Env injection, redeploy, and staging verification | updated in [`staging-resource-register.md`](./staging-resource-register.md); resources created, env injection owner-reported, redeploy and health verified, frontend OAuth browser smoke passed, release gates pending |
 | Production backend HTTP smoke | Frontend production package and CWS package evidence | passed with sanitized owner-assisted evidence: `auth_google`, `me_before_chat`, `chat_provider_stream`, `me_after_chat`, and `logout` all `2xx`; SSE `delta`, `done`, and `usage` seen; positive quota delta and cost guard confirmed |
 | Frontend production host permission package | CWS package evidence and final release review | completed and refreshed locally on 2026-07-03. Default hosted base URL is `https://aviso-backend-production.vercel.app/v1`; exact host permission is `https://aviso-backend-production.vercel.app/*`; Google OAuth now uses the backend-issued public `client_id` from `/auth/google/challenge` instead of embedding the earlier staging client. Frontend checks passed `npm test` (`216/216`), `npx tsc --noEmit`, `git diff --check`, `npm run package`, a staging OAuth artifact absence scan, and `npm run verify:release-candidate`. Backend challenge contract is deployed from `Aviso-backend` commit `40c8c37`; backend `b2b0b65` added secret-safe Google auth diagnostics; backend `c60b895` fixed Upstash JSON string/object parsing for challenge and idempotency records. Sanitized production challenge smoke returned `2xx` with required fields present, and owner-loaded hosted-AI smoke passed for login, translation, and send-to-AI. The canonical owner-loaded package directory is `build/chrome-mv3-prod`; the canonical zip is `build/chrome-mv3-prod.zip`. Manifest guard confirmed manifest key presence, expected Chrome Web Store extension ID shape, production host permission, and no staging backend host, localhost host, or broad backend host permission. Not uploaded/submitted and not live. |
-| Final loaded-extension production smoke | CWS submission and final release review | hosted-AI main flow owner smoke passed on 2026-07-03 after backend `c60b895`: login, translation, and send-to-AI worked in the loaded production candidate. Current latency is recorded as a next-version optimization item, not a current release blocker. This does not replace website page review, website deployment evidence, CWS upload/submission/disclosure evidence, or owner release approval. |
+| Final loaded-extension production smoke | CWS submission and final release review | hosted-AI main flow owner smoke passed on 2026-07-03 after backend `c60b895`: login, translation, and send-to-AI worked in the loaded production candidate. Current latency is recorded as a next-version optimization item, not a current release blocker. This does not replace CWS upload/submission/disclosure evidence or owner release approval. |
 | Host / ordinary permission approval | Any backend URL or OAuth permission in extension manifest | approved and verified for `identity` plus exact production hosted backend host `https://aviso-backend-production.vercel.app/*`; no broad backend host permission, staging backend host permission, or localhost host permission is present in the candidate manifests |
-| Privacy policy update | Public hosted AI claim or CWS update | source updated in `MON-22` and release-prep copy refreshed on 2026-07-02 / owner-approved to prepare publication / not deployed / evidence pending |
+| Privacy policy update | Public hosted AI claim or CWS update | source updated in `MON-22`, release-prep copy refreshed on 2026-07-02, owner website review passed on 2026-07-03, and Vercel production deployment completed from frontend commit `b6d7b65` / CWS evidence pending |
 | CWS data disclosure update | Store submission | draft added in [`cws-disclosure-draft.md`](./cws-disclosure-draft.md) and CWS listing copy refreshed on 2026-07-02 / owner-approved to prepare submission / not submitted / evidence pending |
 | Backend staging deployment | Cross-repo integration test | backend staging health verified; GLM route remediation commit `d5da17b` pushed; provider smoke passed in `MON-18C`; integration smokes remain pending |
 | Real provider validation | Staging or production hosted AI | staging provider route verified in `MON-18C`; production authenticated HTTP smoke also passed with SSE done/usage and quota/cost guard confirmation; final loaded-extension production smoke remains separate |
@@ -44,7 +44,7 @@ This file lists the gates required before v0.3 hosted AI can be described as ava
 
 Before hosted AI is public:
 
-- Privacy policy source now distinguishes BYOK and hosted paths in `MON-22`; deployment/publication remains release-gated.
+- Privacy policy source distinguishes BYOK and hosted paths; website publication passed the 2026-07-03 owner review/deployment gate.
 - Source copy now discloses that hosted request content passes through Aviso backend and upstream model provider services.
 - Source copy now records that the backend does not persist raw prompt, raw response, page body, screenshot/base64, clipboard content, user BYOK API keys, or full URLs.
 - Source copy now records the current metadata retention window as 30 days.
@@ -57,7 +57,7 @@ Owner-confirmed first-slice boundary:
 - Aviso backend must not persist raw prompt, raw response, page body, screenshot/base64, clipboard content, API keys, or full URLs.
 - Metadata retention is 30 days.
 - These decisions do not publish hosted-AI public copy or Chrome Web Store disclosure changes.
-- `MON-22` updates source copy and disclosure drafts only. It does not deploy the website, submit Chrome Web Store disclosure, approve production, or approve release.
+- `MON-22` updated source copy and disclosure drafts only. The later 2026-07-03 owner-approved website deployment publishes the website copy; it still does not submit Chrome Web Store disclosure or approve release.
 
 ## Permission Gates
 
@@ -119,7 +119,7 @@ Before frontend staging integration:
 - 2026-06-27 production candidate package verification passed locally. `npm test` (`202/202`), `npx tsc --noEmit`, `git diff --check`, `npm run build:wxt`, `npm run build:plasmo`, `npm run package:plasmo`, `npm run zip:wxt`, and `npm run check:manifests` passed. Current zip artifacts are `build/chrome-mv3-prod.zip` and `.output/aviso-0.1.0-chrome.zip`; both zip manifests were inspected and contain `https://aviso-backend-production.vercel.app/*` with no staging backend host permission, no localhost host permission, and no broad backend host permission. Focused boundary scan found no staging backend pattern, `api.aviso`, `client_secret`, `getAuthToken`, `X-Install-Id`, telemetry, analytics, Sentry, PostHog, Paddle, or LemonSqueezy pattern in source/config/build outputs.
 - 2026-07-02 production candidate package verification refreshed locally through `npm run verify:release-candidate`. `npm test` (`214/214`), `npx tsc --noEmit`, WXT/Plasmo builds, canonical packaging, manifest guard, forbidden-claim scan, and secret/artifact hygiene scan passed. The canonical owner-loaded directory is `build/chrome-mv3-prod`; the canonical zip is `build/chrome-mv3-prod.zip`.
 - 2026-06-27 final loaded-extension production smoke was attempted locally and is blocked as release evidence. The isolated Google Chrome launch did not register the unpacked candidate extension from command-line loading, and a local unpacked extension ID would not prove the Chrome Web Store production extension ID's OAuth redirect path. The next validation should use the canonical `build/chrome-mv3-prod` directory already produced by the 2026-07-02 release-candidate gate.
-- Public hosted-AI copy, website deployment, Chrome Web Store submission, final loaded-extension production smoke, and release owner approval remain separate gates. Current production package evidence does not make hosted AI live.
+- Public website deployment and final loaded-extension production smoke are complete. Chrome Web Store submission/disclosure and release owner approval remain separate gates. Current production package evidence does not make hosted AI live through Chrome Web Store.
 
 Before production:
 

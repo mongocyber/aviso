@@ -10,7 +10,7 @@
 
 当前构建用于内部试用和 Chrome Web Store 审核。用户已验证 A-G 手动验收基本通过，豆包 / 火山方舟 API 可用。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID；DeepSeek 已有一次 owner 手动 connectivity pass，OpenRouter 最近一次手动测试失败类别为 `unauthorized`，Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 当前仍不能写成 live validated。
 
-v0.3 production candidate 已加入可选 Aviso AI / hosted AI 路径，并已通过 production backend authenticated HTTP smoke 与候选包构建/manifest 证据；2026-07-02 前后端 OAuth challenge gate 已合入并推送到对应 `main`，Chrome Web Store listing copy 和 disclosure draft 已更新。2026-07-03 后端 production closeout 修复了 Google OAuth client ID contract、Google auth 脱敏诊断和 Upstash JSON challenge/idempotency 解析兼容问题；owner-loaded extension 已验证 Aviso AI 登录、翻译和发送给 AI 可用。当前速度慢问题记录为后续版本优化项。但这仍不代表 Chrome Web Store 上传、公开发布、hosted AI live、网站部署或 owner release approval。
+v0.3 production candidate 已加入可选 Aviso AI / hosted AI 路径，并已通过 production backend authenticated HTTP smoke 与候选包构建/manifest 证据；2026-07-02 前后端 OAuth challenge gate 已合入并推送到对应 `main`，Chrome Web Store listing copy 和 disclosure draft 已更新。2026-07-03 后端 production closeout 修复了 Google OAuth client ID contract、Google auth 脱敏诊断和 Upstash JSON challenge/idempotency 解析兼容问题；owner-loaded extension 已验证 Aviso AI 登录、翻译和发送给 AI 可用。当前速度慢问题记录为后续版本优化项。官网页面 owner 复核通过，Vercel production deployment 已从 commit `b6d7b65` 完成并验证新版首页/文档内容。但这仍不代表 Chrome Web Store 上传、正式商店公开发布、hosted AI 已通过商店发布或 owner release approval。
 
 本清单用于记录当前内部试用质量、发布候选准备和已提交审核状态，不代表 Chrome Web Store 审核通过、正式上架或发布批准。
 
@@ -78,9 +78,9 @@ npm run package
 
 2026-06-13 CTO 自动门禁复跑通过：`git diff --check`、`npm test`（159 passed）、`npx tsc --noEmit`、`npx tsc --noEmit -p tsconfig.wxt.json`、`npm run build`、`npm run build:wxt`、`npm run check:manifests`。其中 `npm run build` 在沙箱内会遇到 `Operation not permitted`，非沙箱复跑通过；这不关闭任何 loaded-extension manual release gate。
 
-2026-07-02 maintenance pass 通过：前端 `git diff --check`、`npm test`（214/214）、`npx tsc --noEmit`；后端 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（387/387）、`git diff --check`。本次覆盖前端安全口径收口、纯逻辑 i18n 测试解耦、frontend hosted OAuth challenge 接入、backend OAuth challenge gate、CWS listing copy 和 disclosure draft 更新；`npm run verify:release-candidate` 已重新生成并验证 `build/chrome-mv3-prod.zip`，`website` `npm run build` 通过；未上传 CWS、未部署网站或标记 hosted AI live。
+2026-07-02 maintenance pass 通过：前端 `git diff --check`、`npm test`（214/214）、`npx tsc --noEmit`；后端 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（387/387）、`git diff --check`。本次覆盖前端安全口径收口、纯逻辑 i18n 测试解耦、frontend hosted OAuth challenge 接入、backend OAuth challenge gate、CWS listing copy 和 disclosure draft 更新；`npm run verify:release-candidate` 已重新生成并验证 `build/chrome-mv3-prod.zip`，`website` `npm run build` 通过；当日未上传 CWS，网站部署 gate 当时尚未完成，也未标记 hosted AI live。
 
-2026-07-03 production validation pass 通过：后端 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（392/392）、`git diff --check`；production deployment 完成，sanitized challenge smoke 通过。Owner-loaded extension 验证 Aviso AI 登录、翻译和发送给 AI 可用。最终上传/上线前仍需官网页面人工复核、网站部署证据、Chrome Web Store upload/submission/disclosure evidence 和 owner release approval。
+2026-07-03 production validation pass 通过：后端 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（392/392）、`git diff --check`；production deployment 完成，sanitized challenge smoke 通过。Owner-loaded extension 验证 Aviso AI 登录、翻译和发送给 AI 可用。官网页面 owner 复核通过，Vercel production deployment 完成并验证新版首页/文档内容。最终上传/发布前仍需 Chrome Web Store upload/submission/disclosure evidence 和 owner release approval。
 
 ## 上线前安全扫描
 

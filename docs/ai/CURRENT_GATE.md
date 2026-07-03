@@ -7,11 +7,11 @@ Updated: 2026-07-03
 Aviso has two separate truths:
 
 - Current usable/submitted line: `v0.1` BYOK direct-provider Chrome extension; Chrome Web Store review remains pending, not approved, not publicly listed.
-- v0.3 hosted AI: production candidate with production backend HTTP smoke, OAuth challenge hardening, backend-issued OAuth client id, Upstash challenge parsing fix, owner-loaded sign-in / translate / send-to-AI smoke pass, CWS disclosure draft/copy source updates, website build evidence, and regenerated candidate package evidence; not live, not Chrome Web Store uploaded/submitted/approved, not website-deployed, and not release-ready.
+- v0.3 hosted AI: production candidate with production backend HTTP smoke, OAuth challenge hardening, backend-issued OAuth client id, Upstash challenge parsing fix, owner-loaded sign-in / translate / send-to-AI smoke pass, CWS disclosure draft/copy source updates, website build/deployment evidence, and regenerated candidate package evidence; not live through Chrome Web Store, not Chrome Web Store uploaded/submitted/approved, and not release-ready.
 
 ## Current Blocker
 
-The current release gates are final public-release evidence for v0.3 hosted AI: owner website page review, website deployment evidence, Chrome Web Store upload/submission/disclosure evidence, and owner release approval. Owner-loaded hosted-AI smoke passed on 2026-07-03 after backend commit `c60b895`; the known latency issue is accepted as a next-version optimization and is not treated as the current release blocker. The latest local package evidence is current as of 2026-07-03.
+The current release gates are final public-release evidence for v0.3 hosted AI: Chrome Web Store upload/submission/disclosure evidence and owner release approval. Owner website page review and website deployment evidence passed on 2026-07-03 from commit `b6d7b65`; owner-loaded hosted-AI smoke passed on 2026-07-03 after backend commit `c60b895`. The known latency issue is accepted as a next-version optimization and is not treated as the current release blocker. The latest local package evidence is current as of 2026-07-03.
 
 ## Allowed
 
@@ -24,7 +24,7 @@ The current release gates are final public-release evidence for v0.3 hosted AI: 
 ## Forbidden
 
 - Do not say hosted AI is live, public, release-ready, or Chrome Web Store approved.
-- Do not publish website/CWS copy, deploy, submit, call providers, read secrets, change production config, or expand permissions without owner approval.
+- Do not publish further public copy, submit CWS changes, call providers, read secrets, change production config, or expand permissions without owner approval.
 - Do not imply anonymous free quota, subscription, payment, telemetry, web search, or remote link-body fetching is live.
 
 ## Verify
