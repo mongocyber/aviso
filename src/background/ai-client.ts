@@ -7,7 +7,7 @@ import type {
   ProviderConnectivityPayload
 } from "~types/messages"
 import { applyAIContextBudget } from "~utils/ai-context"
-import { normalizeError } from "~utils/errors"
+import { EMPTY_PROVIDER_ANSWER_ERROR, normalizeError } from "~utils/errors"
 import { assertSupportedImageSrc } from "~utils/image-src"
 import { parseIntentLocally } from "~utils/intent"
 import {
@@ -329,7 +329,9 @@ export async function handleAIRequest(
   let translationOutput = ""
   const forwardChunk = (chunk: StreamChunk) => {
     if (chunk.perfSummary) finalPerfSummary = chunk.perfSummary
-    if (translationCacheKey && chunk.text) translationOutput += chunk.text
+    if (translationCacheKey && chunk.text && chunk.kind !== "reasoning") {
+      translationOutput += chunk.text
+    }
     onChunk(chunk)
   }
 
@@ -419,6 +421,7 @@ async function callOpenAI(
   let timing: RequestTiming | undefined = payload.timing
   let sawFirstChunk = false
   let sawDone = false
+  let answerOutput = ""
   let errorCategory: PerfErrorCategory = "none"
 
   try {
@@ -499,7 +502,14 @@ async function callOpenAI(
       if (reasoningText) {
         onChunk({ text: reasoningText, done: false, kind: "reasoning" })
       }
+      if (text) {
+        answerOutput += text
+      }
       if (done) {
+        if (!answerOutput.trim()) {
+          errorCategory = "provider_error"
+          throw new Error(EMPTY_PROVIDER_ANSWER_ERROR)
+        }
         sawDone = true
         timing = markTiming(timing, "doneAt")
         logTiming("provider_done", requestId, timing, {

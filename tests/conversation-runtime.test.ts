@@ -400,6 +400,21 @@ test("reasoning stream renders as temporary UI state, not saved answer content",
   assert.match(toolbarSource, /statusText: tRef\.current\("model\.thinking"\)/)
 })
 
+test("reasoning-only provider streams fail visibly and never populate translation cache", () => {
+  const aiClientSource = readFileSync(
+    new URL("../src/background/ai-client.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(aiClientSource, /EMPTY_PROVIDER_ANSWER_ERROR/)
+  assert.match(aiClientSource, /if \(!answerOutput\.trim\(\)\)/)
+  assert.match(aiClientSource, /throw new Error\(EMPTY_PROVIDER_ANSWER_ERROR\)/)
+  assert.match(
+    aiClientSource,
+    /translationCacheKey && chunk\.text && chunk\.kind !== "reasoning"/
+  )
+})
+
 test("perf summary reaches content scripts through final stream chunks as JSON", () => {
   const aiClientSource = readFileSync(
     new URL("../src/background/ai-client.ts", import.meta.url),

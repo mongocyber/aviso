@@ -11,7 +11,11 @@ import {
   getTemplateParentMenuContexts,
   normalizeTemplateMenuContexts
 } from "../src/utils/context-menu-templates.ts"
-import { buildSafeErrorLog, normalizeError } from "../src/utils/errors.ts"
+import {
+  buildSafeErrorLog,
+  EMPTY_PROVIDER_ANSWER_ERROR,
+  normalizeError
+} from "../src/utils/errors.ts"
 import {
   MAX_DATA_IMAGE_URL_CHARS,
   parseSupportedImageSrc,
@@ -239,6 +243,13 @@ test("normalizeError 不透传未知错误原文", () => {
   assert.equal(
     normalizeError(new Error("something odd")),
     "请求失败，请稍后再试。"
+  )
+})
+
+test("normalizeError 保留空回答安全提示", () => {
+  assert.equal(
+    normalizeError(new Error(EMPTY_PROVIDER_ANSWER_ERROR)),
+    EMPTY_PROVIDER_ANSWER_ERROR
   )
 })
 

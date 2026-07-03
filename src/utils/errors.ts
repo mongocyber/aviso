@@ -46,6 +46,9 @@ const REMOTE_IMAGE_DOWNLOAD_ERROR =
 const TRANSLATION_EMPTY_INPUT_ERROR =
   "没有可翻译的文本：请先选中文字，或在命令面板输入“翻译 + 文本”。"
 
+export const EMPTY_PROVIDER_ANSWER_ERROR =
+  "AI 服务没有返回可显示结果，请重试或切换模型。"
+
 const IMAGE_UNSUPPORTED_MODEL_ERROR =
   "当前模型不支持图片理解，请切换到支持视觉输入的模型。"
 
@@ -180,6 +183,7 @@ function normalizeKnownSafeUserMessage(message: string): string | null {
   if (message === USER_MESSAGES.unknown_error) return message
   if (message === REMOTE_IMAGE_DOWNLOAD_ERROR) return message
   if (message === TRANSLATION_EMPTY_INPUT_ERROR) return message
+  if (message === EMPTY_PROVIDER_ANSWER_ERROR) return message
   if (message === IMAGE_UNSUPPORTED_MODEL_ERROR) return message
   if (message === SCREENSHOT_UNSUPPORTED_MODEL_ERROR) return message
   if (message === IMAGE_MODEL_DEPENDENT_ERROR) return message
