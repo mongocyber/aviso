@@ -1,16 +1,18 @@
 # Aviso Status
 
-Updated: 2026-07-03
+Updated: 2026-07-04
 
 ## 结论
 
-Aviso 当前是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Chrome Web Store 审核，正在等待审核结果。它是一个 Chrome MV3 扩展，使用 Plasmo、React 18 和 TypeScript 构建，在网页当前上下文里通过右键菜单、划词工具栏、命令面板、剪贴板提示和页面内结果面板触发 AI 操作。
+Aviso 当前 Chrome 上传包版本是 `0.1.0`。它是一个 Chrome MV3 扩展，使用 Plasmo、React 18 和 TypeScript 构建，在网页当前上下文里通过右键菜单、划词工具栏、命令面板、剪贴板提示和页面内结果面板触发 AI 操作。
 
 当前版本还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
 
-## v0.3 开发态说明
+## 版本口径
 
-v0.3 hosted AI 正在独立门禁下开发，不代表当前 Chrome Web Store 版本已经上线托管 AI。staging 阶段已完成托管后端配置、`identity` 权限、精确 staging host permission、Google OAuth `launchWebAuthFlow` id-token 后台登录代码、loaded-extension 账号 smoke、真实 Upstash Redis 并发 quota smoke、provider smoke、敏感日志审查和 release build / manifest gate；BYOK direct-provider 仍保持默认可用路径。当前已进入 production candidate gate：production backend origin 为 `https://aviso-backend-production.vercel.app`，authenticated production HTTP smoke 已通过 `auth_google`、`me_before_chat`、`chat_provider_stream`、`me_after_chat` 和 `logout`，SSE `delta` / `done` / `usage`、正向 quota delta 和 cost guard 均已确认。前端候选包已切换到 production hosted base URL `https://aviso-backend-production.vercel.app/v1`、精确 host permission `https://aviso-backend-production.vercel.app/*`，并同步 production Google OAuth client ID；旧 staging hosted session 会被 URL allowlist 拒绝。2026-07-02 OAuth challenge 安全收口已合入并推送前后端 `main`：后端 `3b69e3d` 增加服务端 challenge gate，前端 `6f41513` 改为先取 challenge 再走 Google OAuth / hosted session exchange；后端本地与远端 `main` 均已通过 lint、typecheck、387/387 tests，前端 `main` 已通过 214/214 tests、typecheck 和 diff check。2026-07-03 production closeout 进一步合入并部署后端 `40c8c37`、`b2b0b65` 和 `c60b895`：challenge response 返回当前环境 Google OAuth client ID，Google auth 拒绝日志只记录脱敏原因，Upstash JSON string/object 解析兼容修复已解决生产登录 challenge 消费失败；后端通过 lint、typecheck、392/392 tests 和 diff check。Owner-loaded extension 已验证 Aviso AI 登录、翻译和发送给 AI 可用。当前已知速度慢问题转入下版本优化，不作为本轮 release blocker。2026-07-02 Chrome Web Store listing copy 与 v0.3 disclosure draft 已更新为 BYOK 默认 + 可选 Aviso AI 候选路径口径；`npm run verify:release-candidate` 已重新生成并验证 `build/chrome-mv3-prod.zip`，`website` production build 也已通过。2026-07-03 owner 复核官网页面通过，Vercel production deployment 已从前端 commit `b6d7b65` 完成，公开项目域名返回新版首页和文档内容。但仍未上传 CWS、未完成 owner release approval，也不代表 Chrome Web Store 正式上架或 hosted AI 已通过商店发布；billing 已批准排除在首个 hosted-AI release 之外。
+`package.json` / manifest / Popup 显示统一使用 `0.1.0`。历史 `v0.2`、`v0.3` 只作为内部规划和 issue 分组标签保留，不再代表当前上传版本、公开产品版本或单独的用户可见版本。
+
+0.1.0 production candidate 已包含可选 Aviso AI / hosted AI 路径，但 BYOK direct-provider 仍保持默认可用路径。staging 阶段已完成托管后端配置、`identity` 权限、精确 staging host permission、Google OAuth `launchWebAuthFlow` id-token 后台登录代码、loaded-extension 账号 smoke、真实 Upstash Redis 并发 quota smoke、provider smoke、敏感日志审查和 release build / manifest gate；production backend origin 为 `https://aviso-backend-production.vercel.app`，authenticated production HTTP smoke 已通过 `auth_google`、`me_before_chat`、`chat_provider_stream`、`me_after_chat` 和 `logout`，SSE `delta` / `done` / `usage`、正向 quota delta 和 cost guard 均已确认。前端候选包已切换到 production hosted base URL `https://aviso-backend-production.vercel.app/v1`、精确 host permission `https://aviso-backend-production.vercel.app/*`，并同步 production Google OAuth client ID；旧 staging hosted session 会被 URL allowlist 拒绝。2026-07-02 OAuth challenge 安全收口已合入并推送前后端 `main`：后端 `3b69e3d` 增加服务端 challenge gate，前端 `6f41513` 改为先取 challenge 再走 Google OAuth / hosted session exchange；后端本地与远端 `main` 均已通过 lint、typecheck、387/387 tests，前端 `main` 已通过 214/214 tests、typecheck 和 diff check。2026-07-03 production closeout 进一步合入并部署后端 `40c8c37`、`b2b0b65` 和 `c60b895`：challenge response 返回当前环境 Google OAuth client ID，Google auth 拒绝日志只记录脱敏原因，Upstash JSON string/object 解析兼容修复已解决生产登录 challenge 消费失败；后端通过 lint、typecheck、392/392 tests 和 diff check。Owner-loaded extension 已验证 Aviso AI 登录、翻译和发送给 AI 可用。当前已知速度慢问题转入下版本优化，不作为本轮 release blocker。2026-07-02 Chrome Web Store listing copy 与 disclosure draft 已更新为 BYOK 默认 + 可选 Aviso AI 候选路径口径；`npm run verify:release-candidate` 已重新生成并验证 `build/chrome-mv3-prod.zip`，`website` production build 也已通过。2026-07-03 owner 复核官网页面通过，Vercel production deployment 已从前端 commit `b6d7b65` 完成，公开项目域名返回新版首页和文档内容。但仍未完成 owner release approval，也不代表 Chrome Web Store 正式上架、Chrome Web Store 已批准或 hosted AI 已通过商店发布；billing 已批准排除在首个 hosted-AI release 之外。
 
 ## 当前能力
 
@@ -23,7 +25,7 @@ v0.3 hosted AI 正在独立门禁下开发，不代表当前 Chrome Web Store �
 | 双击快捷菜单 | 已实现，默认关闭；避开输入框、可编辑区域、常见代码编辑器和 Aviso 自身 UI。 |
 | 剪贴板提示 | 已实现普通文本提示和敏感内容跳过。 |
 | 结果面板 | 已实现流式结果、复制、保存、继续追问和本地对话历史。 |
-| Popup 设置 | 已实现界面语言、外观主题、默认模型、功能开关、AI 服务配置、手动连接测试、历史和自定义指令；v0.3 candidate 中 Aviso AI 可作为默认模型或快速任务服务选择项。 |
+| Popup 设置 | 已实现界面语言、外观主题、默认模型、功能开关、AI 服务配置、手动连接测试、历史和自定义指令；0.1.0 candidate 中 Aviso AI 可作为默认模型或快速任务服务选择项。 |
 | 多 AI 服务配置 | 已实现；支持同 provider 多配置、默认配置切换、模型 ID 手动编辑。 |
 | v0.2 provider 配置扩展 | DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 已支持配置；DeepSeek 已有 owner 手动 live connectivity pass 记录；Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 仍不能写成 live validated。 |
 | v0.2 命令面板本地意图 | 已实现本地确定性候选、危险 URL 拦截、打开/页面动作 confirm-first、本地对话恢复；不包含自主浏览、联网搜索或远端链接正文抓取。 |
@@ -45,7 +47,7 @@ v0.3 hosted AI 正在独立门禁下开发，不代表当前 Chrome Web Store �
 
 当前 owner 确认的 v0.2 要求边界还包括：
 
-- BYOK 默认路径不要求 Aviso 后端、provider proxy、登录、订阅、支付或匿名额度；当前候选包已包含 v0.3 hosted AI 所需的 `identity` 权限和精确 production backend host permission，但该路径默认休眠、需用户主动选择托管路径并登录，且不代表 public live、Chrome Web Store 批准、订阅支付或公开匿名额度。
+- BYOK 默认路径不要求 Aviso 后端、provider proxy、登录、订阅、支付或匿名额度；当前 0.1.0 候选包已包含 hosted AI 所需的 `identity` 权限和精确 production backend host permission，但该路径默认休眠、需用户主动选择托管路径并登录，且不代表 public live、Chrome Web Store 批准、订阅支付或公开匿名额度。
 - 不做遥测、分析 SDK、远端日志。
 - 不做 custom base URL，不做自动读取模型列表；`V02-015` 已关闭为当前 v0.2 明确不做 custom OpenAI-compatible base URL，后续只能作为 future-backlog / 新版本新 issue 重新开启。
 - 不把 provider configuration support 写成 live validation。
@@ -59,7 +61,7 @@ v0.3 hosted AI 正在独立门禁下开发，不代表当前 Chrome Web Store �
 - 2026-07-02 maintenance pass：前端安全口径收口、纯逻辑 i18n 测试解耦、frontend hosted OAuth challenge 接入和 backend OAuth challenge gate 均已合入对应 `main`；前端复跑 `git diff --check`、`npm test`（214/214）和 `npx tsc --noEmit` 通过，后端复跑 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（387/387）和 `git diff --check` 通过。最终 extension package 已通过 `npm run verify:release-candidate` 重新生成和验证，官网 `npm run build` 通过。当日未上传 CWS，网站部署 gate 当时尚未完成，也未标记 hosted AI live。
 - 2026-07-03 production validation pass：后端 Google OAuth client ID contract、Google auth 脱敏诊断、Upstash JSON 解析兼容修复已合入并部署到 production；后端复跑 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（392/392）和 `git diff --check` 通过。Owner-loaded extension 验证 Aviso AI 登录、翻译和发送给 AI 可用；速度慢问题记录为后续版本优化，不阻塞当前 candidate。官网页面 owner 复核通过，Vercel production deployment 已完成并验证公开项目域名返回新版首页和文档。CWS upload/submission/disclosure 和 owner release approval 仍未完成。
 - 最终 Chrome Web Store 提交包路径：`build/chrome-mv3-prod.zip`。
-- Chrome Web Store 提交状态：已人工提交审核，Git tag 为 `v0.1.0-cws-submitted`。
+- Chrome Web Store 提交状态：待 owner 上传 / 提交 / 审核；正式 tag 和 GitHub Release 仍需发布批准后单独创建。
 - GitHub CI：`CI` workflow 已在 `597391b` 通过。
 - 最终 manifest 已核对，普通权限和 host permissions 未扩大。
 - package zip 真实形态密钥扫描未发现 OpenAI、Anthropic、GitHub、AWS、Google、Slack 或私钥格式凭证。
@@ -86,13 +88,13 @@ v0.3 hosted AI 正在独立门禁下开发，不代表当前 Chrome Web Store �
 | 模型 ID 编辑 | 用户确认可以编辑。 |
 | 权限边界 | 当前普通权限为 `contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`identity`、`clipboardWrite`；host permissions 仅限已批准 provider host 和精确 production hosted backend host `https://aviso-backend-production.vercel.app/*`。 |
 | v0.2 loaded-extension smoke | V02-WXT-005 closeout ready_for_owner_release_decision：WXT 内容脚本注入、划词工具栏、命令面板打开、双击菜单无截图入口、iframe 划词工具栏、iframe 快捷键桥接和控制台隐私摘要通过；Owner-assisted Chrome refresh 进一步确认 Popup Settings 主界面、功能开关、命令面板本地历史搜索和双击快捷菜单可见。Popup AI 服务/记录/指令二级页、clipboard toast、native right-click screenshot/context-menu、readability extraction 和 provider-safe floating action open 已记录 owner manual pass evidence；这不代表 WXT 默认构建批准、公开发布批准或 Chrome Web Store 审核通过。 |
-| v0.3 hosted AI owner smoke | 2026-07-03 owner-loaded production candidate 验证通过：Aviso AI 登录、划词翻译、发送给 AI 可用；速度慢作为下版本优化项，不作为当前 candidate blocker。官网已部署并验证公开项目域名返回新版内容；这不代表 Chrome Web Store 提交/审核通过、hosted AI 已通过商店发布或最终 release approval。 |
+| hosted AI owner smoke | 2026-07-03 owner-loaded 0.1.0 production candidate 验证通过：Aviso AI 登录、划词翻译、发送给 AI 可用；速度慢作为下版本优化项，不作为当前 candidate blocker。官网已部署并验证公开项目域名返回新版内容；这不代表 Chrome Web Store 提交/审核通过、hosted AI 已通过商店发布或最终 release approval。 |
 
 ## 当前边界
 
 - BYOK direct-provider：用户提供自己的 API Key，扩展直连所选 provider。
-- v0.3 production candidate hosted AI：用户主动选择 Aviso AI 并登录后，请求经过 Aviso production backend 和上游 provider；该路径已进入候选包，但不是 CWS 上线或 public live。
-- 当前公开/已提交审核的 v0.1 口径仍不包含已上线的项目方后端、登录、订阅、支付或匿名额度。
+- 0.1.0 production candidate hosted AI：用户主动选择 Aviso AI 并登录后，请求经过 Aviso production backend 和上游 provider；该路径已进入候选包，但不是 CWS 上线或 public live。
+- 当前 0.1.0 口径不包含已公开上线的项目方后端、订阅、支付或匿名额度；登录只用于用户主动选择的可选 Aviso AI 路径。
 - 前端不新增遥测或分析 SDK；hosted backend 只允许按后端门禁记录脱敏运行 metadata，不记录 raw prompt、raw response、页面正文、截图/base64、剪贴板、BYOK API Key 或完整 URL。
 - 不做远端链接正文抓取，不做联网搜索。
 - 不自动读取 provider 账号里的模型列表。
