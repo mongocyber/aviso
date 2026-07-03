@@ -1,5 +1,4 @@
-export const HOSTED_GOOGLE_OAUTH_CLIENT_ID =
-  "870944741190-02nqquvimsqghtn3fojdvvocmv03dtv8.apps.googleusercontent.com"
+export const HOSTED_GOOGLE_OAUTH_CLIENT_ID = ""
 
 const GOOGLE_OAUTH_AUTH_URL = "https://accounts.google.com/o/oauth2/v2/auth"
 const GOOGLE_OAUTH_SCOPES = ["openid", "email", "profile"] as const

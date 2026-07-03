@@ -76,6 +76,7 @@ export type HostedAiSession = {
 export type HostedAiGoogleChallenge = {
   state: string
   nonce: string
+  client_id: string
   expires_at: string
 }
 
@@ -649,6 +650,7 @@ function normalizeHostedAiGoogleChallenge(
   if (
     !isNonEmptyString(candidate.state) ||
     !isNonEmptyString(candidate.nonce) ||
+    !isNonEmptyString(candidate.client_id) ||
     !isNonEmptyString(candidate.expires_at) ||
     !Number.isFinite(Date.parse(candidate.expires_at))
   ) {
@@ -658,6 +660,7 @@ function normalizeHostedAiGoogleChallenge(
   return {
     state: candidate.state,
     nonce: candidate.nonce,
+    client_id: candidate.client_id,
     expires_at: candidate.expires_at
   }
 }

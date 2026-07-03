@@ -7,6 +7,7 @@ export const HOSTED_AI_PRODUCTION_HOST_PERMISSION =
 export const HOSTED_AI_PROVIDER_CONFIG_ID = "aviso-hosted-ai"
 export const HOSTED_AI_DEFAULT_MODEL = "free-small"
 export const HOSTED_SESSION_STORAGE_KEY = "aviso_hosted_session"
+export const HOSTED_SIGN_IN_RESULT_STORAGE_KEY = "aviso_hosted_sign_in_result"
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"])
 const PRODUCTION_ORIGIN = new URL(HOSTED_AI_PRODUCTION_BASE_URL).origin
@@ -63,6 +64,26 @@ export type HostedAccountStatus =
 
 export type HostedRouteSelection = "byok" | "hosted"
 
+export type HostedSignInStage =
+  | "client"
+  | "challenge"
+  | "oauth"
+  | "auth_google"
+  | "me"
+  | "storage"
+  | "done"
+
+export type StoredHostedSignInResult = {
+  status: HostedAccountStatus
+  stage: HostedSignInStage
+  error?: {
+    source: "oauth" | "backend" | "storage" | "unknown"
+    code: string
+    httpStatusClass?: "1xx" | "2xx" | "3xx" | "4xx" | "5xx" | "unknown"
+  }
+  updatedAt: number
+}
+
 export function isHostedAiProviderConfigId(configId?: string): boolean {
   return configId === HOSTED_AI_PROVIDER_CONFIG_ID
 }
@@ -112,6 +133,13 @@ export async function readHostedSession(): Promise<StoredHostedSession | null> {
   return normalizeStoredHostedSession(result[HOSTED_SESSION_STORAGE_KEY])
 }
 
+export async function readHostedSignInResult(): Promise<StoredHostedSignInResult | null> {
+  const result = await chrome.storage.local.get(HOSTED_SIGN_IN_RESULT_STORAGE_KEY)
+  return normalizeStoredHostedSignInResult(
+    result[HOSTED_SIGN_IN_RESULT_STORAGE_KEY]
+  )
+}
+
 export async function saveHostedSession(
   session: HostedAiSession,
   options: { baseUrl?: string; me?: HostedAiMe } = {}
@@ -147,6 +175,23 @@ export async function updateHostedSessionMe(
 
 export async function clearHostedSession(): Promise<void> {
   await chrome.storage.local.remove(HOSTED_SESSION_STORAGE_KEY)
+}
+
+export async function saveHostedSignInResult(
+  result: Omit<StoredHostedSignInResult, "updatedAt">
+): Promise<StoredHostedSignInResult> {
+  const value: StoredHostedSignInResult = {
+    status: result.status,
+    stage: result.stage,
+    error: normalizeHostedSignInError(result.error),
+    updatedAt: Date.now()
+  }
+  await chrome.storage.local.set({ [HOSTED_SIGN_IN_RESULT_STORAGE_KEY]: value })
+  return value
+}
+
+export async function clearHostedSignInResult(): Promise<void> {
+  await chrome.storage.local.remove(HOSTED_SIGN_IN_RESULT_STORAGE_KEY)
 }
 
 export function deriveHostedAccountStatus(options: {
@@ -302,6 +347,88 @@ function normalizeStoredHostedSession(
   }
 
   return candidate as StoredHostedSession
+}
+
+function normalizeStoredHostedSignInResult(
+  value: unknown
+): StoredHostedSignInResult | null {
+  if (!value || typeof value !== "object") return null
+  const candidate = value as Partial<StoredHostedSignInResult>
+  if (!isHostedAccountStatus(candidate.status)) return null
+  if (!isHostedSignInStage(candidate.stage)) return null
+  if (!isFiniteQuotaNumber(candidate.updatedAt)) return null
+
+  return {
+    status: candidate.status,
+    stage: candidate.stage,
+    error: normalizeHostedSignInError(candidate.error),
+    updatedAt: candidate.updatedAt
+  }
+}
+
+function normalizeHostedSignInError(
+  value: StoredHostedSignInResult["error"] | unknown
+): StoredHostedSignInResult["error"] | undefined {
+  if (!value || typeof value !== "object") return undefined
+  const candidate = value as Partial<StoredHostedSignInResult["error"]>
+  if (
+    candidate.source !== "oauth" &&
+    candidate.source !== "backend" &&
+    candidate.source !== "storage" &&
+    candidate.source !== "unknown"
+  ) {
+    return undefined
+  }
+  if (typeof candidate.code !== "string" || !candidate.code.trim()) {
+    return undefined
+  }
+
+  return {
+    source: candidate.source,
+    code: candidate.code,
+    ...(isHostedHttpStatusClass(candidate.httpStatusClass)
+      ? { httpStatusClass: candidate.httpStatusClass }
+      : {})
+  }
+}
+
+function isHostedAccountStatus(value: unknown): value is HostedAccountStatus {
+  return (
+    value === "signed_out" ||
+    value === "signing_in" ||
+    value === "signed_in" ||
+    value === "expired" ||
+    value === "local_backend_unavailable" ||
+    value === "quota_exhausted" ||
+    value === "rate_limited" ||
+    value === "hosted_route_unavailable" ||
+    value === "request_invalid"
+  )
+}
+
+function isHostedSignInStage(value: unknown): value is HostedSignInStage {
+  return (
+    value === "client" ||
+    value === "challenge" ||
+    value === "oauth" ||
+    value === "auth_google" ||
+    value === "me" ||
+    value === "storage" ||
+    value === "done"
+  )
+}
+
+function isHostedHttpStatusClass(
+  value: unknown
+): value is NonNullable<StoredHostedSignInResult["error"]>["httpStatusClass"] {
+  return (
+    value === "1xx" ||
+    value === "2xx" ||
+    value === "3xx" ||
+    value === "4xx" ||
+    value === "5xx" ||
+    value === "unknown"
+  )
 }
 
 function normalizeHostedQuotaWindow(

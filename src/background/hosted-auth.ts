@@ -13,7 +13,9 @@ import {
 } from "~utils/hosted-oauth"
 import {
   HOSTED_AI_DEFAULT_BASE_URL,
+  clearHostedSignInResult,
   deriveHostedAccountStatus,
+  saveHostedSignInResult,
   saveHostedSession,
   type HostedAccountStatus
 } from "~utils/hosted-session"
@@ -32,9 +34,13 @@ type HostedAuthClient = {
 type HostedGoogleSignInDependencies = {
   client?: HostedAuthClient
   requestGoogleIdentityToken?: (
-    challenge: Pick<HostedAiGoogleChallenge, "state" | "nonce">
+    challenge: Pick<HostedAiGoogleChallenge, "state" | "nonce"> & {
+      clientId: string
+    }
   ) => Promise<{ idToken: string; nonce: string }>
   saveSession?: typeof saveHostedSession
+  saveSignInResult?: typeof saveHostedSignInResult
+  clearSignInResult?: typeof clearHostedSignInResult
 }
 
 export async function handleHostedGoogleSignIn(
@@ -50,13 +56,16 @@ export async function handleHostedGoogleSignIn(
     const requestGoogleIdentity =
       dependencies.requestGoogleIdentityToken ?? requestHostedGoogleIdentityToken
     const persistSession = dependencies.saveSession ?? saveHostedSession
+    const clearSignInResult =
+      dependencies.clearSignInResult ?? clearHostedSignInResult
 
     stage = "challenge"
     const challenge = await client.createGoogleAuthChallenge()
     stage = "oauth"
     const googleIdentity = await requestGoogleIdentity({
       state: challenge.state,
-      nonce: challenge.nonce
+      nonce: challenge.nonce,
+      clientId: challenge.client_id
     })
     googleIdToken = googleIdentity.idToken
     stage = "auth_google"
@@ -70,15 +79,41 @@ export async function handleHostedGoogleSignIn(
     const me = await client.me(session.session_token)
     stage = "storage"
     await persistSession(session, { baseUrl: client.baseUrl, me })
+    try {
+      await clearSignInResult()
+    } catch {
+      // Stale sign-in status cleanup should not fail a completed sign-in.
+    }
 
     return {
       status: "signed_in",
       stage: "done"
     }
   } catch (error) {
-    return normalizeHostedGoogleSignInFailure(error, stage)
+    const failure = normalizeHostedGoogleSignInFailure(error, stage)
+    await persistHostedGoogleSignInFailure(failure, dependencies)
+    return failure
   } finally {
     googleIdToken = null
+  }
+}
+
+async function persistHostedGoogleSignInFailure(
+  failure: HostedGoogleSignInData,
+  dependencies: HostedGoogleSignInDependencies
+): Promise<void> {
+  try {
+    if (failure.status === "signed_out") {
+      await (dependencies.clearSignInResult ?? clearHostedSignInResult)()
+      return
+    }
+    await (dependencies.saveSignInResult ?? saveHostedSignInResult)({
+      status: failure.status,
+      stage: failure.stage,
+      error: failure.error
+    })
+  } catch {
+    // Sign-in failure reporting must not mask the underlying auth result.
   }
 }
 

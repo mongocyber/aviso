@@ -26,18 +26,22 @@ import {
 } from "~utils/hosted-ai-client"
 import {
   buildHostedAccountQuotaDisplay,
+  clearHostedSignInResult,
   clearHostedSession,
   deriveHostedAccountStatus,
   getHostedMonthlyQuotaWindow,
   HOSTED_AI_DEFAULT_BASE_URL,
   HOSTED_AI_DEFAULT_MODEL,
   HOSTED_AI_PROVIDER_CONFIG_ID,
+  HOSTED_SIGN_IN_RESULT_STORAGE_KEY,
   HOSTED_SESSION_STORAGE_KEY,
   isHostedAiProviderConfigId,
   isHostedSessionUsable,
+  readHostedSignInResult,
   readHostedSession,
   updateHostedSessionMe,
   type HostedAccountStatus,
+  type StoredHostedSignInResult,
   type StoredHostedSession
 } from "~utils/hosted-session"
 import {
@@ -738,8 +742,31 @@ function Popup() {
     return stored
   }
 
+  const applyHostedSignInResult = (
+    result: StoredHostedSignInResult | HostedGoogleSignInData | null
+  ) => {
+    if (!result || result.status === "signed_in") return false
+    setHostedAccountResult(
+      result.status,
+      getHostedSignInFailureMessageKey(result, false),
+      null
+    )
+    return true
+  }
+
+  const refreshHostedSignInResultFromStorage = async () => {
+    const [stored, result] = await Promise.all([
+      readHostedSession(),
+      readHostedSignInResult()
+    ])
+    if (stored) return null
+    applyHostedSignInResult(result)
+    return result
+  }
+
   const signInHosted = async () => {
     setHostedBusy(true)
+    void clearHostedSignInResult()
     setHostedAccountResult("signing_in", "popup.hosted.status.signingIn")
     try {
       const response = await sendRuntimeMessage<HostedGoogleSignInData>({
@@ -760,12 +787,13 @@ function Popup() {
       }
       if (!response.success) {
         const result = response.data
-        const status = result?.status ?? "local_backend_unavailable"
-        setHostedAccountResult(
-          status,
-          getHostedSignInFailureMessageKey(result, false),
-          null
-        )
+        if (!applyHostedSignInResult(result ?? null)) {
+          setHostedAccountResult(
+            "local_backend_unavailable",
+            getHostedSignInFailureMessageKey(result, false),
+            null
+          )
+        }
         return
       }
     } catch (error) {
@@ -792,8 +820,14 @@ function Popup() {
       changes: Record<string, chrome.storage.StorageChange>,
       areaName: string
     ) => {
-      if (areaName !== "local" || !changes[HOSTED_SESSION_STORAGE_KEY]) return
-      void refreshHostedSessionStateFromStorage()
+      if (areaName !== "local") return
+      if (changes[HOSTED_SESSION_STORAGE_KEY]) {
+        void refreshHostedSessionStateFromStorage()
+        return
+      }
+      if (changes[HOSTED_SIGN_IN_RESULT_STORAGE_KEY]) {
+        void refreshHostedSignInResultFromStorage()
+      }
     }
 
     chrome.storage.onChanged.addListener(onHostedSessionStorageChange)
@@ -847,6 +881,7 @@ function Popup() {
       // Local sign-out should not leave a stale token when the backend is down.
     } finally {
       await clearHostedSession()
+      await clearHostedSignInResult()
       setHostedAccountResult(
         "signed_out",
         "popup.hosted.status.signedOut",
@@ -857,19 +892,27 @@ function Popup() {
   }
 
   useEffect(() => {
-    Promise.all([getSettings(), getApiKeys(), readHostedSession()]).then(
-      ([s, keys, session]) => {
+    Promise.all([
+      getSettings(),
+      getApiKeys(),
+      readHostedSession(),
+      readHostedSignInResult()
+    ]).then(([s, keys, session, signInResult]) => {
         const normalizedSettings = normalizeCommonFeatureSettings(s)
         persistedSettingsSignature.current =
           settingsSignature(normalizedSettings)
         setSettings(normalizedSettings)
         setHostedSession(session)
-        setHostedStatus(deriveHostedAccountStatus({ session }))
-        setHostedMessageKey(
-          session
-            ? "popup.hosted.status.signedIn"
-            : "popup.hosted.status.signedOut"
-        )
+        if (!session && signInResult) {
+          applyHostedSignInResult(signInResult)
+        } else {
+          setHostedStatus(deriveHostedAccountStatus({ session }))
+          setHostedMessageKey(
+            session
+              ? "popup.hosted.status.signedIn"
+              : "popup.hosted.status.signedOut"
+          )
+        }
         if (settingsSignature(normalizedSettings) !== settingsSignature(s)) {
           void saveSettings(normalizedSettings)
         }
@@ -938,8 +981,7 @@ function Popup() {
         }
         // 加载完成后才允许自动保存
         loaded.current = true
-      }
-    )
+      })
   }, [])
 
   // 设置（模型 / 开关 / 模板 / 豆包接入点）变更即时保存，防抖 300ms
@@ -3278,6 +3320,21 @@ function Popup() {
                       ? t("popup.hosted.statusLabel.signing_in")
                       : t("popup.zero.hosted.cta")}
                   </button>
+                  {(hostedBusy || hostedStatus !== "signed_out") && (
+                    <p
+                      role={hostedStatusTone === "danger" ? "alert" : "status"}
+                      style={{
+                        ...styles.recStatus,
+                        color:
+                          hostedStatusTone === "danger"
+                            ? ui.danger
+                            : hostedStatusTone === "warning"
+                              ? ui.text2
+                              : ui.text3
+                      }}>
+                      {t(hostedMessageKey)}
+                    </p>
+                  )}
                 </div>
                 <div style={styles.orRow}>
                   <span style={{ ...styles.orLine, background: ui.line }} />
@@ -3493,6 +3550,21 @@ function Popup() {
                       ? t("popup.hosted.statusLabel.signing_in")
                       : t("popup.zero.hosted.cta")}
                   </button>
+                  {(hostedBusy || hostedStatus !== "signed_out") && (
+                    <p
+                      role={hostedStatusTone === "danger" ? "alert" : "status"}
+                      style={{
+                        ...styles.recStatus,
+                        color:
+                          hostedStatusTone === "danger"
+                            ? ui.danger
+                            : hostedStatusTone === "warning"
+                              ? ui.text2
+                              : ui.text3
+                      }}>
+                      {t(hostedMessageKey)}
+                    </p>
+                  )}
                 </div>
               ))}
             {!showZeroState && (
@@ -4794,7 +4866,9 @@ function getHostedAccountStatusMessageKey(
 }
 
 function getHostedSignInFailureMessageKey(
-  result: HostedGoogleSignInData | undefined,
+  result:
+    | Pick<HostedGoogleSignInData, "status" | "stage" | "error">
+    | undefined,
   hasStoredSession: boolean
 ): I18nKey {
   if (!result) return "popup.hosted.status.runtimeUnavailable"
@@ -4816,6 +4890,9 @@ function getHostedSignInFailureMessageKey(
   if (result.error?.source === "backend") {
     if (result.stage === "client") {
       return "popup.hosted.status.authClientUnavailable"
+    }
+    if (result.stage === "challenge") {
+      return getHostedAccountStatusMessageKey(result.status)
     }
     if (result.stage === "auth_google" && result.error.httpStatusClass === "4xx") {
       return "popup.hosted.status.authRejected"
@@ -5330,6 +5407,13 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     fontWeight: 700,
     cursor: "pointer"
+  },
+  recStatus: {
+    fontFamily: aviso.font,
+    fontSize: 12,
+    lineHeight: 1.45,
+    margin: "9px 2px 0",
+    overflowWrap: "anywhere"
   },
   orRow: {
     display: "flex",

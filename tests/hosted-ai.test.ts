@@ -17,13 +17,13 @@ import {
 import {
   buildHostedGoogleOAuthUrl,
   HostedGoogleOAuthError,
-  HOSTED_GOOGLE_OAUTH_CLIENT_ID,
   parseHostedGoogleOAuthRedirect,
   requestHostedGoogleIdentityToken,
   requestHostedGoogleIdToken
 } from "../src/utils/hosted-oauth.ts"
 import {
   buildHostedAccountQuotaDisplay,
+  clearHostedSignInResult,
   clearHostedSession,
   deriveHostedAccountStatus,
   getHostedMonthlyQuotaWindow,
@@ -33,12 +33,15 @@ import {
   HOSTED_AI_PRODUCTION_BASE_URL,
   HOSTED_AI_PRODUCTION_HOST_PERMISSION,
   HOSTED_AI_PROVIDER_CONFIG_ID,
+  HOSTED_SIGN_IN_RESULT_STORAGE_KEY,
   HOSTED_SESSION_STORAGE_KEY,
   isByokBlockedByHostedSignIn,
   isHostedAiProviderConfigId,
   isHostedSessionUsable,
+  readHostedSignInResult,
   readHostedSession,
   requiresHostedSignInForRoute,
+  saveHostedSignInResult,
   saveHostedSession,
   selectConfiguredHostedRoute,
   type StoredHostedSession
@@ -123,6 +126,9 @@ test("popup surfaces explicit account chip and zero-state dual entry (MON-26)", 
   assert.match(popupSource, /popup\.zero\.title/)
   assert.match(popupSource, /popup\.zero\.hosted\.cta/)
   assert.match(popupSource, /popup\.zero\.byok\.cta/)
+  assert.match(popupSource, /styles\.recStatus/)
+  assert.match(popupSource, /hostedBusy \|\| hostedStatus !== "signed_out"/)
+  assert.match(popupSource, /t\(hostedMessageKey\)/)
   // Jargon stays in i18n, not hardcoded in source
   assert.equal(popupSource.includes("BYOK"), false)
   // Subscription stays deferred: no upgrade/checkout entry shipped
@@ -138,6 +144,31 @@ test("popup surfaces explicit account chip and zero-state dual entry (MON-26)", 
     getI18nMessage("popup.account.manage", "zh-CN"),
     "在 AI 服务中管理"
   )
+})
+
+test("popup hosted sign-in failure feedback is visible and stage-aware", () => {
+  const popupSource = readFileSync(
+    new URL("../src/popup/index.tsx", import.meta.url),
+    "utf8"
+  )
+  const failureMapperBlock =
+    popupSource.match(
+      /function getHostedSignInFailureMessageKey\([\s\S]*?\n\}/
+    )?.[0] ?? ""
+
+  assert.match(failureMapperBlock, /result\.stage === "challenge"/)
+  assert.match(
+    failureMapperBlock,
+    /getHostedAccountStatusMessageKey\(result\.status\)/
+  )
+  assert.match(
+    failureMapperBlock,
+    /result\.stage === "auth_google" && result\.error\.httpStatusClass === "4xx"/
+  )
+  assert.match(popupSource, /readHostedSignInResult/)
+  assert.match(popupSource, /HOSTED_SIGN_IN_RESULT_STORAGE_KEY/)
+  assert.match(popupSource, /applyHostedSignInResult/)
+  assert.match(popupSource, /clearHostedSignInResult/)
 })
 
 test("hosted AI base URL is explicit and limited to local or production", () => {
@@ -172,7 +203,9 @@ test("hosted AI base URL is explicit and limited to local or production", () => 
 })
 
 test("hosted Google OAuth builds id-token auth URL without client secret", () => {
+  const clientId = "release-client.apps.googleusercontent.com"
   const authUrl = buildHostedGoogleOAuthUrl({
+    clientId,
     redirectUri: "https://extension-id.chromiumapp.org/",
     nonce: "nonce-1",
     state: "state-1"
@@ -181,7 +214,7 @@ test("hosted Google OAuth builds id-token auth URL without client secret", () =>
 
   assert.equal(parsed.origin, "https://accounts.google.com")
   assert.equal(parsed.pathname, "/o/oauth2/v2/auth")
-  assert.equal(parsed.searchParams.get("client_id"), HOSTED_GOOGLE_OAUTH_CLIENT_ID)
+  assert.equal(parsed.searchParams.get("client_id"), clientId)
   assert.equal(parsed.searchParams.get("redirect_uri"), "https://extension-id.chromiumapp.org/")
   assert.equal(parsed.searchParams.get("response_type"), "id_token")
   assert.equal(parsed.searchParams.get("response_mode"), "fragment")
@@ -221,6 +254,7 @@ test("hosted Google OAuth parses redirect id token and sanitizes failures", asyn
 
   let launchedUrl = ""
   const token = await requestHostedGoogleIdToken({
+    clientId: "release-client.apps.googleusercontent.com",
     getRedirectUrl: () => "https://extension-id.chromiumapp.org/",
     nonce: "nonce-1",
     state: "state-1",
@@ -237,10 +271,15 @@ test("hosted Google OAuth parses redirect id token and sanitizes failures", asyn
   assert.match(launchedUrl, /response_type=id_token/)
   assert.doesNotMatch(launchedUrl, /client_secret/)
   const launchedAuthUrl = new URL(launchedUrl)
+  assert.equal(
+    launchedAuthUrl.searchParams.get("client_id"),
+    "release-client.apps.googleusercontent.com"
+  )
   assert.equal(launchedAuthUrl.searchParams.get("state"), "state-1")
   assert.equal(launchedAuthUrl.searchParams.get("nonce"), "nonce-1")
 
   const identity = await requestHostedGoogleIdentityToken({
+    clientId: "release-client.apps.googleusercontent.com",
     getRedirectUrl: () => "https://extension-id.chromiumapp.org/",
     nonce: "nonce-2",
     state: "state-2",
@@ -272,6 +311,7 @@ test("hosted Google sign-in binds backend challenge through OAuth and exchange",
         return {
           state: "backend-state",
           nonce: "backend-nonce",
+          client_id: "release-client.apps.googleusercontent.com",
           expires_at: "2026-06-18T00:05:00.000Z"
         }
       },
@@ -294,7 +334,8 @@ test("hosted Google sign-in binds backend challenge through OAuth and exchange",
       calls.push("oauth")
       assert.deepEqual(challenge, {
         state: "backend-state",
-        nonce: "backend-nonce"
+        nonce: "backend-nonce",
+        clientId: "release-client.apps.googleusercontent.com"
       })
       return { idToken: "mock-id-token", nonce: "backend-nonce" }
     },
@@ -392,6 +433,52 @@ test("hosted Google sign-in stops safely when backend challenge fails", async ()
   }
 })
 
+test("hosted Google sign-in persists sanitized failure state", async () => {
+  const { handleHostedGoogleSignIn } = await import(
+    "../src/background/hosted-auth.ts"
+  )
+  const storage = installHostedChromeStorageForTest()
+
+  try {
+    const result = await handleHostedGoogleSignIn({
+      client: {
+        baseUrl: HOSTED_AI_LOCAL_BASE_URL,
+        createGoogleAuthChallenge: async () => ({
+          state: "backend-state",
+          nonce: "backend-nonce",
+          client_id: "release-client.apps.googleusercontent.com",
+          expires_at: "2026-06-18T00:05:00.000Z"
+        }),
+        authGoogle: async () => {
+          throw new HostedAiClientError(
+            normalizeHostedAiError("unauthorized", 401)
+          )
+        },
+        me: async () => createHostedMeFixture(0)
+      },
+      requestGoogleIdentityToken: async () => ({
+        idToken: "mock-id-token",
+        nonce: "backend-nonce"
+      })
+    })
+
+    const storedFailure = await readHostedSignInResult()
+    assert.equal(result.status, "expired")
+    assert.equal(result.stage, "auth_google")
+    assert.equal(storedFailure?.status, "expired")
+    assert.equal(storedFailure?.stage, "auth_google")
+    assert.equal(storedFailure?.error?.source, "backend")
+    assert.equal(storedFailure?.error?.code, "unauthorized")
+    assert.equal(storedFailure?.error?.httpStatusClass, "4xx")
+    assert.doesNotMatch(
+      JSON.stringify(storage.localStore),
+      /backend-state|backend-nonce|mock-id-token|https?:\/\//
+    )
+  } finally {
+    storage.restore()
+  }
+})
+
 test("hosted AI client exposes auth, logout, me, and chat with scoped headers", async () => {
   const calls: Array<{ input: RequestInfo | URL; init?: RequestInit }> = []
   const responseBody = `data: {"delta":"hello"}\n\ndata: {"done":true,"usage":{"tokens_in":1,"tokens_out":2}}\n\n`
@@ -406,6 +493,7 @@ test("hosted AI client exposes auth, logout, me, and chat with scoped headers", 
       return Response.json({
         state: "backend-state",
         nonce: "backend-nonce",
+        client_id: "release-client.apps.googleusercontent.com",
         expires_at: "2026-06-18T00:05:00.000Z"
       })
     }
@@ -1067,7 +1155,7 @@ test("popup hosted current-model fallback does not rewrite the saved BYOK defaul
   )
   const loadBlock =
     popupSource.match(
-      /useEffect\(\(\) => \{[\s\S]*?Promise\.all\(\[getSettings\(\), getApiKeys\(\), readHostedSession\(\)\]\)[\s\S]*?\n  \}, \[\]\)/
+      /useEffect\(\(\) => \{[\s\S]*?Promise\.all\(\[[\s\S]*?getSettings\(\)[\s\S]*?getApiKeys\(\)[\s\S]*?readHostedSession\(\)[\s\S]*?readHostedSignInResult\(\)[\s\S]*?\]\)\.then[\s\S]*?\n  \}, \[\]\)/
     )?.[0] ?? ""
   const currentModelBlock =
     popupSource.match(
@@ -1075,6 +1163,7 @@ test("popup hosted current-model fallback does not rewrite the saved BYOK defaul
     )?.[0] ?? ""
 
   assert.match(loadBlock, /setSettings\(normalizedSettings\)/)
+  assert.match(loadBlock, /applyHostedSignInResult\(signInResult\)/)
   assert.doesNotMatch(loadBlock, /nextDefaultProviderConfigId/)
   assert.doesNotMatch(
     loadBlock,
@@ -1245,7 +1334,12 @@ test("hosted session storage uses a separate local key from API keys", async () 
 
   try {
     assert.equal(HOSTED_SESSION_STORAGE_KEY, "aviso_hosted_session")
+    assert.equal(
+      HOSTED_SIGN_IN_RESULT_STORAGE_KEY,
+      "aviso_hosted_sign_in_result"
+    )
     assert.notEqual(HOSTED_SESSION_STORAGE_KEY, "contextai_api_keys")
+    assert.notEqual(HOSTED_SIGN_IN_RESULT_STORAGE_KEY, "contextai_api_keys")
 
     await saveHostedSession(
       {
@@ -1266,6 +1360,28 @@ test("hosted session storage uses a separate local key from API keys", async () 
     assert.equal(
       (await readHostedSession())?.session.session_token,
       "session-local"
+    )
+
+    await saveHostedSignInResult({
+      status: "hosted_route_unavailable",
+      stage: "auth_google",
+      error: {
+        source: "backend",
+        code: "unauthorized",
+        httpStatusClass: "4xx"
+      }
+    })
+
+    assert.deepEqual(Object.keys(setCalls[1]), [
+      HOSTED_SIGN_IN_RESULT_STORAGE_KEY
+    ])
+    assert.equal(Object.hasOwn(localStore, "contextai_api_keys"), false)
+    assert.equal((await readHostedSignInResult())?.error?.code, "unauthorized")
+
+    await clearHostedSignInResult()
+    assert.equal(
+      Object.hasOwn(localStore, HOSTED_SIGN_IN_RESULT_STORAGE_KEY),
+      false
     )
 
     await clearHostedSession()
@@ -1761,6 +1877,7 @@ test("hosted sign-in slice keeps production backend and permission boundaries", 
   assert.match(hostedAuthSource, /createGoogleAuthChallenge/)
   assert.match(hostedAuthSource, /state: challenge\.state/)
   assert.match(hostedAuthSource, /nonce: challenge\.nonce/)
+  assert.match(hostedAuthSource, /clientId: challenge\.client_id/)
   assert.match(hostedAuthSource, /googleIdToken = null/)
   assert.equal(
     getI18nMessage("popup.hosted.status.authClientUnavailable", "zh-CN"),

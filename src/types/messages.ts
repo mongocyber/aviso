@@ -1,7 +1,10 @@
 import type { ConversationMessage } from "~types/history"
 import type { ClipboardType } from "~utils/clipboard-detect"
 import type { CommandQuickActionId } from "~utils/command-access"
-import type { HostedAccountStatus } from "~utils/hosted-session"
+import type {
+  HostedAccountStatus,
+  HostedSignInStage
+} from "~utils/hosted-session"
 import type { AiUnavailableGuidance } from "~utils/ai-unavailable-guidance"
 import type { ProviderId } from "~utils/model-registry"
 import type { PerfSummary, RequestTiming } from "~utils/timing"
@@ -47,14 +50,7 @@ export type ProviderConnectivityPayload = {
 
 export type HostedGoogleSignInData = {
   status: HostedAccountStatus
-  stage:
-    | "client"
-    | "challenge"
-    | "oauth"
-    | "auth_google"
-    | "me"
-    | "storage"
-    | "done"
+  stage: HostedSignInStage
   error?: {
     source: "oauth" | "backend" | "storage" | "unknown"
     code: string
