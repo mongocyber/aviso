@@ -498,6 +498,21 @@ test("reasoning stream deltas parse separately from answer text", () => {
   )
   assert.equal(
     extractReasoningDeltaText({
+      choices: [
+        {
+          delta: {
+            reasoning_details: [
+              { type: "reasoning.text", text: "分析术语。" },
+              { type: "reasoning.summary", summary: "确认译法。" }
+            ]
+          }
+        }
+      ]
+    }),
+    "分析术语。确认译法。"
+  )
+  assert.equal(
+    extractReasoningDeltaText({
       choices: [{ delta: { content: "Final answer" } }]
     }),
     ""

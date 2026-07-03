@@ -106,7 +106,8 @@ export function extractReasoningDeltaText(chunkOrDelta: unknown): string {
   return (
     textFromUnknown(delta.reasoning_content) ||
     textFromUnknown(delta.reasoning_text) ||
-    textFromUnknown(delta.reasoning)
+    textFromUnknown(delta.reasoning) ||
+    textFromReasoningDetails(delta.reasoning_details)
   )
 }
 
@@ -129,6 +130,16 @@ function textFromUnknown(value: unknown): string {
     if (typeof value.content === "string") return value.content
   }
   return ""
+}
+
+function textFromReasoningDetails(value: unknown): string {
+  if (!Array.isArray(value)) return ""
+  return value
+    .map((detail) => {
+      if (!isRecord(detail)) return ""
+      return textFromUnknown(detail.text) || textFromUnknown(detail.summary)
+    })
+    .join("")
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {

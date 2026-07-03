@@ -407,8 +407,9 @@ test("reasoning-only provider streams fail visibly and never populate translatio
   )
 
   assert.match(aiClientSource, /EMPTY_PROVIDER_ANSWER_ERROR/)
+  assert.match(aiClientSource, /OUTPUT_BUDGET_EXHAUSTED_ERROR/)
   assert.match(aiClientSource, /if \(!answerOutput\.trim\(\)\)/)
-  assert.match(aiClientSource, /throw new Error\(EMPTY_PROVIDER_ANSWER_ERROR\)/)
+  assert.match(aiClientSource, /finishReason === "length"/)
   assert.match(
     aiClientSource,
     /translationCacheKey && chunk\.text && chunk\.kind !== "reasoning"/
@@ -637,6 +638,8 @@ test("AI output token budgets stay small for common short operations", () => {
     )?.[0] ?? ""
 
   assert.match(tokenBudgetBlock, /getTranslationMaxOutputTokens\(payload\)/)
+  assert.match(tokenBudgetBlock, /providerId === "openrouter"/)
+  assert.match(tokenBudgetBlock, /Math\.max\(translationTokens, 512\)/)
   assert.match(tokenBudgetBlock, /operation === "polish"\) return 768/)
   assert.match(tokenBudgetBlock, /return 1024/)
   assert.equal(

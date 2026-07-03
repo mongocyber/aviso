@@ -7,7 +7,11 @@ import type {
   ProviderConnectivityPayload
 } from "~types/messages"
 import { applyAIContextBudget } from "~utils/ai-context"
-import { EMPTY_PROVIDER_ANSWER_ERROR, normalizeError } from "~utils/errors"
+import {
+  EMPTY_PROVIDER_ANSWER_ERROR,
+  normalizeError,
+  OUTPUT_BUDGET_EXHAUSTED_ERROR
+} from "~utils/errors"
 import { assertSupportedImageSrc } from "~utils/image-src"
 import { parseIntentLocally } from "~utils/intent"
 import {
@@ -434,12 +438,12 @@ async function callOpenAI(
       cacheKey: opts?.clientCacheKey ?? `${opts?.providerId ?? "openai"}:default`
     })
 
+    const providerId = opts?.providerId ?? "openai"
     const messages =
       payload.operation === "image_explain" && payload.srcUrl
         ? buildImageMessages(payload, "openai")
         : buildMessages(payload)
-    const maxTokens = getMaxOutputTokens(payload)
-    const providerId = opts?.providerId ?? "openai"
+    const maxTokens = getMaxOutputTokens(payload, providerId)
     const reasoningParams = buildChatCompletionReasoningParams({
       providerId,
       modelOrEndpoint: model,
@@ -489,7 +493,8 @@ async function callOpenAI(
       throwIfAborted(opts?.signal)
       const reasoningText = extractReasoningDeltaText(chunk)
       const text = chunk.choices[0]?.delta?.content ?? ""
-      const done = chunk.choices[0]?.finish_reason != null
+      const finishReason = chunk.choices[0]?.finish_reason
+      const done = finishReason != null
       if ((reasoningText || text) && !sawFirstChunk) {
         sawFirstChunk = true
         timing = markTiming(timing, "firstChunkAt")
@@ -508,7 +513,11 @@ async function callOpenAI(
       if (done) {
         if (!answerOutput.trim()) {
           errorCategory = "provider_error"
-          throw new Error(EMPTY_PROVIDER_ANSWER_ERROR)
+          throw new Error(
+            finishReason === "length"
+              ? OUTPUT_BUDGET_EXHAUSTED_ERROR
+              : EMPTY_PROVIDER_ANSWER_ERROR
+          )
         }
         sawDone = true
         timing = markTiming(timing, "doneAt")
@@ -804,9 +813,16 @@ function resolveTemplatePromptFromTemplates(
   })
 }
 
-export function getMaxOutputTokens(payload: AIRequestPayload): number {
+export function getMaxOutputTokens(
+  payload: AIRequestPayload,
+  providerId?: ProviderId
+): number {
   const operation = payload.operation
-  if (operation === "translate") return getTranslationMaxOutputTokens(payload)
+  if (operation === "translate") {
+    const translationTokens = getTranslationMaxOutputTokens(payload)
+    if (providerId === "openrouter") return Math.max(translationTokens, 512)
+    return translationTokens
+  }
   if (operation === "polish") return 768
   return 1024
 }

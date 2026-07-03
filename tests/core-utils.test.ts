@@ -14,7 +14,8 @@ import {
 import {
   buildSafeErrorLog,
   EMPTY_PROVIDER_ANSWER_ERROR,
-  normalizeError
+  normalizeError,
+  OUTPUT_BUDGET_EXHAUSTED_ERROR
 } from "../src/utils/errors.ts"
 import {
   MAX_DATA_IMAGE_URL_CHARS,
@@ -250,6 +251,10 @@ test("normalizeError 保留空回答安全提示", () => {
   assert.equal(
     normalizeError(new Error(EMPTY_PROVIDER_ANSWER_ERROR)),
     EMPTY_PROVIDER_ANSWER_ERROR
+  )
+  assert.equal(
+    normalizeError(new Error(OUTPUT_BUDGET_EXHAUSTED_ERROR)),
+    OUTPUT_BUDGET_EXHAUSTED_ERROR
   )
 })
 

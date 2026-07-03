@@ -49,6 +49,9 @@ const TRANSLATION_EMPTY_INPUT_ERROR =
 export const EMPTY_PROVIDER_ANSWER_ERROR =
   "AI 服务没有返回可显示结果，请重试或切换模型。"
 
+export const OUTPUT_BUDGET_EXHAUSTED_ERROR =
+  "AI 输出预算被思考过程用完，请重试或切换更快模型。"
+
 const IMAGE_UNSUPPORTED_MODEL_ERROR =
   "当前模型不支持图片理解，请切换到支持视觉输入的模型。"
 
@@ -184,6 +187,7 @@ function normalizeKnownSafeUserMessage(message: string): string | null {
   if (message === REMOTE_IMAGE_DOWNLOAD_ERROR) return message
   if (message === TRANSLATION_EMPTY_INPUT_ERROR) return message
   if (message === EMPTY_PROVIDER_ANSWER_ERROR) return message
+  if (message === OUTPUT_BUDGET_EXHAUSTED_ERROR) return message
   if (message === IMAGE_UNSUPPORTED_MODEL_ERROR) return message
   if (message === SCREENSHOT_UNSUPPORTED_MODEL_ERROR) return message
   if (message === IMAGE_MODEL_DEPENDENT_ERROR) return message
