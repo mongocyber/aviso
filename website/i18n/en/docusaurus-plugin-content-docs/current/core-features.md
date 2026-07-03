@@ -10,9 +10,12 @@ Aviso currently focuses on connecting common webpage objects to AI and keeping t
 
 ## AI Service Paths
 
-Aviso keeps BYOK direct-provider as the default available path: users enter their own model API key, and the browser extension calls the selected provider directly without forcing sign-in.
+Aviso supports two AI service paths:
 
-The v0.3 hosted AI path is optional in the production candidate. Only when the user chooses hosted AI and signs in does the request pass through the Aviso production backend and upstream model providers. BYOK configuration and direct-provider requests are not blocked by hosted sign-in state. Production backend smoke and candidate package evidence exist, but this is still not public release or Chrome Web Store approval.
+- Aviso AI: sign in and use free quota, useful for starting quickly.
+- BYOK direct-provider: enter your own model API key, and the browser extension calls the selected provider directly without forcing sign-in.
+
+Only when the user chooses Aviso AI and signs in does the request pass through the Aviso backend and upstream model providers. BYOK configuration and direct-provider requests are not blocked by Aviso AI sign-in state.
 
 ## Right-Click Menu
 
@@ -21,7 +24,7 @@ The right-click menu supports multiple webpage contexts:
 - Selected text: explain, translate, refine, summarize.
 - Current page: extract page text and summarize it.
 - Link: send the link URL as context to AI.
-- Copy current context: write page title, URL, optional selected text, and truncated page text to the clipboard without calling a provider.
+- Copy current context: write page title, URL, optional selected text, and truncated page text to the clipboard without calling a provider. This is useful for follow-up questions, notes, reports, or team handoff.
 - Image: in the internal right-click path, explain supported image URLs or supported base64 image data; this is not a main public entry point.
 - Custom templates: use prompt templates configured in the Popup.
 - Model switching: quickly switch the current model from the right-click menu.
@@ -37,6 +40,8 @@ Available actions include explain, translate, refine, summarize, and send to AI.
 The selection translation card is off by default. When enabled, short selections can show an in-place translation result with copy, retry, and open-panel actions.
 
 The translation payload only uses the selected text or user-entered text to translate. It does not mix in page URL, page body, remote link body, screenshot, or clipboard content.
+
+Translation target language can be set in the Popup. It is independent from the UI language.
 
 ## Command Palette
 
@@ -60,7 +65,7 @@ The command palette does not perform autonomous browsing, web search, or remote 
 
 The double-click quick menu is off by default. When enabled, it provides a compact entry in normal webpage areas and avoids inputs, editable regions, common code editors, and Aviso UI.
 
-It reuses existing local and AI actions and does not show a screenshot entry.
+It reuses existing local and AI actions, including copy current context, page summary, templates, translate, explain, refine, and summarize selection. It does not show a screenshot entry.
 
 ## Clipboard-Aware Prompt
 
@@ -87,8 +92,9 @@ The Popup manages:
 - API keys.
 - OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan model IDs.
 - Doubao / Volcengine Ark endpoint and model fields.
-- Hosted AI account sign-in, refresh, and sign-out state.
+- Aviso AI account sign-in, refresh, sign-out, account status, and quota status.
 - Feature switches.
+- Translation target language.
 - Custom templates.
 - History.
 - Privacy information.

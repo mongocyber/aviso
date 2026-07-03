@@ -1,12 +1,27 @@
 ---
-title: API Key Setup
-description: Configure model provider API keys and understand where data is sent.
+title: AI Services And API Keys
+description: Choose Aviso AI or configure model provider API keys and understand where data is sent.
 sidebar_position: 3
 ---
 
-# API Key Setup
+# AI Services And API Keys
 
-Aviso uses your own model provider API key. Requests are sent directly from the browser extension to the provider you select.
+Aviso supports two AI service paths:
+
+- **Aviso AI**: sign in and use free quota without providing your own model provider API key.
+- **BYOK provider**: use your own model provider API key. Requests are sent directly from the browser extension to the provider you select.
+
+You can manage the default service in the Popup and switch services by task.
+
+## Aviso AI
+
+Aviso AI is the quickest way to start. After sign-in, the Popup shows account status, quota status, refresh, and sign-out controls. When you use Aviso AI, requests pass through the Aviso backend and upstream model providers.
+
+Important boundaries:
+
+- Free quota is available after sign-in.
+- Signing out of Aviso AI does not remove or disable BYOK provider configs.
+- If quota or service availability blocks a task, you can switch back to a BYOK provider.
 
 ## Supported Providers
 
@@ -14,21 +29,23 @@ The current code includes these provider paths:
 
 | Provider | Current status |
 | --- | --- |
-| Doubao / Volcengine Ark | Internal testing and user feedback confirm the path works. |
-| OpenAI | API key and model ID can be configured; actual availability depends on your key, model access, and provider status. |
-| Anthropic | API key and model ID can be configured; actual availability depends on your key, model access, and provider status. |
-| DeepSeek | API key and model ID can be configured; has one owner-manual connectivity pass. Actual availability still depends on your key, model access, and provider status. |
-| Kimi / Moonshot | API key and model ID can be configured; not live-provider validated. |
-| OpenRouter | Provider id is `openrouter`, base URL is `https://openrouter.ai/api/v1`; API key and manual model ID can be configured; host permission is `https://openrouter.ai/*`; not live-provider validated. |
-| Gemini | Provider id is `gemini`, base URL is `https://generativelanguage.googleapis.com/v1beta/openai/`; API key and manual model ID can be configured; host permission is `https://generativelanguage.googleapis.com/*`; V02-018 completed non-live validation, but it is not live-provider validated. |
-| Tencent Hunyuan | Provider id is `hunyuan`, base URL is `https://api.hunyuan.cloud.tencent.com/v1`; API key and manual model ID can be configured; host permission is `https://api.hunyuan.cloud.tencent.com/*`; V02-018 completed non-live validation, but it is not live-provider validated. |
+| Doubao / Volcengine Ark | API key, model ID, and endpoint can be configured; actual availability depends on your key, model access, and service status. |
+| OpenAI | API key and model ID can be configured; actual availability depends on your key, model access, and service status. |
+| Anthropic | API key and model ID can be configured; actual availability depends on your key, model access, and service status. |
+| DeepSeek | API key and model ID can be configured; actual availability depends on your key, model access, and service status. |
+| Kimi / Moonshot | API key and model ID can be configured; actual availability depends on your key, model access, and service status. |
+| OpenRouter | API key, model ID, and endpoint can be configured; actual availability depends on your key, model access, and service status. |
+| Gemini | API key, model ID, and endpoint can be configured; actual availability depends on your key, model access, and service status. |
+| Tencent Hunyuan | API key, model ID, and endpoint can be configured; actual availability depends on your key, model access, and service status. |
 
-OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan are not availability guarantees in the current version. Users need to enter their own valid API keys and manually trigger connection tests in the Popup. OpenRouter, Gemini, and Tencent Hunyuan are BYOK OpenAI-compatible presets and Aviso does not automatically read model lists.
+These services require your own valid API key. You can trigger a connection test in the Popup when needed. OpenRouter, Gemini, and Tencent Hunyuan use OpenAI-compatible configs and require a manually entered model ID; Aviso does not automatically read model lists.
 
 ## AI Service Configs
 
 The Popup supports multiple AI service configs. You can:
 
+- Sign in to, refresh, or sign out of Aviso AI.
+- View Aviso AI account status and quota status.
 - Save multiple configs for the same provider.
 - Set the current default service.
 - Manually edit OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan model IDs.
@@ -37,7 +54,7 @@ The Popup supports multiple AI service configs. You can:
 
 Aviso does not automatically read model lists from your provider account and does not automatically call list-models APIs.
 
-## Setup Steps
+## BYOK Setup Steps
 
 1. Click the Aviso icon in the Chrome toolbar.
 2. Add or edit a service config in the AI services area.
@@ -58,6 +75,8 @@ Important boundaries:
 - When you use a model, the request is sent directly to the provider you selected.
 - Provider billing, logs, retention, and limits follow your provider account terms.
 - Do not expose API keys in screenshots, feedback, issues, recordings, or chat messages.
+
+Aviso AI does not require a model provider API key from you. Its session is stored in local extension storage and can be signed out from the Popup.
 
 ## Replace or Remove a Key
 

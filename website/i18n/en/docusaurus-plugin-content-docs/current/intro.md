@@ -1,29 +1,33 @@
 ---
 title: Product Intro
-description: Aviso is a Chrome extension for calling AI in place on the current webpage.
+description: Aviso is a Chrome extension for using AI directly inside the current webpage.
 sidebar_position: 1
 ---
 
 # Product Intro
 
-Aviso is a Chrome extension for quickly calling AI while you read, research, or edit content on the web. You can explain, translate, refine, summarize, or run custom prompts on selected text, the current page, links, image clues, clipboard text, browsing history, bookmarks, and local AI conversations. Results appear in an in-page floating panel.
+Aviso is a Chrome extension for using AI while you read, research, or edit content on the web. You can explain, translate, refine, summarize, or run custom prompts on selected text, the current page, links, clipboard text, browsing history, bookmarks, and local AI conversations. Results appear in an in-page floating panel.
 
-Aviso is not trying to replace a full chat app. Its goal is to reduce copy-paste friction: when you are already looking at a webpage or drafting content, you can work with the current context directly.
+Aviso's core value is reducing copy-paste friction: when you are already looking at a webpage or drafting content, you can work with the current context directly.
+
+## Two Ways To Start
+
+Aviso supports two AI service paths:
+
+- **Sign in to Aviso AI**: best for starting quickly. After sign-in, you can use free quota without preparing a model provider API key first.
+- **Bring your own API key**: best if you already have model service accounts such as OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, or Tencent Hunyuan. Requests are sent directly from the browser extension to the provider you choose.
+
+You can switch between the two paths by task. BYOK does not require sign-in; signing out of Aviso AI does not remove or disable your BYOK configs.
 
 ## Current Status
 
-Aviso is currently version `0.1.0`. This site is the public product website and documentation, covering current capabilities, privacy boundaries, and installation guidance. Version `0.1.0` has been submitted for Chrome Web Store review. The official install link is not available yet and will be updated after review approval. Core features are implemented, internal manual acceptance has a basic-pass record, and internal testing plus user feedback confirm the Doubao / Volcengine Ark path works. BYOK direct-provider remains the current public path; v0.3 Aviso AI / hosted AI has moved into production candidate evidence, but it is still not public release, Chrome Web Store approval, or hosted AI live.
-
 Current facts:
 
-- This site describes the current product in public website form; the Chrome Web Store install link is not available yet and will be updated after review approval.
-- Version `0.1.0` has been submitted for Chrome Web Store review. Before the official link is available, the build directory is provided only to invited testers and review-preparation maintainers.
-- Right-click menu, selection toolbar, selection translation card, command palette, double-click quick menu, clipboard prompt, in-page result panel, and Popup settings are implemented.
-- Multiple AI service configs, default service switching, editable model IDs, Chinese / English UI, and Manifest localization are implemented.
-- BYOK direct-provider is the default available path and does not force sign-in; v0.3 production candidate has validated Aviso AI / hosted AI as an optional path, sign-in is required only for that hosted path, and BYOK remains unaffected.
-- Internal testing and user feedback confirm the Doubao / Volcengine Ark path works.
-- OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan can be configured with an API key and model ID. OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually, and Aviso does not automatically read model lists. DeepSeek has one owner-manual connectivity pass; Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan should not be described as live-provider validated. Actual availability depends on your key, model access, and provider status.
-- This site explains the current implemented capabilities and boundaries. The extension has been submitted for review, but it has not been approved by the Chrome Web Store yet.
+- This site describes the current product in public website form; the Chrome Web Store install link is not available yet and will be updated later.
+- Before the official link is available, the install guide explains the current loadable extension build directory.
+- Right-click menu, selection toolbar, selection translation card, command palette, double-click quick menu, clipboard prompt, copy current context, in-page result panel, and Popup settings are implemented.
+- Aviso AI sign-in, account status, free quota display, refresh / sign-out, BYOK provider configuration, default service switching, manual model ID editing, Chinese / English UI, and Manifest localization are implemented.
+- Aviso supports multiple model service configs, including OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan. You can enter your own API key, model ID, or endpoint in settings; actual availability depends on your account access, model access, and provider status.
 
 ## Who It Is For
 
@@ -32,18 +36,18 @@ Aviso is useful if you often process information in the browser:
 - Reading English materials and needing quick translation or explanation.
 - Editing webpage text, emails, forms, or drafts and needing wording help.
 - Researching webpages, links, bookmarks, and history records.
+- Signing in and starting with Aviso AI free quota.
 - Calling models with your own API key while understanding exactly which data goes to the selected provider.
-- Keeping prompts, model switching, history reuse, and follow-up questions inside the current browser context.
+- Keeping copy context, prompts, model switching, history reuse, and follow-up questions inside the current browser context.
 
 ## Product Boundaries
 
-BYOK AI requests are sent directly from the browser extension to the model provider you select. API keys, settings, and history are stored primarily in your browser. v0.3 Aviso AI / hosted AI is currently a production candidate path; when that path is used, requests pass through the Aviso production backend and upstream providers. Production backend HTTP smoke and frontend candidate package evidence exist, but final loaded-extension production smoke, Chrome Web Store submission, website deployment, and owner release approval remain incomplete.
+If you choose “bring your own API key”, Aviso lets your browser connect directly to the model service you selected. Your API keys, settings, and history stay primarily in your browser. When you sign in to Aviso AI and use free quota, requests pass through the Aviso backend and upstream model providers.
 
 This means:
 
-- You need to provide your own provider API key.
-- Sign-in is required only when you actively choose Aviso AI / hosted AI; being signed out of hosted AI does not prevent you from using BYOK providers.
-- Provider billing, data handling, and terms are governed by your account relationship with that provider.
+- To start quickly, sign in to Aviso AI and use free quota.
+- To use your own model service, add your own API key. Billing, data handling, and terms are governed by your account relationship with that service.
 - Aviso does not promise instant model responses. First-token latency depends on network, model, input length, provider status, and API key status.
 - Aviso has improved visible waiting states and a local summary-only timing method, but it does not claim live provider p50 / p95 targets have been achieved.
 - Aviso does not fetch arbitrary remote link bodies and does not request broad host permissions for that purpose.
@@ -55,7 +59,7 @@ This means:
 Recommended reading order:
 
 1. [Install Aviso](./install.md)
-2. [API Key Setup](./api-keys.md)
-3. [First Use](./first-use.md)
+2. [First Use](./first-use.md)
+3. [AI Services And API Keys](./api-keys.md)
 4. [Core Features](./core-features.md)
 5. [Privacy Policy](./privacy-policy.md)

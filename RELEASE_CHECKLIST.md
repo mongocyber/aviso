@@ -4,13 +4,13 @@
 
 状态：`v0.1 internal dogfood / 内部试用版`，Chrome Web Store 已提交审核 / 待审核
 
-日期：2026-07-02
+日期：2026-07-03
 
 ## 当前结论
 
 当前构建用于内部试用和 Chrome Web Store 审核。用户已验证 A-G 手动验收基本通过，豆包 / 火山方舟 API 可用。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID；DeepSeek 已有一次 owner 手动 connectivity pass，OpenRouter 最近一次手动测试失败类别为 `unauthorized`，Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 当前仍不能写成 live validated。
 
-v0.3 production candidate 已加入可选 Aviso AI / hosted AI 路径，并已通过 production backend authenticated HTTP smoke 与候选包构建/manifest 证据；2026-07-02 前后端 OAuth challenge gate 已合入并推送到对应 `main`，Chrome Web Store listing copy 和 disclosure draft 已更新；但这仍不代表 Chrome Web Store 上传、公开发布、hosted AI live、网站部署或 owner release approval。
+v0.3 production candidate 已加入可选 Aviso AI / hosted AI 路径，并已通过 production backend authenticated HTTP smoke 与候选包构建/manifest 证据；2026-07-02 前后端 OAuth challenge gate 已合入并推送到对应 `main`，Chrome Web Store listing copy 和 disclosure draft 已更新。2026-07-03 后端 production closeout 修复了 Google OAuth client ID contract、Google auth 脱敏诊断和 Upstash JSON challenge/idempotency 解析兼容问题；owner-loaded extension 已验证 Aviso AI 登录、翻译和发送给 AI 可用。当前速度慢问题记录为后续版本优化项。但这仍不代表 Chrome Web Store 上传、公开发布、hosted AI live、网站部署或 owner release approval。
 
 本清单用于记录当前内部试用质量、发布候选准备和已提交审核状态，不代表 Chrome Web Store 审核通过、正式上架或发布批准。
 
@@ -30,6 +30,7 @@ v0.3 production candidate 已加入可选 Aviso AI / hosted AI 路径，并已�
 | 多 AI 服务配置 | 通过：新增、编辑、删除、默认服务切换、模型 ID 手动编辑。 |
 | UI 语言 | 通过 smoke check：中文 / English，可跟随 Chrome，也可在设置中覆盖。 |
 | Manifest 本地化 | 通过：中文 Chrome 显示中文描述和快捷键说明，英文 Chrome 显示英文描述和 `Open command palette`。 |
+| Aviso AI / hosted AI 主链 | 通过 owner-loaded production candidate smoke：登录、翻译、发送给 AI 可用；速度慢转入后续版本优化。 |
 
 截图能力仅保留在右键主动触发的内部路径中；命令面板和双击快捷菜单不展示截图入口。当前清单不把截图作为普通用户主入口或公开卖点。
 
@@ -77,7 +78,9 @@ npm run package
 
 2026-06-13 CTO 自动门禁复跑通过：`git diff --check`、`npm test`（159 passed）、`npx tsc --noEmit`、`npx tsc --noEmit -p tsconfig.wxt.json`、`npm run build`、`npm run build:wxt`、`npm run check:manifests`。其中 `npm run build` 在沙箱内会遇到 `Operation not permitted`，非沙箱复跑通过；这不关闭任何 loaded-extension manual release gate。
 
-2026-07-02 maintenance pass 通过：前端 `git diff --check`、`npm test`（214/214）、`npx tsc --noEmit`；后端 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（387/387）、`git diff --check`。本次覆盖前端安全口径收口、纯逻辑 i18n 测试解耦、frontend hosted OAuth challenge 接入、backend OAuth challenge gate、CWS listing copy 和 disclosure draft 更新；`npm run verify:release-candidate` 已重新生成并验证 `build/chrome-mv3-prod.zip`，`website` `npm run build` 通过；未上传 CWS、未部署网站或标记 hosted AI live。最终上传前仍需 owner final loaded-extension validation。
+2026-07-02 maintenance pass 通过：前端 `git diff --check`、`npm test`（214/214）、`npx tsc --noEmit`；后端 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（387/387）、`git diff --check`。本次覆盖前端安全口径收口、纯逻辑 i18n 测试解耦、frontend hosted OAuth challenge 接入、backend OAuth challenge gate、CWS listing copy 和 disclosure draft 更新；`npm run verify:release-candidate` 已重新生成并验证 `build/chrome-mv3-prod.zip`，`website` `npm run build` 通过；未上传 CWS、未部署网站或标记 hosted AI live。
+
+2026-07-03 production validation pass 通过：后端 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（392/392）、`git diff --check`；production deployment 完成，sanitized challenge smoke 通过。Owner-loaded extension 验证 Aviso AI 登录、翻译和发送给 AI 可用。最终上传/上线前仍需官网页面人工复核、网站部署证据、Chrome Web Store upload/submission/disclosure evidence 和 owner release approval。
 
 ## 上线前安全扫描
 

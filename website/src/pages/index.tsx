@@ -146,17 +146,16 @@ function GlyphProvider(): JSX.Element {
 
 const copy = {
   zh: {
-    pageDescription: "Aviso 是一个在当前网页就地调用 AI 的 Chrome 扩展。BYOK 是当前默认可用路径；v0.3 Aviso AI / 托管 AI 仍是候选路径，release gate 完成后才会公开。",
-    badge: "内部试用 · Chrome 扩展",
-    heroLine1: "在你正看的网页里,",
-    heroLine2Pre: "就地调用 ",
+    pageDescription: "Aviso 是一个在当前网页直接使用 AI 的 Chrome 扩展。登录 Aviso AI 可使用免费额度,也支持添加自己的 API Key。",
+    badge: "Chrome 扩展 · 网页 AI 助手",
+    heroLine1: "在当前网页里,",
+    heroLine2Pre: "直接使用 ",
     heroEm: "AI",
-    sub: "一个快捷键唤起命令面板,搜本地历史与书签,或把问题直接交给 AI。解释、翻译、润色、总结,结果就浮在原文旁边 —— 不跳转、不复制粘贴。BYOK 路径默认直连模型厂商；v0.3 Aviso AI 是可选托管候选路径,只有 release gate 完成后才会公开。",
+    sub: "选中文本、打开右键菜单或唤起命令面板,就能翻译、解释、总结、追问和复制上下文。登录 Aviso AI 可使用免费额度,也可以添加自己的 API Key。",
     install: "查看安装指南",
     readDocs: "产品文档",
     viewDocs: "查看文档",
-    micro: "BYOK 无需登录 · Aviso AI production candidate · Chrome 桌面版",
-    statusNote: "0.1.0 正在 Chrome Web Store 审核中,目前没有正式商店链接；v0.3 Aviso AI 已通过 production backend smoke 并完成候选包构建,但还没有公开、部署网站或提交新版商店披露。",
+    micro: "Aviso AI 登录可用免费额度 · 支持自带 API Key · Chrome 桌面版",
     shortcutPre: "在任意网页按下",
     cmdPlaceholder: "搜索浏览历史、书签、AI 对话…",
     cmdStatus: "AI 可用",
@@ -165,17 +164,17 @@ const copy = {
     cmdHint: "无结果时可发给 AI",
     cmdNoMatch: "无匹配结果 — 回车把输入交给",
     cmdNoMatchTail: "按意图处理",
-    providerLab: "使用自己的 Key,浏览器直连已批准的模型厂商",
+    providerLab: "登录使用 Aviso AI,或连接你自己的模型服务",
     doubao: "豆包",
     ark: "Volcengine Ark",
-    entriesTag: "01 — 触发入口",
-    entriesTitle: "需要的那一刻,从哪都能叫出它",
-    entriesLede: "Aviso 不强迫你换一种用浏览器的方式。它接进你已有的习惯 —— 右键、划词、快捷键,你顺手怎么用都行。",
-    resultTag: "02 — 结果留在页面",
-    resultTitlePre: "答案浮在原文旁,",
-    resultTitleEm: "不必",
-    resultTitlePost: "离开这一页",
-    resultLede: "页面内浮窗是 Aviso 的主结果位。内容流式输出,可以复制、保存、继续追问。保存的对话进入本地历史,之后能在命令面板里复用。",
+    entriesTag: "01 — 网页内操作",
+    entriesTitle: "需要 AI 的那一刻,直接在页面里完成",
+    entriesLede: "Aviso 接进你已有的浏览习惯:划词、右键、快捷键、双击入口都能用。读网页、整理资料、理解外文内容时,不用来回复制粘贴。",
+    resultTag: "02 — 结果与上下文",
+    resultTitlePre: "答案、追问和上下文,",
+    resultTitleEm: "都留在",
+    resultTitlePost: "当前页面",
+    resultLede: "结果直接显示在原页面旁边。你可以复制答案、保存历史、继续追问,也可以一键复制页面标题、链接、选中文本和当前上下文,继续交给 AI 分析或整理成笔记。",
     winModel: "解释",
     winUser: "清理函数会在组件卸载前…",
     winAnswerStrong: "清理函数",
@@ -185,27 +184,27 @@ const copy = {
     saveLabel: "保存",
     followup: "继续追问…",
     sendLabel: "发送",
-    byokTag: "03 — BYOK 默认直连",
-    byokTitlePre: "你的 Key,直连厂商。",
-    byokTitleMid: "托管 AI 可选,",
-    byokTitleEm: "不挡 BYOK",
-    byokLede: "BYOK 路径使用你自己的 API Key,浏览器直连你选的模型厂商,不要求 Aviso 账号。v0.3 Aviso AI / 托管 AI 仍是候选路径；只有你选择托管并登录时,请求才会经过 Aviso production 后端和上游模型服务,公开前还需要完成剩余 release gate。",
+    byokTag: "03 — 两种开始方式",
+    byokTitlePre: "登录即可使用 Aviso AI。",
+    byokTitleMid: "也可以",
+    byokTitleEm: "自带 API Key",
+    byokLede: "Aviso AI 适合快速开始:登录后可使用免费额度。已有模型服务账号的用户,可以继续使用 BYOK 模式,由浏览器直连当前支持的模型服务商。两种方式可以按任务切换。",
     provCardTitle: "AI 服务",
-    provCardTag: "本地保护",
+    provCardTag: "两种路径",
     provDaily: "Volcengine Ark",
     provDoubao: "豆包接入点",
     provDefault: "可配置",
     provConnected: "已配置",
     provUnset: "支持配置 · 待测试",
     provNotSet: "未配置",
-    privacyTag: "04 — 隐私边界",
-    privacyTitlePre: "别让扩展悄悄收走你的对话。",
-    privacyTitleEm: "每条路径都说清楚",
-    privacyLede: "Aviso 把 BYOK 直连和 v0.3 候选托管路径分开披露。BYOK 请求不经过 Aviso 后端；托管 AI 只在你主动选择并登录后使用,请求会经过 Aviso production 后端和上游模型服务。",
+    privacyTag: "04 — 隐私与控制",
+    privacyTitlePre: "每一种使用方式,",
+    privacyTitleEm: "数据流向都清楚",
+    privacyLede: "BYOK 模式下,浏览器直连你选择的模型服务商。Aviso AI 需要登录并主动使用,请求会经过 Aviso 后端和上游模型服务。剪贴板敏感内容会跳过提示,功能入口也可以在设置里关闭。",
     compareThem: "多数 AI 助手扩展",
     compareUs: "Aviso",
     privacyNote:
-      "这不是空话:Aviso 的隐私边界写进了实现本身。API Key 不明文保存,对话历史只存在你的浏览器里,命令面板搜历史和书签都在本地完成。BYOK 只由浏览器直连你选择的 provider；v0.3 候选托管后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板、API Key 或完整 URL。",
+      "Aviso 的隐私边界写进了实现本身:API Key 不明文保存,对话历史只存在你的浏览器里,命令面板搜索历史和书签都在本地完成。BYOK 由浏览器直连你选择的 provider；Aviso AI 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板、API Key 或完整 URL。",
     metricBackendNum: "BYOK",
     metricBackend: "直连路径不经过 Aviso 后端",
     metricTelemetryNum: "0",
@@ -213,32 +212,30 @@ const copy = {
     metricTriggerNum: "主动触发",
     metricTrigger: "才发送 —— 托管路径不持久化正文",
     docsTag: "产品文档",
-    docsTitle: "几分钟上手,数据流向写在明面上",
-    docsLede: "文档帮你两件事:把 Aviso 顺手装好用起来,以及看清每个操作会把哪些内容发给哪个 provider。读完,你能放心地决定怎么用它。",
+    docsTitle: "几分钟上手,每条路径都讲清楚",
+    docsLede: "从安装、首次使用、Aviso AI 登录、API Key 配置到数据权限,文档会说明每个入口能做什么、哪些内容会发送给哪个服务。",
     docRead: "阅读 →",
     faqTag: "常见问题",
     faqTitle: "还有疑问?",
-    finalTitle: "把 AI 留在你需要它的那一刻",
-    finalLede: "BYOK 无需登录。v0.3 Aviso AI 仍是候选路径,release gate 完成后才会公开。按指南装好后,按 ⌘⇧Space,就能开始。",
-    badgeKey: "自备 API Key",
+    finalTitle: "在下一次阅读网页时,直接用上 AI",
+    finalLede: "登录 Aviso AI 可使用免费额度；也可以添加自己的 API Key。按指南装好后,划词、右键或按 ⌘⇧Space 就能开始。",
+    badgeKey: "Aviso AI 免费额度",
     badgeNoData: "不持久化正文",
-    badgeNoAccount: "BYOK 无需登录",
+    badgeNoAccount: "BYOK 可选",
     cmdReady: "AI 可用"
   },
   en: {
     pageDescription:
-      "Aviso is a Chrome extension for calling AI inside the current page. BYOK is the current available path; v0.3 Aviso AI / hosted AI is still a candidate path and will be public only after the release gates are complete.",
-    badge: "Internal trial · Chrome extension",
-    heroLine1: "Call AI right",
+      "Aviso is a Chrome extension for using AI inside the page you are reading. Sign in to Aviso AI for free quota, or add your own API key.",
+    badge: "Chrome extension · In-page AI assistant",
+    heroLine1: "Use AI right",
     heroLine2Pre: "inside the page ",
-    heroEm: "you're on",
-    sub: "One shortcut opens the command palette — search your history and bookmarks, or hand a question straight to the AI. Explain, translate, refine, summarize; the answer floats right beside the text. BYOK stays browser-direct by default; v0.3 Aviso AI is an optional hosted candidate path and will be public only after the release gates are complete.",
+    heroEm: "you are on",
+    sub: "Select text, open the right-click menu, or launch the command palette to translate, explain, summarize, follow up, and copy page context. Sign in to Aviso AI for free quota, or add your own API key.",
     install: "View install guide",
     readDocs: "Read the docs",
     viewDocs: "View docs",
-    micro: "BYOK no login · Aviso AI production candidate · Chrome desktop",
-    statusNote:
-      "0.1.0 is under Chrome Web Store review, with no official store link yet; v0.3 Aviso AI has passed production backend smoke and candidate packaging, but it is not public, website-deployed, or submitted as a new store disclosure yet.",
+    micro: "Aviso AI free quota after sign-in · Bring your own API key · Chrome desktop",
     shortcutPre: "On any page, press",
     cmdPlaceholder: "Search browser history, bookmarks, AI chats…",
     cmdStatus: "AI ready",
@@ -247,19 +244,19 @@ const copy = {
     cmdHint: "Send to AI when no results",
     cmdNoMatch: "No match — press Enter to hand it to",
     cmdNoMatchTail: "",
-    providerLab: "Bring your key — your browser connects directly to approved providers",
+    providerLab: "Sign in to Aviso AI, or connect your own model service",
     doubao: "Doubao",
     ark: "Volcengine Ark",
-    entriesTag: "01 — Entry points",
-    entriesTitle: "Reach it from wherever you already are",
+    entriesTag: "01 — In-page actions",
+    entriesTitle: "Use AI the moment you need it",
     entriesLede:
-      "Aviso doesn't make you learn a new way to browse. It plugs into the habits you already have — right-click, select, a keystroke. Whatever's nearest.",
-    resultTag: "02 — Results stay in place",
-    resultTitlePre: "The answer floats by the text —",
-    resultTitleEm: "you never",
-    resultTitlePost: "leave the page",
+      "Aviso plugs into the browsing habits you already have: selection, right-click, shortcuts, and double-click. Read pages, collect research, and understand foreign-language content with less copy-paste.",
+    resultTag: "02 — Results and context",
+    resultTitlePre: "Answers, follow-ups, and context",
+    resultTitleEm: "stay on",
+    resultTitlePost: "the current page",
     resultLede:
-      "The in-page panel is where Aviso puts results. Output streams in; copy it, save it, or keep asking. Saved chats go to local history and can be reused later from the command palette.",
+      "Results appear beside the original page. Copy an answer, save it to local history, keep asking, or copy the page title, link, selected text, and current context for deeper analysis or notes.",
     winModel: "Explain",
     winUser: "The cleanup function runs before…",
     winAnswerStrong: "The cleanup function",
@@ -269,29 +266,29 @@ const copy = {
     saveLabel: "Save",
     followup: "Ask a follow-up…",
     sendLabel: "Send",
-    byokTag: "03 — BYOK stays direct",
-    byokTitlePre: "Your key, straight to the provider.",
-    byokTitleMid: "Hosted AI is optional, ",
-    byokTitleEm: "BYOK remains open",
+    byokTag: "03 — Two ways to start",
+    byokTitlePre: "Sign in for Aviso AI.",
+    byokTitleMid: "Or bring ",
+    byokTitleEm: "your own API key",
     byokLede:
-      "The BYOK path uses your own API key and connects your browser straight to the provider you choose, with no Aviso account required. v0.3 Aviso AI / hosted AI is still a candidate path; only when you choose hosted AI and sign in does the request pass through the Aviso production backend and upstream model services, and remaining release gates must pass before it is public.",
+      "Aviso AI is the fastest start: sign in and use free quota. If you already have a model account, BYOK keeps your browser connected directly to currently supported providers. Switch between the two paths by task.",
     provCardTitle: "AI services",
-    provCardTag: "local protection",
+    provCardTag: "two paths",
     provDaily: "Volcengine Ark",
     provDoubao: "Doubao endpoint",
     provDefault: "configurable",
     provConnected: "configured",
     provUnset: "configurable · test needed",
     provNotSet: "not set",
-    privacyTag: "04 — Privacy boundary",
-    privacyTitlePre: "Don't let extensions quietly take your chats.",
-    privacyTitleEm: "Every path is explicit",
+    privacyTag: "04 — Privacy and control",
+    privacyTitlePre: "Every way to use Aviso",
+    privacyTitleEm: "has a clear data path",
     privacyLede:
-      "Aviso discloses BYOK and the v0.3 hosted candidate path separately. BYOK requests do not pass through the Aviso backend; hosted AI is used only after you choose it and sign in, and requests pass through the Aviso production backend and upstream model services.",
+      "In BYOK mode, your browser connects directly to the model provider you choose. Aviso AI requires sign-in and an explicit action, then requests pass through the Aviso backend and upstream model services. Sensitive clipboard content is skipped, and entry points can be turned off in settings.",
     compareThem: "Most AI assistant extensions",
     compareUs: "Aviso",
     privacyNote:
-      "This isn't a slogan — Aviso's privacy boundary is built into the implementation. API keys are not stored in plaintext, chat history stays in your browser, and command-palette searches over history and bookmarks run locally. BYOK goes browser-direct to your selected provider; the v0.3 hosted candidate backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, API keys, or full URLs.",
+      "Aviso's privacy boundary is built into the implementation: API keys are not stored in plaintext, chat history stays in your browser, and command-palette searches over history and bookmarks run locally. BYOK goes browser-direct to your selected provider; the Aviso AI backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, API keys, or full URLs.",
     metricBackendNum: "BYOK",
     metricBackend: "direct path does not pass through the Aviso backend",
     metricTelemetryNum: "0",
@@ -299,17 +296,17 @@ const copy = {
     metricTriggerNum: "On trigger",
     metricTrigger: "only — hosted path does not persist raw content",
     docsTag: "Documentation",
-    docsTitle: "Set up in minutes — every data path in plain sight",
+    docsTitle: "Set up in minutes, with every path explained",
     docsLede:
-      "The docs do two things: get Aviso running smoothly, and show you exactly which content each action sends to which provider. Read them and you'll know precisely how to trust it.",
+      "From install and first use to Aviso AI sign-in, API keys, and data permissions, the docs explain what each entry can do and which service receives which content.",
     docRead: "Read →",
     faqTag: "FAQ",
     faqTitle: "Still wondering?",
-    finalTitle: "Keep AI for the moment you need it",
-    finalLede: "BYOK needs no login. v0.3 Aviso AI is still a candidate path and will be public only after the release gates are complete. Follow the install guide, press ⌘⇧Space, and go.",
-    badgeKey: "Bring your own key",
+    finalTitle: "Use AI on the next page you read",
+    finalLede: "Sign in to Aviso AI for free quota, or add your own API key. Follow the install guide, then select text, right-click, or press ⌘⇧Space to start.",
+    badgeKey: "Aviso AI free quota",
     badgeNoData: "No raw content persisted",
-    badgeNoAccount: "BYOK no login",
+    badgeNoAccount: "BYOK available",
     cmdReady: "AI ready"
   }
 } as const;
@@ -339,7 +336,7 @@ const entries: Entry[] = [
     zhTitle: "命令面板",
     enTitle: "Command palette",
     zhText:
-      "一个快捷键随处唤起。搜本地历史、书签、浏览记录和过往 AI 对话;没有结果时,回车把输入直接交给 AI 按意图处理。",
+      "一个快捷键随处唤起。搜本地历史、书签、浏览记录和过往 AI 对话；没有结果时,回车把输入直接交给 AI 按意图处理。",
     enText:
       "One shortcut, anywhere. Search local history, bookmarks, browsing history, and past AI chats — and when nothing matches, Enter hands your input straight to the AI."
   },
@@ -357,9 +354,9 @@ const entries: Entry[] = [
     icon: "more",
     zhTitle: "右键菜单",
     enTitle: "Right-click menu",
-    zhText: "融入原生右键菜单,条目随选区、页面、链接、图片自动变化。还能复制当前上下文,或切换模型。",
+    zhText: "融入原生右键菜单,条目随选区、页面、链接、图片自动变化。翻译、解释、总结、复制上下文和切换模型都能从这里开始。",
     enText:
-      "Woven into the native context menu, with entries that adapt to selection, page, link, or image — plus copy-context and model switching."
+      "Woven into the native context menu, with entries that adapt to selection, page, link, or image. Translate, explain, summarize, copy context, and switch models from here."
   },
   {
     no: "04",
@@ -383,14 +380,13 @@ const entries: Entry[] = [
   },
   {
     no: "06",
-    icon: "refine",
-    zhTitle: "自定义指令",
-    enTitle: "Custom prompts",
-    zhTextPre: "把你常用的 Prompt 存成模板,出现在右键菜单里。支持 ",
-    zhTextPost: " 等占位符,随取随用。",
-    enTextPre: "Save your go-to prompts as templates that surface in the right-click menu. Placeholders like ",
-    enTextPost: " fill themselves in.",
-    code: "{{selection}}"
+    icon: "copy",
+    zhTitle: "复制上下文",
+    enTitle: "Copy context",
+    zhText:
+      "一键带走页面标题、链接、选中文本和当前上下文,方便继续提问、整理笔记、写报告或转给团队讨论。",
+    enText:
+      "Copy the page title, link, selected text, and current context in one action, ready for follow-up questions, notes, reports, or team handoff."
   }
 ];
 
@@ -400,30 +396,30 @@ const caps = [
   {icon: "refine", zh: "润色", en: "Refine"},
   {icon: "summarize", zh: "总结", en: "Summarize"},
   {icon: "continue", zh: "继续追问", en: "Follow-up"},
-  {icon: "refine", zh: "自定义指令", en: "Custom prompt"}
+  {icon: "copy", zh: "复制上下文", en: "Copy context"}
 ] as const;
 
 const byokPoints = [
   {
-    icon: "sliders",
-    zhTitle: "多套配置,随时切换",
-    enTitle: "Multiple configs, switch anytime",
-    zhText: "同一厂商可存多套配置,设默认服务,右键菜单里也能换模型。",
-    enText: "Keep several configs per provider, set a default, and swap models from the right-click menu."
-  },
-  {
     icon: "model",
-    zhTitle: "模型 ID 手动可填",
-    enTitle: "Model IDs are editable",
-    zhText: "OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini、Tencent Hunyuan 的模型 ID,以及豆包 / Volcengine Ark 的接入点,都能自己填。",
-    enText: "Type in model IDs for OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan, plus endpoints for Doubao / Volcengine Ark."
+    zhTitle: "登录 Aviso AI",
+    enTitle: "Sign in to Aviso AI",
+    zhText: "登录后可使用免费额度,适合先试起来、先完成手头任务。",
+    enText: "Sign in for free quota, ideal when you want to start quickly and finish the task at hand."
   },
   {
-    icon: "check",
-    zhTitle: "手动连接测试",
-    enTitle: "Manual connection test",
-    zhText: "想确认能用,手动测一下单个 provider;结果只显示脱敏摘要。",
-    enText: "Verify a single provider on demand; the test shows only a redacted summary."
+    icon: "key",
+    zhTitle: "添加自己的 API Key",
+    enTitle: "Add your own API key",
+    zhText: "已有模型服务账号时,可用 BYOK 模式直连当前支持的 provider。",
+    enText: "If you already have a model account, BYOK connects your browser directly to currently supported providers."
+  },
+  {
+    icon: "sliders",
+    zhTitle: "按任务切换",
+    enTitle: "Switch by task",
+    zhText: "默认服务、模型和入口都能在设置里管理,需要时也能在右键菜单里切换。",
+    enText: "Manage defaults, models, and entry points in settings, and switch models from the right-click menu when needed."
   }
 ] as const;
 
@@ -431,42 +427,42 @@ const compareRows = [
   {
     zhCrit: "你的内容去哪",
     enCrit: "Where your content goes",
-    zhThem: "可能被收集、画像,甚至转卖给数据经纪商",
-    enThem: "May be collected, profiled, even sold to data brokers",
-    zhUs: "BYOK 直连 provider;托管 AI 仅主动触发并且不持久化正文",
-    enUs: "BYOK goes direct; hosted AI is user-triggered and does not persist raw content"
+    zhThem: "通常要先接受一套统一的数据处理规则",
+    enThem: "Often asks you to accept one broad data policy",
+    zhUs: "BYOK 直连 provider；Aviso AI 仅在你主动触发时工作,并且不持久化正文",
+    enUs: "BYOK goes direct; Aviso AI runs only when triggered and does not persist raw content"
   },
   {
-    zhCrit: "怎么计费",
-    enCrit: "How it's billed",
-    zhThem: "在模型费之外再收月费,按信用点限额,成本难预估",
-    enThem: "A monthly fee on top of model cost, credit caps, unpredictable spend",
-    zhUs: "BYOK 按厂商规则结算;v0.3 托管计费不在首轮公开范围",
-    enUs: "BYOK is billed by your provider; hosted billing is out of the first v0.3 public scope"
+    zhCrit: "怎么开始",
+    enCrit: "How you start",
+    zhThem: "常需要先理解模型、Key、额度和配置",
+    enThem: "Often starts with models, keys, quotas, and setup choices",
+    zhUs: "登录 Aviso AI 可用免费额度；已有模型账号也可以 BYOK",
+    enUs: "Sign in to Aviso AI for free quota, or use BYOK if you already have a model account"
   },
   {
     zhCrit: "要不要账号",
     enCrit: "Account required?",
     zhThem: "常需注册登录才能用",
     enThem: "Often sign-up and login required",
-    zhUs: "BYOK 不强制登录;只有托管 AI 需要登录",
-    enUs: "BYOK does not require login; hosted AI requires sign-in"
+    zhUs: "Aviso AI 需要登录；BYOK 可以不登录",
+    enUs: "Aviso AI needs sign-in; BYOK can be used without signing in"
   },
   {
     zhCrit: "索取什么权限",
     enCrit: "What it asks for",
     zhThem: "常索取“读取并更改所有网站数据”",
     enThem: 'Often wants "read and change all your data on all sites"',
-    zhUs: "host 权限限于已批准 provider 和托管后端域名",
-    enUs: "Host permissions are limited to approved provider and hosted backend origins"
+    zhUs: "host 权限限于当前支持的 provider 和 Aviso AI 后端域名",
+    enUs: "Host permissions are limited to supported provider and Aviso AI backend origins"
   },
   {
     zhCrit: "什么时候在工作",
     enCrit: "When it runs",
     zhThem: "后台常驻,持续监听页面",
     enThem: "Runs in the background, watching pages",
-    zhUs: "只在你主动触发的那一刻工作",
-    enUs: "Only the moment you trigger it"
+    zhUs: "划词、右键、命令面板或其他入口主动触发时才工作",
+    enUs: "Runs when you trigger selection, right-click, the command palette, or another entry point"
   }
 ] as const;
 
@@ -477,8 +473,8 @@ const docsCards = [
     href: "/docs/install/",
     zhTitle: "安装与首次使用",
     enTitle: "Install & first use",
-    zhText: "加载扩展、填入 API Key、跑通第一个动作。",
-    enText: "Load the extension, add a key, run your first action."
+    zhText: "加载扩展、登录 Aviso AI 或添加 API Key、跑通第一个动作。",
+    enText: "Load the extension, sign in to Aviso AI or add an API key, and run your first action."
   },
   {
     no: "02",
@@ -486,8 +482,8 @@ const docsCards = [
     href: "/docs/core-features/",
     zhTitle: "核心功能",
     enTitle: "Core features",
-    zhText: "五个入口、结果面板、翻译、命令面板的用法。",
-    enText: "The five entries, result panel, translation, palette."
+    zhText: "划词、右键、命令面板、翻译卡、复制上下文和结果面板。",
+    enText: "Selection, right-click, command palette, translation cards, copy context, and result panel."
   },
   {
     no: "03",
@@ -504,20 +500,20 @@ const faqs = [
   {
     zhQ: "Aviso 收费吗?",
     enQ: "Does Aviso cost money?",
-    zhA: "扩展本身当前不收费。BYOK 路径使用你自己的 provider Key,费用按厂商规则结算。v0.3 Aviso AI / 托管 AI 仍是候选路径；任何额度、价格或付费方案都不会在发布前作为公开承诺。",
-    enA: "The extension itself currently does not charge. The BYOK path uses your own provider key and is billed by that provider. v0.3 Aviso AI / hosted AI is still a candidate path; any quota, pricing, or paid-plan detail is not a public promise before release approval."
+    zhA: "扩展本身当前不收费。登录 Aviso AI 可使用免费额度；BYOK 路径使用你自己的 provider Key,费用按厂商规则结算。免费额度需要登录后使用。",
+    enA: "The extension itself currently does not charge. Sign in to Aviso AI for free quota; BYOK uses your own provider key and is billed by that provider. Free quota is available after sign-in."
   },
   {
     zhQ: "必须自己准备 API Key 吗?",
     enQ: "Do I need my own API key?",
-    zhA: "BYOK 路径需要你自己的模型 API Key,并且浏览器直接连接你选择的厂商。v0.3 同时准备可选托管 AI：只有你选择托管路径时才需要登录,不影响 BYOK。内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用；其他 provider 的 BYOK 可用性仍取决于你的 Key、模型权限和 provider 状态。",
-    enA: "The BYOK path needs your own model API key and connects your browser directly to the provider you choose. v0.3 also prepares optional hosted AI: sign-in is needed only when you choose the hosted path, and BYOK remains available. Internal testing and user feedback confirm the Doubao / Volcengine Ark path works; other BYOK provider availability still depends on your key, model access, and provider status."
+    zhA: "不一定。想快速开始,可以登录 Aviso AI 使用免费额度。已有模型服务账号时,可以添加自己的 API Key,让浏览器直连你选择的厂商。BYOK 可用性仍取决于你的 Key、模型权限和 provider 状态。",
+    enA: "Not necessarily. To start quickly, sign in to Aviso AI and use free quota. If you already have a model account, add your own API key and let the browser connect directly to your chosen provider. BYOK availability still depends on your key, model access, and provider status."
   },
   {
     zhQ: "Aviso 会收集我的浏览数据吗?",
     enQ: "Does Aviso collect my browsing data?",
-    zhA: "Aviso 不做被动浏览数据收集,没有遥测或第三方分析 SDK。BYOK 路径不经过 Aviso 后端；托管 AI 只在你主动选择并登录后使用,请求会经过 Aviso 后端和上游模型服务。托管后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板、API Key 或完整 URL。",
-    enA: "Aviso does not passively collect browsing data, and it has no telemetry or third-party analytics SDK. BYOK requests do not pass through the Aviso backend; hosted AI is used only after you choose it and sign in, and requests pass through the Aviso backend and upstream model services. The hosted backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, API keys, or full URLs."
+    zhA: "Aviso 不做被动浏览数据收集,没有遥测或第三方分析 SDK。BYOK 路径不经过 Aviso 后端；Aviso AI 只在你登录并主动触发后使用,请求会经过 Aviso 后端和上游模型服务。Aviso AI 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板、API Key 或完整 URL。",
+    enA: "Aviso does not passively collect browsing data, and it has no telemetry or third-party analytics SDK. BYOK requests do not pass through the Aviso backend; Aviso AI is used only after you sign in and trigger it, and requests pass through the Aviso backend and upstream model services. The Aviso AI backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, API keys, or full URLs."
   },
   {
     zhQ: "它在每个网站都能用吗?",
@@ -528,8 +524,8 @@ const faqs = [
   {
     zhQ: "当前版本的边界是什么?",
     enQ: "What are the current limits?",
-    zhA: "核心功能已经实现、可以日常使用,并经过内部手动验收;同时我们对当前的可用边界保持坦白 —— 比如内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用,OpenAI/Anthropic/DeepSeek/Kimi-Moonshot/OpenRouter/Gemini/Tencent Hunyuan 支持配置但仍取决于你的 Key 和模型权限。OpenRouter、Gemini 和 Tencent Hunyuan 模型 ID 需要手动填写,Aviso 不自动读取模型列表。首段返回速度会受网络、模型、输入长度和 provider 状态影响,当前不宣称 p50/p95 已达标。",
-    enA: "The core features are built, usable day-to-day, and internally manually verified — while we stay candid about the current edges, like internal testing and user feedback confirming the Doubao / Volcengine Ark path works, and OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan being configurable depending on your key and model access. OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually; Aviso does not automatically read model lists. First-token latency depends on network, model, input length, and provider status; we do not claim p50/p95 targets have been met."
+    zhA: "核心功能已经实现,适合日常阅读和资料整理。当前正式商店链接暂不可用；BYOK 使用自己的 Key 和模型权限；首段返回速度会受网络、模型、输入长度和服务状态影响。",
+    enA: "Core features are built for everyday reading and research workflows. The official store link is not available yet; BYOK uses your own key and model access; first-token speed varies by network, model, input length, and service status."
   }
 ] as const;
 
@@ -673,10 +669,6 @@ export default function Home(): JSX.Element {
             <p className="micro">
               <Icon name="key" />
               {t.micro}
-            </p>
-            <p className="micro">
-              <Icon name="shield" />
-              {t.statusNote}
             </p>
 
             <div className="palette-stage">

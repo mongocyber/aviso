@@ -6,27 +6,27 @@ sidebar_position: 2
 
 # Install
 
-Aviso documentation is public-facing, and version `0.1.0` has been submitted for Chrome Web Store review, but the official install link is not available yet. This page covers both the future store install path and the current loading method for invited testers and review-preparation maintainers.
+The official Chrome Web Store install link is not available yet. This page explains the current loading method before the official link is available, plus the checks to run after installation.
 
-## Install After Chrome Web Store Approval
+## Chrome Web Store Install
 
-After the Chrome Web Store listing is approved, this page will be updated with the official store link and final install steps. For now, no fake store URL is shown:
+When the official store link is available, this page will be updated with the standard install steps. For now, no fake store URL is shown:
 
 ```text
-Chrome Web Store official link: not available yet; will be updated after review approval
+Chrome Web Store official link: not available yet; will be updated later
 ```
 
-At that point, the website homepage and navigation CTA will also point to the official store listing.
+The website homepage and navigation CTA will also point to the official store listing when that link is available.
 
 ## Current Build Access
 
-Before the official store link is available, the build directory is provided only to invited testers and review-preparation maintainers. The current production build directory is:
+Before the official store link is available, the build directory is provided by the maintainer. The current build directory is:
 
 ```text
 build/chrome-mv3-prod
 ```
 
-This directory comes from the local project build and is currently used for invited testing and review preparation. After the Chrome Web Store link is available, this page will be replaced with the official install steps.
+This directory comes from the local project build and is used to load the extension and complete the installation checks. After the Chrome Web Store link is available, this page will be replaced with the official install steps.
 
 ## Load the Extension in Chrome
 
@@ -43,10 +43,11 @@ After installation, Aviso appears in the Chrome toolbar. From the Popup you can 
 
 Recommended checks:
 
-- Open the Aviso Popup and confirm that model and API key settings are visible.
+- Open the Aviso Popup and confirm that Aviso AI sign-in, AI service configs, and API key settings are visible.
+- To start quickly, sign in to Aviso AI and confirm account and free quota status are visible.
+- To use your own model service, add or edit a BYOK service config and save the API key, model ID, or endpoint as needed.
+- After signing in to Aviso AI, saving an API key, or switching to a new model service for the first time, the first request may take longer than usual. Wait for the page prompt to return; later requests are usually faster.
 - Open a normal webpage, select text, and check whether the selection toolbar appears.
 - Right-click on a webpage and check whether the Aviso menu appears.
 - On Mac, use `Command+Shift+Space`; on Windows/Linux, use `Ctrl+Shift+Space`; check whether the command palette opens.
 - If the selection translation card or double-click quick menu is enabled, confirm that it appears only in normal webpage areas.
-
-Treat the current material as “submitted for Chrome Web Store review; official store link not available yet; currently verified through the build directory provided by the maintainer.”

@@ -6,7 +6,27 @@ sidebar_position: 4
 
 # First Use
 
-After installing Aviso and setting an API key, start from a normal public webpage that does not contain private information. This helps you confirm the basic flow safely.
+After installing Aviso, start from a normal public webpage that does not contain private information. You can sign in to Aviso AI and use free quota, or add your own API key for a BYOK provider.
+
+## Choose An AI Service First
+
+### Option 1: Sign In To Aviso AI
+
+1. Click the Aviso icon in the Chrome toolbar.
+2. Open the AI services area in the Popup.
+3. Sign in to Aviso AI.
+4. After sign-in, confirm account status and free quota are visible.
+5. Return to the page and trigger an action through selection, right-click, or the command palette.
+
+### Option 2: Add Your Own API Key
+
+1. Click the Aviso icon in the Chrome toolbar.
+2. Add or edit a provider config in the AI services area.
+3. Enter the API key, model ID, or endpoint.
+4. Save it and optionally make it the default service.
+5. Return to the page and trigger an action through selection, right-click, or the command palette.
+
+BYOK does not require Aviso AI sign-in. Signing out of Aviso AI does not delete your BYOK config.
 
 ## Option 1: Use the Selection Toolbar
 
@@ -17,6 +37,8 @@ After installing Aviso and setting an API key, start from a normal public webpag
 5. Check the in-page result panel.
 
 If the selection translation card is enabled, short selections can show an inline translation result with copy, retry, and open-result-panel actions.
+
+If you often translate foreign-language content, set the translation target language in the Popup first. The translation target language is independent from the interface language.
 
 ## Option 2: Use the Right-Click Menu
 
@@ -37,6 +59,8 @@ Common actions include:
 Image explanation and screenshot-related flows remain internal right-click paths and are not the main user entry.
 
 Link summary sends the link itself as context to the model.
+
+Copy current context writes the page title, URL, optional selected text, and truncated page body to your clipboard. That action itself does not call a model or save to history.
 
 ## Option 3: Use the Command Palette
 
@@ -72,7 +96,8 @@ After you copy normal text, Aviso can show a prompt so you can send clipboard co
 Check:
 
 - The extension is enabled in `chrome://extensions/`.
-- The API key is saved and the provider account is usable.
+- If you use Aviso AI, you are signed in and quota is available.
+- If you use BYOK, the API key is saved and the provider account is usable.
 - The current webpage allows extension content scripts.
 - The feature switch is enabled.
 - The model may simply be slow rather than failed.

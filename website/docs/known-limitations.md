@@ -1,12 +1,12 @@
 ---
 title: 已知限制
-description: Aviso 当前 release candidate 的使用限制。
+description: Aviso 当前版本的使用限制。
 sidebar_position: 8
 ---
 
 # 已知限制
 
-Aviso 当前仍处于内部试用 / release candidate 阶段。以下记录用于说明当前使用边界；公开安装状态仍以 Chrome Web Store 审核结果为准，0.2 / 0.2.1 记录不代表公开上架。
+以下记录用于说明 Aviso 当前版本的使用边界。
 
 ## Provider 响应速度
 
@@ -19,7 +19,7 @@ Aviso 会尽量在触发后立即显示浮窗和等待状态，但模型首段�
 - 输入内容长度。
 - 页面正文复杂度。
 
-Aviso 当前版本不承诺模型秒回。v0.2 已加入更明确的等待状态和本地 summary-only TTFT 方法，但未执行真实 provider 采样，也不宣称 p50 / p95 目标已经达成。
+Aviso 当前版本不承诺模型秒回。界面会显示等待状态；如果长时间没有返回结果，会给出更明确的失败提示。
 
 ## 页面总结长度
 
@@ -53,25 +53,25 @@ Aviso 仅在右键内部路径中，对支持的图片 URL 或支持格式的 ba
 
 截图提问是否可用还取决于用户选择的模型是否支持视觉输入。
 
-## 托管 AI 发布前状态
+## Aviso AI 与发布状态
 
-v0.3 托管 AI 当前仍是发布前 gate，不代表公开发布、付费托管 AI、hosted AI live 或 Chrome Web Store 披露提交已经批准。
+Aviso AI 支持登录后使用免费额度。
 
-已验证的是分层证据：staging 登录、额度、provider smoke、敏感日志边界、前端账号展示、release build 和 manifest 检查已经通过；production backend authenticated smoke 已通过；production frontend candidate package 已切到 `https://aviso-backend-production.vercel.app/*`。最终 loaded-extension production smoke、Chrome Web Store 提交、website deployment 和 owner release approval 仍是后续 gate。
+Chrome Web Store 正式商店链接暂不可用；官网会在正式链接可用后更新安装入口。
 
-BYOK direct-provider 仍是默认可用路径；未登录托管 AI 不会阻止用户继续使用自己的 API Key。
+未登录 Aviso AI 不会阻止用户继续使用自己的 API Key；退出 Aviso AI 也不会删除 BYOK 配置。
 
-## Provider 验证状态
+## Provider 支持范围
 
-当前记录中：
+当前支持配置：
 
-- 内部测试和用户反馈确认豆包 / Volcengine Ark 路径可用。
-- OpenAI 支持配置 API Key 和模型 ID；实际可用性取决于你的 Key、模型权限和 provider 状态。
-- Anthropic 支持配置 API Key 和模型 ID；实际可用性取决于你的 Key、模型权限和 provider 状态。
-- DeepSeek 支持配置 API Key 和模型 ID；已有一次 owner 手动 connectivity pass，实际可用性仍取决于你的 Key、模型权限和 provider 状态。
-- Kimi / Moonshot 支持配置 API Key 和模型 ID；未做真实 provider live validation。
-- OpenRouter 支持配置 API Key 和手动模型 ID；provider id 为 `openrouter`，base URL 为 `https://openrouter.ai/api/v1`，host permission 为 `https://openrouter.ai/*`；未做真实 provider live validation，不自动读取模型列表。
-- Gemini 支持配置 API Key 和手动模型 ID；provider id 为 `gemini`，base URL 为 `https://generativelanguage.googleapis.com/v1beta/openai/`，host permission 为 `https://generativelanguage.googleapis.com/*`；V02-018 已完成非 live 验证，未做真实 provider live validation，不自动读取模型列表。
-- Tencent Hunyuan 支持配置 API Key 和手动模型 ID；provider id 为 `hunyuan`，base URL 为 `https://api.hunyuan.cloud.tencent.com/v1`，host permission 为 `https://api.hunyuan.cloud.tencent.com/*`；V02-018 已完成非 live 验证，未做真实 provider live validation，不自动读取模型列表。
+- 豆包 / Volcengine Ark 支持配置 API Key、模型 ID 和接入点。
+- OpenAI 支持配置 API Key 和模型 ID。
+- Anthropic 支持配置 API Key 和模型 ID。
+- DeepSeek 支持配置 API Key 和模型 ID。
+- Kimi / Moonshot 支持配置 API Key 和模型 ID。
+- OpenRouter 支持配置 API Key、模型 ID 和接入点。
+- Gemini 支持配置 API Key、模型 ID 和接入点。
+- Tencent Hunyuan 支持配置 API Key、模型 ID 和接入点。
 
-OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 不作为当前版本的可用性保证；需要由用户填写自己的可用 API Key，并在 Popup 中手动触发连接测试。
+这些服务需要填写自己的可用 API Key。OpenRouter、Gemini 和 Tencent Hunyuan 作为 OpenAI-compatible 配置使用时，需要手动填写模型 ID；Aviso 不会自动读取模型列表。你也可以在 Popup 中按需手动触发连接测试。

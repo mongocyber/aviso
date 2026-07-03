@@ -10,9 +10,12 @@ Aviso 当前重点是把常见网页对象接入 AI，并把结果留在当前�
 
 ## AI 服务路径
 
-Aviso 保留 BYOK direct-provider 作为默认可用路径：用户填写自己的模型 API Key，浏览器扩展直接请求所选 provider，不强制登录。
+Aviso 支持两条 AI 服务路径：
 
-v0.3 托管 AI 是 production candidate 中的可选路径。只有用户选择托管 AI 并登录后，请求才会经过 Aviso production 后端和上游模型 provider；BYOK 配置和直连请求不受托管登录状态影响。它已有 production backend smoke 和候选包证据，但仍不是公开发布或 Chrome Web Store 批准。
+- Aviso AI：登录后可使用免费额度，适合快速开始。
+- BYOK direct-provider：填写自己的模型 API Key，浏览器扩展直接请求所选 provider，不强制登录。
+
+只有用户选择 Aviso AI 并登录后，请求才会经过 Aviso 后端和上游模型 provider；BYOK 配置和直连请求不受 Aviso AI 登录状态影响。
 
 ## 右键菜单
 
@@ -21,7 +24,7 @@ v0.3 托管 AI 是 production candidate 中的可选路径。只有用户选择�
 - 选中文本：解释、翻译、润色、总结。
 - 当前页面：提取页面正文后总结。
 - 链接：把链接 URL 作为上下文交给 AI。
-- 复制当前上下文：把页面标题、URL、可选选中文本和截断正文写入剪贴板，不调用 provider。
+- 复制当前上下文：把页面标题、URL、可选选中文本和截断正文写入剪贴板，不调用 provider，适合继续提问、整理笔记或转给团队讨论。
 - 图片：在右键内部路径中，对支持的图片地址或支持格式的 base64 图片数据发起解释；当前不作为普通用户主入口。
 - 自定义模板：使用你在 Popup 中配置的提示词模板。
 - 模型切换：从右键菜单快速切换当前模型。
@@ -37,6 +40,8 @@ v0.3 托管 AI 是 production candidate 中的可选路径。只有用户选择�
 划词翻译卡默认关闭。开启后，短选区可以就地显示翻译结果，并支持复制、重试和打开结果面板。
 
 翻译 payload 只使用选区或用户输入的待翻译文本，不混入页面 URL、页面正文、远端链接正文、截图或剪贴板内容。
+
+翻译目标语言可以在 Popup 中设置；它和界面语言互相独立。
 
 ## 命令面板
 
@@ -60,7 +65,7 @@ Mac 使用 `Command+Shift+Space`，Windows/Linux 使用 `Ctrl+Shift+Space`。
 
 双击快捷菜单默认关闭。开启后，它会在普通网页区域提供紧凑入口，并避开输入框、可编辑区域、常见代码编辑器和 Aviso 自身 UI。
 
-双击快捷菜单复用现有本地动作和 AI 动作，不展示截图入口。
+双击快捷菜单复用现有本地动作和 AI 动作，包括复制当前上下文、页面总结、常用模板、翻译、解释、润色和总结选区；不展示截图入口。
 
 ## 剪贴板感知
 
@@ -87,8 +92,9 @@ Popup 用于管理：
 - API Key。
 - OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 模型 ID。
 - 豆包 / Volcengine Ark 接入点和模型字段。
-- 托管 AI 账号登录、刷新和退出状态。
+- Aviso AI 账号登录、刷新、退出、账号状态和额度状态。
 - 功能开关。
+- 翻译目标语言。
 - 自定义模板。
 - 历史记录。
 - 隐私说明。

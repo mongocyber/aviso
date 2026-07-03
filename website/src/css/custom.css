@@ -843,6 +843,10 @@ select {
   text-align: center;
 }
 
+#features .shead {
+  max-width: 800px;
+}
+
 .eyebrow {
   align-items: center;
   color: var(--sage-600);
@@ -1499,6 +1503,7 @@ select {
   line-height: 1.5;
   margin-top: 10px;
   max-width: 24ch;
+  white-space: nowrap;
 }
 
 /* ---------- docs entry ---------- */
@@ -2542,6 +2547,10 @@ pre {
   .metrics {
     gap: 14px;
     grid-template-columns: 1fr;
+  }
+
+  .metric .desc {
+    white-space: normal;
   }
 
   .sblock {
