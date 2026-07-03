@@ -71,6 +71,8 @@ test("popup high-fidelity settings panel keeps four tabs and local theme setting
   assert.match(popupSource, /popup\.theme\.light/)
   assert.match(popupSource, /popup\.theme\.dark/)
   assert.match(popupSource, /popup\.theme\.system/)
+  assert.match(popupSource, /chrome\.runtime\.getManifest\(\)\.version/)
+  assert.doesNotMatch(popupSource, />v0\.1\.0</)
   assert.match(typeSource, /appearanceTheme: "light" \| "dark" \| "system"/)
   assert.match(typeSource, /providerConfigs\?: ProviderConfig\[\]/)
   assert.match(typeSource, /defaultProviderConfigId\?: string/)

@@ -396,6 +396,7 @@ function ThemeModeIcon({ name }: { name: ThemeModeIconName }) {
 }
 
 function Popup() {
+  const extensionVersion = chrome.runtime.getManifest().version
   const [settings, setSettings] = useState<Settings>(DEFAULT_SETTINGS)
   const [openaiKey, setOpenaiKey] = useState("")
   const [anthropicKey, setAnthropicKey] = useState("")
@@ -4611,7 +4612,9 @@ function Popup() {
             style={{ ...styles.link, color: ui.text3 }}>
             {t("popup.footer.privacy")}
           </button>
-          <span style={{ ...styles.version, color: ui.text3 }}>v0.1.0</span>
+          <span style={{ ...styles.version, color: ui.text3 }}>
+            v{extensionVersion}
+          </span>
         </span>
       </footer>
     </div>
