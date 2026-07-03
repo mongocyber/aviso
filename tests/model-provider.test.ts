@@ -433,6 +433,14 @@ test("reasoning request params are gated by operation, provider, and model", () 
   )
   assert.deepEqual(
     buildChatCompletionReasoningParams({
+      providerId: "openrouter",
+      modelOrEndpoint: "moonshotai/kimi-k2",
+      payload: selectionTranslate
+    }),
+    { reasoning: { effort: "minimal", exclude: true } }
+  )
+  assert.deepEqual(
+    buildChatCompletionReasoningParams({
       providerId: "doubao",
       modelOrEndpoint: "doubao-seed-1-6-thinking",
       payload: { ...selectionTranslate, operation: "explain" }

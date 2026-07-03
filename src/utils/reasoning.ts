@@ -5,6 +5,10 @@ export type ReasoningStreamKind = "answer" | "reasoning"
 
 export type ChatCompletionReasoningParams = {
   reasoning_effort?: "low"
+  reasoning?: {
+    effort?: "minimal"
+    exclude?: boolean
+  }
   thinking?: {
     type: "enabled"
   }
@@ -71,6 +75,13 @@ export function buildChatCompletionReasoningParams(input: {
   >
 }): ChatCompletionReasoningParams {
   if (!isSelectionTtftOperation(input.payload)) return {}
+
+  if (
+    input.providerId === "openrouter" &&
+    input.payload.operation === "translate"
+  ) {
+    return { reasoning: { effort: "minimal", exclude: true } }
+  }
 
   if (
     input.providerId === "openai" &&

@@ -639,7 +639,7 @@ test("AI output token budgets stay small for common short operations", () => {
 
   assert.match(tokenBudgetBlock, /getTranslationMaxOutputTokens\(payload\)/)
   assert.match(tokenBudgetBlock, /providerId === "openrouter"/)
-  assert.match(tokenBudgetBlock, /Math\.max\(translationTokens, 512\)/)
+  assert.match(tokenBudgetBlock, /Math\.max\(translationTokens, 2048\)/)
   assert.match(tokenBudgetBlock, /operation === "polish"\) return 768/)
   assert.match(tokenBudgetBlock, /return 1024/)
   assert.equal(

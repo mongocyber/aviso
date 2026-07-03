@@ -820,7 +820,7 @@ export function getMaxOutputTokens(
   const operation = payload.operation
   if (operation === "translate") {
     const translationTokens = getTranslationMaxOutputTokens(payload)
-    if (providerId === "openrouter") return Math.max(translationTokens, 512)
+    if (providerId === "openrouter") return Math.max(translationTokens, 2048)
     return translationTokens
   }
   if (operation === "polish") return 768
