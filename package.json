@@ -1,7 +1,7 @@
 {
   "name": "aviso",
   "displayName": "Aviso",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "智能浏览器助手，感知操作对象，就地调用 AI，浮窗展示结果。BYOK 默认可用，可选 Aviso AI 候选路径，无遥测。",
   "author": "Aviso",
   "scripts": {

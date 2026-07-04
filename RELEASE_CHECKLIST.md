@@ -1,8 +1,8 @@
 # Aviso Internal Dogfood Checklist
 
-版本：`0.1.0`
+版本：`0.1.1`
 
-状态：`0.1.0 production candidate / 待 owner 上传与发布批准`
+状态：`0.1.1 production candidate / 待 owner 上传与发布批准`
 
 日期：2026-07-04
 
@@ -10,9 +10,9 @@
 
 当前构建用于内部试用和 Chrome Web Store 审核。用户已验证 A-G 手动验收基本通过，豆包 / 火山方舟 API 可用。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID；DeepSeek 已有一次 owner 手动 connectivity pass，OpenRouter 最近一次手动测试失败类别为 `unauthorized`，Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 当前仍不能写成 live validated。
 
-0.1.0 production candidate 已加入可选 Aviso AI / hosted AI 路径，并已通过 production backend authenticated HTTP smoke 与候选包构建/manifest 证据；2026-07-02 前后端 OAuth challenge gate 已合入并推送到对应 `main`，Chrome Web Store listing copy 和 disclosure draft 已更新。2026-07-03 后端 production closeout 修复了 Google OAuth client ID contract、Google auth 脱敏诊断和 Upstash JSON challenge/idempotency 解析兼容问题；owner-loaded extension 已验证 Aviso AI 登录、翻译和发送给 AI 可用。当前速度慢问题记录为后续版本优化项。官网页面 owner 复核通过，Vercel production deployment 已从 commit `b6d7b65` 完成并验证新版首页/文档内容。但这仍不代表 Chrome Web Store 正式商店公开发布、hosted AI 已通过商店发布或 owner release approval。
+0.1.1 production candidate 已加入可选 Aviso AI / hosted AI 路径，并已通过 production backend authenticated HTTP smoke 与候选包构建/manifest 证据；2026-07-02 前后端 OAuth challenge gate 已合入并推送到对应 `main`，Chrome Web Store listing copy 和 disclosure draft 已更新。2026-07-03 后端 production closeout 修复了 Google OAuth client ID contract、Google auth 脱敏诊断和 Upstash JSON challenge/idempotency 解析兼容问题；owner-loaded extension 已验证 Aviso AI 登录、翻译和发送给 AI 可用。当前速度慢问题记录为后续版本优化项。官网页面 owner 复核通过，Vercel production deployment 已从 commit `b6d7b65` 完成并验证新版首页/文档内容。但这仍不代表 Chrome Web Store 正式商店公开发布、hosted AI 已通过商店发布或 owner release approval。
 
-版本口径：`package.json` / manifest / Popup 显示统一使用 `0.1.0`。历史 `v0.2`、`v0.3` 只作为内部规划和 issue 分组标签保留，不代表当前上传版本、公开产品版本或单独用户可见版本。
+版本口径：`package.json` / manifest / Popup 显示统一使用 `0.1.1`。历史 `v0.2`、`v0.3` 只作为内部规划和 issue 分组标签保留，不代表当前上传版本、公开产品版本或单独用户可见版本。
 
 本清单用于记录当前内部试用质量和发布候选准备状态，不代表 Chrome Web Store 审核通过、正式上架或发布批准。
 
@@ -53,13 +53,13 @@ Provider 连接测试只能由用户在 Popup 手动触发，一次只测一个 
 
 ## 权限与隐私
 
-- [x] 普通权限只包含当前功能需要的 `contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`clipboardWrite`；0.1.0 production candidate 还包含 `identity`，仅用于用户主动登录 Aviso AI / hosted AI。
-- [x] Host permissions 只包含 `https://api.openai.com/*`、`https://api.anthropic.com/*`、`https://ark.cn-beijing.volces.com/*`、`https://api.deepseek.com/*`、`https://api.moonshot.cn/*`、`https://openrouter.ai/*`、`https://generativelanguage.googleapis.com/*`、`https://api.hunyuan.cloud.tencent.com/*`，以及 0.1.0 production candidate 的精确托管后端域名 `https://aviso-backend-production.vercel.app/*`。
+- [x] 普通权限只包含当前功能需要的 `contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`clipboardWrite`；0.1.1 production candidate 还包含 `identity`，仅用于用户主动登录 Aviso AI / hosted AI。
+- [x] Host permissions 只包含 `https://api.openai.com/*`、`https://api.anthropic.com/*`、`https://ark.cn-beijing.volces.com/*`、`https://api.deepseek.com/*`、`https://api.moonshot.cn/*`、`https://openrouter.ai/*`、`https://generativelanguage.googleapis.com/*`、`https://api.hunyuan.cloud.tencent.com/*`，以及 0.1.1 production candidate 的精确托管后端域名 `https://aviso-backend-production.vercel.app/*`。
 - [x] API Key 不明文保存，保存在 `chrome.storage.local/contextai_api_keys`，不进入 sync。
 - [x] 当前 API Key 保护属于由扩展 ID 派生口令的本地加密 / 混淆级保护，不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。
 - [x] 非敏感设置保存在 `chrome.storage.sync/contextai_settings`。
 - [x] 本地对话历史保存在 `chrome.storage.local/contextai_history`。
-- [x] BYOK 路径无项目方后端或 provider proxy；0.1.0 production candidate 的可选托管路径会经过 Aviso production 后端，但仍未公开发布、未标记 live。项目仍无遥测、分析 SDK 或远端用户内容日志。
+- [x] BYOK 路径无项目方后端或 provider proxy；0.1.1 production candidate 的可选托管路径会经过 Aviso production 后端，但仍未公开发布、未标记 live。项目仍无遥测、分析 SDK 或远端用户内容日志。
 - [x] 浏览历史和书签只用于命令面板本地关键词搜索，不进入 AI 请求或远端服务。
 - [x] 截图/base64 不写入 history、storage、docs、console、telemetry 或 release artifacts。
 
@@ -96,7 +96,7 @@ npm run package
 
 当前仍有公开发布级风险：Plasmo `0.90.5` 是 npm 当前最新版本，但官方 `npm audit` 仍报告其 Parcel 构建链存在 high 级审计项；`npm audit fix --force` 会把 Plasmo 降级到不适合当前项目的旧版本，因此不能自动修复。该风险主要落在本地构建工具链，不是当前扩展运行时 manifest 权限扩大，但公开提交前需要 owner 明确接受或等待 Plasmo / Parcel 上游修复。
 
-当前仍未完成公开发布级收口：Chrome Web Store 审核通过证据、正式商店链接、正式 `v0.1.0` tag、GitHub Release 和人工发布批准。
+当前仍未完成公开发布级收口：Chrome Web Store 审核通过证据、正式商店链接、正式 `v0.1.1` tag、GitHub Release 和人工发布批准。
 
 ## v0.2 实现证据与剩余门禁
 
@@ -161,5 +161,5 @@ Chrome 版本、操作系统、截图或录屏未补录；当前记录只作为�
 - 当前状态不是 Chrome Web Store 审核通过。
 - 当前状态是待 owner 上传 / 提交 / 审核，不是审核通过。
 - OpenAI / Anthropic / Kimi / Moonshot / OpenRouter / Gemini / Tencent Hunyuan 当前只描述为支持配置的 provider，不描述为 live validated 可用状态；DeepSeek 只能描述为已有一次 owner 手动 connectivity pass，不能扩大成全 provider、全模型或 release-ready 证明。
-- 当前公开默认路径仍是 BYOK direct-provider，不要求后端、登录、订阅、支付、公开匿名额度、联网搜索或远端链接正文抓取；0.1.0 候选包已包含 hosted AI 所需的 `identity` 权限和精确 production backend host permission，默认休眠且仅在用户主动选择托管路径并登录时使用；这不代表公开发布、Chrome Web Store 批准、hosted AI live、订阅支付或公开匿名额度。CWS listing copy 可以解释该可选路径，但不能写成已经上架、已批准或公开 live。
+- 当前公开默认路径仍是 BYOK direct-provider，不要求后端、登录、订阅、支付、公开匿名额度、联网搜索或远端链接正文抓取；0.1.1 候选包已包含 hosted AI 所需的 `identity` 权限和精确 production backend host permission，默认休眠且仅在用户主动选择托管路径并登录时使用；这不代表公开发布、Chrome Web Store 批准、hosted AI live、订阅支付或公开匿名额度。CWS listing copy 可以解释该可选路径，但不能写成已经上架、已批准或公开 live。
 - GitHub push、构建通过或内部手动 QA 不等于 Chrome Web Store 发布批准。

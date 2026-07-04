@@ -25,9 +25,9 @@ Aviso is a Chrome MV3 extension with BYOK direct-provider as the default availab
 
 Current public/product truth:
 
-- the Chrome package version is `0.1.0`,
+- the Chrome package version is `0.1.1`,
 - BYOK direct-provider remains the default available path,
-- optional Aviso AI / hosted AI is included in the same `0.1.0` production candidate package, with production backend smoke, exact production backend host permission, and candidate package evidence,
+- optional Aviso AI / hosted AI is included in the same `0.1.1` production candidate package, with production backend smoke, exact production backend host permission, and candidate package evidence,
 - historical labels such as `v0.2` and `v0.3` are internal planning / issue-group labels only, not separate upload versions,
 - hosted AI is still not Chrome Web Store approved and not release-approved/live through Chrome Web Store; public website deployment evidence exists,
 - no login requirement for BYOK,
@@ -42,7 +42,7 @@ Current public/product truth:
 
 ## Hosted AI Planning Truth
 
-The hosted AI work was tracked in the historical/internal `docs/planning/v0.3` folder. That folder remains useful as evidence and issue history, but the upload package version is `0.1.0`; do not treat `v0.3` as a separate public product version.
+The hosted AI work was tracked in the historical/internal `docs/planning/v0.3` folder. That folder remains useful as evidence and issue history, but the upload package version is `0.1.1`; do not treat `v0.3` as a separate public product version.
 
 Planning entry:
 
