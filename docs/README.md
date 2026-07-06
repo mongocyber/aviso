@@ -1,33 +1,23 @@
 # Aviso Project Docs
 
-当前 `docs/` 按用途分成几个入口：
-
-1. **当前事实文档**：只描述已经实现、正在维护和需要验收的真实产品状态。
-2. **版本规划文档**：描述尚未实现或正在推进的版本。
-3. **历史归档文档**：保存已完成版本的规格、执行记录、发布总结和关键决策。
-4. **决策与执行上下文**：保存跨版本决策、agent 入口和 issue 执行合同。
-5. **设计系统文档**：沉淀 Aviso 当前可复用的品牌、视觉 token、基础组件和迁移规则。
-
-当前事实文档不能混入未来版本功能；未来版本应先进入 `planning/`，完成后再更新当前事实文档并归档旧版本记录。
+当前 `docs/` 只做导航和长期事实入口。当前状态不要复制到多个文件：人读状态见根目录 [`STATUS.md`](../STATUS.md)，agent gate 见 [`ai/CURRENT_GATE.md`](./ai/CURRENT_GATE.md)，发布证据见 [`../RELEASE_CHECKLIST.md`](../RELEASE_CHECKLIST.md)。
 
 ## 文档入口
 
-### 当前事实
+### 当前事实文档
 
-- [01_PROJECT_CHARTER.md](./01_PROJECT_CHARTER.md)：项目定位、当前范围和边界。
-- [02_PRD.md](./02_PRD.md)：当前已实现能力对应的产品需求。
-- [03_TECH_SPEC.md](./03_TECH_SPEC.md)：当前技术结构、权限、存储和数据流。
-- [07_PRIVACY_AND_SECURITY.md](./07_PRIVACY_AND_SECURITY.md)：当前隐私、安全和敏感数据边界。
-- [EXECUTION_PLAN.md](./EXECUTION_PLAN.md)：当前维护执行计划。
-- [ACCEPTANCE_CRITERIA.md](./ACCEPTANCE_CRITERIA.md)：当前验收标准。
+- [charter.md](./charter.md)：项目定位、当前范围和边界。
+- [prd.md](./prd.md)：当前已实现能力对应的产品需求。
+- [tech-spec.md](./tech-spec.md)：当前技术结构、权限、存储和数据流。
+- [privacy-and-security.md](./privacy-and-security.md)：当前隐私、安全和敏感数据边界。
+- [execution-plan.md](./execution-plan.md)：当前维护执行计划。
+- [acceptance-criteria.md](./acceptance-criteria.md)：当前验收标准。
 
 ### 版本规划
 
 - [planning/README.md](./planning/README.md)：版本规划、执行进度和归档规则。
-- [planning/inbox.md](./planning/inbox.md)：新想法、新需求和未定范围事项的入口。
-- [planning/backlog.md](./planning/backlog.md)：已梳理但暂不进入当前版本的需求池。
 - [planning/roadmap.md](./planning/roadmap.md)：产品路线图、版本顺序和跨仓库方向。
-- [planning/v0.3/README.md](./planning/v0.3/README.md)：v0.3 托管 AI 规划入口。
+- [planning/v0.3/README.md](./planning/v0.3/README.md)：v0.3 hosted AI 历史规划入口。
 
 ### 历史归档和决策
 
@@ -37,7 +27,8 @@
 
 ### Agent 上下文
 
-- [ai/PROJECT_CONTEXT.md](./ai/PROJECT_CONTEXT.md)：给 Codex / Claude 执行线程读取的仓库身份、当前边界和 v0.3 协同入口。
+- [ai/CURRENT_GATE.md](./ai/CURRENT_GATE.md)：当前 agent gate。
+- [ai/PROJECT_CONTEXT.md](./ai/PROJECT_CONTEXT.md)：给 Codex / Claude 执行线程读取的仓库身份、协同入口和 stop lines。
 
 ### 设计系统
 
@@ -46,16 +37,12 @@
 - [design-system/components.md](./design-system/components.md)：基础组件、适用场景、未来替换位置和暂不抽象范围。
 - [design-system/assets/](./design-system/assets/)：已确认可用的 Logo / brand 源资产。
 
-根目录还保留：
+根目录入口：
 
 - [../README.md](../README.md)：项目概览和开发入口。
-- [../STATUS.md](../STATUS.md)：当前状态。
-- [../RELEASE_CHECKLIST.md](../RELEASE_CHECKLIST.md)：内部试用验收清单。
+- [../STATUS.md](../STATUS.md)：当前人读状态。
+- [../RELEASE_CHECKLIST.md](../RELEASE_CHECKLIST.md)：内部试用、release candidate 和发布证据清单。
 - [../CLAUDE.md](../CLAUDE.md)：长期工作规则。
-
-## 编号说明
-
-当前文档保留历史编号，`04`、`05`、`06` 对应的旧规划文档已随过时规划移除或归档。为避免破坏历史引用，本轮不重命名现有文件。
 
 ## 当前文档原则
 

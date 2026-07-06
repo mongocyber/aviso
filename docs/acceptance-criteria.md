@@ -10,10 +10,11 @@ Updated: 2026-06-30
 - `npm test` 应通过。
 - `npx tsc --noEmit` 应通过。
 - `npm run build` 应通过。
+- `npm run package` 应能生成规范候选包。
 - Chrome 应能加载 `build/chrome-mv3-prod`。
 - `tests/manual-test.html` 的 A-G 清单应完成记录。
 
-检查命令需要 Node 22+ 的本地环境；当前 `package.json` 已通过 `engines.node` 声明 `>=22.6.0`。
+检查命令需要 Node 22+ 的本地环境；当前 `package.json` 已通过 `engines.node` 声明 `>=22.6.0`。`build/chrome-mv3-prod` 应来自 `npm run package`，不是直接加载 `.output/chrome-mv3`。
 
 ## 功能验收
 

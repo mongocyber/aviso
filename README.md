@@ -6,7 +6,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它在当前网页内提供右键�
 
 当前状态：`0.1.1 / Chrome Web Store 待审核`，owner 已上传并提交 Chrome Web Store 审核，正在等待审核结果
 
-技术栈：Plasmo、React 18、TypeScript、Chrome MV3
+技术栈：Chrome MV3、React 18、TypeScript；本地 `dev` / `build` 保留 Plasmo 路径，规范发布包由 WXT 生成。
 
 ## 当前状态
 
@@ -16,7 +16,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它在当前网页内提供右键�
 - UI 支持中文和英文：默认跟随 Chrome 界面语言，Popup 设置里可以手动切换。
 - BYOK direct-provider 仍是当前默认可用路径，不要求 Aviso 账号，也不经过 Aviso 后端；`0.1.1` production candidate 中已经加入可选 Aviso AI / hosted AI 路径，只有用户主动选择托管路径时才需要登录。该路径来自 historical/internal `v0.3` 规划线，已有 production backend authenticated HTTP smoke 和候选包证据，但仍不是公开发布、Chrome Web Store 批准或 hosted AI live。
 - Aviso 没有公开 live 的 production 托管 AI、订阅支付、公开匿名额度、遥测、分析 SDK、远端链接正文抓取或联网搜索。
-- historical/internal `v0.2` 的命令面板本地意图、等待态和 WXT 并行构建路径已有实现证据；`v0.2` 不是当前上传版本或公开产品版本，WXT 也未切换为默认构建。
+- historical/internal `v0.2` 的命令面板本地意图、等待态和 WXT 构建路径已有实现证据；`v0.2` 不是当前上传版本或公开产品版本。
 
 更细状态见 [STATUS.md](./STATUS.md) 和 [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)。
 
@@ -36,12 +36,12 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它在当前网页内提供右键�
 ## 文档
 
 - [docs/README.md](./docs/README.md)：项目文档索引。
-- [docs/01_PROJECT_CHARTER.md](./docs/01_PROJECT_CHARTER.md)：当前项目定位和边界。
-- [docs/02_PRD.md](./docs/02_PRD.md)：当前已实现功能对应的产品需求。
-- [docs/03_TECH_SPEC.md](./docs/03_TECH_SPEC.md)：当前技术结构、权限、存储和数据流。
-- [docs/07_PRIVACY_AND_SECURITY.md](./docs/07_PRIVACY_AND_SECURITY.md)：当前隐私和安全边界。
-- [docs/EXECUTION_PLAN.md](./docs/EXECUTION_PLAN.md)：当前维护执行计划。
-- [docs/ACCEPTANCE_CRITERIA.md](./docs/ACCEPTANCE_CRITERIA.md)：当前验收标准。
+- [docs/charter.md](./docs/charter.md)：当前项目定位和边界。
+- [docs/prd.md](./docs/prd.md)：当前已实现功能对应的产品需求。
+- [docs/tech-spec.md](./docs/tech-spec.md)：当前技术结构、权限、存储和数据流。
+- [docs/privacy-and-security.md](./docs/privacy-and-security.md)：当前隐私和安全边界。
+- [docs/execution-plan.md](./docs/execution-plan.md)：当前维护执行计划。
+- [docs/acceptance-criteria.md](./docs/acceptance-criteria.md)：当前验收标准。
 
 ## 本地开发
 
@@ -63,22 +63,22 @@ Chrome 加载开发构建目录：
 build/chrome-mv3-dev
 ```
 
-生产构建：
+生产构建检查：
 
 ```bash
 npm run build
 ```
 
-Chrome 加载生产构建目录：
-
-```text
-build/chrome-mv3-prod
-```
-
-打包 zip：
+生成规范加载包和 zip：
 
 ```bash
 npm run package
+```
+
+Chrome 加载规范包目录：
+
+```text
+build/chrome-mv3-prod
 ```
 
 ## 检查
@@ -89,13 +89,14 @@ npm run package
 npm test
 npx tsc --noEmit
 npm run build
+npm run package
 ```
 
 这些命令只验证单元测试、类型检查和构建，不等于真实 Chrome 加载验收，也不等于真实模型 API 验证。
 
 ## 手动验收
 
-1. 运行 `npm run build`。
+1. 运行 `npm run package`。
 2. 在 Chrome 扩展管理页加载 `build/chrome-mv3-prod`。
 3. 打开 `tests/manual-test.html`。
 4. 按 A-G 清单验证右键菜单、划词工具栏、命令面板、剪贴板提示、自定义指令、结果面板和 iframe 场景。

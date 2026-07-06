@@ -11,7 +11,7 @@ When a version is completed or retired:
 1. Keep current product truth in root docs and current docs.
 2. Add a short release or closeout summary.
 3. Move or copy the final version planning set into `docs/archive/<version>/`.
-4. Do not keep stale planned features in `docs/02_PRD.md`, website copy, or store copy.
+4. Do not keep stale planned features in `docs/prd.md`, website copy, or store copy.
 
 ## Recommended Version Archive Shape
 
@@ -28,4 +28,4 @@ docs/archive/v0.2/
 
 - `v0.2/`: frozen historical planning, execution, performance, command-palette, provider, WXT, manual acceptance, and design-system migration records.
 
-Current `v0.1` remains the submitted/internal-dogfood product baseline, not an archived historical version.
+Current `0.1.1` remains the submitted / Chrome Web Store pending product baseline, not an archived historical version.

@@ -4,7 +4,7 @@ Updated: 2026-07-06
 
 ## 结论
 
-Aviso 当前 Chrome 上传包版本是 `0.1.1`。它是一个 Chrome MV3 扩展，使用 Plasmo、React 18 和 TypeScript 构建，在网页当前上下文里通过右键菜单、划词工具栏、命令面板、剪贴板提示和页面内结果面板触发 AI 操作。
+Aviso 当前 Chrome 上传包版本是 `0.1.1`。它是一个 Chrome MV3 扩展，使用 React 18 和 TypeScript 构建；本地 `dev` / `build` 仍保留 Plasmo 路径，规范发布包由 WXT 生成。产品在网页当前上下文里通过右键菜单、划词工具栏、命令面板、剪贴板提示和页面内结果面板触发 AI 操作。
 
 当前 `0.1.1` 上传包已由 owner 上传并提交 Chrome Web Store 审核，当前等待审核结果。它还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
 
@@ -30,9 +30,9 @@ Aviso 当前 Chrome 上传包版本是 `0.1.1`。它是一个 Chrome MV3 扩展�
 | v0.2 provider 配置扩展 | DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 已支持配置；DeepSeek 已有 owner 手动 live connectivity pass 记录；Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 仍不能写成 live validated。 |
 | v0.2 命令面板本地意图 | 已实现本地确定性候选、危险 URL 拦截、打开/页面动作 confirm-first、本地对话恢复；不包含自主浏览、联网搜索或远端链接正文抓取。 |
 | v0.2 等待态、快任务路由与本地计时 | 已实现更明确的等待状态、summary-only 本地 TTFT 方法，以及短文本 translate / explain / polish 在用户显式选择 fast provider config 时的 operation-level route override；当前 v0.2 只承认感知等待优化和 summary-only 方法，不做真实 provider 采样，也不宣称 p50 / p95 达标。 |
-| WXT 并行构建路径 | 已实现 WXT 并行构建和 manifest checks；V02-WXT-005 已记录 refreshed browser smoke 和 owner manual pass evidence，可进入 owner release decision；owner 已决定当前 v0.2 默认构建仍为 Plasmo，WXT default-build migration/default-build release 移到独立 `v0.2.1` slice。 |
+| WXT 规范发布包路径 | 已实现 WXT 构建和 manifest checks；当前 `npm run package` 会生成规范加载目录和 zip。历史 v0.2 的 WXT default-build 决策不覆盖当前 0.1.1 package gate。 |
 | UI 语言 | 已实现中文 / English，默认跟随 Chrome UI language，支持设置 override。 |
-| Manifest 本地化 | 已实现；源码位于 `locales/zh_CN` 和 `locales/en`，Plasmo 构建后映射为 Chrome `_locales`。 |
+| Manifest 本地化 | 已实现；源码位于 `locales/zh_CN` 和 `locales/en`，构建后输出为 Chrome `_locales`。 |
 
 ## v0.2 需求基线
 
@@ -40,7 +40,7 @@ Aviso 当前 Chrome 上传包版本是 `0.1.1`。它是一个 Chrome MV3 扩展�
 
 | Slice | 当前基线 |
 | --- | --- |
-| `v0.2.0` WXT 迁移 / 构建链清理 | `closeout_ready_for_owner_release_decision`：并行构建、manifest checks、refreshed browser smoke 和 owner manual pass evidence 已记录；当前 v0.2 默认构建保持 Plasmo，WXT default-build migration 移到独立 `v0.2.1`。 |
+| `v0.2.0` WXT 迁移 / 构建链清理 | `closeout_ready_for_owner_release_decision`：并行构建、manifest checks、refreshed browser smoke 和 owner manual pass evidence 已记录；历史 v0.2 曾保持 Plasmo default-build。当前 0.1.1 规范发布包已由 WXT package gate 生成。 |
 | 早期 historical `v0.2.1` 速度基线 + thinking/reasoning 控制 + 快模型策略 | `label superseded / current speed scope implemented`：等待态、summary-only TTFT 方法和 operation-level fast-model strategy 已实现；当前 v0.2 不做真实 TTFT sampling / p50 / p95 release wording；reasoning/thinking request-parameter control 已从当前 v0.2 scope 移除。 |
 | `v0.2.2` OpenRouter / OpenAI-compatible provider | `partial`：DeepSeek 已有 owner 手动 live connectivity pass；Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 仍为配置支持或非 live 验证；V02-010 OpenRouter closeout 和 V02-011 宽松保存 acceptance 已显性关闭。 |
 | `v0.2.3` 命令面板本地意图增强 | `completed_for_implementation / included_in_loaded_extension_closeout`。 |
@@ -53,7 +53,7 @@ Aviso 当前 Chrome 上传包版本是 `0.1.1`。它是一个 Chrome MV3 扩展�
 - 不把 provider configuration support 写成 live validation。
 - 不把 v0.2 implementation 写成 release ready。
 
-当前 delivery 状态以 `RELEASE_CHECKLIST.md` 和 V02 closeout 文档为准，`docs/planning/v0.2-issue-plan.md` 作为历史 issue 追踪保留：`V02-WXT-005` closeout 已记录 refreshed browser smoke 和 owner manual pass evidence，但不代表 WXT 默认构建批准或 release approval；`V02-009` 已记录 DeepSeek owner 手动 live connectivity pass，OpenRouter 仍未通过且最近失败类别为 `unauthorized`，provider live validation 仍不是当前 v0.2 wording 的必要条件；`V02-013` reasoning/thinking request-parameter control 已从当前 v0.2 scope 移除，不再作为延期或待办。`V02-WXT-006`、`V02-014`、`V02-015` 已按 owner 决策关闭当前 v0.2 口径，不能被写成 release ready。
+当前 delivery 状态以 `RELEASE_CHECKLIST.md` 和 V02 closeout 文档为准，`docs/archive/v0.2/v0.2-issue-plan.md` 作为历史 issue 追踪保留：`V02-WXT-005` closeout 已记录 refreshed browser smoke 和 owner manual pass evidence，但不代表 release approval；`V02-009` 已记录 DeepSeek owner 手动 live connectivity pass，OpenRouter 仍未通过且最近失败类别为 `unauthorized`，provider live validation 仍不是当前 v0.2 wording 的必要条件；`V02-013` reasoning/thinking request-parameter control 已从当前 v0.2 scope 移除，不再作为延期或待办。`V02-WXT-006`、`V02-014`、`V02-015` 已按 owner 决策关闭当前 v0.2 口径，不能被写成 release ready。
 
 ## 发布候选状态
 
@@ -116,12 +116,12 @@ Aviso 当前 Chrome 上传包版本是 `0.1.1`。它是一个 Chrome MV3 扩展�
 当前保留的项目文档只描述已实现功能、当前实现计划、验收口径和隐私边界：
 
 - `docs/README.md`
-- `docs/01_PROJECT_CHARTER.md`
-- `docs/02_PRD.md`
-- `docs/03_TECH_SPEC.md`
-- `docs/07_PRIVACY_AND_SECURITY.md`
-- `docs/EXECUTION_PLAN.md`
-- `docs/ACCEPTANCE_CRITERIA.md`
+- `docs/charter.md`
+- `docs/prd.md`
+- `docs/tech-spec.md`
+- `docs/privacy-and-security.md`
+- `docs/execution-plan.md`
+- `docs/acceptance-criteria.md`
 - `README.md`
 - `RELEASE_CHECKLIST.md`
 - `CLAUDE.md`

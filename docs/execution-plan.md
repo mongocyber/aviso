@@ -1,10 +1,10 @@
 # Aviso Execution Plan
 
-Updated: 2026-06-12
+Updated: 2026-07-06
 
 ## 当前维护目标
 
-保持 Aviso `v0.1 internal dogfood / 内部试用版` 稳定、可构建、可手动验收，并确保文档只描述当前已实现能力和当前边界。
+保持 Aviso `0.1.1 / Chrome Web Store 待审核` 候选包稳定、可构建、可手动验收，并确保文档只描述当前已实现能力和当前边界。
 
 ## 执行顺序
 
@@ -26,6 +26,12 @@ npx tsc --noEmit
 npm run build
 ```
 
+涉及 release package、manifest、加载目录或 Chrome Web Store 候选包证据时，还需要运行：
+
+```bash
+npm run package
+```
+
 只改文档时，至少运行：
 
 ```bash
@@ -40,7 +46,7 @@ git diff --check
 - 英文 Chrome 下扩展描述和 UI 为英文。
 - 快捷键说明英文正常。
 - 权限没有变化。
-- 构建通过。
+- 构建通过；release package 场景下 `npm run package` 也通过，并加载 `build/chrome-mv3-prod`。
 - OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 模型 ID 可以手动编辑；OpenRouter、Gemini 和 Tencent Hunyuan 不自动读取模型列表。
 - 当前文档只引用实际存在的 roadmap、planning、design-system、archive 和 decisions 入口；不再引用已删除的 store、brand 或旧 specs 目录。
 
@@ -53,4 +59,4 @@ git diff --check
 - 改 API Key 存储、读取、解密、打印或迁移逻辑。
 - 真实 provider API 调用。
 - 发布、tag、push、Chrome Web Store workflow 或生产部署。
-- 把当前内部试用状态改成公开发布状态。
+- 把当前待审核状态改成公开上架或 Chrome Web Store 已批准状态。

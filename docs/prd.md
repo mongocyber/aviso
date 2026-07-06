@@ -1,6 +1,6 @@
 # Aviso PRD
 
-Updated: 2026-06-27
+Updated: 2026-07-06
 
 ## 产品目标
 
@@ -53,7 +53,7 @@ Aviso 帮用户在当前网页内快速调用 AI。用户不需要离开页面�
 
 - 运行时 UI 默认跟随 Chrome UI language：中文环境显示中文，其他环境显示 English。
 - 用户可以在 Popup 中覆盖界面语言。
-- Chrome 扩展描述和快捷键说明通过源码 `locales/zh_CN` 和 `locales/en` 本地化；Plasmo 构建时映射到 Chrome 扩展的 `_locales` 目录。
+- Chrome 扩展描述和快捷键说明通过源码 `locales/zh_CN` 和 `locales/en` 本地化；构建时输出到 Chrome 扩展的 `_locales` 目录。
 
 ## 数据与隐私需求
 
@@ -69,4 +69,4 @@ Aviso 帮用户在当前网页内快速调用 AI。用户不需要离开页面�
 
 ## 验收标准
 
-当前 PRD 的验收标准见 [ACCEPTANCE_CRITERIA.md](./ACCEPTANCE_CRITERIA.md)，执行记录见 [../RELEASE_CHECKLIST.md](../RELEASE_CHECKLIST.md)。
+当前 PRD 的验收标准见 [acceptance-criteria.md](./acceptance-criteria.md)，执行记录见 [../RELEASE_CHECKLIST.md](../RELEASE_CHECKLIST.md)。

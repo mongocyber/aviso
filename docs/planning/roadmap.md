@@ -1,7 +1,7 @@
 # Aviso Roadmap
 
 Status: `planning / product-owner source`
-Updated: 2026-06-18
+Updated: 2026-07-06
 
 This roadmap records product direction and version sequencing. It is not release approval, store approval, or implementation evidence.
 
@@ -9,8 +9,8 @@ This roadmap records product direction and version sequencing. It is not release
 
 | Area | Source |
 | --- | --- |
-| Current product truth | [`../01_PROJECT_CHARTER.md`](../01_PROJECT_CHARTER.md), [`../../STATUS.md`](../../STATUS.md), [`../../RELEASE_CHECKLIST.md`](../../RELEASE_CHECKLIST.md) |
-| Current privacy and permissions | [`../07_PRIVACY_AND_SECURITY.md`](../07_PRIVACY_AND_SECURITY.md), [`../03_TECH_SPEC.md`](../03_TECH_SPEC.md) |
+| Current product truth | [`../charter.md`](../charter.md), [`../../STATUS.md`](../../STATUS.md), [`../../RELEASE_CHECKLIST.md`](../../RELEASE_CHECKLIST.md) |
+| Current privacy and permissions | [`../privacy-and-security.md`](../privacy-and-security.md), [`../tech-spec.md`](../tech-spec.md) |
 | Active future-version planning | [`v0.3/README.md`](./v0.3/README.md) |
 | Backend API and service design | `../Aviso-backend/docs/README.md` in the sibling backend repository |
 
@@ -18,10 +18,9 @@ This roadmap records product direction and version sequencing. It is not release
 
 | Version / Track | Status | Purpose | Release Rule |
 | --- | --- | --- | --- |
-| `0.1.0` internal dogfood | submitted to Chrome Web Store review / not public | Current BYOK extension package and store-review baseline. | Do not describe as public listing until Chrome Web Store approval and store URL exist. |
-| `v0.2` hardening | implementation evidence recorded / not public | Provider configuration expansion, command-palette local intent, waiting-state improvements, and WXT parallel-path evidence. | Do not describe as release-ready or public. |
-| `v0.2.1` WXT default-build gate | planned / owner-gated | Decide whether and when WXT becomes the default build and package path. | Requires owner release decision and loaded-extension confidence; not a user-facing feature release. |
-| `v0.3` hosted AI | planned / cross-repo | Add hosted AI path with login, quota, backend API, and BYOK fallback. | Requires backend staging, frontend integration, privacy updates, CWS data disclosure, host-permission review, and owner approval. |
+| `0.1.1` Chrome Web Store pending | submitted to Chrome Web Store review / not public | Current uploaded extension package and store-review baseline. | Do not describe as public listing until Chrome Web Store approval and store URL exist. |
+| historical `v0.2` hardening | implementation evidence recorded / not public | Provider configuration expansion, command-palette local intent, waiting-state improvements, and historical WXT evidence. | Do not describe as a separate public version. |
+| historical `v0.3` hosted AI | incorporated into `0.1.1` candidate / not public live | Optional hosted AI path with login, quota, backend API, and BYOK fallback. | Still not Chrome Web Store approved or hosted AI public live. |
 
 ## Product Principles
 
@@ -47,4 +46,4 @@ This roadmap records product direction and version sequencing. It is not release
 - Hosted AI, account, quota, subscription, or payment public claims.
 - Provider live validation.
 - Staging or production deployment.
-- Chrome Web Store resubmission.
+- Chrome Web Store resubmission beyond the current `0.1.1` pending review state.

@@ -8,10 +8,10 @@ The public copy is adapted from the internal project source of truth in the repo
 - `STATUS.md`
 - `RELEASE_CHECKLIST.md`
 - `docs/README.md`
-- `docs/01_PROJECT_CHARTER.md`
-- `docs/02_PRD.md`
-- `docs/03_TECH_SPEC.md`
-- `docs/07_PRIVACY_AND_SECURITY.md`
+- `docs/charter.md`
+- `docs/prd.md`
+- `docs/tech-spec.md`
+- `docs/privacy-and-security.md`
 
 The root project docs remain the internal source of truth and should not be overwritten by website edits.
 

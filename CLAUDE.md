@@ -4,8 +4,8 @@
 
 ## 当前项目事实
 
-- Aviso 是 Chrome MV3 扩展，技术栈为 Plasmo、React 18、TypeScript。
-- 当前状态是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Chrome Web Store 审核，等待审核结果；还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
+- Aviso 是 Chrome MV3 扩展，技术栈为 React 18 和 TypeScript；本地 `dev` / `build` 保留 Plasmo 路径，规范发布包由 WXT 生成。
+- 当前 Chrome 上传包版本是 `0.1.1`，owner 已上传并提交 Chrome Web Store 审核，等待审核结果；还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
 - 当前默认可用产品模型仍是 BYOK direct-provider：用户提供自己的 API Key，浏览器扩展直连模型厂商。
 - v0.3 production candidate 已加入可选 Aviso AI / hosted AI 路径：只有用户主动选择托管路径时才需要 Google 登录，请求才会经过 Aviso production 后端。该路径已有 production backend authenticated HTTP smoke 和候选包证据，但还不是公开发布、Chrome Web Store 批准、hosted AI live 或网站部署。
 - 当前没有 provider proxy 公开 live、订阅、支付、公开匿名额度、遥测、分析 SDK、远端链接正文抓取或联网搜索。
@@ -19,9 +19,9 @@
 - `STATUS.md`
 - `RELEASE_CHECKLIST.md`
 - `docs/README.md`
-- `docs/02_PRD.md`
-- `docs/03_TECH_SPEC.md`
-- `docs/07_PRIVACY_AND_SECURITY.md`
+- `docs/prd.md`
+- `docs/tech-spec.md`
+- `docs/privacy-and-security.md`
 - 和当前任务直接相关的源码或测试。
 
 不要引用已经移除的旧 roadmap、issue、spec、store、design 或 brand 目录作为当前依据。
@@ -75,8 +75,9 @@ git diff --check
 npm test
 npx tsc --noEmit
 npm run build
+npm run package
 ```
 
-`npm run build` 在默认沙箱内可能出现 Plasmo `Operation not permitted`；需要在允许的本地环境中重跑确认。
+`npm run build` 在默认沙箱内可能出现 Plasmo `Operation not permitted`；需要在允许的本地环境中重跑确认。涉及 release package、manifest 或 loaded-extension candidate 时，以 `npm run package` 生成的 `build/chrome-mv3-prod` / `build/chrome-mv3-prod.zip` 为准。
 
 `website/` 是独立 Docusaurus 项目；只有改到网站代码或网站文档时才进入 `website/` 单独构建。

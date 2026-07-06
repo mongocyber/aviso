@@ -1,12 +1,12 @@
 # Aviso Project Charter
 
-Updated: 2026-06-27
+Updated: 2026-07-06
 
 ## 定位
 
 Aviso 是一个 Chrome MV3 浏览器扩展。它把用户在网页上的当前操作对象转成可控的 AI 输入，并在页面内结果面板中展示输出。
 
-当前项目状态是 `v0.1 internal dogfood / 内部试用版`，`0.1.0` 已提交 Chrome Web Store 审核，等待审核结果。它用于内部试用、质量收口、商店审核和边界验证；还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
+当前 Chrome 上传包版本是 `0.1.1`，owner 已上传并提交 Chrome Web Store 审核，等待审核结果。它用于内部试用、质量收口、商店审核和边界验证；还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
 
 ## 当前目标
 
@@ -20,7 +20,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它把用户在网页上的当前�
 
 | 范围 | 当前状态 |
 | --- | --- |
-| Chrome 扩展 | 已实现，版本 `0.1.0`。 |
+| Chrome 扩展 | 已实现，版本 `0.1.1`。 |
 | 右键菜单 | 已实现。 |
 | 划词工具栏 | 已实现。 |
 | 划词翻译卡 | 已实现，默认关闭。 |
@@ -39,7 +39,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它把用户在网页上的当前�
 
 v0.2 记录的是当前内部试用版本上的 hardening 和实现证据，不代表公开发布、Chrome Web Store 审核通过或正式商店链接。已完成的用户可见能力包括多 provider 配置扩展、命令面板本地意图、等待状态改善、summary-only 本地计时方法和短文本快任务路由。
 
-v0.2.1 当前只作为 WXT default-build migration / rebaseline 的独立工程 gate。WXT 已有并行构建和 closeout 证据，但默认构建仍保持 Plasmo；任何默认构建切换、重新打包提交或公开发布都需要单独 owner decision。
+v0.2.1 的历史 WXT default-build gate 已被当前 package gate 重新界定：本地 `dev` / `build` 仍保留 Plasmo 路径，规范 release package 由 WXT 产物生成。任何删除 Plasmo rollback、重新提交 Chrome Web Store 或公开发布仍需要单独 owner decision。
 
 这些记录不改变当前公开产品边界：BYOK direct-provider 仍是默认路径，未登录托管 AI 不会阻止 BYOK。v0.3 production candidate 已加入 Aviso AI / hosted AI、`identity` 权限和精确 production host permission `https://aviso-backend-production.vercel.app/*`，并已有 production backend authenticated smoke 证据；但它仍不是公开发布、付费托管 AI、订阅支付、公开匿名额度或 Chrome Web Store 批准。
 
@@ -49,9 +49,9 @@ v0.2.1 当前只作为 WXT default-build migration / rebaseline 的独立工程 
 - 豆包 / 火山方舟：用户确认可用。
 - OpenAI / Anthropic：支持在设置中配置 API Key 和模型 ID，请求由浏览器直连对应 provider。
 - DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan：支持在设置中配置 API Key 和模型 ID；除 DeepSeek 的一次 owner 手动 connectivity pass 外，这是 BYOK direct-provider 配置支持，不代表真实 provider live validation。
-- v0.3 hosted AI：staging 登录、账号状态、额度展示、provider smoke 和 manifest/release-build 检查已有验证记录；production backend authenticated smoke 已通过，production frontend package 已构建并包含精确 production host permission。最终 loaded-extension production smoke、CWS disclosure 提交、website deployment 和 owner release approval 仍是后续 gate。
+- v0.3 hosted AI：staging 登录、账号状态、额度展示、provider smoke 和 manifest/release-build 检查已有验证记录；production backend authenticated smoke 已通过，production frontend package 已构建并包含精确 production host permission。Owner 已完成 0.1.1 上传并提交审核；这仍不代表 Chrome Web Store 批准、hosted AI public live 或最终公开发布。
 - 英文界面：用户 smoke check 未发现明显问题。
-- 自动检查：以 `git diff --check`、`npm test`、`npx tsc --noEmit`、`npm run build` 为当前基础检查。
+- 自动检查：以 `git diff --check`、`npm test`、`npx tsc --noEmit`、`npm run build` 为当前基础检查；release package / manifest 证据以 `npm run package` 为规范入口。
 
 ## 决策原则
 

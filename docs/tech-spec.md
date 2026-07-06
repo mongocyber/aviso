@@ -1,12 +1,12 @@
 # Aviso Tech Spec
 
-Updated: 2026-06-27
+Updated: 2026-07-06
 
 ## 技术栈
 
 - Chrome MV3 extension
-- Plasmo `0.90.5`
-- WXT parallel build path
+- Plasmo `0.90.5` local dev/build and rollback path
+- WXT `0.20.26` canonical release package path
 - React 18
 - TypeScript
 - Node test runner
@@ -136,17 +136,21 @@ v0.3 hosted path 只在 request route 明确为 `hosted` 时触发：background 
 - 截图只在用户通过右键内部路径主动确认后用于当次图片说明请求；base64 不写入 storage、history、docs 或日志。当前不把截图作为普通用户主入口或公开卖点。
 - Hosted AI 当前不接受 image/screenshot-style request 作为公开能力；截图路径仍保留在 BYOK/右键内部边界内。
 
-## WXT 并行构建
+## 构建和规范包
 
-WXT 已作为并行构建路径存在，产物位于 `.output/chrome-mv3`。当前默认 `dev`、`build` 和 `package` 仍保留 Plasmo 路径，未切换到 WXT。
+当前仓库保留两条构建路径：
 
-当前 WXT 状态：
+- `npm run dev` / `npm run build`：Plasmo 路径，用于本地开发、基础构建检查和 rollback 参考。
+- `npm run dev:wxt` / `npm run build:wxt`：WXT 构建路径，产物位于 `.output/chrome-mv3`。
+- `npm run package`：规范 release package 入口。该命令运行 `scripts/package-production.mjs`，从 WXT `.output/chrome-mv3` 生成 `build/chrome-mv3-prod`，注入 Chrome Web Store public key，生成 `build/chrome-mv3-prod.zip`，并运行 manifest 检查。
 
-- 自动构建和 manifest parity 已通过。
-- WXT manifest host permissions 与 Plasmo 构建一致，包含 OpenAI、Anthropic、火山方舟、DeepSeek、Moonshot、OpenRouter、Gemini、Tencent Hunyuan 和 v0.3 production backend host。
-- V02-WXT-005 closeout 已记录 refreshed browser smoke 和 owner manual pass evidence，状态可进入 owner release decision；这不等于 WXT 默认构建批准、公开发布批准或 Chrome Web Store 审核通过。
-- WXT default-build migration / default-build release 已移到独立 `v0.2.1` gate；当前默认 `dev`、`build` 和 `package` 仍保持 Plasmo 路径。
-- `.output/aviso-0.1.0-chrome.zip` 是内部迁移 artifact，不是 Chrome Web Store 提交包。
+当前 package 状态：
+
+- `build/chrome-mv3-prod` 是 owner loaded-extension smoke 应加载的规范目录。
+- `build/chrome-mv3-prod.zip` 是当前规范候选 zip。
+- `.output/chrome-mv3` 是 WXT 中间产物，不是本轮优先加载目录。
+- WXT manifest host permissions 与当前批准范围一致，包含 OpenAI、Anthropic、火山方舟、DeepSeek、Moonshot、OpenRouter、Gemini、Tencent Hunyuan 和 production hosted backend host。
+- 历史 v0.2 曾保留 Plasmo default-build 决策；这不覆盖当前 `npm run package` 的 WXT 规范包事实，也不代表公开发布批准或 Chrome Web Store 审核通过。
 
 ## 本地性能摘要
 
@@ -158,7 +162,7 @@ V02-006 已实现 summary-only 本地 TTFT 方法和等待态改善。性能摘�
 
 - 运行时 UI 文案由 `src/utils/i18n.ts` 提供。
 - `contextai_settings.uiLanguage` 是非敏感设置，可选自动、中文、English。
-- Chrome manifest 文案源码位于 `locales/zh_CN/messages.json` 和 `locales/en/messages.json`；Plasmo 构建时映射到 Chrome 扩展要求的 `_locales/zh_CN/messages.json` 和 `_locales/en/messages.json`。
+- Chrome manifest 文案源码位于 `locales/zh_CN/messages.json` 和 `locales/en/messages.json`；构建时输出到 Chrome 扩展要求的 `_locales/zh_CN/messages.json` 和 `_locales/en/messages.json`。
 - 翻译目标语言与 UI 语言互相独立。
 
 ## 检查命令
@@ -168,6 +172,7 @@ git diff --check
 npm test
 npx tsc --noEmit
 npm run build
+npm run package
 ```
 
-这些命令不执行真实 provider API 调用。
+这些命令不执行真实 provider API 调用。只改普通文档时至少运行 `git diff --check`；涉及 release package、加载目录、manifest 或 CWS 证据时应运行 `npm run package`。

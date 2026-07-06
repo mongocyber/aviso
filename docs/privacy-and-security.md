@@ -118,6 +118,6 @@ API Key 不明文保存，位置是 `chrome.storage.local/contextai_api_keys`，
 
 - 修改权限、host permissions、API Key 存储、provider route 或真实 provider 调用前必须单独确认。
 - 修改托管 AI metadata 字段、保留窗口、provider logging、OAuth 数据处理或 production backend 前必须单独确认。
-- 新增用户数据流时必须同步更新 `docs/03_TECH_SPEC.md`、本文档和 `RELEASE_CHECKLIST.md`。
+- 新增用户数据流时必须同步更新 `docs/tech-spec.md`、本文档和 `RELEASE_CHECKLIST.md`。
 - 不把当前内部试用记录写成公开发布批准。
 - 不把 DeepSeek、Kimi / Moonshot、OpenRouter、Gemini、Tencent Hunyuan 等配置支持写成真实 provider live validation；DeepSeek 的 owner 手动 connectivity pass 只能按单次 summary-only evidence 描述。
