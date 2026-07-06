@@ -16,7 +16,7 @@ Aviso 设计系统用于沉淀当前 extension UI 的品牌、视觉 token、基
 
 ## 当前边界
 
-- 当前产品仍是 `v0.1 internal dogfood / 内部试用版` 和 `v0.2 candidate` 推进中。
+- 设计系统不维护发布状态；当前产品状态以 [`../../STATUS.md`](../../STATUS.md) 为准。
 - 不新增权限、manifest、host permissions、依赖、后台服务、遥测或商店发布材料。
 - 不迁入 `uploads/`、`screenshots/`、`studio/`、Landing Page 历史变体或外部 `CLAUDE.md`。
 - 商店截图、官网文案和公开卖点必须另走事实复核，不能直接由设计包迁入。

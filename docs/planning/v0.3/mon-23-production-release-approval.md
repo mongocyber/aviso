@@ -1,23 +1,23 @@
 # Aviso MON-23 Production Release Approval Gate
 
-Status: `owner-approved-to-execute / production-backend-smoke-passed / production-frontend-package-built / production-loaded-extension-smoke-attempted-blocked / not submitted / not live`
-Updated: 2026-06-27
+Status: `owner-approved-to-execute / production-backend-smoke-passed / production-frontend-package-built / owner-loaded-smoke-passed / cws-submitted-for-review / not approved / not live`
+Updated: 2026-07-06
 
-This file records the owner decision package for `MON-23`: production environment and release approval. Owner approval was recorded in the CTO control thread on 2026-06-26, which authorizes execution threads for production preparation and release validation. It is not Chrome Web Store submission, website publication, production verification, or live evidence by itself.
+This file records the owner decision package for `MON-23`: production environment and release approval. Owner approval was recorded in the CTO control thread on 2026-06-26, which authorized execution threads for production preparation and release validation. Later evidence closed production backend smoke, owner-loaded extension smoke, website publication, and Chrome Web Store submission. It is still not Chrome Web Store approval, owner release approval, or live evidence by itself.
 
 ## Scope
 
 | Release type | Meaning | Current status | Owner decision needed |
 | --- | --- | --- | --- |
-| Production | Create and configure production backend resources, production environment variables, production OAuth/provider settings, production cost controls, production observability, and rollback path. | `owner-approved-to-execute / backend smoke passed / frontend package built / not live` | Approved; remaining final release evidence required |
-| Store Submission | Submit Chrome Web Store privacy/data disclosure and hosted-AI package updates for review. | `owner-approved-to-prepare / draft exists / not submitted` | Approved; final submission evidence required |
-| Website Publication | Deploy public website/privacy-policy copy that describes BYOK and hosted AI accurately. | `owner-approved-to-prepare / source updated / not deployed` | Approved; final deployment evidence required |
+| Production | Create and configure production backend resources, production environment variables, production OAuth/provider settings, production cost controls, production observability, and rollback path. | `owner-approved-to-execute / backend smoke passed / owner-loaded extension smoke passed / not live` | Approved; Chrome Web Store review result and final release evidence still required |
+| Store Submission | Submit Chrome Web Store privacy/data disclosure and hosted-AI package updates for review. | `submitted for review / not approved` | Chrome Web Store review result still required |
+| Website Publication | Deploy public website/privacy-policy copy that describes BYOK and hosted AI accurately. | `reviewed / deployed` | Completed; future copy changes require separate approval |
 
 ## Current Conclusion
 
 v0.3 hosted AI has staging evidence that can support production execution, and the owner has approved the MON-23 decision set. This approval authorizes production resource preparation, production host-permission work, production OAuth/provider validation, website publication preparation, Chrome Web Store submission preparation, release copy finalization, rollback readiness work, and keeping billing excluded from the first hosted-AI release unless separately expanded.
 
-Production backend smoke and frontend candidate-package evidence now exist. A local final loaded-extension production smoke attempt was blocked because official Chrome did not register the unpacked candidate through command-line loading, and a local unpacked extension ID cannot prove the Chrome Web Store production extension ID's OAuth redirect path without a CWS-ID-preserving validation path. Until website deployment, Chrome Web Store submission, final loaded-extension production smoke, owner release approval, and live release evidence are complete, BYOK direct-provider remains the default available path, hosted AI remains not live, and public copy must not imply hosted AI is available before the release evidence exists.
+Production backend smoke and frontend candidate-package evidence now exist. Owner-loaded extension smoke later passed for Aviso AI login, translation, and send-to-AI. Website deployment and Chrome Web Store submission are complete, but Chrome Web Store review result, owner release approval, and live release evidence remain incomplete. BYOK direct-provider remains the default available path, hosted AI remains not live, and public copy must not imply hosted AI is live before the release evidence exists.
 
 ## Verified Evidence Available For Review
 
@@ -39,7 +39,7 @@ Use this section as the evidence index for owner review. Do not expand it with s
 | Hosted sign-in UX and local unavailable guidance | Hosted sign-in UX redesign was merged and local unavailable-state guidance validation passed; public release approval remains separate. | [`status.md`](./status.md), `MON-26`, `MON-29` |
 | Production backend smoke | Authenticated production HTTP smoke passed with `auth_google`, `me_before_chat`, `chat_provider_stream`, `me_after_chat`, and `logout` all `2xx`; SSE `delta` / `done` / `usage`, positive quota delta, and cost guard were confirmed with sanitized owner-assisted evidence. | [`release-gates.md`](./release-gates.md), [`status.md`](./status.md) |
 | Frontend production package | Production hosted base URL, exact production host permission, and production Google OAuth client ID are aligned; WXT/Plasmo builds, zips, manifest guard, zip manifest inspection, and focused forbidden-boundary scan passed. | [`release-gates.md`](./release-gates.md), [`status.md`](./status.md) |
-| Final loaded-extension production smoke | Attempted locally on 2026-06-27 but blocked as release evidence by official Chrome unpacked-extension CLI loading and CWS extension-ID constraints; not a pass and not live. | [`release-gates.md`](./release-gates.md), [`status.md`](./status.md) |
+| Final loaded-extension production smoke | Owner-loaded extension smoke passed for Aviso AI login, translation, and send-to-AI after backend `c60b895`; current latency is a next-version optimization, not a current release blocker. This is not Chrome Web Store approval or live release evidence. | [`release-gates.md`](./release-gates.md), [`status.md`](./status.md) |
 
 ## Owner Approval Checklist
 
@@ -47,16 +47,16 @@ Every row below must be explicitly approved, blocked, or deferred by the owner b
 
 | Decision | Owner must confirm | Current default |
 | --- | --- | --- |
-| Production backend resources | Whether to create separate production Vercel/backend runtime, Supabase project, Upstash Redis, provider account/key, OAuth client, session secret, and any required production domains. | `Vercel production origin configured / external resources and secrets pending / not live` |
-| Production env and secrets | Who will inject production env values, which environment they target, and how sanitized evidence will confirm readiness without exposing values. | `approved for owner-controlled injection / values must not be recorded / evidence pending` |
-| Production host permission | Exact production backend origin and exact extension `host_permissions` entry, if hosted AI is included in the production package. No broad host permission. | `completed for candidate package: https://aviso-backend-production.vercel.app/* / no staging backend host / no localhost host / not submitted` |
-| Production OAuth validation | Exact production Google OAuth client, consent screen status, redirect origin, and sanitized production auth/session smoke plan. | `authenticated HTTP smoke passed / local final loaded-extension smoke attempted-blocked / CWS-ID-preserving smoke pending` |
-| Production provider validation | Approved provider account, model route, spend cap, cost guard, quota path, sanitized smoke scope, and allowed evidence fields. | `authenticated HTTP smoke passed with cost guard / final loaded-extension smoke pending` |
+| Production backend resources | Whether to create separate production Vercel/backend runtime, Supabase project, Upstash Redis, provider account/key, OAuth client, session secret, and any required production domains. | `Vercel production origin configured / authenticated smoke passed / not live` |
+| Production env and secrets | Who will inject production env values, which environment they target, and how sanitized evidence will confirm readiness without exposing values. | `owner-controlled injection / values not recorded / production smoke passed` |
+| Production host permission | Exact production backend origin and exact extension `host_permissions` entry, if hosted AI is included in the production package. No broad host permission. | `completed for candidate package: https://aviso-backend-production.vercel.app/* / no staging backend host / no localhost host / submitted for review` |
+| Production OAuth validation | Exact production Google OAuth client, consent screen status, redirect origin, and sanitized production auth/session smoke plan. | `authenticated HTTP smoke passed / owner-loaded extension smoke passed` |
+| Production provider validation | Approved provider account, model route, spend cap, cost guard, quota path, sanitized smoke scope, and allowed evidence fields. | `authenticated HTTP smoke passed with cost guard / owner-loaded extension smoke passed` |
 | Production cost caps | Free quota policy, hard spend cap, abuse controls, quota reset behavior, and emergency disable path. Do not publish quota numbers unless release copy is approved. | `approved as required release gate / evidence pending` |
 | Observability and alerts | Which alerts must exist before production, who receives them, what log fields are allowed, and how sensitive-data exclusions are verified. | `approved as required release gate / evidence pending` |
 | Rollback | Rollback owner, rollback trigger conditions, package rollback path, backend disable path, provider key disable path, and public communication rules. | `approved as required release gate / evidence pending` |
-| Website privacy deployment | Whether to deploy the source-updated privacy/website copy, where it will be hosted, and what URL is safe to cite in CWS. | `approved to prepare / not deployed / evidence pending` |
-| Chrome Web Store disclosure submission | Whether to submit the hosted-AI disclosure update, final data-category answers, final permission explanations, and final review package. | `approved to prepare / not submitted / evidence pending` |
+| Website privacy deployment | Whether to deploy the source-updated privacy/website copy, where it will be hosted, and what URL is safe to cite in CWS. | `reviewed / deployed` |
+| Chrome Web Store disclosure submission | Whether to submit the hosted-AI disclosure update, final data-category answers, final permission explanations, and final review package. | `submitted for review / approval pending` |
 | Release copy | Public wording for hosted AI availability, sign-in, quota, BYOK fallback, provider transit, and staging-to-production transition. | `approved to finalize / evidence pending` |
 | Billing exclusion | Whether paid hosted AI, checkout, subscription, billing provider, and upgrade copy remain excluded from the first v0.3 production release. | `approved excluded / later owner gate` |
 
@@ -66,11 +66,11 @@ Do not cross these lines in MON-23 execution work:
 
 - Do not create or configure production backend, database, cache, provider, OAuth, alerting, or website resources outside the approved execution threads and sanitized evidence plans.
 - Do not inject, read, print, copy, or store production secrets or `.env` values in project files or chat.
-- Do not submit Chrome Web Store disclosure, privacy updates, package updates, or store listing changes until the production package and disclosure evidence are final.
-- Do not deploy website/privacy changes or publish hosted-AI public copy until final copy and publication evidence are ready.
+- Do not change Chrome Web Store disclosure, privacy updates, package updates, or store listing copy again without a new approval and evidence record.
+- Do not change website/privacy copy or publish hosted-AI live copy until final copy and publication evidence are ready.
 - Do not add broad extension host permissions; production host permission is approved only for the exact production backend origin `https://aviso-backend-production.vercel.app`.
 - Do not run additional production provider, OAuth, database, cache, billing, or alerting validation without a sanitized evidence plan.
-- Do not describe hosted AI as live, production, publicly available, or release-approved until production validation, CWS/package, website, and release evidence are complete.
+- Do not describe hosted AI as live, publicly available, or release-approved until Chrome Web Store review, owner release approval, and live release evidence are complete.
 - Do not add billing, subscription, checkout, upgrade, anonymous quota, or paid-plan claims unless the owner explicitly expands scope.
 
 ## Evidence Template

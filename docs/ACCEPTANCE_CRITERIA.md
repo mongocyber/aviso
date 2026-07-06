@@ -1,6 +1,6 @@
 # Aviso Acceptance Criteria
 
-Updated: 2026-06-27
+Updated: 2026-06-30
 
 ## 验收标准
 
@@ -51,44 +51,14 @@ Updated: 2026-06-27
 - 截图/base64 不写入 history、storage、docs、console 或远端服务。
 - 不新增 provider proxy、遥测、分析 SDK、订阅、支付或公开匿名额度；v0.3 hosted AI 只能按 pre-release gate 描述，不能写成 live。
 
-## 当前执行记录 / 证据
+## 证据入口
 
-- A-G 手动验收：用户已验证基本通过。
-- 豆包 / 火山方舟：用户确认可用。
-- OpenAI：支持配置 API Key 和模型 ID。
-- Anthropic：支持配置 API Key 和模型 ID。
-- DeepSeek：支持配置 API Key 和模型 ID；2026-06-12 owner 手动重新配置后确认可用，记录为 summary-only live connectivity pass；不记录 API Key、raw prompt 或 raw response，也不扩大成所有 DeepSeek 模型可用性证明。
-- Kimi / Moonshot：支持配置 API Key 和模型 ID；未做真实 provider live validation。
-- OpenRouter：provider id 为 `openrouter`，base URL 为 `https://openrouter.ai/api/v1`，host permission 为 `https://openrouter.ai/*`；支持配置 API Key 和手动模型 ID；未做真实 provider live validation，不自动读取模型列表。
-- Gemini：provider id 为 `gemini`，base URL 为 `https://generativelanguage.googleapis.com/v1beta/openai/`，host permission 为 `https://generativelanguage.googleapis.com/*`；支持配置 API Key 和手动模型 ID；V02-018 已完成非 live 验证，未做真实 provider live validation，不自动读取模型列表。
-- Tencent Hunyuan：provider id 为 `hunyuan`，base URL 为 `https://api.hunyuan.cloud.tencent.com/v1`，host permission 为 `https://api.hunyuan.cloud.tencent.com/*`；支持配置 API Key 和手动模型 ID；V02-018 已完成非 live 验证，未做真实 provider live validation，不自动读取模型列表。
-- v0.2 命令面板本地意图：功能验证已通过；相关 loaded-extension surface 已纳入 V02-WXT-005 closeout / owner manual pass 记录，不代表公开发布批准。
-- v0.2 速度体验：等待态和 summary-only 本地 TTFT 方法已实现；未做真实 provider live sampling，不宣称 p50 / p95 达标。
-- WXT：自动构建和 manifest parity 已通过；V02-WXT-005 closeout 已记录 refreshed browser smoke 和 owner manual pass evidence，可进入 owner release decision；默认构建仍未切换，WXT default-build migration / default-build release 移到独立 `v0.2.1` gate。
-- v0.3 hosted AI：staging 登录、session/account state、额度展示、provider smoke、敏感日志边界、release build 和 manifest 检查已有验证记录；production backend authenticated smoke 已通过；production frontend package 已构建并切到 `https://aviso-backend-production.vercel.app/*`；最终 loaded-extension production smoke、商店提交、website deployment 和 owner release approval 仍需最终证据。
-- Reasoning / thinking request-parameter control：已从当前 v0.2 scope 移除；不作为实现项、延期项或发布口径前置条件。
-- Custom OpenAI-compatible base URL：当前 v0.2 明确不做；不是当前待办或延期项。
-- 英文界面：用户 smoke check 未发现明显问题。
-- 模型 ID 编辑：用户确认可以编辑。
-- Chrome 版本、操作系统、截图和录屏证据尚未补录；当前记录不能写成完整发布验收通过。
+本文件只定义验收标准，不维护执行证据副本。当前状态和历史证据请从以下入口读取：
+
+- 当前产品状态：[`../STATUS.md`](../STATUS.md)。
+- 发布和内部试用门禁：[`../RELEASE_CHECKLIST.md`](../RELEASE_CHECKLIST.md)。
+- 当前执行 gate：[`ai/CURRENT_GATE.md`](./ai/CURRENT_GATE.md)。
+- v0.3 hosted AI gate：[`planning/v0.3/status.md`](./planning/v0.3/status.md) 和 [`planning/v0.3/release-gates.md`](./planning/v0.3/release-gates.md)。
+- v0.2 历史证据：[`archive/v0.2/README.md`](./archive/v0.2/README.md)。
 
 截图能力仅按右键主动触发的内部路径保留，不作为普通用户主入口或公开卖点。
-
-## v0.2 验证线程复核清单
-
-验证线程需要逐项确认。Closed rows 只用于追溯当前边界，不代表 active remaining delivery：
-
-- `V02-WXT-005`：WXT loaded-extension QA closeout 已记录 refreshed browser smoke 和 owner manual pass evidence；覆盖记录不等于 WXT 默认构建批准、公开发布批准或 Chrome Web Store 审核通过。
-- `V02-WXT-006`：Closed，当前 v0.2 保持 Plasmo 默认构建；WXT default-build migration 移到单独 `v0.2.1`，自动 parity 不等于默认切换。
-- `V02-009`：DeepSeek 已记录 owner 手动 live connectivity pass；OpenRouter 最近手动测试失败类别为 `unauthorized`，不能写成 live validated；provider live validation 不是当前 v0.2 configuration-support wording 的必要条件，记录必须 summary-only。
-- `V02-010`：Closed，OpenRouter 只能写为 configuration support，不能写成 live validated。
-- `V02-011`：Closed / accepted，宽松保存只表示配置可保存；缺 Key、缺模型/endpoint 或未测试状态不能升级为 provider 可用证明。
-- `V02-012`：Fast-model strategy 已有 operation-level 行为；loaded-extension behavior 仍需 release-gate 复核。
-- `V02-013`：Closed / removed，Reasoning / thinking 请求参数不做；不需要实现证明，也不能写成当前 v0.2 能力。
-- `V02-014`：Closed，当前 v0.2 只承认感知等待优化和 summary-only TTFT 方法；不要求 live sampling，不写 p50 / p95 达标声明。
-- `V02-015`：Closed / not doing，Custom OpenAI-compatible base URL 不属于当前 v0.2；未来如需恢复，必须新开 owner-approved issue。
-- `V02-016`：Batch 2 preflight 已完成；Gemini 与 Tencent Hunyuan 进入配置支持实现线，Qwen / DashScope 仍 deferred，智谱 GLM 仍 deferred / unresolved。
-- `V02-017`：CTO accepted as non-live configuration support for Gemini / Tencent Hunyuan；继续保持 fixed preset / fixed base URL / fixed host permission。
-- `V02-018`：CTO accepted as non-live validation evidence for Gemini / Tencent Hunyuan；没有真实 API 调用授权时不能写成 live validation。
-
-这些记录只代表当前内部试用 / basic-launch hardening / v0.2 实现证据、v0.3 staging gate 和 production candidate gate 的分层证据；DeepSeek owner 手动 connectivity pass 只覆盖该次手动配置可用性，v0.3 hosted evidence 不代表公开发布批准、Chrome Web Store 审核通过、正式商店链接、GitHub Release、全 provider live validation、hosted AI live 或 WXT 默认构建切换批准。

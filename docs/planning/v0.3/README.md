@@ -1,9 +1,8 @@
 # Aviso v0.3 Planning
 
-Status: `execution-started / cross-repo / production-backend-smoke-passed / production-frontend-package-built / production-loaded-extension-smoke-attempted-blocked / not release-ready`
-Updated: 2026-06-28
-
 This folder is the product-side control plane for Aviso v0.3 hosted AI. It coordinates the extension repository and the sibling backend repository without merging the two codebases.
+
+Current v0.3 gate status lives in [`status.md`](./status.md). This README is only the navigation and ownership entrypoint.
 
 ## Read First
 
@@ -16,7 +15,7 @@ This folder is the product-side control plane for Aviso v0.3 hosted AI. It coord
 | [`frontend-ux-states.md`](./frontend-ux-states.md) | Hosted/BYOK account, quota, error, and fallback states before implementation. |
 | [`cross-repo-integration-plan.md`](./cross-repo-integration-plan.md) | Frontend/backend work split, sequencing, and synchronization rules. |
 | [`release-gates.md`](./release-gates.md) | Privacy, permissions, deployment, provider, billing, and store gates before release. |
-| [`cws-disclosure-draft.md`](./cws-disclosure-draft.md) | Chrome Web Store privacy/data-disclosure draft for v0.3 hosted AI; not submitted. |
+| [`cws-disclosure-draft.md`](./cws-disclosure-draft.md) | Chrome Web Store privacy/data-disclosure source for v0.3 hosted AI; submitted with `0.1.1` and pending review. |
 | [`staging-resource-register.md`](./staging-resource-register.md) | Non-secret staging resource inventory and env/verification checklist. |
 | [`frontend-scope.md`](./frontend-scope.md) | Extension and website scope for hosted AI integration. |
 | [`issue-plan.md`](./issue-plan.md) | Product-side issue map and repository ownership. |
@@ -32,24 +31,12 @@ This folder is the product-side control plane for Aviso v0.3 hosted AI. It coord
 | `mongocyber/aviso` | Product, extension, website, release wording | User experience, frontend integration, privacy wording, CWS-facing claims, release gates | Backend API implementation, database schema, provider proxy internals |
 | `mongocyber/aviso-backend` | Hosted AI service | API contract, OpenAPI, auth/session, quota, metering, provider routing, deployment, ops | Product positioning, frontend UI decisions, public marketing claims |
 
-## Current v0.3 Status
-
-- Product planning is starting in this repository.
-- Owner closeout decisions are accepted in [`../../decisions/0003-v0.3-owner-closeout-decisions.md`](../../decisions/0003-v0.3-owner-closeout-decisions.md).
-- Requirements closeout is ready for issue planning, with acceptance criteria, API contract review, and UX-state design documented.
-- The backend repository has staging backend logic deployed and verified through the current v0.3 gates.
-- The extension has staging hosted AI integration, exact staging host permission, `identity` permission, and owner-assisted account smoke evidence.
-- BYOK direct-provider remains the default available path.
-- Hosted AI has moved from staging-only evidence into production candidate packaging, but it remains not release-ready.
-- MON-23 owner decisions approved production preparation, website/CWS preparation, production OAuth/provider validation, exact production host-permission work, and billing exclusion for the first hosted-AI release.
-- Production backend authenticated HTTP smoke passed, and the frontend production candidate package now uses the exact production host permission `https://aviso-backend-production.vercel.app/*`.
-- Chrome Web Store submission, website deployment, final loaded-extension production smoke, owner release approval, and live release evidence are not complete.
-
 ## Source-Of-Truth Rules
 
 - Product requirements: this folder, especially [`hosted-ai-spec.md`](./hosted-ai-spec.md).
 - Owner first-slice decisions: [`../../decisions/0003-v0.3-owner-closeout-decisions.md`](../../decisions/0003-v0.3-owner-closeout-decisions.md).
 - Frontend implementation readiness: [`requirements-closeout.md`](./requirements-closeout.md), [`api-contract-review.md`](./api-contract-review.md), and [`frontend-ux-states.md`](./frontend-ux-states.md).
+- Current v0.3 gate status: [`status.md`](./status.md).
 - API contract: backend repository `docs/api-contract.md` and `docs/openapi.yaml`.
 - Backend data model: backend repository `docs/data-model.md`.
 - Backend deployment and operations: backend repository `docs/deploy.md`, `docs/ops-runbook.md`, and `docs/security.md`.

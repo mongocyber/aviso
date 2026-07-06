@@ -15,17 +15,6 @@ This folder holds future-version planning and active execution records. It is no
 - `v0.3/frontend-scope.md`: extension and website integration scope.
 - `v0.3/issue-plan.md`: v0.3 issue ownership and execution order.
 - `v0.3/status.md`: current v0.3 planning and readiness status.
-- `v0.2-fast-open-provider-spec.md`: v0.2 requirements and scope.
-- `v0.2-issue-plan.md`: v0.2 issue map and execution order.
-- `v0.2-status.md`: v0.2 progress, evidence, and open decisions.
-- `v0.2-manual-acceptance.html`: interactive v0.2 manual acceptance checklist for owner validation.
-- `v0.2-next-development-queue.md`: post-v0.2 development queue after manual validation is deferred.
-- `v0.2-wxt-migration-plan.md`: WXT migration issue track and dependency impact.
-- `v0.2-provider-architecture-preflight.md`: V02-001 provider matrix, adapter contract, permission review, and stop lines.
-- `v0.2-provider-deferred-decision-pack.md`: owner decision pack for deferred Qwen / DashScope and Zhipu GLM provider work.
-- `v0.2-wxt-migration-preflight.md`: V02-WXT-001 migration map, manifest parity checklist, and loaded-extension QA plan.
-- `v0.2-provider-config-contract.md`: V02-003 provider config schema, UI state, routing, storage, and connectivity-test contract.
-- `v0.2-wxt-migration-closeout.md`: V02-WXT-003 runtime build evidence and V02-WXT-004 automated package / manifest parity record.
 
 ## Rules
 
@@ -36,6 +25,7 @@ This folder holds future-version planning and active execution records. It is no
 - Do not describe planned features as implemented.
 - Do not update website or store copy from planning docs until implementation evidence exists.
 - When a version completes, add a release summary and move or copy the final planning set into `docs/archive/<version>/`.
+- Keep completed or retired process records out of this folder. v0.2 and related historical process material lives in `../archive/v0.2/`.
 
 ## Version Lifecycle
 

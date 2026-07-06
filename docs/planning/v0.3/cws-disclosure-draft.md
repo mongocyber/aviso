@@ -1,15 +1,15 @@
 # Aviso v0.3 CWS Disclosure Draft
 
-Status: `draft / source-updated / backend-main-pushed / final-package-verified / not submitted`
-Updated: 2026-07-02
+Status: `source-updated / backend-main-pushed / final-package-verified / submitted-for-review / not approved / not live`
+Updated: 2026-07-06
 
-This draft is the product-side source for Chrome Web Store privacy and data-disclosure updates for the current production-candidate package. The backend and frontend OAuth challenge contract has been merged to main on both repositories, but this file does not submit the Chrome Web Store form, prove Chrome Web Store approval, mark hosted AI live, or approve paid hosted AI.
+This file is the product-side source for Chrome Web Store privacy and data-disclosure updates for the current production-candidate package. The backend and frontend OAuth challenge contract has been merged to main on both repositories, and owner later submitted `0.1.1` to Chrome Web Store review. This file does not prove Chrome Web Store approval, mark hosted AI live, or approve paid hosted AI.
 
 ## Final Submission Readiness
 
-Current conclusion: `ready for owner final validation before upload`.
+Current conclusion: `submitted to Chrome Web Store review / approval pending`.
 
-This draft can be used as the source checklist for the final Chrome Web Store submission. The current package has been regenerated and verified locally, but the final packet must still be tied to the exact package uploaded to Chrome Web Store and to owner-reviewed deployed website privacy/support URLs.
+This file can be used as the source checklist for the Chrome Web Store submission. The current package has been regenerated, verified locally, and submitted by the owner for review; approval/rejection evidence and final owner release approval remain separate gates.
 
 | Field | Current value in this draft | Final submission requirement | Status |
 | --- | --- | --- | --- |
@@ -17,10 +17,10 @@ This draft can be used as the source checklist for the final Chrome Web Store su
 | Hosted backend host permission | Production candidate origin in source package config: `https://aviso-backend-production.vercel.app/*` | Exact host permission from the final production package manifest; no broad host permission | `verified in regenerated package` |
 | Production OAuth evidence | Backend OAuth challenge gate merged and pushed; frontend challenge client merged and pushed | Final loaded-extension sign-in smoke using the exact package | `code merged / owner final smoke pending` |
 | Production provider evidence | Authenticated production HTTP smoke previously passed with SSE `delta`, `done`, `usage`, positive quota delta, and cost guard exercised | Sanitized production provider smoke evidence with quota/cost guard confirmation on the final package | `partial / final package smoke pending` |
-| Production package evidence | `build/chrome-mv3-prod.zip` regenerated and verified after the 2026-07-02 frontend/backend changes | Final uploaded package filename, manifest permission list, and package boundary scan | `local package verified / not uploaded` |
-| Website privacy URL | Source copy exists and owner has reviewed website content | Deployed privacy-policy URL reviewed against the final package | `source reviewed / deployment URL confirmation pending` |
-| Support URL | Source copy exists | Deployed support/feedback URL safe to cite in CWS | `deployment URL confirmation pending` |
-| Store listing copy | `store-assets/chrome-web-store/STORE_LISTING_COPY.md` updated for BYOK + optional Aviso AI | Final owner-approved store copy pasted into CWS | `source updated / not uploaded` |
+| Production package evidence | `build/chrome-mv3-prod.zip` regenerated and verified after the 2026-07-02 frontend/backend changes | Final uploaded package filename, manifest permission list, and package boundary scan | `local package verified / submitted for review` |
+| Website privacy URL | Source copy exists and owner has reviewed website content | Deployed privacy-policy URL reviewed against the final package | `reviewed / deployed` |
+| Support URL | Source copy exists | Deployed support/feedback URL safe to cite in CWS | `reviewed / deployed` |
+| Store listing copy | `store-assets/chrome-web-store/STORE_LISTING_COPY.md` updated for BYOK + optional Aviso AI | Final owner-approved store copy pasted into CWS | `source updated / submitted for review` |
 | Billing / paid plan | Excluded from first v0.3 release | Keep financial/payment disclosure as not collected; no paid-plan or checkout copy | `ready if scope unchanged` |
 
 Do not paste the staging backend host permission into a production Chrome Web Store submission. For the intended hosted-AI production release, the host-permission list must come from the exact verified production package manifest.
@@ -31,14 +31,14 @@ Do not paste the staging backend host permission into a production Chrome Web St
 - Hosted AI is optional and requires user sign-in.
 - BYOK users are not forced through hosted AI, login, quota, or the backend.
 - MON-23 owner approval covers final submission preparation, production backend preparation, production OAuth/provider validation, and billing exclusion for the first hosted-AI release.
-- Chrome Web Store submission, final package evidence, website deployment evidence, final loaded-extension smoke, and live release evidence remain incomplete.
+- Chrome Web Store review result, final owner release approval, and live release evidence remain incomplete.
 
 ## Request Paths
 
 | Path | User action | Data transit | Account required | Current release meaning |
 | --- | --- | --- | --- | --- |
 | BYOK direct-provider | User triggers an AI action with a configured provider key | Browser extension -> selected provider | No | Existing/default path |
-| Hosted AI | User chooses hosted AI and signs in | Browser extension -> Aviso backend -> upstream provider | Yes | Optional production-candidate path; backend/frontend challenge contract merged, final package / CWS / live evidence pending |
+| Hosted AI | User chooses hosted AI and signs in | Browser extension -> Aviso backend -> upstream provider | Yes | Optional production-candidate path; backend/frontend challenge contract merged, submitted to Chrome Web Store review, approval/live evidence pending |
 
 ## Data Categories
 

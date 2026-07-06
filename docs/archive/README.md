@@ -17,13 +17,15 @@ When a version is completed or retired:
 
 ```text
 docs/archive/v0.2/
-  spec.md
-  issue-plan.md
-  status.md
-  release-summary.md
-  decisions.md
+  README.md
+  v0.2-*.md
+  perf-*.md
+  cmd-*.md
+  supporting historical artifacts
 ```
 
 ## Current Archive State
 
-No version archive has been created yet. Current `v0.1` remains the submitted/internal-dogfood product baseline, not an archived historical version.
+- `v0.2/`: frozen historical planning, execution, performance, command-palette, provider, WXT, manual acceptance, and design-system migration records.
+
+Current `v0.1` remains the submitted/internal-dogfood product baseline, not an archived historical version.
