@@ -3,7 +3,7 @@ import type { AIRequestPayload } from "~types/messages"
 import type { ModelRoute } from "~utils/model-registry"
 import {
   getTranslationSourceText,
-  normalizeTranslationTargetLanguage
+  resolveTranslationTargetLanguageForText
 } from "~utils/translation"
 
 const TRANSLATION_CACHE_TTL_MS = 10 * 60 * 1000
@@ -38,8 +38,9 @@ export function getTranslationCacheKey(input: {
     return null
   }
 
-  const targetLanguage = normalizeTranslationTargetLanguage(
-    input.settings.inlineTranslationTargetLanguage
+  const targetLanguage = resolveTranslationTargetLanguageForText(
+    input.settings.inlineTranslationTargetLanguage,
+    sourceText
   )
   const pageKey = normalizePageForCache(
     input.pageUrl ?? input.payload.pageUrl ?? ""

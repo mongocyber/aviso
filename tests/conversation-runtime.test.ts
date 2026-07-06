@@ -412,7 +412,7 @@ test("reasoning-only provider streams fail visibly and never populate translatio
   assert.match(aiClientSource, /finishReason === "length"/)
   assert.match(
     aiClientSource,
-    /translationCacheKey && chunk\.text && chunk\.kind !== "reasoning"/
+    /translationCacheKey &&[\s\S]*visibleChunk\.text &&[\s\S]*visibleChunk\.kind !== "reasoning"/
   )
 })
 
@@ -488,6 +488,13 @@ test("inline translation uses shared two-second slow hint without fake output", 
   assert.match(toolbarSource, /startInlineSlowHintTimer/)
   assert.match(toolbarSource, /shouldShowSlowResponseHint/)
   assert.match(toolbarSource, /statusText: tRef\.current\("model\.slow"\)/)
+  assert.match(toolbarSource, /TRANSLATION_NO_FIRST_CHUNK_NOTICE_MS/)
+  assert.match(toolbarSource, /TRANSLATION_NO_FIRST_CHUNK_TIMEOUT_MS/)
+  assert.match(toolbarSource, /startInlineNoFirstChunkTimeoutTimer/)
+  assert.match(toolbarSource, /getTranslationNoFirstChunkWaitingText/)
+  assert.match(toolbarSource, /inlineHardTimeoutTimer/)
+  assert.match(toolbarSource, /cancelInlineRequest\(requestId\)/)
+  assert.match(toolbarSource, /getTranslationNoFirstChunkTimeoutError/)
   assert.match(toolbarSource, /getDynamicLoadingStatusText/)
   assert.match(toolbarSource, /operation: "translate"/)
   assert.doesNotMatch(toolbarSource, /output: SLOW_MODEL_RESPONSE_TEXT/)

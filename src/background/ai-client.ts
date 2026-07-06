@@ -66,8 +66,10 @@ import {
 import {
   buildTranslationUserContent,
   buildTranslationSystemPrompt,
+  createTranslationStreamChunkFilter,
   getTranslationMaxOutputTokens,
   getTranslationSourceText,
+  resolveTranslationTargetLanguageForText,
   sanitizeTranslationPayload,
   TRANSLATION_EMPTY_INPUT_ERROR,
   TRANSLATION_SYSTEM_PROMPT
@@ -234,18 +236,51 @@ export async function handleAIRequest(
     }
   }
   payload = applyAIContextBudget(sanitizeTranslationPayload(payload))
+  const translationSourceText =
+    payload.operation === "translate" ? getTranslationSourceText(payload) : ""
+  const translationTargetLanguage =
+    payload.operation === "translate"
+      ? resolveTranslationTargetLanguageForText(
+          settings.inlineTranslationTargetLanguage,
+          translationSourceText
+        )
+      : undefined
   if (payload.operation === "translate" && !payload.systemPrompt) {
     payload = {
       ...payload,
-      systemPrompt: buildTranslationSystemPrompt(
-        settings.inlineTranslationTargetLanguage
-      )
+      systemPrompt: buildTranslationSystemPrompt(translationTargetLanguage)
     }
   }
 
-  if (payload.operation === "translate" && !getTranslationSourceText(payload)) {
+  if (payload.operation === "translate" && !translationSourceText) {
     logPreProviderPerf(payload, "openai", "translation-cache")
     throw new Error(TRANSLATION_EMPTY_INPUT_ERROR)
+  }
+
+  let translationCacheKey: string | null = null
+  let translationOutput = ""
+  const translationChunkFilter =
+    payload.operation === "translate"
+      ? createTranslationStreamChunkFilter(translationSourceText)
+      : null
+  const forwardVisibleChunk = (chunk: StreamChunk) => {
+    if (chunk.perfSummary) finalPerfSummary = chunk.perfSummary
+    const visibleChunks = translationChunkFilter
+      ? translationChunkFilter(chunk)
+      : [chunk]
+    for (const visibleChunk of visibleChunks) {
+      if (visibleChunk.perfSummary) {
+        finalPerfSummary = visibleChunk.perfSummary
+      }
+      if (
+        translationCacheKey &&
+        visibleChunk.text &&
+        visibleChunk.kind !== "reasoning"
+      ) {
+        translationOutput += visibleChunk.text
+      }
+      onChunk(visibleChunk)
+    }
   }
 
   const providerConfigs = getProviderConfigsWithLegacy(settings, apiKeys)
@@ -282,12 +317,13 @@ export async function handleAIRequest(
     try {
       const hostedPerfSummary = await runHostedChatRequest(
         { ...payload, aiRoute: "hosted" },
-        onChunk,
+        forwardVisibleChunk,
         {
           requestId: options.requestId,
           signal: options.signal,
           session: hostedSession,
-          targetLanguage: settings.inlineTranslationTargetLanguage,
+          targetLanguage:
+            translationTargetLanguage ?? settings.inlineTranslationTargetLanguage,
           firstRequestReason: options.hostedFirstRequestReason,
           onPerfSummary: recordPerfSummary
         }
@@ -309,7 +345,7 @@ export async function handleAIRequest(
     resolveFastModelRouteForOperation(payload, settings, providerConfigs) ??
     resolveRuntimeModelRoute(payload.model, settings)
 
-  const translationCacheKey = getTranslationCacheKey({
+  translationCacheKey = getTranslationCacheKey({
     payload,
     settings,
     route,
@@ -330,13 +366,8 @@ export async function handleAIRequest(
   }
 
   const imageInputBlockReason = getImageInputBlockReason(payload, route)
-  let translationOutput = ""
   const forwardChunk = (chunk: StreamChunk) => {
-    if (chunk.perfSummary) finalPerfSummary = chunk.perfSummary
-    if (translationCacheKey && chunk.text && chunk.kind !== "reasoning") {
-      translationOutput += chunk.text
-    }
-    onChunk(chunk)
+    forwardVisibleChunk(chunk)
   }
 
   try {
@@ -442,7 +473,7 @@ async function callOpenAI(
     const messages =
       payload.operation === "image_explain" && payload.srcUrl
         ? buildImageMessages(payload, "openai")
-        : buildMessages(payload)
+        : buildMessages(payload, { useSystemRole: true })
     const maxTokens = getMaxOutputTokens(payload, providerId)
     const reasoningParams = buildChatCompletionReasoningParams({
       providerId,
@@ -620,7 +651,7 @@ async function callOpenAIConnectivity(
   const messages =
     payload.operation === "image_explain" && payload.srcUrl
       ? buildImageMessages(payload, "openai")
-      : buildMessages(payload)
+      : buildMessages(payload, { useSystemRole: true })
 
   logTiming("provider_request_start", requestId, payload.timing, {
     provider: opts?.keyLabel ?? "OpenAI",
@@ -951,11 +982,19 @@ function buildImageMessages(
 }
 
 function buildMessages(
-  payload: AIRequestPayload
-): Array<{ role: "user" | "assistant"; content: string }> {
+  payload: AIRequestPayload,
+  options: { useSystemRole?: boolean } = {}
+): Array<{ role: "system" | "user" | "assistant"; content: string }> {
   const systemPrompt =
     payload.systemPrompt ?? getDefaultSystemPrompt(payload.operation)
   const userContent = buildUserContent(payload)
+
+  if (options.useSystemRole) {
+    return [
+      { role: "system", content: systemPrompt },
+      { role: "user", content: userContent }
+    ]
+  }
 
   return [{ role: "user", content: `${systemPrompt}\n\n${userContent}` }]
 }

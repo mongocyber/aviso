@@ -34,9 +34,13 @@ import { logTiming, markTiming, startTiming } from "~utils/timing"
 import {
   formatTranslationError,
   formatTranslationUserBubble,
+  getTranslationNoFirstChunkTimeoutError,
+  getTranslationNoFirstChunkWaitingText,
   getInlineTranslationRoute,
   getTranslationTargetLabel,
   normalizeTranslationTargetLanguage,
+  TRANSLATION_NO_FIRST_CHUNK_NOTICE_MS,
+  TRANSLATION_NO_FIRST_CHUNK_TIMEOUT_MS,
   type TranslationTargetLanguage
 } from "~utils/translation"
 
@@ -201,6 +205,8 @@ function SelectionToolbar() {
   const inlineTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const inlineCopyTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const inlineSlowTimer = useRef<ReturnType<typeof setTimeout>>(null)
+  const inlineNoFirstChunkTimer = useRef<ReturnType<typeof setTimeout>>(null)
+  const inlineHardTimeoutTimer = useRef<ReturnType<typeof setTimeout>>(null)
   const suppressUntilRef = useRef(0)
   const avisoPointerDownAtRef = useRef(0)
   const pageScrollAtRef = useRef(0)
@@ -248,6 +254,8 @@ function SelectionToolbar() {
     clearTimeout(inlineTimer.current)
     clearTimeout(inlineCopyTimer.current)
     clearTimeout(inlineSlowTimer.current)
+    clearTimeout(inlineNoFirstChunkTimer.current)
+    clearTimeout(inlineHardTimeoutTimer.current)
     if (cancel && inlineRequestRef.current) {
       cancelInlineRequest(inlineRequestRef.current)
     }
@@ -274,6 +282,63 @@ function SelectionToolbar() {
         return { ...prev, statusText: tRef.current("model.slow") }
       })
     }, SLOW_FIRST_CHUNK_MS)
+  }
+
+  const clearInlineNoFirstChunkTimers = () => {
+    clearTimeout(inlineNoFirstChunkTimer.current)
+    clearTimeout(inlineHardTimeoutTimer.current)
+  }
+
+  const startInlineNoFirstChunkTimeoutTimer = (requestId: string) => {
+    clearInlineNoFirstChunkTimers()
+    inlineNoFirstChunkTimer.current = setTimeout(() => {
+      setInlineCard((prev) => {
+        if (
+          prev.requestId !== requestId ||
+          inlineRequestRef.current !== requestId ||
+          prev.mode !== "loading" ||
+          prev.output.trim()
+        ) {
+          return prev
+        }
+
+        return {
+          ...prev,
+          statusText: getTranslationNoFirstChunkWaitingText(languageRef.current)
+        }
+      })
+    }, TRANSLATION_NO_FIRST_CHUNK_NOTICE_MS)
+
+    inlineHardTimeoutTimer.current = setTimeout(() => {
+      let shouldCancel = false
+      setInlineCard((prev) => {
+        if (
+          prev.requestId !== requestId ||
+          inlineRequestRef.current !== requestId ||
+          prev.mode !== "loading" ||
+          prev.output.trim()
+        ) {
+          return prev
+        }
+
+        shouldCancel = true
+        return {
+          ...prev,
+          mode: "error",
+          statusText: "",
+          error: formatTranslationError(
+            getTranslationNoFirstChunkTimeoutError(languageRef.current),
+            languageRef.current
+          )
+        }
+      })
+
+      if (shouldCancel && inlineRequestRef.current === requestId) {
+        cancelInlineRequest(requestId)
+        inlineRequestRef.current = ""
+        clearTimeout(inlineSlowTimer.current)
+      }
+    }, TRANSLATION_NO_FIRST_CHUNK_TIMEOUT_MS)
   }
 
   useEffect(() => {
@@ -360,12 +425,27 @@ function SelectionToolbar() {
           return
         }
 
+        if (chunk.text) clearInlineNoFirstChunkTimers()
+
         setInlineCard((prev) => {
           if (prev.requestId !== requestId) return prev
+          const nextOutput = prev.output + chunk.text
+          if (chunk.done && !nextOutput.trim()) {
+            return {
+              ...prev,
+              mode: "error",
+              output: nextOutput,
+              statusText: "",
+              error: formatTranslationError(
+                getTranslationNoFirstChunkTimeoutError(languageRef.current),
+                languageRef.current
+              )
+            }
+          }
           return {
             ...prev,
             mode: chunk.done ? "success" : prev.mode,
-            output: prev.output + chunk.text,
+            output: nextOutput,
             statusText: chunk.text ? "" : prev.statusText
           }
         })
@@ -373,9 +453,22 @@ function SelectionToolbar() {
         if (chunk.done) {
           inlineRequestRef.current = ""
           clearTimeout(inlineSlowTimer.current)
+          clearInlineNoFirstChunkTimers()
           setInlineCard((prev) =>
             prev.requestId === requestId
-              ? { ...prev, mode: "success", statusText: "" }
+              ? prev.output.trim()
+                ? { ...prev, mode: "success", statusText: "" }
+                : {
+                    ...prev,
+                    mode: "error",
+                    statusText: "",
+                    error: formatTranslationError(
+                      getTranslationNoFirstChunkTimeoutError(
+                        languageRef.current
+                      ),
+                      languageRef.current
+                    )
+                  }
               : prev
           )
         }
@@ -386,6 +479,7 @@ function SelectionToolbar() {
         if (requestId !== inlineRequestRef.current) return
         inlineRequestRef.current = ""
         clearTimeout(inlineSlowTimer.current)
+        clearInlineNoFirstChunkTimers()
         const displayError = guidance
           ? tRef.current(getAiUnavailableDetailKey(guidance))
           : error
@@ -423,6 +517,7 @@ function SelectionToolbar() {
       selectionChars: sourceText.length
     })
     startInlineSlowHintTimer(requestId)
+    startInlineNoFirstChunkTimeoutTimer(requestId)
 
     chrome.runtime.sendMessage(
       {
@@ -441,6 +536,7 @@ function SelectionToolbar() {
         const runtimeError = chrome.runtime.lastError
         if (runtimeError) {
           clearTimeout(inlineSlowTimer.current)
+          clearInlineNoFirstChunkTimers()
           setInlineCard((prev) =>
             prev.requestId === requestId &&
             inlineRequestRef.current === requestId
@@ -465,6 +561,7 @@ function SelectionToolbar() {
             ? tRef.current(getAiUnavailableDetailKey(guidance))
             : (response.error as string)
           clearTimeout(inlineSlowTimer.current)
+          clearInlineNoFirstChunkTimers()
           setInlineCard((prev) =>
             prev.requestId === requestId &&
             inlineRequestRef.current === requestId
@@ -499,6 +596,7 @@ function SelectionToolbar() {
 
     clearTimeout(inlineTimer.current)
     clearTimeout(inlineCopyTimer.current)
+    clearInlineNoFirstChunkTimers()
     if (inlineRequestRef.current) {
       cancelInlineRequest(inlineRequestRef.current)
       inlineRequestRef.current = ""
@@ -544,6 +642,7 @@ function SelectionToolbar() {
     const timing = startTiming()
     clearTimeout(inlineTimer.current)
     clearTimeout(inlineSlowTimer.current)
+    clearInlineNoFirstChunkTimers()
     if (inlineRequestRef.current) cancelInlineRequest(inlineRequestRef.current)
     inlineRequestRef.current = requestId
     inlineCardVisibleRef.current = true

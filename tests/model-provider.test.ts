@@ -527,6 +527,20 @@ test("reasoning stream deltas parse separately from answer text", () => {
   )
 })
 
+test("openai-compatible text requests keep system prompts in system role", () => {
+  const aiClientSource = readFileSync(
+    new URL("../src/background/ai-client.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(
+    aiClientSource,
+    /buildMessages\(payload, \{ useSystemRole: true \}\)/
+  )
+  assert.match(aiClientSource, /role: "system", content: systemPrompt/)
+  assert.match(aiClientSource, /role: "user", content: userContent/)
+})
+
 test("legacy provider keys map to provider configs without changing storage keys", () => {
   const providerConfigSource = readFileSync(
     new URL("../src/utils/provider-configs.ts", import.meta.url),

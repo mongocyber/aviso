@@ -38,9 +38,12 @@ import { expandTemplate } from "../src/utils/template.ts"
 import {
   buildTranslationSystemPrompt,
   buildTranslationUserContent,
+  createTranslationStreamChunkFilter,
   formatTranslationError,
   formatTranslationUserBubble,
   getInlineTranslationRoute,
+  getTranslationNoFirstChunkTimeoutError,
+  getTranslationNoFirstChunkWaitingText,
   getTranslationMaxOutputTokens,
   getTranslationSourceText,
   getTranslationTargetLabel,
@@ -49,7 +52,10 @@ import {
   normalizeTranslationTargetLanguage,
   resolveTranslationTargetLanguageForText,
   sanitizeTranslationPayload,
+  sanitizeTranslationOutputText,
   TRANSLATION_EMPTY_INPUT_ERROR,
+  TRANSLATION_NO_FIRST_CHUNK_NOTICE_MS,
+  TRANSLATION_NO_FIRST_CHUNK_TIMEOUT_MS,
   TRANSLATION_SYSTEM_PROMPT,
   TRANSLATION_WAITING_TEXT
 } from "../src/utils/translation.ts"
@@ -730,6 +736,8 @@ test("translation payload trims user input and removes non-translation context",
 
 test("translation display 文案明确翻译状态和失败反馈", () => {
   assert.equal(TRANSLATION_WAITING_TEXT, "正在翻译…")
+  assert.equal(TRANSLATION_NO_FIRST_CHUNK_NOTICE_MS, 10_000)
+  assert.equal(TRANSLATION_NO_FIRST_CHUNK_TIMEOUT_MS, 30_000)
   assert.equal(
     TRANSLATION_EMPTY_INPUT_ERROR,
     "没有可翻译的文本：请先选中文字，或在命令面板输入“翻译 + 文本”。"
@@ -751,6 +759,18 @@ test("translation display 文案明确翻译状态和失败反馈", () => {
   assert.equal(
     formatTranslationError("Translation failed: network error", "en"),
     "Translation failed: network error"
+  )
+  assert.match(
+    getTranslationNoFirstChunkWaitingText("zh-CN"),
+    /继续等待中/
+  )
+  assert.match(
+    getTranslationNoFirstChunkTimeoutError("zh-CN"),
+    /更快的 BYOK 模型/
+  )
+  assert.match(
+    getTranslationNoFirstChunkTimeoutError("en"),
+    /faster BYOK model/
   )
 })
 
@@ -778,6 +798,68 @@ test("translation target language prompt supports explicit targets", () => {
   assert.doesNotMatch(
     buildTranslationSystemPrompt("fr"),
     /Google|百度|有道|fallback/i
+  )
+})
+
+test("translation output filter removes model meta reasoning and keeps only translation", () => {
+  const source = "这是候选版本，不代表公开上线。"
+
+  assert.equal(
+    sanitizeTranslationOutputText(
+      [
+        "The user wants me to translate the selected text.",
+        "Key terms:",
+        "- candidate",
+        source,
+        "译文：이것은 후보 버전이며 공개 출시를 의미하지 않습니다."
+      ].join("\n"),
+      source
+    ),
+    "이것은 후보 버전이며 공개 출시를 의미하지 않습니다."
+  )
+
+  const filter = createTranslationStreamChunkFilter(source)
+  assert.deepEqual(
+    filter({ text: "先判断语境。", done: false, kind: "reasoning" }),
+    []
+  )
+  assert.deepEqual(
+    filter({
+      text: "The user wants me to translate the selected text.\nKey terms:\n- candidate\n",
+      done: false
+    }),
+    []
+  )
+  assert.deepEqual(
+    filter({
+      text: "译文：이것은 후보 버전이며",
+      done: false
+    }),
+    [
+      {
+        text: "이것은 후보 버전이며",
+        done: false,
+        kind: "answer"
+      }
+    ]
+  )
+  assert.deepEqual(
+    filter({
+      text: " 공개 출시를 의미하지 않습니다.",
+      done: true
+    }),
+    [
+      {
+        text: " 공개 출시를 의미하지 않습니다.",
+        done: false,
+        kind: "answer"
+      },
+      {
+        text: "",
+        done: true,
+        kind: "answer"
+      }
+    ]
   )
 })
 
