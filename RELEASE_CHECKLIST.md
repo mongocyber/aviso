@@ -103,7 +103,7 @@ npm run package
 - Provider：DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 已实现 BYOK direct-provider 配置支持；provider ids 为 `deepseek`、`moonshot`、`openrouter`、`gemini`、`hunyuan`，base URLs 为 `https://api.deepseek.com`、`https://api.moonshot.cn/v1`、`https://openrouter.ai/api/v1`、`https://generativelanguage.googleapis.com/v1beta/openai/`、`https://api.hunyuan.cloud.tencent.com/v1`。OpenRouter、Gemini 和 Tencent Hunyuan 模型 ID 需用户手动填写，Aviso 不自动读取模型列表。除 DeepSeek 的一次 owner 手动 connectivity pass 外，这些配置支持不能写成 live provider validation。
 - 速度体验：已实现更明确的等待状态、summary-only 本地 TTFT 方法，以及短文本 translate / explain / polish 在用户显式选择 fast provider config 时的 operation-level route override；当前 v0.2 只承认感知等待优化和 summary-only 方法，未执行真实 provider 采样，不宣称 p50 / p95 达标。
 - 命令面板：本地确定性候选、confirm-first 打开/页面动作、危险 URL 拦截和本地对话恢复已实现；不包含自主浏览、联网搜索或远端链接正文抓取。
-- WXT：并行构建、自动构建和 manifest checks 已通过；V02-WXT-005 已记录 refreshed loaded-extension smoke 和 owner manual pass evidence；owner 已决定当前 v0.2 默认构建不切换，继续使用 Plasmo；WXT default-build migration/default-build release 移到独立 `v0.2.1`。
+- WXT：自动构建和 manifest checks 已通过；当前 `npm run package` 通过 WXT 输出生成 `build/chrome-mv3-prod` 和 `build/chrome-mv3-prod.zip`。历史 v0.2 曾决定保留 Plasmo default-build；该历史决策不覆盖当前 0.1.1 规范包事实。
 - Loaded-extension 可见 smoke：历史 Popup smoke 曾显示 AI 服务、设置、记录、指令和功能开关；V02-WXT-005 最新复核通过了 WXT 内容脚本注入、划词工具栏、命令面板打开和 Esc 关闭、危险 URL 拦截、安全 URL confirm-first、无截图普通入口、iframe 划词工具栏、iframe 快捷键桥接和控制台隐私摘要。Popup AI 服务/历史/指令页、provider-safe floating action open、clipboard toast、native right-click screenshot/context-menu、readability extraction 和 iframe native context-menu 记录为 owner manual pass，不是自动化证据或 release approval。
 - 公开发布：v0.2 未公开发布，未通过 Chrome Web Store 公开上架，没有正式商店 URL。
 - Owner decisions / gates：`docs/planning/v0.2-owner-gated-decision-pack.md` 已记录 owner 对 WXT default、reasoning/thinking request-parameter control、TTFT sampling 和 custom base URL 的当前 v0.2 决策；V02-009 已记录 DeepSeek owner 手动 connectivity pass 和 OpenRouter `unauthorized`，进一步 provider live validation 仍需单独 owner 选择和 summary-only evidence 批准，且不是当前 v0.2 wording 的必要条件。
@@ -115,7 +115,7 @@ npm run package
 | Issue | Gate |
 | --- | --- |
 | `V02-WXT-005` | Accepted closeout with owner manual pass recorded：WXT loaded-extension QA closeout 已记录/接受；自动化可验 surfaces 已复核，原生菜单、Popup、clipboard、readability 和 provider-safe floating surfaces 记录为 owner manual pass。 |
-| `V02-WXT-006` | Closed / owner_decided：当前 v0.2 保持 Plasmo 默认构建，WXT default-build migration/default-build release 移到独立 `v0.2.1`。 |
+| `V02-WXT-006` | Closed / owner_decided：历史 v0.2 保持 Plasmo default-build；该决策不覆盖当前 0.1.1 的 WXT package gate。 |
 | `V02-009` | Provider live validation 授权和 summary-only 记录；DeepSeek owner 手动 connectivity pass 已记录，OpenRouter 最近手动测试失败类别为 `unauthorized`；进一步 live validation 仍需单独选择 provider/config/model 和 summary-only 记录规则。 |
 | `V02-010` | Closed：OpenRouter closeout 只写配置支持，不写 live validated。 |
 | `V02-011` | Closed / accepted：宽松保存行为 acceptance；可保存不等于已验证，缺 Key / 缺模型仍必须阻断 provider call。 |
