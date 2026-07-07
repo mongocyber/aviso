@@ -1,14 +1,14 @@
 # Aviso Chrome Web Store Listing Copy
 
-Updated: 2026-07-02
+Updated: 2026-07-07
 
 ## Listing Basics
 
 - Recommended category: `Productivity`
 - Supported languages: `Chinese (Simplified)`, `English`
-- Current release posture: final-prep listing source for the current production candidate package; not uploaded in this thread, not approved by Chrome Web Store, and not public live
+- Current release posture: resubmission listing source after Chrome Web Store rejected the prior product description for excessive or unrelated keyword-style provider names; not approved by Chrome Web Store, and not public live
 
-Scope note: this file is the Chrome Web Store listing copy source for owner final validation. It describes the current package boundary: BYOK direct-provider remains the default path, while optional Aviso AI / hosted AI uses Google sign-in and the approved production-candidate backend only when the user chooses it. This file does not upload the listing, prove Chrome Web Store approval, or mark hosted AI live.
+Scope note: this file is the Chrome Web Store listing copy source for owner final validation. It describes the current package boundary: BYOK direct-provider remains the default path, while optional Aviso AI / hosted AI uses Google sign-in and the approved production-candidate backend only when the user chooses it. This file does not upload the listing, prove Chrome Web Store approval, or mark hosted AI live. Do not paste provider-name lists into the public product description; keep provider-specific wording only where it is needed for permission or reviewer explanations.
 
 ## Short Description
 
@@ -37,7 +37,7 @@ Aviso 是一个 Chrome 扩展，帮助你在当前网页里直接调用 AI，而
 
 Aviso 保留 BYOK direct-provider 作为默认路径：用户自己提供 API Key，扩展从浏览器直接连接到已批准的 provider host。用户也可以主动选择 Aviso AI / hosted AI 路径并使用 Google 登录；只有选择该路径时，请求才会经过 Aviso 后端和上游模型 provider。BYOK 不需要登录，也不会被 Aviso AI 登录状态拦住。
 
-当前用户可用反馈已覆盖豆包 / 火山方舟。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持配置 API Key 和模型 ID；实际可用性取决于用户自己的 Key、模型权限和 provider 状态。OpenRouter、Gemini 和 Tencent Hunyuan 的模型 ID 需要用户手动填写，Aviso 不自动读取模型列表。
+如果你选择自备 API Key，可以在设置中添加模型服务配置，并填写需要的 API Key、模型 ID 或接入点。实际可用性取决于你自己的账号权限、模型权限和服务状态。Aviso 不自动读取模型列表。
 
 截图能力只保留在用户主动触发的右键内部路径中，不作为普通用户主入口或公开卖点。
 
@@ -58,7 +58,7 @@ Current features include:
 
 Aviso keeps BYOK direct-provider as the default path: users bring their own API keys, and the extension connects directly from the browser to approved provider hosts. Users may also choose Aviso AI / hosted AI and sign in with Google; only that optional path sends requests through the Aviso backend and upstream model providers. BYOK does not require sign-in and is not blocked by Aviso AI account state.
 
-Doubao / Volcengine Ark already has user-usable feedback. OpenAI, Anthropic, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan can be configured with the user's own API key and model ID; actual usability depends on the user's key, model access, and provider status. OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually; Aviso does not automatically read model lists.
+If you bring your own API key, you can add model service configs in Settings and enter the required API key, model ID, or endpoint. Actual usability depends on your own account access, model access, and service status. Aviso does not automatically read model lists.
 
 Screenshot capability remains an internal right-click path and is not presented as a main public entry or promotional feature.
 
@@ -90,14 +90,14 @@ Aviso has a single purpose: provide user-triggered AI reading, translation, summ
 
 | Host permission | Why it is needed |
 | --- | --- |
-| `https://api.openai.com/*` | Allows direct browser-to-provider API requests when the user configures an OpenAI-compatible service with their own API key. |
-| `https://api.anthropic.com/*` | Allows direct browser-to-provider API requests when the user configures Anthropic with their own API key. |
-| `https://ark.cn-beijing.volces.com/*` | Allows direct browser-to-provider API requests for Doubao / Volcengine Ark when the user configures their own key and endpoint. |
-| `https://api.deepseek.com/*` | Allows direct browser-to-provider API requests when the user configures DeepSeek with their own API key and model ID. |
-| `https://api.moonshot.cn/*` | Allows direct browser-to-provider API requests when the user configures Kimi / Moonshot with their own API key and model ID. |
-| `https://openrouter.ai/*` | Allows direct browser-to-provider API requests when the user configures OpenRouter with their own API key and model ID. |
-| `https://generativelanguage.googleapis.com/*` | Allows direct browser-to-provider API requests when the user configures Gemini with their own API key and model ID. |
-| `https://api.hunyuan.cloud.tencent.com/*` | Allows direct browser-to-provider API requests when the user configures Tencent Hunyuan with their own API key and model ID. |
+| `https://api.openai.com/*` | Allows direct browser-to-provider API requests to this declared API domain when the user configures their own key and model access. |
+| `https://api.anthropic.com/*` | Allows direct browser-to-provider API requests to this declared API domain when the user configures their own key and model access. |
+| `https://ark.cn-beijing.volces.com/*` | Allows direct browser-to-provider API requests to this declared API domain when the user configures their own key and endpoint. |
+| `https://api.deepseek.com/*` | Allows direct browser-to-provider API requests to this declared API domain when the user configures their own key and model access. |
+| `https://api.moonshot.cn/*` | Allows direct browser-to-provider API requests to this declared API domain when the user configures their own key and model access. |
+| `https://openrouter.ai/*` | Allows direct browser-to-provider API requests to this declared API domain when the user configures their own key and model access. |
+| `https://generativelanguage.googleapis.com/*` | Allows direct browser-to-provider API requests to this declared API domain when the user configures their own key and model access. |
+| `https://api.hunyuan.cloud.tencent.com/*` | Allows direct browser-to-provider API requests to this declared API domain when the user configures their own key and model access. |
 | `https://aviso-backend-production.vercel.app/*` | Allows the optional Aviso AI / hosted AI path to reach the approved production-candidate backend after the user signs in. BYOK requests do not use this backend. |
 
 These host permissions are limited to approved provider API domains and the exact Aviso hosted AI backend origin. They are not used for remote webpage scraping, analytics, or remote logging.
@@ -140,9 +140,7 @@ Reviewers can still verify these non-provider flows without any external API key
 
 - For BYOK review, the reviewer must use their own valid provider key
 - For Aviso AI review, the reviewer signs in only through the user-initiated Google sign-in flow
-- Doubao / Volcengine Ark has existing user-usable feedback
-- OpenAI / Anthropic / DeepSeek / Kimi / Moonshot / OpenRouter / Gemini / Tencent Hunyuan should be reviewed as configurable provider paths, not as broadly live-certified providers
-- If a reviewer chooses to test a provider call, they should supply their own key and model access
+- If a reviewer chooses to test a BYOK provider call, they should supply their own key, model ID, and model access
 
 ## Store Asset Checklist And Current Gaps
 

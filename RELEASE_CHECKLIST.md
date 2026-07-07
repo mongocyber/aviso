@@ -2,15 +2,15 @@
 
 版本：`0.1.1`
 
-状态：`0.1.1 / Chrome Web Store 待审核 / 未公开上架`
+状态：`0.1.1 / Chrome Web Store 拒审待重提 / 未公开上架`
 
-日期：2026-07-06
+日期：2026-07-07
 
 ## 当前结论
 
 当前构建用于内部试用和 Chrome Web Store 审核。用户已验证 A-G 手动验收基本通过，豆包 / 火山方舟 API 可用。OpenAI、Anthropic、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 支持在设置中配置 API Key 和模型 ID；DeepSeek 已有一次 owner 手动 connectivity pass，OpenRouter 最近一次手动测试失败类别为 `unauthorized`，Kimi / Moonshot、OpenRouter、Gemini 与 Tencent Hunyuan 当前仍不能写成 live validated。
 
-0.1.1 production candidate 已加入可选 Aviso AI / hosted AI 路径，并已通过 production backend authenticated HTTP smoke 与候选包构建/manifest 证据；2026-07-02 前后端 OAuth challenge gate 已合入并推送到对应 `main`，Chrome Web Store listing copy 和 disclosure draft 已更新。2026-07-03 后端 production closeout 修复了 Google OAuth client ID contract、Google auth 脱敏诊断和 Upstash JSON challenge/idempotency 解析兼容问题；owner-loaded extension 已验证 Aviso AI 登录、翻译和发送给 AI 可用。当前速度慢问题记录为后续版本优化项。官网页面 owner 复核通过，Vercel production deployment 已从 commit `b6d7b65` 完成并验证新版首页/文档内容。Owner 已上传并提交 `0.1.1` 到 Chrome Web Store 审核，当前等待审核结果；这仍不代表 Chrome Web Store 正式商店公开发布、审核通过、hosted AI 已通过商店发布、hosted AI public live 或最终 release approval。
+0.1.1 production candidate 已加入可选 Aviso AI / hosted AI 路径，并已通过 production backend authenticated HTTP smoke 与候选包构建/manifest 证据；2026-07-02 前后端 OAuth challenge gate 已合入并推送到对应 `main`，Chrome Web Store listing copy 和 disclosure draft 已更新。2026-07-03 后端 production closeout 修复了 Google OAuth client ID contract、Google auth 脱敏诊断和 Upstash JSON challenge/idempotency 解析兼容问题；owner-loaded extension 已验证 Aviso AI 登录、翻译和发送给 AI 可用。当前速度慢问题记录为后续版本优化项。官网页面 owner 复核通过，Vercel production deployment 已从 commit `b6d7b65` 完成并验证新版首页/文档内容。Owner 已上传并提交 `0.1.1` 到 Chrome Web Store 审核，2026-07-07 收到商品说明关键词问题拒审，需删除公开商品说明里的 provider 名称堆叠并重新提交；这仍不代表 Chrome Web Store 正式商店公开发布、审核通过、hosted AI 已通过商店发布、hosted AI public live 或最终 release approval。
 
 版本口径：`package.json` / manifest / Popup 显示统一使用 `0.1.1`。历史 `v0.2`、`v0.3` 只作为内部规划和 issue 分组标签保留，不代表当前上传版本、公开产品版本或单独用户可见版本。
 
@@ -82,7 +82,7 @@ npm run package
 
 2026-07-02 maintenance pass 通过：前端 `git diff --check`、`npm test`（214/214）、`npx tsc --noEmit`；后端 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（387/387）、`git diff --check`。本次覆盖前端安全口径收口、纯逻辑 i18n 测试解耦、frontend hosted OAuth challenge 接入、backend OAuth challenge gate、CWS listing copy 和 disclosure draft 更新；`npm run verify:release-candidate` 已重新生成并验证 `build/chrome-mv3-prod.zip`，`website` `npm run build` 通过；当日未上传 CWS，网站部署 gate 当时尚未完成，也未标记 hosted AI live。
 
-2026-07-03 production validation pass 通过：后端 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（392/392）、`git diff --check`；production deployment 完成，sanitized challenge smoke 通过。Owner-loaded extension 验证 Aviso AI 登录、翻译和发送给 AI 可用。官网页面 owner 复核通过，Vercel production deployment 完成并验证新版首页/文档内容。当时 CWS upload/submission/disclosure 尚未完成；后续 owner 已完成 `0.1.1` 上传并提交审核，当前仍需 Chrome Web Store 审核通过证据和最终 release approval。
+2026-07-03 production validation pass 通过：后端 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（392/392）、`git diff --check`；production deployment 完成，sanitized challenge smoke 通过。Owner-loaded extension 验证 Aviso AI 登录、翻译和发送给 AI 可用。官网页面 owner 复核通过，Vercel production deployment 完成并验证新版首页/文档内容。当时 CWS upload/submission/disclosure 尚未完成；后续 owner 已完成 `0.1.1` 上传并提交审核。2026-07-07 收到商品说明关键词问题拒审，当前仍需重新提交、Chrome Web Store 审核通过证据和最终 release approval。
 
 ## 上线前安全扫描
 
@@ -96,7 +96,7 @@ npm run package
 
 当前仍有公开发布级风险：Plasmo `0.90.5` 是 npm 当前最新版本，但官方 `npm audit` 仍报告其 Parcel 构建链存在 high 级审计项；`npm audit fix --force` 会把 Plasmo 降级到不适合当前项目的旧版本，因此不能自动修复。该风险主要落在本地构建工具链，不是当前扩展运行时 manifest 权限扩大，但公开提交前需要 owner 明确接受或等待 Plasmo / Parcel 上游修复。
 
-当前仍未完成公开发布级收口：Chrome Web Store 审核通过证据、正式商店链接、正式 `v0.1.1` tag、GitHub Release 和人工发布批准。
+当前仍未完成公开发布级收口：Chrome Web Store 重新提交、审核通过证据、正式商店链接、正式 `v0.1.1` tag、GitHub Release 和人工发布批准。
 
 ## v0.2 实现证据与剩余门禁
 
@@ -159,7 +159,7 @@ Chrome 版本、操作系统、截图或录屏未补录；当前记录只作为�
 
 - 当前状态不是公开上架。
 - 当前状态不是 Chrome Web Store 审核通过。
-- 当前状态是 owner 已上传并提交 `0.1.1` 审核、等待 Chrome Web Store 审核结果，不是审核通过。
+- 当前状态是 owner 已上传并提交 `0.1.1` 审核后收到商品说明关键词问题拒审，需要修正文案并重新提交，不是审核通过。
 - OpenAI / Anthropic / Kimi / Moonshot / OpenRouter / Gemini / Tencent Hunyuan 当前只描述为支持配置的 provider，不描述为 live validated 可用状态；DeepSeek 只能描述为已有一次 owner 手动 connectivity pass，不能扩大成全 provider、全模型或 release-ready 证明。
 - 当前公开默认路径仍是 BYOK direct-provider，不要求后端、登录、订阅、支付、公开匿名额度、联网搜索或远端链接正文抓取；0.1.1 候选包已包含 hosted AI 所需的 `identity` 权限和精确 production backend host permission，默认休眠且仅在用户主动选择托管路径并登录时使用；这不代表公开发布、Chrome Web Store 批准、hosted AI live、订阅支付或公开匿名额度。CWS listing copy 可以解释该可选路径，但不能写成已经上架、已批准或公开 live。
 - GitHub push、构建通过或内部手动 QA 不等于 Chrome Web Store 发布批准。
