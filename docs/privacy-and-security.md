@@ -45,7 +45,7 @@ Host permissions：
 - `https://api.hunyuan.cloud.tencent.com/*`
 - `https://aviso-backend-production.vercel.app/*`
 
-`identity` 和 `https://aviso-backend-production.vercel.app/*` 仅在 v0.3 production candidate 托管 AI gate 中批准。它们不代表公开发布、Chrome Web Store 提交或 hosted AI live 已经批准。
+`identity` 和 `https://aviso-backend-production.vercel.app/*` 仅在 production candidate 托管 AI gate 中批准。它们不代表公开发布、Chrome Web Store 批准或 hosted AI live；当前 release gate 以 [STATE.md](./STATE.md) 为准。
 
 ## 数据流
 

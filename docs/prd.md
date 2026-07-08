@@ -6,7 +6,7 @@ Updated: 2026-07-06
 
 Aviso 帮用户在当前网页内快速调用 AI。用户不需要离开页面，就可以对选中文字、当前页面、图片或自己输入的问题进行解释、翻译、润色、总结和继续追问。
 
-当前版本面向内部试用和 Chrome Web Store 审核，核心价值是提供“网页上下文 + 用户主动触发 + 页面内结果面板”的稳定工作流。它还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。BYOK direct-provider 仍是当前对外主线；v0.3 Aviso AI / hosted AI 已进入 production candidate，但仍不代表公开发布、Chrome Web Store 批准或 hosted AI live。
+当前版本、Chrome Web Store 状态、BYOK/hosted AI 边界和 release gate 以 [STATE.md](./STATE.md) 为准；本文件只描述当前产品需求和验收入口。
 
 ## 用户对象
 
@@ -65,7 +65,7 @@ Aviso 帮用户在当前网页内快速调用 AI。用户不需要离开页面�
 - BYOK 路径不经过 Aviso 后端；v0.3 production candidate hosted 路径仅在用户主动选择并登录后经过 Aviso production 后端和上游 provider。
 - 浏览历史、书签和本地 AI 对话用于命令面板本地候选展示，不自动进入 AI 请求。
 - Provider 连接测试由用户在 Popup 中手动触发，并展示脱敏摘要。
-- 当前公开产品不做自主浏览、联网搜索、远端链接正文抓取、遥测或分析；v0.3 production candidate hosted AI 已有 production backend authenticated smoke 和候选包证据，但 final loaded-extension smoke、CWS disclosure、website deployment 和 release approval 仍需单独 gate。
+- 当前公开产品不做自主浏览、联网搜索、远端链接正文抓取、遥测或分析；hosted AI 的候选证据和剩余 release gate 以 [STATE.md](./STATE.md) 为准。
 
 ## 验收标准
 

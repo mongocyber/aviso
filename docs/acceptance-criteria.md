@@ -43,7 +43,7 @@ Updated: 2026-06-30
 - 普通权限仍限于当前批准范围：`contextMenus`、`activeTab`、`storage`、`history`、`bookmarks`、`identity`、`clipboardWrite`。
 - `identity` 仅用于 v0.3 hosted AI 的用户主动 Google 授权窗口和 session 交换；BYOK 不需要该登录。
 - Host permissions 仍限于已批准 provider host：OpenAI、Anthropic、火山方舟北京网关、DeepSeek、Moonshot、OpenRouter、Gemini、Tencent Hunyuan，以及 v0.3 production candidate hosted AI 域名 `https://aviso-backend-production.vercel.app/*`。
-- production candidate hosted host permission 不代表公开发布、CWS disclosure 提交、Chrome Web Store 批准或 hosted AI live。
+- production candidate hosted host permission 不代表公开发布、Chrome Web Store 批准或 hosted AI live；当前 release gate 以 [STATE.md](./STATE.md) 为准。
 - API Key 仍不明文保存，并保存在 `chrome.storage.local/contextai_api_keys`。
 - 当前 API Key 保护边界已写明：由扩展 ID 派生口令提供本地加密 / 混淆级保护，不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。
 - 非敏感设置仍保存在 `chrome.storage.sync/contextai_settings`。
@@ -56,7 +56,8 @@ Updated: 2026-06-30
 
 本文件只定义验收标准，不维护执行证据副本。当前状态和历史证据请从以下入口读取：
 
-- 当前产品状态：[`../STATUS.md`](../STATUS.md)。
+- 当前事实源：[`STATE.md`](./STATE.md)。
+- 当前状态视图：[`../STATUS.md`](../STATUS.md)。
 - 发布和内部试用门禁：[`../RELEASE_CHECKLIST.md`](../RELEASE_CHECKLIST.md)。
 - 当前执行 gate：[`ai/CURRENT_GATE.md`](./ai/CURRENT_GATE.md)。
 - v0.3 hosted AI gate：[`planning/v0.3/status.md`](./planning/v0.3/status.md) 和 [`planning/v0.3/release-gates.md`](./planning/v0.3/release-gates.md)。

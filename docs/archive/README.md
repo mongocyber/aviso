@@ -28,4 +28,4 @@ docs/archive/v0.2/
 
 - `v0.2/`: frozen historical planning, execution, performance, command-palette, provider, WXT, manual acceptance, and design-system migration records.
 
-Current `0.1.1` remains the submitted / Chrome Web Store pending product baseline, not an archived historical version.
+Current release facts live in [docs/STATE.md](../STATE.md). Do not infer current Chrome Web Store or hosted-AI status from archive records.

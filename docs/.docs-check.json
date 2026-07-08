@@ -1,0 +1,141 @@
+{
+  "$comment": "AI Doc Kit check configuration. bannedClaims mirror docs/STATE.md Boundaries; keep release facts in docs/STATE.md and treat other docs as views or evidence.",
+  "include": [
+    "CLAUDE.md",
+    "AGENTS.md",
+    "README.md",
+    "STATUS.md",
+    "RELEASE_CHECKLIST.md",
+    "docs",
+    "website/README.md",
+    "website/src/pages/index.tsx",
+    "website/src/pages/feedback.tsx",
+    "website/api/feedback.js",
+    "website/docusaurus.config.ts",
+    "website/i18n/en/code.json",
+    "website/i18n/en/docusaurus-theme-classic/navbar.json",
+    "website/i18n/en/docusaurus-theme-classic/footer.json",
+    "website/docs",
+    "website/i18n/en/docusaurus-plugin-content-docs/current",
+    "store-assets/chrome-web-store/STORE_LISTING_COPY.md",
+    "store-assets/chrome-web-store/README.md"
+  ],
+  "textExtensions": [".md", ".ts", ".tsx", ".js", ".json"],
+  "exclude": [
+    "docs/archive",
+    "docs/.docs-check.json",
+    "node_modules",
+    "website/build",
+    "website/.docusaurus",
+    "tmp",
+    "build",
+    ".output",
+    ".plasmo",
+    ".wxt",
+    "store-assets/chrome-web-store/output"
+  ],
+  "bannedClaims": [
+    {
+      "pattern": "已通过\\s*Chrome\\s*Web\\s*Store\\s*审核|Chrome\\s*Web\\s*Store\\s*已批准|审核已通过",
+      "hint": "CWS approval gate is still pending; update docs/STATE.md Gates before using approval wording.",
+      "allowIn": [
+        "docs/STATE.md",
+        "STATUS.md",
+        "RELEASE_CHECKLIST.md",
+        "docs/ai",
+        "docs/decisions",
+        "docs/issues",
+        "docs/planning",
+        "docs/execution-plan.md"
+      ]
+    },
+    {
+      "pattern": "正式商店链接\\s*[:：]\\s*https?://|Chrome\\s*Web\\s*Store\\s*公开可安装",
+      "hint": "Formal store link is not recorded yet; update docs/STATE.md Gates first.",
+      "allowIn": ["docs/STATE.md"]
+    },
+    {
+      "pattern": "hosted AI is live|hosted AI 已(公开)?上线|Aviso AI 已(公开)?上线|托管 AI 已(公开)?上线|public live now",
+      "hint": "Hosted AI is candidate-only, not public live.",
+      "allowIn": [
+        "docs/STATE.md",
+        "STATUS.md",
+        "RELEASE_CHECKLIST.md",
+        "docs/ai",
+        "docs/decisions",
+        "docs/issues",
+        "docs/planning"
+      ]
+    },
+    {
+      "pattern": "订阅(已|已经)(上线|发布)|支付(已|已经)(上线|发布)|公开匿名额度(已|已经)(上线|发布)|anonymous quota is live",
+      "hint": "Subscription, payment, and public anonymous quota are not part of the current release.",
+      "allowIn": [
+        "docs/STATE.md",
+        "STATUS.md",
+        "RELEASE_CHECKLIST.md",
+        "docs/ai",
+        "docs/planning"
+      ]
+    },
+    {
+      "pattern": "遥测(已|已经)(接入|启用)|分析\\s*SDK(已|已经)(接入|启用)|telemetry is enabled|analytics SDK is enabled",
+      "hint": "Telemetry and analytics SDKs are outside current scope.",
+      "allowIn": [
+        "docs/STATE.md",
+        "STATUS.md",
+        "RELEASE_CHECKLIST.md",
+        "docs/ai",
+        "docs/planning"
+      ]
+    },
+    {
+      "pattern": "联网搜索(已|已经)(上线|支持|启用)|远端链接正文抓取(已|已经)(上线|支持|启用)|web search is live|remote link-body fetching is live",
+      "hint": "Web search and remote link-body fetching are outside current scope.",
+      "allowIn": [
+        "docs/STATE.md",
+        "STATUS.md",
+        "RELEASE_CHECKLIST.md",
+        "docs/ai",
+        "docs/planning"
+      ]
+    }
+  ],
+  "siteAbsoluteRoutes": ["/feedback/", "/en/feedback/"],
+  "requiredFiles": [
+    ".github/PULL_REQUEST_TEMPLATE.md",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "docs/STATE.md",
+    "docs/.docs-check.json",
+    "docs/architecture/README.md",
+    "docs/architecture/testing.md",
+    "docs/architecture/module-template.md",
+    "docs/decisions/README.md",
+    "docs/decisions/0000-template.md",
+    "docs/issues/README.md",
+    "docs/issues/issue-template.md",
+    "docs/planning/README.md",
+    "docs/planning/inbox.md",
+    "docs/planning/backlog.md",
+    "docs/planning/current/requirements.md",
+    "docs/planning/current/acceptance.md",
+    "docs/planning/current/status.md",
+    "docs/archive/README.md",
+    "scripts/check-docs.mjs"
+  ],
+  "freshness": { "file": "docs/STATE.md", "maxDays": 30 },
+  "requiredSections": [
+    "Release Line",
+    "Current Focus",
+    "Gates",
+    "Capabilities",
+    "Boundaries",
+    "Storage & Data",
+    "Pointers"
+  ],
+  "statusEnums": {
+    "capability": ["implemented", "configured-only", "unverified", "not-planned"],
+    "gate": ["not-started", "pending", "passed", "failed", "waived"]
+  }
+}

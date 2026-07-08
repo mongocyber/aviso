@@ -1,11 +1,12 @@
 # Aviso Project Docs
 
-当前 `docs/` 只做导航和长期事实入口。当前状态不要复制到多个文件：人读状态见根目录 [`STATUS.md`](../STATUS.md)，agent gate 见 [`ai/CURRENT_GATE.md`](./ai/CURRENT_GATE.md)，发布证据见 [`../RELEASE_CHECKLIST.md`](../RELEASE_CHECKLIST.md)。
+当前 `docs/` 只做导航和长期事实入口。当前事实统一见 [`STATE.md`](./STATE.md)；状态视图见根目录 [`STATUS.md`](../STATUS.md)，agent gate 见 [`ai/CURRENT_GATE.md`](./ai/CURRENT_GATE.md)，发布证据见 [`../RELEASE_CHECKLIST.md`](../RELEASE_CHECKLIST.md)。
 
 ## 文档入口
 
 ### 当前事实文档
 
+- [STATE.md](./STATE.md)：当前状态、release gate、能力矩阵和边界的唯一事实源。
 - [charter.md](./charter.md)：项目定位、当前范围和边界。
 - [prd.md](./prd.md)：当前已实现能力对应的产品需求。
 - [tech-spec.md](./tech-spec.md)：当前技术结构、权限、存储和数据流。

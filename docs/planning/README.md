@@ -6,12 +6,14 @@ This folder holds future-version planning and active execution records. It is no
 
 - `inbox.md`: first stop for new ideas that are not ready for a version or issue.
 - `backlog.md`: triaged but uncommitted items outside the current active version.
+- `current/`: active release-closeout requirements, acceptance, and planning status.
 - `roadmap.md`: product roadmap, version order, and cross-repo direction.
-- `v0.3/README.md`: v0.3 hosted AI planning entry.
+- `v0.3/README.md`: hosted AI planning and release-closeout evidence retained until the current release closes.
 
 ## Rules
 
-- Keep `docs/prd.md`, `docs/tech-spec.md`, and `docs/privacy-and-security.md` aligned to shipped or submitted product truth.
+- Keep [docs/STATE.md](../STATE.md) as the current-facts source; planning files are future-facing or release-closeout evidence.
+- Keep `docs/prd.md`, `docs/tech-spec.md`, and `docs/privacy-and-security.md` aligned to [docs/STATE.md](../STATE.md) and shipped/submitted product truth.
 - Put raw new ideas in `inbox.md` before deciding whether they belong to the active version.
 - Put valid but non-current ideas in `backlog.md`; backlog is not a delivery commitment.
 - Put future requirements in versioned planning files first.
@@ -23,15 +25,15 @@ This folder holds future-version planning and active execution records. It is no
 ## Version Lifecycle
 
 ```text
-Inbox -> Backlog / Roadmap / Version spec -> Requirements closeout -> Issue plan -> Implementation evidence -> Release gate -> Current docs update -> Archive
+Inbox -> Backlog / Roadmap / current or version spec -> Requirements closeout -> Issue plan -> Implementation evidence -> Release gate -> STATE update -> Archive
 ```
 
 ## Minimum Planning Set
 
 Each substantial version should have:
 
-- `vX.Y-*-spec.md`
-- requirements closeout before implementation
-- `vX.Y-issue-plan.md`
-- `vX.Y-status.md`
+- `current/requirements.md`
+- `current/acceptance.md`
+- `current/status.md`
+- issue contracts or versioned evidence docs when work needs stable handoff
 - release summary after completion

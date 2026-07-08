@@ -4,7 +4,7 @@ Updated: 2026-07-06
 
 ## 当前维护目标
 
-保持 Aviso `0.1.1 / Chrome Web Store 待审核` 候选包稳定、可构建、可手动验收，并确保文档只描述当前已实现能力和当前边界。
+保持 Aviso 当前候选包稳定、可构建、可手动验收，并确保文档只描述当前已实现能力和当前边界。版本、Chrome Web Store 状态和 release gate 以 [STATE.md](./STATE.md) 为准。
 
 ## 执行顺序
 
@@ -36,6 +36,7 @@ npm run package
 
 ```bash
 git diff --check
+npm run docs:check
 ```
 
 如果文档涉及已删除路径、权限、命令或用户可见说明，还需要用搜索确认没有旧引用残留。

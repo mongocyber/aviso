@@ -2,7 +2,7 @@
 
 This folder is the product-side control plane for Aviso v0.3 hosted AI. It coordinates the extension repository and the sibling backend repository without merging the two codebases.
 
-Current v0.3 gate status lives in [`status.md`](./status.md). This README is only the navigation and ownership entrypoint.
+Current product facts live in [`../../STATE.md`](../../STATE.md). v0.3 gate evidence lives in [`status.md`](./status.md) and [`release-gates.md`](./release-gates.md). This README is only the navigation and ownership entrypoint.
 
 ## Read First
 
@@ -36,7 +36,8 @@ Current v0.3 gate status lives in [`status.md`](./status.md). This README is onl
 - Product requirements: this folder, especially [`hosted-ai-spec.md`](./hosted-ai-spec.md).
 - Owner first-slice decisions: [`../../decisions/0003-v0.3-owner-closeout-decisions.md`](../../decisions/0003-v0.3-owner-closeout-decisions.md).
 - Frontend implementation readiness: [`requirements-closeout.md`](./requirements-closeout.md), [`api-contract-review.md`](./api-contract-review.md), and [`frontend-ux-states.md`](./frontend-ux-states.md).
-- Current v0.3 gate status: [`status.md`](./status.md).
+- Current product truth: [`../../STATE.md`](../../STATE.md).
+- v0.3 gate evidence: [`status.md`](./status.md) and [`release-gates.md`](./release-gates.md).
 - API contract: backend repository `docs/api-contract.md` and `docs/openapi.yaml`.
 - Backend data model: backend repository `docs/data-model.md`.
 - Backend deployment and operations: backend repository `docs/deploy.md`, `docs/ops-runbook.md`, and `docs/security.md`.

@@ -12,6 +12,7 @@
     "build:plasmo": "plasmo build",
     "build:wxt": "wxt build --mv3",
     "check:manifests": "node scripts/check-extension-manifests.mjs",
+    "docs:check": "node scripts/check-docs.mjs --root .",
     "verify:release-candidate": "node scripts/verify-release-candidate.mjs",
     "package": "node scripts/package-production.mjs",
     "package:plasmo": "plasmo package",
