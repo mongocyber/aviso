@@ -49,4 +49,4 @@ npm run package
 
 `npm run build` can hit Plasmo sandbox limits in restricted environments; rerun in an allowed local environment when build evidence is required. Website changes need a separate `cd website && npm run build`.
 
-Doc system: ai-doc-kit v1.8.0
+Doc system: ai-doc-kit v1.9.1 (L + production + ai-product)

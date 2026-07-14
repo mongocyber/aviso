@@ -1,6 +1,6 @@
 # Aviso State
 
-Updated: 2026-07-08
+Updated: 2026-07-10
 
 This is the L1 current-facts registry for Aviso. Other docs should link here instead of repeating release state, Chrome Web Store state, or hosted-AI live status.
 
@@ -70,7 +70,12 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 ## Pointers
 
 - Architecture map: [docs/architecture/README.md](./architecture/README.md)
-- Testing map: [docs/architecture/testing.md](./architecture/testing.md)
+- Testing and quality strategy: [docs/architecture/testing.md](./architecture/testing.md)
+- Release and rollback rules: [docs/release/README.md](./release/README.md)
+- Operations and incident response: [docs/operations/README.md](./operations/README.md)
+- Security lifecycle: [docs/security/README.md](./security/README.md)
+- AI eval strategy: [docs/ai/evals.md](./ai/evals.md)
+- Model/provider policy: [docs/ai/model-provider-policy.md](./ai/model-provider-policy.md)
 - Current planning lane: [docs/planning/current/status.md](./planning/current/status.md)
 - Current gate: [docs/ai/CURRENT_GATE.md](./ai/CURRENT_GATE.md)
 - Status view: [STATUS.md](../STATUS.md)

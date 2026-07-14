@@ -14,6 +14,15 @@
 - [execution-plan.md](./execution-plan.md)：当前维护执行计划。
 - [acceptance-criteria.md](./acceptance-criteria.md)：当前验收标准。
 
+### 生产生命周期
+
+- [architecture/testing.md](./architecture/testing.md)：唯一测试与质量策略入口。
+- [release/README.md](./release/README.md)：候选包、商店、官网、迁移与回滚规则。
+- [operations/README.md](./operations/README.md)：ownership、运行信号、runbook、事故与恢复入口。
+- [security/README.md](./security/README.md)：威胁模型、数据分级、隐私与供应链入口。
+- [ai/evals.md](./ai/evals.md)：AI 行为回归、安全 eval 和人工审核规则。
+- [ai/model-provider-policy.md](./ai/model-provider-policy.md)：BYOK/hosted 模型、provider、fallback、成本与停用边界。
+
 ### 版本规划
 
 - [planning/README.md](./planning/README.md)：版本规划、执行进度和归档规则。
