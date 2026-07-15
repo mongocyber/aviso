@@ -8,14 +8,14 @@ Current product facts live in [docs/STATE.md](../../STATE.md). This file only tr
 
 | Lane | Status | Notes |
 | --- | --- | --- |
-| `0.1.1` release closeout | `external-review-pending` | Waiting for owner-confirmed Chrome Web Store backend review state for the cleaned/reuploaded package. |
-| AI Doc Kit migration | `passed` | Frontend AI Doc Kit layer is installed in this branch. Backend migration was completed in the separate `codex/backend-ai-doc-kit-migration` worktree/thread and verified by the control thread. |
+| `0.1.1` release closeout | `external-review-pending` | Owner confirmed on 2026-07-08 that the cleaned/reuploaded package has entered Chrome Web Store review again; waiting for the final review result. |
+| AI Doc Kit migration | `passed` | Frontend and backend AI Doc Kit migrations are committed and pushed to their `main` branches. |
 
 ## Next Actions
 
-- Confirm CWS backend review state when owner evidence is available.
+- Confirm CWS final review result when owner evidence is available.
 - Keep release claims in [docs/STATE.md](../../STATE.md) before editing README, website, or store copy.
-- If owner wants merge-ready branches, review/stage/commit the frontend branch and backend worktree separately.
+- After CWS final review result is available, update release evidence docs before creating a tag, GitHub Release, or public release wording.
 
 ## Do Not Treat As Done
 
