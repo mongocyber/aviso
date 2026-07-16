@@ -1,6 +1,6 @@
 # Aviso State
 
-Updated: 2026-07-08
+Updated: 2026-07-10
 
 This is the L1 current-facts registry for Aviso. Other docs should link here instead of repeating release state, Chrome Web Store state, or hosted-AI live status.
 
@@ -10,21 +10,21 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 - Current upload/package version: `0.1.1`; `package.json`, manifest, and Popup-visible version are aligned to `0.1.1`.
 - Default usable path: BYOK direct-provider remains the default path; users provide their own API Keys and the browser extension calls approved provider hosts directly.
 - Optional hosted path: Aviso AI / hosted AI is included in the `0.1.1` production-candidate package and only runs after the user explicitly chooses it and signs in.
-- Chrome Web Store state: owner uploaded and submitted `0.1.1`; Chrome Web Store rejected the 2026-07-07 submission for product-description keyword issues; listing copy was cleaned, owner reports the latest `0.1.1` package was reuploaded, and the backend review state still needs confirmation.
+- Chrome Web Store state: owner uploaded and submitted `0.1.1`; Chrome Web Store rejected the 2026-07-07 submission for product-description keyword issues; listing copy was cleaned, owner reports the latest `0.1.1` package was reuploaded, and owner confirmed on 2026-07-08 that it has entered Chrome Web Store review again.
 - Public release state: Aviso is not publicly listed, not Chrome Web Store approved, has no formal store link, and has no final owner release approval.
 - Website state: owner website review and production deployment evidence passed on 2026-07-03 for the configured website URL `https://aviso-nine.vercel.app`; website deployment does not equal Chrome Web Store approval or extension public release.
 - Internal labels: `v0.2` and `v0.3` are historical/internal planning and issue-group labels only, not separate upload versions or public product versions.
 
 ## Current Focus
 
-- Current blocker: confirm the Chrome Web Store backend review state and final review result for the cleaned/reuploaded `0.1.1` package.
-- Next action: once the owner confirms the CWS backend state, update this file plus the matching release evidence docs before changing any public release wording.
+- Current blocker: wait for the final Chrome Web Store review result for the cleaned/reuploaded `0.1.1` package.
+- Next action: once the owner confirms the final CWS review result, update this file plus the matching release evidence docs before changing any public release wording.
 
 ## Gates
 
 | Gate | 状态 | 证据 |
 | --- | --- | --- |
-| Chrome Web Store backend review state confirmed | `pending` | [CURRENT_GATE](./ai/CURRENT_GATE.md), [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md) |
+| Chrome Web Store backend review state confirmed | `passed` | Owner confirmed on 2026-07-08 that the cleaned/reuploaded `0.1.1` package entered Chrome Web Store review again; [CURRENT_GATE](./ai/CURRENT_GATE.md), [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md) |
 | Chrome Web Store approved | `pending` | [CURRENT_GATE](./ai/CURRENT_GATE.md), [release gates](./planning/v0.3/release-gates.md) |
 | Formal Chrome Web Store link recorded | `pending` | [CURRENT_GATE](./ai/CURRENT_GATE.md), [STATUS](../STATUS.md) |
 | Final owner release approval | `pending` | [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md), [release gates](./planning/v0.3/release-gates.md) |
@@ -70,7 +70,12 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 ## Pointers
 
 - Architecture map: [docs/architecture/README.md](./architecture/README.md)
-- Testing map: [docs/architecture/testing.md](./architecture/testing.md)
+- Testing and quality strategy: [docs/architecture/testing.md](./architecture/testing.md)
+- Release and rollback rules: [docs/release/README.md](./release/README.md)
+- Operations and incident response: [docs/operations/README.md](./operations/README.md)
+- Security lifecycle: [docs/security/README.md](./security/README.md)
+- AI eval strategy: [docs/ai/evals.md](./ai/evals.md)
+- Model/provider policy: [docs/ai/model-provider-policy.md](./ai/model-provider-policy.md)
 - Current planning lane: [docs/planning/current/status.md](./planning/current/status.md)
 - Current gate: [docs/ai/CURRENT_GATE.md](./ai/CURRENT_GATE.md)
 - Status view: [STATUS.md](../STATUS.md)

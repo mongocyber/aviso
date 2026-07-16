@@ -1,18 +1,18 @@
 # Aviso Status
 
-Updated: 2026-07-07
+Updated: 2026-07-08
 
 ## 结论
 
 Aviso 当前 Chrome 上传包版本是 `0.1.1`。它是一个 Chrome MV3 扩展，使用 React 18 和 TypeScript 构建；本地 `dev` / `build` 仍保留 Plasmo 路径，规范发布包由 WXT 生成。产品在网页当前上下文里通过右键菜单、划词工具栏、命令面板、剪贴板提示和页面内结果面板触发 AI 操作。
 
-当前 `0.1.1` 上传包已由 owner 上传并提交 Chrome Web Store 审核，但 2026-07-07 收到 Chrome Web Store 拒审邮件，原因是商品说明中包含过多或不相关的关键词式 provider 名称。公开商品说明里的 provider 名称堆叠已清理，owner 已反馈最新 `0.1.1` 包已在 Chrome Web Store 后台重新上传。当前仍需以 Chrome Web Store 后台状态确认是否已进入审核；它还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
+当前 `0.1.1` 上传包已由 owner 上传并提交 Chrome Web Store 审核，但 2026-07-07 收到 Chrome Web Store 拒审邮件，原因是商品说明中包含过多或不相关的关键词式 provider 名称。公开商品说明里的 provider 名称堆叠已清理，owner 已反馈最新 `0.1.1` 包已在 Chrome Web Store 后台重新上传，并于 2026-07-08 确认已重新进入审核。当前仍需等待最终审核结果；它还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
 
 ## 版本口径
 
 `package.json` / manifest / Popup 显示统一使用 `0.1.1`。历史 `v0.2`、`v0.3` 只作为内部规划和 issue 分组标签保留，不再代表当前上传版本、公开产品版本或单独的用户可见版本。
 
-0.1.1 production candidate 已包含可选 Aviso AI / hosted AI 路径，但 BYOK direct-provider 仍保持默认可用路径。staging 阶段已完成托管后端配置、`identity` 权限、精确 staging host permission、Google OAuth `launchWebAuthFlow` id-token 后台登录代码、loaded-extension 账号 smoke、真实 Upstash Redis 并发 quota smoke、provider smoke、敏感日志审查和 release build / manifest gate；production backend origin 为 `https://aviso-backend-production.vercel.app`，authenticated production HTTP smoke 已通过 `auth_google`、`me_before_chat`、`chat_provider_stream`、`me_after_chat` 和 `logout`，SSE `delta` / `done` / `usage`、正向 quota delta 和 cost guard 均已确认。前端候选包已切换到 production hosted base URL `https://aviso-backend-production.vercel.app/v1`、精确 host permission `https://aviso-backend-production.vercel.app/*`，并同步 production Google OAuth client ID；旧 staging hosted session 会被 URL allowlist 拒绝。2026-07-02 OAuth challenge 安全收口已合入并推送前后端 `main`：后端 `3b69e3d` 增加服务端 challenge gate，前端 `6f41513` 改为先取 challenge 再走 Google OAuth / hosted session exchange；后端本地与远端 `main` 均已通过 lint、typecheck、387/387 tests，前端 `main` 已通过 214/214 tests、typecheck 和 diff check。2026-07-03 production closeout 进一步合入并部署后端 `40c8c37`、`b2b0b65` 和 `c60b895`：challenge response 返回当前环境 Google OAuth client ID，Google auth 拒绝日志只记录脱敏原因，Upstash JSON string/object 解析兼容修复已解决生产登录 challenge 消费失败；后端通过 lint、typecheck、392/392 tests 和 diff check。Owner-loaded extension 已验证 Aviso AI 登录、翻译和发送给 AI 可用。当前已知速度慢问题转入下版本优化，不作为本轮 release blocker。2026-07-02 Chrome Web Store listing copy 与 disclosure draft 已更新为 BYOK 默认 + 可选 Aviso AI 候选路径口径；`npm run verify:release-candidate` 已重新生成并验证 `build/chrome-mv3-prod.zip`，`website` production build 也已通过。2026-07-03 owner 复核官网页面通过，Vercel production deployment 已从前端 commit `b6d7b65` 完成，公开项目域名返回新版首页和文档内容。Owner 已上传并提交 `0.1.1` 到 Chrome Web Store 审核，2026-07-07 收到商品说明关键词问题拒审；公开商品说明中的 provider 名称堆叠已清理，owner 已反馈最新 `0.1.1` 包已重新上传，当前仍需确认 Chrome Web Store 后台审核状态。这仍不代表 Chrome Web Store 正式上架、Chrome Web Store 已批准、hosted AI 已通过商店发布或 hosted AI public live。billing 已批准排除在首个 hosted-AI release 之外。
+0.1.1 production candidate 已包含可选 Aviso AI / hosted AI 路径，但 BYOK direct-provider 仍保持默认可用路径。staging 阶段已完成托管后端配置、`identity` 权限、精确 staging host permission、Google OAuth `launchWebAuthFlow` id-token 后台登录代码、loaded-extension 账号 smoke、真实 Upstash Redis 并发 quota smoke、provider smoke、敏感日志审查和 release build / manifest gate；production backend origin 为 `https://aviso-backend-production.vercel.app`，authenticated production HTTP smoke 已通过 `auth_google`、`me_before_chat`、`chat_provider_stream`、`me_after_chat` 和 `logout`，SSE `delta` / `done` / `usage`、正向 quota delta 和 cost guard 均已确认。前端候选包已切换到 production hosted base URL `https://aviso-backend-production.vercel.app/v1`、精确 host permission `https://aviso-backend-production.vercel.app/*`，并同步 production Google OAuth client ID；旧 staging hosted session 会被 URL allowlist 拒绝。2026-07-02 OAuth challenge 安全收口已合入并推送前后端 `main`：后端 `3b69e3d` 增加服务端 challenge gate，前端 `6f41513` 改为先取 challenge 再走 Google OAuth / hosted session exchange；后端本地与远端 `main` 均已通过 lint、typecheck、387/387 tests，前端 `main` 已通过 214/214 tests、typecheck 和 diff check。2026-07-03 production closeout 进一步合入并部署后端 `40c8c37`、`b2b0b65` 和 `c60b895`：challenge response 返回当前环境 Google OAuth client ID，Google auth 拒绝日志只记录脱敏原因，Upstash JSON string/object 解析兼容修复已解决生产登录 challenge 消费失败；后端通过 lint、typecheck、392/392 tests 和 diff check。Owner-loaded extension 已验证 Aviso AI 登录、翻译和发送给 AI 可用。当前已知速度慢问题转入下版本优化，不作为本轮 release blocker。2026-07-02 Chrome Web Store listing copy 与 disclosure draft 已更新为 BYOK 默认 + 可选 Aviso AI 候选路径口径；`npm run verify:release-candidate` 已重新生成并验证 `build/chrome-mv3-prod.zip`，`website` production build 也已通过。2026-07-03 owner 复核官网页面通过，Vercel production deployment 已从前端 commit `b6d7b65` 完成，公开项目域名返回新版首页和文档内容。Owner 已上传并提交 `0.1.1` 到 Chrome Web Store 审核，2026-07-07 收到商品说明关键词问题拒审；公开商品说明中的 provider 名称堆叠已清理，owner 已反馈最新 `0.1.1` 包已重新上传，并于 2026-07-08 确认已重新进入审核，当前仍需等待最终审核结果。这仍不代表 Chrome Web Store 正式上架、Chrome Web Store 已批准、hosted AI 已通过商店发布或 hosted AI public live。billing 已批准排除在首个 hosted-AI release 之外。
 
 ## 当前能力
 
@@ -59,9 +59,9 @@ Aviso 当前 Chrome 上传包版本是 `0.1.1`。它是一个 Chrome MV3 扩展�
 
 - 主线检查已通过：`git diff --check`、`npm test`、`npx tsc --noEmit`、`npm run build`、`cd website && npm run build`、`npm run package`。
 - 2026-07-02 maintenance pass：前端安全口径收口、纯逻辑 i18n 测试解耦、frontend hosted OAuth challenge 接入和 backend OAuth challenge gate 均已合入对应 `main`；前端复跑 `git diff --check`、`npm test`（214/214）和 `npx tsc --noEmit` 通过，后端复跑 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（387/387）和 `git diff --check` 通过。最终 extension package 已通过 `npm run verify:release-candidate` 重新生成和验证，官网 `npm run build` 通过。当日未上传 CWS，网站部署 gate 当时尚未完成，也未标记 hosted AI live。
-- 2026-07-03 production validation pass：后端 Google OAuth client ID contract、Google auth 脱敏诊断、Upstash JSON 解析兼容修复已合入并部署到 production；后端复跑 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（392/392）和 `git diff --check` 通过。Owner-loaded extension 验证 Aviso AI 登录、翻译和发送给 AI 可用；速度慢问题记录为后续版本优化，不阻塞当前 candidate。官网页面 owner 复核通过，Vercel production deployment 已完成并验证公开项目域名返回新版首页和文档。当时 CWS upload/submission/disclosure 尚未完成；后续 owner 已完成 `0.1.1` 上传并提交审核，2026-07-07 商品说明关键词问题已按拒审原因清理，owner 已反馈最新包已重新上传，当前仍需确认 Chrome Web Store 后台审核状态。
+- 2026-07-03 production validation pass：后端 Google OAuth client ID contract、Google auth 脱敏诊断、Upstash JSON 解析兼容修复已合入并部署到 production；后端复跑 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（392/392）和 `git diff --check` 通过。Owner-loaded extension 验证 Aviso AI 登录、翻译和发送给 AI 可用；速度慢问题记录为后续版本优化，不阻塞当前 candidate。官网页面 owner 复核通过，Vercel production deployment 已完成并验证公开项目域名返回新版首页和文档。当时 CWS upload/submission/disclosure 尚未完成；后续 owner 已完成 `0.1.1` 上传并提交审核，2026-07-07 商品说明关键词问题已按拒审原因清理，owner 已反馈最新包已重新上传，并于 2026-07-08 确认已重新进入审核，当前仍需等待最终审核结果。
 - 最终 Chrome Web Store 提交包路径：`build/chrome-mv3-prod.zip`。
-- Chrome Web Store 提交状态：owner 已上传并提交 `0.1.1` 审核；2026-07-07 因商品说明 provider 关键词堆叠被拒，商品说明已更新，owner 已反馈最新包已重新上传，CWS 审核状态需以后台状态为准。正式 tag 和 GitHub Release 仍需发布批准后单独创建。
+- Chrome Web Store 提交状态：owner 已上传并提交 `0.1.1` 审核；2026-07-07 因商品说明 provider 关键词堆叠被拒，商品说明已更新，owner 已反馈最新包已重新上传，并于 2026-07-08 确认已重新进入审核。正式 tag 和 GitHub Release 仍需发布批准后单独创建。
 - GitHub CI：`CI` workflow 已在 `597391b` 通过。
 - 最终 manifest 已核对，普通权限和 host permissions 未扩大。
 - package zip 真实形态密钥扫描未发现 OpenAI、Anthropic、GitHub、AWS、Google、Slack 或私钥格式凭证。
@@ -132,4 +132,4 @@ Aviso 当前 Chrome 上传包版本是 `0.1.1`。它是一个 Chrome MV3 扩展�
 
 - 当前 Git 节奏由 CTO 统一收口：先保持本地 `main` 干净和检查通过，再按批次同步到远端。
 - GitHub push 只同步代码和文档历史，不等于 Chrome Web Store 发布、tag、release 或生产上线。
-- Chrome Web Store 审核通过确认、正式商店链接、正式 `v0.1.1` tag、GitHub Release 和公开发布仍需要单独人工确认。
+- Chrome Web Store 最终审核结果、正式商店链接、正式 `v0.1.1` tag、GitHub Release 和公开发布仍需要单独人工确认。

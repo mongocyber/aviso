@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
  * check-docs.mjs — 文档系统机器校验（零依赖）。
+ * Vendored from ai-doc-kit v1.9.1; repository-specific route compatibility is preserved locally.
  *
  * 读取 docs/.docs-check.json，检查（各项对应 DOC-SYSTEM.md §6 与 §6.1 问责表）：
  *
@@ -36,7 +37,7 @@ import path from "node:path";
 
 // 本脚本所属 ai-doc-kit 版本。项目 CLAUDE.md 页脚声明的版本与此不一致时，
 // 说明 vendored 的脚本相对声明版本已漂移（自检见文件末尾 kitVersion 检查）。
-const KIT_VERSION = "1.8.0";
+const KIT_VERSION = "1.9.1";
 
 const rootIdx = process.argv.indexOf("--root");
 const ROOT = path.resolve(rootIdx > -1 ? process.argv[rootIdx + 1] : ".");

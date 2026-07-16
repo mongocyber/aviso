@@ -1,6 +1,8 @@
 # Aviso Privacy and Security
 
-Updated: 2026-06-27
+Updated: 2026-07-10
+
+生产级安全生命周期入口见 [`security/README.md`](./security/README.md)；本文继续持有扩展权限、存储和数据流的实现详情，当前状态以 [`STATE.md`](./STATE.md) 为准。
 
 ## 核心原则
 
