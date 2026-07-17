@@ -36,7 +36,7 @@ const DEFAULT_SETTINGS: Settings = {
   appearanceTheme: "system",
   uiLanguage: "auto",
   doubaoModel: "",
-  enableClipboardSense: true,
+  enableClipboardSense: false,
   enableToolbar: true,
   enableCommandPalette: true,
   enableDoubleClickMenu: false,

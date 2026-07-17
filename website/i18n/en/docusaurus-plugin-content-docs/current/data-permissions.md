@@ -57,7 +57,7 @@ Do not actively send passwords, API keys, private account information, unpublish
 
 ## Site Access
 
-Aviso content scripts match webpage URLs to display the selection toolbar, selection translation card, double-click quick menu, command palette, in-page result panel, clipboard prompt, iframe bridge, and the screenshot selection UI used by the internal right-click path.
+Aviso content scripts match webpage URLs to display the selection toolbar, selection translation card, default-off double-click quick menu, command palette, in-page result panel, explicitly enabled clipboard prompt, iframe bridge, and the screenshot selection UI used by the internal right-click path.
 
 This access is not used to fetch arbitrary remote link bodies, advertising, telemetry, analytics, or project-owned remote logs. Only when the user actively triggers an AI action that needs page content is relevant content sent through the selected BYOK or Aviso AI path.
 
@@ -85,7 +85,7 @@ They are used for OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek, Kimi / M
 
 ## Sensitive Content Handling
 
-Aviso applies sensitive-domain and sensitive-content filtering to clipboard-aware prompts to reduce accidental handling of passwords, keys, payment pages, admin panels, and similar high-risk content.
+Clipboard-aware prompts are off by default; when the setting is off or missing, Aviso does not keep a copy listener registered. After the user explicitly enables the feature in the Popup, Aviso applies sensitive-domain and sensitive-content filtering to reduce accidental handling of passwords, keys, payment pages, admin panels, and similar high-risk content.
 
 This is not a complete guarantee for all sensitive information. Users should still judge which content may be sent to model providers.
 

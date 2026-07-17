@@ -25,7 +25,7 @@ Current facts:
 
 - This site describes the current product in public website form; the Chrome Web Store install link is not available yet and will be updated later.
 - Before the official link is available, the install guide explains the current loadable extension build directory.
-- Right-click menu, selection toolbar, selection translation card, command palette, double-click quick menu, clipboard prompt, copy current context, in-page result panel, and Popup settings are implemented.
+- Right-click menu, selection toolbar, selection translation card, command palette, double-click quick menu, default-off clipboard prompt, copy current context, in-page result panel, and Popup settings are implemented.
 - Aviso AI sign-in, account status, free quota display, refresh / sign-out, BYOK provider configuration, default service switching, manual model ID editing, Chinese / English UI, and Manifest localization are implemented.
 - Aviso supports multiple model service configs, including OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan. You can enter your own API key, model ID, or endpoint in settings; actual availability depends on your account access, model access, and provider status.
 

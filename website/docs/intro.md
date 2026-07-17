@@ -23,7 +23,7 @@ Aviso 支持两条 AI 服务路径：
 
 - 本站按公开官网口径说明当前能力；Chrome Web Store 正式安装链接暂不可用，后续会更新。
 - 在正式链接可用前，安装页会说明当前可加载的扩展构建目录。
-- 右键菜单、划词工具栏、划词翻译卡、命令面板、双击快捷菜单、剪贴板提示、复制当前上下文、页面内结果面板和 Popup 设置页已经实现。
+- 右键菜单、划词工具栏、划词翻译卡、命令面板、双击快捷菜单、默认关闭的剪贴板提示、复制当前上下文、页面内结果面板和 Popup 设置页已经实现。
 - Aviso AI 登录、账号状态、免费额度展示、刷新 / 退出，以及 BYOK provider 配置、默认服务切换、模型 ID 手动编辑、中文 / English 界面和 Manifest 本地化已经实现。
 - 支持多种模型服务配置，包括 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan。你可以在设置中填写自己的 API Key、模型 ID 或接入点；实际可用性取决于你的账号权限、模型权限和服务状态。
 

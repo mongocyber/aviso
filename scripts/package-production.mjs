@@ -13,9 +13,15 @@ import { join } from "node:path"
 const intermediateWxtDir = ".output/chrome-mv3"
 const canonicalLoadDir = "build/chrome-mv3-prod"
 const canonicalZip = "build/chrome-mv3-prod.zip"
+const manifestEvidenceDir = "build/manifest-evidence"
+const plasmoManifestEvidencePath = join(
+  manifestEvidenceDir,
+  "plasmo-manifest.json"
+)
 const chromeWebStorePublicKeyPath = "config/chrome-web-store-public-key.txt"
 const expectedChromeWebStoreExtensionId = "phigblobbahhecgbcifmkamglcdnghcg"
 
+preservePlasmoManifestEvidence()
 run("npm", ["run", "build:wxt"])
 
 if (!existsSync(join(intermediateWxtDir, "manifest.json"))) {
@@ -37,6 +43,7 @@ run("npm", ["run", "check:manifests"])
 
 console.log(`Canonical load directory ready: ${canonicalLoadDir}`)
 console.log(`Canonical zip ready: ${canonicalZip}`)
+console.log(`Plasmo manifest evidence: ${plasmoManifestEvidencePath}`)
 console.log(`Manifest key present: true`)
 console.log(`Derived extension ID: ${extensionId}`)
 console.log(`${intermediateWxtDir} is an intermediate WXT build output, not the owner-loaded release candidate.`)
@@ -62,6 +69,34 @@ function injectChromeWebStoreKey(dir) {
   manifest.key = publicKey
   writeFileSync(manifestPath, `${JSON.stringify(manifest)}\n`)
   return extensionId
+}
+
+function preservePlasmoManifestEvidence() {
+  const manifestPath = join(canonicalLoadDir, "manifest.json")
+  if (!existsSync(manifestPath) || !isPlasmoManifest(manifestPath)) {
+    run("npm", ["run", "build:plasmo"])
+  }
+
+  if (!existsSync(manifestPath)) {
+    fail(`Missing ${manifestPath} after Plasmo build`)
+  }
+  if (!isPlasmoManifest(manifestPath)) {
+    fail(
+      `${manifestPath} does not look like real Plasmo output; refusing to use WXT output as Plasmo evidence`
+    )
+  }
+
+  mkdirSync(manifestEvidenceDir, { recursive: true })
+  cpSync(manifestPath, plasmoManifestEvidencePath)
+}
+
+function isPlasmoManifest(manifestPath) {
+  const manifest = JSON.parse(readFileSync(manifestPath, "utf8"))
+  const serviceWorker = manifest.background?.service_worker
+  return (
+    typeof serviceWorker === "string" &&
+    /(^|\/)static\/background\/index\.js$/.test(serviceWorker)
+  )
 }
 
 function readChromeWebStorePublicKey() {

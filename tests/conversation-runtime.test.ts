@@ -805,6 +805,51 @@ test("page summary paths parallelize page extraction and runtime warmup", () => 
   assert.match(runtimeCacheSource, /clearPageContentMemoryCache/)
 })
 
+test("context menu copy context extracts from source frame and writes through display frame", () => {
+  const source = readFileSync(
+    new URL("../src/background/context-menus.ts", import.meta.url),
+    "utf8"
+  )
+  const block =
+    source.match(
+      /export async function copyCurrentContextFromFrame\([\s\S]*?\nexport async function summarizePageFromFrame/
+    )?.[0] ?? ""
+
+  assert.match(
+    block,
+    /requestPageContentForCopy\(\s*\n\s*tabId,\s*\n\s*sourceFrameId,\s*\n\s*sourceFrameUrl\s*\)/
+  )
+  assert.match(block, /const writeResult = await sendMessageToDisplayFrame/)
+  assert.doesNotMatch(
+    block,
+    /const writeResult = await sendMessageToFrame<MessageResponse>/
+  )
+  assert.match(
+    block,
+    /allowDomFallback:\s*canUseDomClipboardFallbackForSourceFrame\(sourceFrameId\)/
+  )
+  assert.match(block, /fallbackFrameId: sourceFrameId/)
+  assert.match(block, /fallbackFrameUrl: sourceFrameUrl/)
+})
+
+test("all copy-context clipboard writers explicitly gate DOM fallback by source frame", () => {
+  const contextMenuSource = readFileSync(
+    new URL("../src/background/context-menus.ts", import.meta.url),
+    "utf8"
+  )
+  const commandActionsSource = readFileSync(
+    new URL("../src/background/command-actions.ts", import.meta.url),
+    "utf8"
+  )
+
+  assert.match(contextMenuSource, /canUseDomClipboardFallbackForSourceFrame/)
+  assert.match(commandActionsSource, /canUseDomClipboardFallbackForSourceFrame/)
+  assert.doesNotMatch(
+    `${contextMenuSource}\n${commandActionsSource}`,
+    /WRITE_CURRENT_CONTEXT_TO_CLIPBOARD"[\s\S]{0,160}payload: \{ text \}/
+  )
+})
+
 test("inline AI requests warm runtime config before provider calls", () => {
   const messageTypesSource = readFileSync(
     new URL("../src/types/messages.ts", import.meta.url),

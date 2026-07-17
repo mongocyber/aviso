@@ -89,7 +89,7 @@ Aviso avoids input fields, editable regions, common code editors, and its own UI
 
 ## Option 5: Use the Clipboard Prompt
 
-After you copy normal text, Aviso can show a prompt so you can send clipboard content to AI. Sensitive pages and sensitive content are skipped to reduce accidental triggers in high-risk contexts.
+Clipboard-aware prompts are off by default. First enable Clipboard-aware prompts in the Popup feature switches. After that, Aviso can show a prompt when you copy normal text so you can send clipboard content to AI. Sensitive pages and sensitive content are skipped to reduce accidental triggers in high-risk contexts.
 
 ## If Nothing Happens
 

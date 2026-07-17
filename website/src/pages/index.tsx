@@ -200,7 +200,7 @@ const copy = {
     privacyTag: "04 — 隐私与控制",
     privacyTitlePre: "每一种使用方式,",
     privacyTitleEm: "数据流向都清楚",
-    privacyLede: "BYOK 模式下,浏览器直连你选择的模型服务商。Aviso AI 需要登录并主动使用,请求会经过 Aviso 后端和上游模型服务。剪贴板敏感内容会跳过提示,功能入口也可以在设置里关闭。",
+    privacyLede: "BYOK 模式下,浏览器直连你选择的模型服务商。Aviso AI 需要登录并主动使用,请求会经过 Aviso 后端和上游模型服务。剪贴板感知默认关闭；开启后敏感内容会跳过提示,功能入口也可以在设置里关闭。",
     compareThem: "多数 AI 助手扩展",
     compareUs: "Aviso",
     privacyNote:
@@ -284,7 +284,7 @@ const copy = {
     privacyTitlePre: "Every way to use Aviso",
     privacyTitleEm: "has a clear data path",
     privacyLede:
-      "In BYOK mode, your browser connects directly to the model provider you choose. Aviso AI requires sign-in and an explicit action, then requests pass through the Aviso backend and upstream model services. Sensitive clipboard content is skipped, and entry points can be turned off in settings.",
+      "In BYOK mode, your browser connects directly to the model provider you choose. Aviso AI requires sign-in and an explicit action, then requests pass through the Aviso backend and upstream model services. Clipboard-aware prompts are off by default; when enabled, sensitive clipboard content is skipped, and entry points can be turned off in settings.",
     compareThem: "Most AI assistant extensions",
     compareUs: "Aviso",
     privacyNote:
@@ -363,9 +363,9 @@ const entries: Entry[] = [
     icon: "copy",
     zhTitle: "剪贴板感知",
     enTitle: "Clipboard-aware",
-    zhText: "复制普通文字后,轻轻提示一下,要不要交给 AI。复制密码、密钥、支付等敏感内容时,绝不触发。",
+    zhText: "默认关闭。开启后复制普通文字,轻轻提示一下,要不要交给 AI。复制密码、密钥、支付等敏感内容时,绝不触发。",
     enText:
-      "After you copy plain text, a gentle nudge offers to hand it to the AI. On passwords, keys, or payment fields, it never fires."
+      "Off by default. After you enable it and copy plain text, a gentle nudge offers to hand it to the AI. On passwords, keys, or payment fields, it never fires."
   },
   {
     no: "05",

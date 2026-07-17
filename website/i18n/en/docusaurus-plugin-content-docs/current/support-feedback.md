@@ -22,7 +22,7 @@ If Aviso does not work as expected, first check:
 - If you use Aviso AI, you are signed in, quota is available, and you have tried refreshing account status.
 - If you use BYOK, the API key is saved and the provider account is usable.
 - The current webpage allows extension content scripts.
-- You are not in a sensitive page or sensitive-content scenario that causes the clipboard prompt to be skipped.
+- If the issue is the clipboard prompt, Clipboard-aware prompts are enabled in the Popup and the page/content is not being skipped as sensitive.
 - Relevant feature switches are enabled, such as the selection translation card or double-click quick menu.
 - The model may be slow rather than the request not being sent.
 

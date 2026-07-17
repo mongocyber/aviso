@@ -1,0 +1,214 @@
+import assert from "node:assert/strict"
+import { test } from "node:test"
+import { getSettings } from "../src/utils/storage.ts"
+import "./helpers/register-aliases.ts"
+
+type ChromeLike = typeof globalThis.chrome
+
+function installSyncStorageForSettings(contextaiSettings: unknown) {
+  const previousChrome = (globalThis as { chrome?: ChromeLike }).chrome
+
+  ;(globalThis as { chrome?: unknown }).chrome = {
+    runtime: { id: "aviso-test-extension" },
+    storage: {
+      sync: {
+        get: async (key: string) => ({ [key]: contextaiSettings })
+      }
+    }
+  }
+
+  return () => {
+    ;(globalThis as { chrome?: ChromeLike }).chrome = previousChrome
+  }
+}
+
+async function importClipboardSenseModule() {
+  return import("../src/utils/clipboard-sense.ts").catch(() => null)
+}
+
+async function importClipboardWriteModule() {
+  return import("../src/utils/clipboard-write.ts").catch(() => null)
+}
+
+test("clipboard sense defaults off when the setting is missing", async () => {
+  const restore = installSyncStorageForSettings({})
+
+  try {
+    const settings = await getSettings()
+    assert.equal(settings.enableClipboardSense, false)
+  } finally {
+    restore()
+  }
+})
+
+test("clipboard sense preserves explicit true and explicit false", async () => {
+  const restoreTrue = installSyncStorageForSettings({
+    enableClipboardSense: true
+  })
+
+  try {
+    assert.equal((await getSettings()).enableClipboardSense, true)
+  } finally {
+    restoreTrue()
+  }
+
+  const restoreFalse = installSyncStorageForSettings({
+    enableClipboardSense: false
+  })
+
+  try {
+    assert.equal((await getSettings()).enableClipboardSense, false)
+  } finally {
+    restoreFalse()
+  }
+})
+
+test("clipboard sense listener registers only after explicit enable and removes on disable", async () => {
+  const mod = await importClipboardSenseModule()
+  assert.ok(mod, "clipboard sense policy module should exist")
+
+  const added: Array<() => void> = []
+  const removed: Array<() => void> = []
+  const copyListener = () => undefined
+  const controller = mod.createClipboardSenseListenerController({
+    listener: copyListener,
+    addCopyListener: (listener: () => void) => added.push(listener),
+    removeCopyListener: (listener: () => void) => removed.push(listener)
+  })
+
+  assert.deepEqual(added, [])
+  controller.applySettings({})
+  assert.deepEqual(added, [])
+
+  controller.applySettings({ enableClipboardSense: true })
+  assert.deepEqual(added, [copyListener])
+
+  controller.applySettings({ enableClipboardSense: true })
+  assert.deepEqual(added, [copyListener])
+  assert.deepEqual(removed, [])
+
+  controller.applySettings({ enableClipboardSense: false })
+  assert.deepEqual(removed, [copyListener])
+
+  controller.applySettings({ enableClipboardSense: true })
+  controller.dispose()
+  assert.deepEqual(removed, [copyListener, copyListener])
+})
+
+test("clipboard DOM fallback is denied by default and when false", async () => {
+  const mod = await importClipboardWriteModule()
+  assert.ok(mod, "clipboard write policy module should exist")
+
+  const harness = installClipboardWriteHarness({ clipboardRejects: true })
+  try {
+    await assert.rejects(
+      mod.writeTextToClipboard("private context"),
+      /Clipboard API write was rejected/
+    )
+    assert.equal(harness.appended, 0)
+    assert.equal(harness.execCalls, 0)
+
+    await assert.rejects(
+      mod.writeTextToClipboard("private context", { allowDomFallback: false }),
+      /Clipboard API write was rejected/
+    )
+    assert.equal(harness.appended, 0)
+    assert.equal(harness.execCalls, 0)
+  } finally {
+    harness.restore()
+  }
+})
+
+test("clipboard DOM fallback only runs for explicit top-frame opt-in", async () => {
+  const mod = await importClipboardWriteModule()
+  assert.ok(mod, "clipboard write policy module should exist")
+
+  const harness = installClipboardWriteHarness({ clipboardRejects: true })
+  try {
+    await mod.writeTextToClipboard("top frame context", {
+      allowDomFallback: true
+    })
+    assert.equal(harness.appended, 1)
+    assert.equal(harness.execCalls, 1)
+  } finally {
+    harness.restore()
+  }
+})
+
+test("clipboard DOM fallback policy only trusts confirmed top-frame sources", async () => {
+  const {
+    canUseDomClipboardFallbackForSourceFrame,
+    TOP_FRAME_ID
+  } = await import("../src/background/frame-router.ts")
+  assert.equal(canUseDomClipboardFallbackForSourceFrame(TOP_FRAME_ID), true)
+  assert.equal(canUseDomClipboardFallbackForSourceFrame(7), false)
+  assert.equal(canUseDomClipboardFallbackForSourceFrame(undefined), false)
+})
+
+function installClipboardWriteHarness({
+  clipboardRejects
+}: {
+  clipboardRejects: boolean
+}) {
+  const previousNavigator = Object.getOwnPropertyDescriptor(
+    globalThis,
+    "navigator"
+  )
+  const previousDocument = (globalThis as { document?: Document }).document
+  let appended = 0
+  let execCalls = 0
+
+  const textarea = {
+    value: "",
+    style: {},
+    setAttribute: () => undefined,
+    select: () => undefined,
+    remove: () => undefined
+  }
+  const documentStub = {
+    body: {
+      appendChild: () => {
+        appended += 1
+      }
+    },
+    documentElement: {
+      appendChild: () => {
+        appended += 1
+      }
+    },
+    createElement: () => textarea,
+    execCommand: () => {
+      execCalls += 1
+      return true
+    }
+  }
+
+  Object.defineProperty(globalThis, "navigator", {
+    configurable: true,
+    value: {
+      clipboard: {
+        writeText: async () => {
+          if (clipboardRejects) throw new Error("denied")
+        }
+      }
+    }
+  })
+  ;(globalThis as { document?: unknown }).document = documentStub
+
+  return {
+    get appended() {
+      return appended
+    },
+    get execCalls() {
+      return execCalls
+    },
+    restore() {
+      if (previousNavigator) {
+        Object.defineProperty(globalThis, "navigator", previousNavigator)
+      } else {
+        Reflect.deleteProperty(globalThis, "navigator")
+      }
+      ;(globalThis as { document?: Document }).document = previousDocument
+    }
+  }
+}

@@ -29,6 +29,7 @@ const commandSteps = [
 const requiredArtifacts = [
   "build/chrome-mv3-prod/manifest.json",
   "build/chrome-mv3-prod.zip",
+  "build/manifest-evidence/plasmo-manifest.json",
   ".output/chrome-mv3/manifest.json"
 ]
 
@@ -277,7 +278,7 @@ function runCommandStep({ label, command, args, displayCommand }) {
     stdio: "inherit"
   })
 
-  if (result.error) {
+  if (didSpawnFailBeforeCompletion(result)) {
     console.error(`\n${label} failed before completion: ${result.error.message}`)
     console.error(`Classification: ${classifyCommandFailure(result.error.message)}`)
     process.exit(1)
@@ -291,6 +292,10 @@ function runCommandStep({ label, command, args, displayCommand }) {
   }
 }
 
+export function didSpawnFailBeforeCompletion(result) {
+  return Boolean(result.error) && result.status == null && result.signal == null
+}
+
 function classifyCommandFailure(output) {
   if (/Operation not permitted|EACCES|EPERM/i.test(output)) {
     return "environment or sandbox permission failure; rerun in an allowed local environment before treating this as a code regression"
@@ -301,7 +306,11 @@ function classifyCommandFailure(output) {
   if (/Cannot find package|ERR_MODULE_NOT_FOUND/i.test(output)) {
     return "missing local dependency install; restore dependencies from the lockfile before treating this as a code regression"
   }
-  if (/missing .*manifest\.json|run both build paths first/i.test(output)) {
+  if (
+    /missing .*manifest\.json|missing .*chrome-mv3-prod\.zip|run both build paths first|regenerate the final directory and zip/i.test(
+      output
+    )
+  ) {
     return "missing build artifact; rerun WXT and Plasmo build/package steps"
   }
   return "command failure; inspect the command output above"

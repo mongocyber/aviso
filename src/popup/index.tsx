@@ -111,7 +111,7 @@ const DEFAULT_SETTINGS: Settings = {
   providerConfigs: [],
   appearanceTheme: "system",
   uiLanguage: "auto",
-  enableClipboardSense: true,
+  enableClipboardSense: false,
   enableToolbar: true,
   enableCommandPalette: true,
   enableDoubleClickMenu: false,

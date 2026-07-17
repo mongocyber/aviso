@@ -110,7 +110,7 @@ export type MessageRequest =
     }
   | {
       action: "WRITE_CURRENT_CONTEXT_TO_CLIPBOARD"
-      payload: { text: string }
+      payload: { text: string; allowDomFallback: boolean }
     }
   | {
       action: "SHOW_FLOATING_WINDOW"

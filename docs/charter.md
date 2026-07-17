@@ -10,7 +10,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它把用户在网页上的当前�
 
 ## 当前目标
 
-- 让用户在当前网页里通过右键菜单、划词工具栏、命令面板、剪贴板提示和双击快捷菜单触发 AI 操作。
+- 让用户在当前网页里通过右键菜单、划词工具栏、命令面板、显式开启后的剪贴板提示和双击快捷菜单触发 AI 操作。
 - 让用户在 Popup 中管理界面语言、外观主题、功能开关、AI 服务配置、默认模型、历史和自定义指令。
 - 让 BYOK direct-provider 保持当前对外主线：用户自己的 API Key 不明文保存，浏览器直连所选 provider，不强制登录。
 - 让 v0.3 可选 Aviso AI / hosted AI 按 production candidate gate 分层记录：只有用户选择托管路径时才登录并经过 Aviso production 后端；production 后端 HTTP smoke 和前端候选包已有证据，但该路径仍不代表公开发布、Chrome Web Store 批准或 hosted AI live。
@@ -26,7 +26,7 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它把用户在网页上的当前�
 | 划词翻译卡 | 已实现，默认关闭。 |
 | 命令面板 | 已实现，支持历史、书签、本地 AI 对话和浏览历史关键词搜索。 |
 | 双击快捷菜单 | 已实现，默认关闭。 |
-| 剪贴板提示 | 已实现。 |
+| 剪贴板提示 | 已实现，默认关闭。 |
 | 结果面板和本地历史 | 已实现。 |
 | AI 服务配置 | 已实现多配置、默认服务切换、模型 ID 手动编辑和手动连接测试。 |
 | v0.3 Aviso AI / hosted AI | production candidate 已实现可选登录、session/account/额度状态和显式 hosted route；production backend authenticated smoke 已通过，前端候选包已切到 production backend；不是 public/live release。 |

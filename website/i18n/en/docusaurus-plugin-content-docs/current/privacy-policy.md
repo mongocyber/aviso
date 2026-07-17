@@ -100,7 +100,7 @@ Aviso currently uses these permissions:
 - `identity`: open the Google authorization window and exchange for a session only when the user actively signs in to Aviso AI; BYOK does not require this sign-in.
 - `clipboardWrite`: copy results from the floating panel.
 
-Aviso content scripts match webpage URLs to show the selection toolbar, selection translation card, double-click quick menu, command palette, in-page result panel, clipboard prompt, iframe bridge, and the screenshot selection UI used by the internal right-click path. This site access is not used to fetch arbitrary remote link bodies, serve ads, run telemetry, or run analytics. Only when the user actively triggers an AI action that requires page content does Aviso send relevant content through the selected BYOK or Aviso AI path.
+Aviso content scripts match webpage URLs to show the selection toolbar, selection translation card, default-off double-click quick menu, command palette, in-page result panel, explicitly enabled clipboard prompt, iframe bridge, and the screenshot selection UI used by the internal right-click path. Clipboard-aware prompts are off by default, and Aviso does not keep a copy listener registered when the setting is off or missing. This site access is not used to fetch arbitrary remote link bodies, serve ads, run telemetry, or run analytics. Only when the user actively triggers an AI action that requires page content does Aviso send relevant content through the selected BYOK or Aviso AI path.
 
 Current host permissions are limited to supported provider domains and the Aviso AI backend origin:
 

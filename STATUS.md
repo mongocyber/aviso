@@ -4,7 +4,7 @@ Updated: 2026-07-08
 
 ## 结论
 
-Aviso 当前 Chrome 上传包版本是 `0.1.1`。它是一个 Chrome MV3 扩展，使用 React 18 和 TypeScript 构建；本地 `dev` / `build` 仍保留 Plasmo 路径，规范发布包由 WXT 生成。产品在网页当前上下文里通过右键菜单、划词工具栏、命令面板、剪贴板提示和页面内结果面板触发 AI 操作。
+Aviso 当前 Chrome 上传包版本是 `0.1.1`。它是一个 Chrome MV3 扩展，使用 React 18 和 TypeScript 构建；本地 `dev` / `build` 仍保留 Plasmo 路径，规范发布包由 WXT 生成。产品在网页当前上下文里通过右键菜单、划词工具栏、命令面板、显式开启后的剪贴板提示和页面内结果面板触发 AI 操作。
 
 当前 `0.1.1` 上传包已由 owner 上传并提交 Chrome Web Store 审核，但 2026-07-07 收到 Chrome Web Store 拒审邮件，原因是商品说明中包含过多或不相关的关键词式 provider 名称。公开商品说明里的 provider 名称堆叠已清理，owner 已反馈最新 `0.1.1` 包已在 Chrome Web Store 后台重新上传，并于 2026-07-08 确认已重新进入审核。当前仍需等待最终审核结果；它还不是公开上架版本，没有通过 Chrome Web Store 审核，也没有正式商店链接。
 
@@ -23,7 +23,7 @@ Aviso 当前 Chrome 上传包版本是 `0.1.1`。它是一个 Chrome MV3 扩展�
 | 划词翻译卡 | 已实现，默认关闭；开启后短选区可就地翻译。 |
 | 命令面板 | 已实现快捷键、历史搜索、书签搜索、浏览历史搜索、本地 AI 对话搜索和直接提问。 |
 | 双击快捷菜单 | 已实现，默认关闭；避开输入框、可编辑区域、常见代码编辑器和 Aviso 自身 UI。 |
-| 剪贴板提示 | 已实现普通文本提示和敏感内容跳过。 |
+| 剪贴板提示 | 已实现，默认关闭；用户在 Popup 明确开启后，普通文本提示和敏感内容跳过生效。 |
 | 结果面板 | 已实现流式结果、复制、保存、继续追问和本地对话历史。 |
 | Popup 设置 | 已实现界面语言、外观主题、默认模型、功能开关、AI 服务配置、手动连接测试、历史和自定义指令；0.1.1 candidate 中 Aviso AI 可作为默认模型或快速任务服务选择项。 |
 | 多 AI 服务配置 | 已实现；支持同 provider 多配置、默认配置切换、模型 ID 手动编辑。 |
@@ -99,6 +99,7 @@ Aviso 当前 Chrome 上传包版本是 `0.1.1`。它是一个 Chrome MV3 扩展�
 - 不做远端链接正文抓取，不做联网搜索。
 - 不自动读取 provider 账号里的模型列表。
 - OpenRouter、Gemini 和 Tencent Hunyuan 模型 ID 仍需手动填写。
+- 剪贴板感知默认关闭，缺失设置按关闭处理；开启后才注册 copy listener，关闭后会移除。
 - 不把 API Key、raw prompt、raw response、私人网页正文、截图/base64 或完整 URL 写入文档、日志或远端服务。
 - 不把 provider 配置支持写成真实 provider live validation；DeepSeek 的 owner 手动 connectivity pass 只覆盖该次配置/模型可用性，不扩大成所有 DeepSeek 模型或 release-ready 证明。
 - 不把 v0.2 实现证据写成公开发布批准、Chrome Web Store 审核通过或正式商店链接。

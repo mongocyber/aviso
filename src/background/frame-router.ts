@@ -3,6 +3,12 @@ import { buildSafeErrorLog } from "~utils/errors"
 
 export const TOP_FRAME_ID = 0
 
+export function canUseDomClipboardFallbackForSourceFrame(
+  frameId: number | undefined
+): boolean {
+  return frameId === TOP_FRAME_ID
+}
+
 type SendOptions = {
   frameId?: number
   frameUrl?: string
