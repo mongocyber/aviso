@@ -8,6 +8,7 @@ import { logTiming, markTiming, startTiming } from "~utils/timing"
 
 import { getRuntimeConfigSnapshot } from "./ai-runtime-cache"
 import {
+  canUseDomClipboardFallbackForSourceFrame,
   sendMessageToDisplayFrame,
   sendMessageToFrame,
   TOP_FRAME_ID
@@ -112,7 +113,11 @@ async function copyCurrentContextQuickAction(
     tabId,
     {
       action: "WRITE_CURRENT_CONTEXT_TO_CLIPBOARD",
-      payload: { text }
+      payload: {
+        text,
+        allowDomFallback:
+          canUseDomClipboardFallbackForSourceFrame(sourceFrameId)
+      }
     },
     {
       frameId: sourceFrameId,

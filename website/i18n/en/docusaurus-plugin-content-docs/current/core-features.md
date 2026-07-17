@@ -69,7 +69,7 @@ It reuses existing local and AI actions, including copy current context, page su
 
 ## Clipboard-Aware Prompt
 
-After copying normal text, Aviso can show a prompt that helps you send the clipboard text to AI.
+Clipboard-aware prompts are off by default. After you enable them in the Popup, Aviso can show a prompt after copying normal text so you can send the clipboard text to AI.
 
 Aviso skips sensitive domains and sensitive content to reduce accidental handling of passwords, keys, payment pages, admin panels, and similar high-risk content.
 
@@ -103,6 +103,6 @@ The UI supports Chinese / English, follows the Chrome UI language by default, an
 
 ## Iframe Scenarios
 
-Aviso supports common iframe scenarios for the selection toolbar, right-click triggers, and command-palette bridge, while trying to show only one floating panel on the top-level page.
+Aviso supports common iframe scenarios for the selection toolbar, right-click triggers, command-palette bridge, and explicitly enabled clipboard prompts, while trying to show only one floating panel on the top-level page.
 
 More complex embedded pages, cross-origin pages, and dynamic apps remain ongoing observation areas.

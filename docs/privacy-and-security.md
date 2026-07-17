@@ -1,6 +1,6 @@
 # Aviso Privacy and Security
 
-Updated: 2026-07-10
+Updated: 2026-07-17
 
 生产级安全生命周期入口见 [`security/README.md`](./security/README.md)；本文继续持有扩展权限、存储和数据流的实现详情，当前状态以 [`STATE.md`](./STATE.md) 为准。
 
@@ -48,6 +48,17 @@ Host permissions：
 - `https://aviso-backend-production.vercel.app/*`
 
 `identity` 和 `https://aviso-backend-production.vercel.app/*` 仅在 production candidate 托管 AI gate 中批准。它们不代表公开发布、Chrome Web Store 批准或 hosted AI live；当前 release gate 以 [STATE.md](./STATE.md) 为准。
+
+Content-script frame access：
+
+- Top-frame only：命令面板、结果浮窗和截图选区。
+- All frames：划词工具栏 / 划词翻译卡、默认关闭的双击菜单、剪贴板 host / 复制写入、Readability / editable extraction listener（由右键或命令面板页面动作触发）和 iframe 命令面板快捷键 bridge。
+
+剪贴板感知默认关闭。缺失设置按关闭处理；关闭时不会常驻注册 copy listener；只有用户在 Popup 明确开启后才注册，关闭后会移除。开启时仍会执行敏感域名和敏感内容过滤。
+
+跨 frame 的“复制当前上下文”会从来源 frame 抽取内容，再通过显示 frame 写入剪贴板；DOM textarea fallback 默认禁止，只有确认来源为 top frame 的调用方才能显式启用，避免把子 frame 上下文临时插入父页面 DOM。
+
+本轮 MON-41 frame / clipboard / manifest 修复不新增普通权限、host permissions、provider/network call、storage key、依赖或 production config。
 
 ## 数据流
 

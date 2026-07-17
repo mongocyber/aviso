@@ -1,6 +1,6 @@
 # Aviso Tech Spec
 
-Updated: 2026-07-06
+Updated: 2026-07-17
 
 ## 技术栈
 
@@ -27,7 +27,7 @@ Updated: 2026-07-06
 | `src/contents/toolbar.tsx` | 划词工具栏。 |
 | `src/contents/command.tsx` | 命令面板。 |
 | `src/contents/floating.tsx` | 页面内结果面板。 |
-| `src/contents/clipboard.tsx` | 剪贴板提示。 |
+| `src/contents/clipboard.tsx` | 剪贴板 host、默认关闭的剪贴板提示和复制当前上下文 writer。 |
 | `src/contents/double-click-menu.tsx` | 双击快捷菜单。 |
 | `src/contents/screenshot.tsx` | 截图选区与右键内部截图路径。 |
 | `src/popup/index.tsx` | Popup 设置页。 |
@@ -113,7 +113,7 @@ Aviso 不自动调用 provider 的 list-models API，也不自动读取用户账
 
 ## 消息流
 
-1. 用户从右键菜单、划词工具栏、命令面板、双击菜单、剪贴板提示或 Popup 发起动作。
+1. 用户从右键菜单、划词工具栏、命令面板、双击菜单、显式开启后的剪贴板提示或 Popup 发起动作。
 2. Content script 整理用户主动触发的输入，例如选中文本、页面标题、可截断正文、截图选区或命令文本。
 3. Background 解析当前设置、默认 provider config、模型和 API Key。
 4. BYOK 请求由浏览器扩展直接发往所选 provider host。

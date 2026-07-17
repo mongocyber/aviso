@@ -32,6 +32,7 @@ import { createI18n, resolveSettingsUiLanguage } from "~utils/i18n-core"
 
 import { getRuntimeConfigSnapshot } from "./ai-runtime-cache"
 import {
+  canUseDomClipboardFallbackForSourceFrame,
   sendMessageToDisplayFrame,
   sendMessageToFrame,
   TOP_FRAME_ID
@@ -570,15 +571,19 @@ export async function copyCurrentContextFromFrame({
     selectionText,
     pageContent: extracted.textContent
   })
-  const writeResult = await sendMessageToFrame<MessageResponse>(
+  const writeResult = await sendMessageToDisplayFrame<MessageResponse>(
     tabId,
     {
       action: "WRITE_CURRENT_CONTEXT_TO_CLIPBOARD",
-      payload: { text }
+      payload: {
+        text,
+        allowDomFallback:
+          canUseDomClipboardFallbackForSourceFrame(sourceFrameId)
+      }
     },
     {
-      frameId: sourceFrameId,
-      frameUrl: sourceFrameUrl,
+      fallbackFrameId: sourceFrameId,
+      fallbackFrameUrl: sourceFrameUrl,
       label: `${label}-write-copy-context`
     }
   )

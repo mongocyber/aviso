@@ -1,5 +1,5 @@
 import assert from "node:assert/strict"
-import { readFileSync } from "node:fs"
+import { readdirSync, readFileSync } from "node:fs"
 import { test } from "node:test"
 import {
   buildHostedAccountQuotaDisplay,
@@ -44,6 +44,137 @@ import {
   normalizeSafeBrowserOpenUrl
 } from "../src/utils/url-safety.ts"
 import "./helpers/register-aliases.ts"
+
+const CONTENT_SCRIPT_FRAME_POLICIES = [
+  {
+    name: "toolbar",
+    plasmoPath: "../src/contents/toolbar.tsx",
+    wxtPath: "../src/entrypoints/toolbar.content.tsx",
+    allFrames: true,
+    reason:
+      "iframe user-triggered selection toolbar and inline translation must keep working"
+  },
+  {
+    name: "double-click-menu",
+    plasmoPath: "../src/contents/double-click-menu.tsx",
+    wxtPath: "../src/entrypoints/double-click-menu.content.tsx",
+    allFrames: true,
+    reason:
+      "optional iframe double-click menu is user-triggered and defaults off"
+  },
+  {
+    name: "clipboard",
+    plasmoPath: "../src/contents/clipboard.tsx",
+    wxtPath: "../src/entrypoints/clipboard.content.tsx",
+    allFrames: true,
+    reason:
+      "iframe clipboard toast works only when the explicitly enabled listener is present in that frame"
+  },
+  {
+    name: "command",
+    plasmoPath: "../src/contents/command.tsx",
+    wxtPath: "../src/entrypoints/command.content.tsx",
+    allFrames: false
+  },
+  {
+    name: "floating",
+    plasmoPath: "../src/contents/floating.tsx",
+    wxtPath: "../src/entrypoints/floating.content.tsx",
+    allFrames: false
+  },
+  {
+    name: "screenshot",
+    plasmoPath: "../src/contents/screenshot.tsx",
+    wxtPath: "../src/entrypoints/screenshot.content.ts",
+    allFrames: false
+  },
+  {
+    name: "readability",
+    plasmoPath: "../src/contents/readability.ts",
+    wxtPath: "../src/entrypoints/readability.content.ts",
+    allFrames: true,
+    runAt: "document_idle"
+  },
+  {
+    name: "frame-bridge",
+    plasmoPath: "../src/contents/frame-bridge.ts",
+    wxtPath: "../src/entrypoints/frame-bridge.content.ts",
+    allFrames: true,
+    runAt: "document_start"
+  }
+] as const
+
+function readTestSource(path: string): string {
+  return readFileSync(new URL(path, import.meta.url), "utf8")
+}
+
+function getConfigBoolean(
+  source: string,
+  key: "all_frames" | "allFrames"
+): boolean {
+  const match = source.match(new RegExp(`${key}:\\s*(true|false)`))
+  assert.ok(match, `missing ${key} in content script config`)
+  return match[1] === "true"
+}
+
+function listPlasmoContentScriptNames(): string[] {
+  const dir = new URL("../src/contents", import.meta.url)
+  return readdirSync(dir)
+    .filter((file) => /\.(ts|tsx)$/.test(file))
+    .filter((file) =>
+      readTestSource(`../src/contents/${file}`).includes("PlasmoCSConfig")
+    )
+    .map((file) => file.replace(/\.(ts|tsx)$/, ""))
+    .sort()
+}
+
+function listWxtContentScriptNames(): string[] {
+  const dir = new URL("../src/entrypoints", import.meta.url)
+  return readdirSync(dir)
+    .filter((file) => /\.content\.(ts|tsx)$/.test(file))
+    .map((file) => file.replace(/\.content\.(ts|tsx)$/, ""))
+    .sort()
+}
+
+test("WXT and Plasmo content-script frame policies stay minimal and aligned", () => {
+  const expectedNames = CONTENT_SCRIPT_FRAME_POLICIES.map((policy) => policy.name).sort()
+  assert.deepEqual(listPlasmoContentScriptNames(), expectedNames)
+  assert.deepEqual(listWxtContentScriptNames(), expectedNames)
+
+  for (const policy of CONTENT_SCRIPT_FRAME_POLICIES) {
+    const plasmoSource = readTestSource(policy.plasmoPath)
+    const wxtSource = readTestSource(policy.wxtPath)
+
+    assert.match(
+      plasmoSource + wxtSource,
+      /matches:\s*\[/,
+      `${policy.name} source matches must stay explicit`
+    )
+    assert.equal(
+      getConfigBoolean(plasmoSource, "all_frames"),
+      policy.allFrames,
+      `${policy.name} Plasmo all_frames`
+    )
+    assert.equal(
+      getConfigBoolean(wxtSource, "allFrames"),
+      policy.allFrames,
+      `${policy.name} WXT allFrames`
+    )
+
+    if (policy.runAt) {
+      assert.match(
+        plasmoSource,
+        new RegExp(`run_at:\\s*"${policy.runAt}"`),
+        `${policy.name} Plasmo run_at`
+      )
+      assert.match(
+        wxtSource,
+        new RegExp(`runAt:\\s*"${policy.runAt}"`),
+        `${policy.name} WXT runAt`
+      )
+    }
+  }
+})
 
 test("basic launch hides screenshot from command palette and double-click menu", () => {
   const commandSource = readFileSync(

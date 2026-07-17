@@ -11,6 +11,8 @@ import {
   type ClipboardType
 } from "~utils/clipboard-detect"
 import { useSyncedAvisoLanguage, type I18nKey } from "~utils/i18n"
+import { createClipboardSenseListenerController } from "~utils/clipboard-sense"
+import { writeTextToClipboard } from "~utils/clipboard-write"
 import { getSettings } from "~utils/storage"
 import { logTiming, startTiming } from "~utils/timing"
 
@@ -108,9 +110,14 @@ function ClipboardToast() {
   )
 
   const writeCurrentContextToClipboard = useCallback(
-    async (text: string): Promise<MessageResponse> => {
+    async (payload: {
+      text: string
+      allowDomFallback: boolean
+    }): Promise<MessageResponse> => {
       try {
-        await writeTextToClipboard(text)
+        await writeTextToClipboard(payload.text, {
+          allowDomFallback: payload.allowDomFallback === true
+        })
         showCopyContextToastThroughBackground({
           status: "success",
           message: t("toast.copyContextSuccess"),
@@ -162,10 +169,6 @@ function ClipboardToast() {
     }
 
     const handleCopy = async () => {
-      // 检查设置是否启用剪贴板感知
-      const settings = await getSettings()
-      if (!settings.enableClipboardSense) return
-
       // 检查是否是敏感页面
       if (isSensitiveDomain(window.location.href)) return
 
@@ -228,15 +231,41 @@ function ClipboardToast() {
       }
 
       if (request.action === "WRITE_CURRENT_CONTEXT_TO_CLIPBOARD") {
-        writeCurrentContextToClipboard(request.payload.text).then(sendResponse)
+        writeCurrentContextToClipboard(request.payload).then(sendResponse)
         return true
       }
     }
 
-    document.addEventListener("copy", handleCopy)
+    let disposed = false
+    const copyListenerController = createClipboardSenseListenerController({
+      listener: handleCopy,
+      addCopyListener: (listener) => document.addEventListener("copy", listener),
+      removeCopyListener: (listener) =>
+        document.removeEventListener("copy", listener)
+    })
+
+    getSettings().then((settings) => {
+      if (!disposed) copyListenerController.applySettings(settings)
+    })
+
+    const handleSettingsChange = (
+      changes: Record<string, chrome.storage.StorageChange>,
+      area: string
+    ) => {
+      if (area !== "sync" || !changes.contextai_settings) return
+      copyListenerController.applySettings(
+        changes.contextai_settings.newValue as
+          | { enableClipboardSense?: boolean }
+          | undefined
+      )
+    }
+
+    chrome.storage.onChanged.addListener(handleSettingsChange)
     chrome.runtime.onMessage.addListener(handleMessage)
     return () => {
-      document.removeEventListener("copy", handleCopy)
+      disposed = true
+      copyListenerController.dispose()
+      chrome.storage.onChanged.removeListener(handleSettingsChange)
       chrome.runtime.onMessage.removeListener(handleMessage)
       clearTimeout(hideTimer)
       clearTimeout(copyContextHideTimer)
@@ -353,35 +382,6 @@ function getClipboardTypeLabel(
     other: "clipboard.type.other"
   }
   return t(key[type])
-}
-
-async function writeTextToClipboard(text: string): Promise<void> {
-  if (navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(text)
-      return
-    } catch {
-      // Fall through to the DOM copy fallback below.
-    }
-  }
-
-  const textarea = document.createElement("textarea")
-  textarea.value = text
-  textarea.setAttribute("readonly", "true")
-  textarea.style.position = "fixed"
-  textarea.style.top = "-1000px"
-  textarea.style.left = "-1000px"
-  textarea.style.opacity = "0"
-  const target = document.body ?? document.documentElement
-  target.appendChild(textarea)
-  textarea.select()
-
-  try {
-    const copied = document.execCommand("copy")
-    if (!copied) throw new Error("Clipboard write was rejected")
-  } finally {
-    textarea.remove()
-  }
 }
 
 export default ClipboardToast

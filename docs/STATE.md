@@ -1,6 +1,6 @@
 # Aviso State
 
-Updated: 2026-07-10
+Updated: 2026-07-17
 
 This is the L1 current-facts registry for Aviso. Other docs should link here instead of repeating release state, Chrome Web Store state, or hosted-AI live status.
 
@@ -38,6 +38,7 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 | 能力 | 状态 | 备注 |
 | --- | --- | --- |
 | Right-click menu, selection toolbar, command palette, clipboard prompt, in-page result panel, history, custom instructions, and Popup settings | `implemented` | Product surface summary is maintained in [STATUS](../STATUS.md) and [README](../README.md). |
+| Content-script frame minimization | `implemented` | MON-41 keeps existing user-triggered iframe behavior all-frame for the selection toolbar / inline translation, optional double-click menu, clipboard host / copy writer, Readability extraction, and iframe command-palette bridge. Command palette UI, result panel, and screenshot selector remain top-frame only. Clipboard Sense is default-off for missing settings, registers the copy listener only after an explicit enabled setting resolves, and removes it when disabled. DOM clipboard fallback is explicit top-frame opt-in only. Manifest/package evidence lives in [content surfaces](./architecture/content-surfaces.md), [runtime contract](./architecture/extension-runtime.md), [manifest checks](../scripts/check-extension-manifests.mjs), and [surface tests](../tests/extension-surface.test.ts). Generated package facts must come from local build/package checks; owner desktop loaded-extension review remains pending. |
 | BYOK direct-provider requests | `implemented` | Provider and storage boundaries are recorded in [STATUS](../STATUS.md) and [privacy/security](./privacy-and-security.md). |
 | Multiple provider configurations and manual model ID editing | `implemented` | Provider status and live-validation boundaries are recorded in [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md). |
 | Chinese and English UI plus manifest localization | `implemented` | Locale and manifest status are recorded in [STATUS](../STATUS.md). |
