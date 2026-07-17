@@ -1,7 +1,7 @@
 # Security
 
 Status: `active`
-Updated: 2026-07-10
+Updated: 2026-07-17
 
 本目录是 Aviso 产品仓库的安全生命周期入口。扩展当前权限、数据流、存储和“不收集”边界的详细实现说明仍以 [`../privacy-and-security.md`](../privacy-and-security.md) 为准；当前能力与门禁状态见 [`../STATE.md`](../STATE.md)。
 
@@ -45,7 +45,13 @@ Updated: 2026-07-10
 
 - 依赖新增需要说明用途、维护状态、许可证、运行时/构建时范围和替代方案。
 - 锁文件只能由对应包管理器生成。
-- 发布候选必须执行依赖审计、secret scan、manifest/permission 检查和最终 zip 内容复核；入口见 [`../architecture/testing.md`](../architecture/testing.md)。
+- `npm run supply-chain:check` 是本仓库的确定性本地供应链基线：验证 `package.json`/`package-lock.json` 一致性、两者 SHA-256、基线 schema、直接 runtime/dev 依赖清单、Plasmo dev 分类、未解析 High/Critical 账本 schema、相对 `origin/main`/`main` merge-base 的 package/lock base diff，并输出脱敏 JSON 证据。
+- 当前允许的 package/lock base diff 只有 Plasmo `0.90.5` 从直接 runtime dependency 移到直接 dev dependency，或没有 package/lock diff；package-lock package entry set、每个 package entry 的 version/resolved/integrity 必须保持不变，非 dev 分类 metadata 不能漂移。
+- 基线策略和期望哈希位于 [`supply-chain-baseline.json`](./supply-chain-baseline.json)，账本结构见 [`supply-chain-baseline.schema.json`](./supply-chain-baseline.schema.json)。
+- `package.json`、`package-lock.json`、基线 JSON/schema 和 checker 在 [CODEOWNERS](../../.github/CODEOWNERS) 中归属 `@mongocyber`。Branch protection/code-owner enforcement 是外部 owner gate；同一个 PR 内单独刷新基线策略或 schema 不等于 owner 批准。
+- Plasmo 本地脚本通过 `scripts/run-plasmo-no-version-check.mjs` 只跳过 Plasmo latest-version metadata check，并要求 `node_modules/plasmo` 已按 lockfile 本地安装；它不替代 package manager/Parcel 的依赖行为复核。
+- Fresh registry audit 当前是外部门禁 pending；本地基线不运行 `npm audit`，空 High/Critical 账本也不能写成零漏洞结论。
+- 发布候选必须执行本地供应链基线、fresh registry audit 外部门禁、secret scan、manifest/permission 检查和最终 zip 内容复核；入口见 [`../architecture/testing.md`](../architecture/testing.md)。
 - 不能自动修复的构建链风险必须在发布证据中记录 owner 接受、隔离措施或上游跟踪，不能被“仅开发依赖”一句话关闭。
 
 ## Vulnerability Response

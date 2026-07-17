@@ -1,12 +1,13 @@
 # Aviso State
 
-Updated: 2026-07-10
+Updated: 2026-07-17
 
 This is the L1 current-facts registry for Aviso. Other docs should link here instead of repeating release state, Chrome Web Store state, or hosted-AI live status.
 
 ## Release Line
 
 - Product identity: Aviso is a Chrome MV3 extension built with React 18 and TypeScript; local dev/build still use Plasmo paths, while the canonical release package is generated through the WXT package gate.
+- Build-tool classification: Plasmo `0.90.5` is a direct dev dependency, not a runtime dependency; no resolved dependency versions changed in the local lockfile regeneration for this classification change.
 - Current upload/package version: `0.1.1`; `package.json`, manifest, and Popup-visible version are aligned to `0.1.1`.
 - Default usable path: BYOK direct-provider remains the default path; users provide their own API Keys and the browser extension calls approved provider hosts directly.
 - Optional hosted path: Aviso AI / hosted AI is included in the `0.1.1` production-candidate package and only runs after the user explicitly chooses it and signs in.
@@ -32,6 +33,8 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 | Website owner review and production deployment evidence | `passed` | [STATUS](../STATUS.md), [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md) |
 | Owner-loaded hosted-AI production-candidate smoke | `passed` | [STATUS](../STATUS.md), [release status](./planning/v0.3/status.md) |
 | Billing/payment excluded from first hosted-AI release | `waived` | [STATUS](../STATUS.md), [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md) |
+| Local supply-chain baseline | `passed` | `npm run supply-chain:check`; [baseline](./security/supply-chain-baseline.json), [testing](./architecture/testing.md) |
+| Fresh registry dependency audit | `pending` | External pending; local baseline does not run `npm audit` or claim zero vulnerabilities. |
 
 ## Capabilities
 
@@ -42,6 +45,7 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 | Multiple provider configurations and manual model ID editing | `implemented` | Provider status and live-validation boundaries are recorded in [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md). |
 | Chinese and English UI plus manifest localization | `implemented` | Locale and manifest status are recorded in [STATUS](../STATUS.md). |
 | Canonical production package directory and zip | `implemented` | `npm run package` generates `build/chrome-mv3-prod` and `build/chrome-mv3-prod.zip`; release package evidence is recorded in [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md). |
+| Local supply-chain baseline command | `implemented` | `npm run supply-chain:check` validates package/lock consistency, SHA-256 hashes, tracked baseline schema, direct dependency inventory, Plasmo dev classification, unresolved High/Critical ledger schema, merge-base package/lock base diff, and sanitized JSON evidence; see [security baseline](./security/supply-chain-baseline.json). |
 | Optional Aviso AI / hosted AI candidate path | `implemented` | Candidate-only path; public/live limits are recorded in [CURRENT_GATE](./ai/CURRENT_GATE.md). |
 | Chrome Web Store public install | `unverified` | Review state and approval are pending; see [CURRENT_GATE](./ai/CURRENT_GATE.md). |
 | Subscription, payment, and public anonymous quota | `not-planned` | Excluded from the first hosted-AI release; see [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md). |
@@ -55,6 +59,7 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 - Do not expand manifest permissions, host permissions, storage-key behavior, production config, public copy, CWS submission state, provider calls, or secrets handling without owner approval.
 - Do not write raw API Keys, raw prompts, raw provider responses, private page bodies, screenshot/base64 payloads, full URLs, clipboard content, or sensitive logs into docs, console, storage, release artifacts, or remote services.
 - Do not present screenshot as an ordinary-user primary entry or public selling point; it remains an internal right-click path only.
+- Do not treat the local supply-chain baseline or empty unresolved High/Critical ledger as a fresh registry audit or zero-vulnerability claim; fresh registry audit remains external pending.
 
 ## Storage & Data
 
@@ -74,6 +79,7 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 - Release and rollback rules: [docs/release/README.md](./release/README.md)
 - Operations and incident response: [docs/operations/README.md](./operations/README.md)
 - Security lifecycle: [docs/security/README.md](./security/README.md)
+- Supply-chain baseline: [docs/security/supply-chain-baseline.json](./security/supply-chain-baseline.json)
 - AI eval strategy: [docs/ai/evals.md](./ai/evals.md)
 - Model/provider policy: [docs/ai/model-provider-policy.md](./ai/model-provider-policy.md)
 - Current planning lane: [docs/planning/current/status.md](./planning/current/status.md)

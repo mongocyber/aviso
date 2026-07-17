@@ -88,13 +88,13 @@ npm run package
 
 2026-06-10 发布候选收口已执行：
 
-- `npm audit --registry=https://registry.npmjs.org --audit-level=high` 已执行。
+- 2026-06-10 曾执行 registry dependency audit；这是历史发布候选记录，不代表当前 package/lock 已完成 fresh registry audit。
 - `@mozilla/readability` 已升级到 `0.6.0`，直接运行时 DoS 审计项已移除。
 - 最终 package zip 已执行真实形态密钥扫描，未发现 OpenAI、Anthropic、GitHub、AWS、Google、Slack 或私钥格式凭证。
 - 最终 package zip 已核对内容，只包含扩展运行文件和 Chrome `_locales`。
 - 最终 manifest 已核对权限边界，普通权限和 host permissions 未扩大。
 
-当前仍有公开发布级风险：Plasmo `0.90.5` 是 npm 当前最新版本，但官方 `npm audit` 仍报告其 Parcel 构建链存在 high 级审计项；`npm audit fix --force` 会把 Plasmo 降级到不适合当前项目的旧版本，因此不能自动修复。该风险主要落在本地构建工具链，不是当前扩展运行时 manifest 权限扩大，但公开提交前需要 owner 明确接受或等待 Plasmo / Parcel 上游修复。
+2026-07-17 本地供应链基线通过：Plasmo `0.90.5` 已归类为直接 dev dependency，未保留在 runtime dependencies；baseline schema 已校验，package/lock 期望 SHA-256 已绑定，直接依赖清单完整，merge-base package/lock base diff 只允许 Plasmo runtime -> dev 移动且 package entry version/resolved/integrity 未漂移。Fresh registry audit 对当前 package/lock 仍是外部门禁 pending；未解析 High/Critical 账本因本次没有已验证当前 finding source 而保持空，这不代表零漏洞结论。
 
 当前仍未完成公开发布级收口：Chrome Web Store 最终审核结果、审核通过证据、正式商店链接、正式 `v0.1.1` tag、GitHub Release 和人工发布批准。
 

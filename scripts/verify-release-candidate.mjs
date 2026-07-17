@@ -7,6 +7,7 @@ import {
   statSync
 } from "node:fs"
 import { extname, join } from "node:path"
+import { pathToFileURL } from "node:url"
 
 const expectedChromeWebStoreExtensionId = "phigblobbahhecgbcifmkamglcdnghcg"
 
@@ -15,6 +16,11 @@ const commandSteps = [
     label: "unit tests",
     command: "npm",
     args: ["test"]
+  },
+  {
+    label: "supply-chain baseline",
+    command: "npm",
+    args: ["run", "supply-chain:check"]
   },
   {
     label: "typecheck",
@@ -49,11 +55,13 @@ const requiredArtifacts = [
   ".output/chrome-mv3/manifest.json"
 ]
 
-main()
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main()
+}
 
 function main() {
   console.log("Aviso release-candidate verification")
-  console.log("Scope: local tests, typecheck, canonical package output, manifest boundary, claim scan, and hygiene scan.")
+  console.log("Scope: local tests, supply-chain baseline, typecheck, canonical package output, manifest boundary, claim scan, and hygiene scan.")
   console.log("No deploy, CWS submission, provider call, or secret read is performed.\n")
 
   for (const step of commandSteps) {
@@ -123,37 +131,51 @@ function extensionIdFromPublicKey(publicKey) {
   return id
 }
 
-function runCommandStep({ label, command, args }) {
-  console.log(`\n==> ${label}`)
-  console.log(`$ ${[command, ...args].join(" ")}`)
+export function runCommandStep(
+  { label, command, args },
+  {
+    spawnSync: spawn = spawnSync,
+    stdout = process.stdout,
+    stderr = process.stderr,
+    exit = process.exit
+  } = {}
+) {
+  writeLine(stdout, `\n==> ${label}`)
+  writeLine(stdout, `$ ${[command, ...args].join(" ")}`)
 
-  const result = spawnSync(command, args, {
+  const result = spawn(command, args, {
     encoding: "utf8",
     maxBuffer: 100 * 1024 * 1024
   })
+  const childStdout = result.stdout ?? ""
+  const childStderr = result.stderr ?? ""
 
-  if (result.stdout) {
-    process.stdout.write(result.stdout)
+  if (childStdout) {
+    stdout.write(childStdout)
   }
-  if (result.stderr) {
-    process.stderr.write(result.stderr)
+  if (childStderr) {
+    stderr.write(childStderr)
   }
 
-  if (result.error) {
-    console.error(`\n${label} failed before completion: ${result.error.message}`)
-    process.exit(1)
+  if (result.error && result.status == null) {
+    writeLine(
+      stderr,
+      `\n${label} failed before completion: ${result.error.message}`
+    )
+    exit(1)
+    return
   }
 
   if (result.status !== 0) {
-    const output = `${result.stdout ?? ""}\n${result.stderr ?? ""}`
+    const output = `${childStdout}\n${childStderr}`
     const classification = classifyCommandFailure(output)
-    console.error(`\n${label} failed with exit code ${result.status}.`)
-    console.error(`Classification: ${classification}`)
-    process.exit(result.status ?? 1)
+    writeLine(stderr, `\n${label} failed with exit code ${result.status}.`)
+    writeLine(stderr, `Classification: ${classification}`)
+    exit(result.status ?? 1)
   }
 }
 
-function classifyCommandFailure(output) {
+export function classifyCommandFailure(output) {
   if (/Operation not permitted|EACCES|EPERM/i.test(output)) {
     return "environment or sandbox permission failure; rerun in an allowed local environment before treating this as a code regression"
   }
@@ -167,6 +189,10 @@ function classifyCommandFailure(output) {
     return "missing build artifact; rerun WXT and Plasmo build/package steps"
   }
   return "command failure; inspect the command output above"
+}
+
+function writeLine(stream, line) {
+  stream.write(`${line}\n`)
 }
 
 function checkRequiredArtifacts() {
