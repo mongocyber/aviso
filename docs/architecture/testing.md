@@ -20,7 +20,7 @@ Updated: 2026-07-10
 | unit | 纯逻辑、边界、错误和存储辅助 | `tests/**/*.test.ts` | `npm test` | 相关测试全部通过 |
 | integration | background/content/popup/hosted route 协作 | 同一 Node test suite 的跨模块用例 | `npm test` | 相关路径全部通过 |
 | contract | manifest、host permission、版本、frontend/backend message 约束 | manifest scripts + hosted/provider tests | `npm run check:manifests`、`npm test` | 无未解释差异 |
-| package | WXT/Plasmo build 与规范候选包 | `scripts/verify-release-candidate.mjs` | `npm run verify:release-candidate` | 全部子门禁通过 |
+| package | WXT/Plasmo build、规范候选包、跨表面发布声明扫描 | `scripts/verify-release-candidate.mjs` | `npm run verify:release-candidate` | 全部子门禁通过 |
 | website | 中英文官网、文档和反馈页构建 | `website/` | `cd website && npm run build` | build 成功、链接/文案复核 |
 | manual | Chrome loaded-extension、原生菜单和用户路径 | `tests/manual-test.html` + release checklist | owner 手动执行 | 关键路径被接受或明确 hold |
 
@@ -54,6 +54,8 @@ Updated: 2026-07-10
 | `tests/unit.test.ts` | 共享逻辑回归 | `npm test` |
 | `tests/manual-test.html` | Chrome 手动 loaded-extension 验收 | 按 release checklist |
 | `website/` | 官网与公开文档 | `cd website && npm run build` |
+
+`scripts/verify-release-candidate.mjs` 的发布声明扫描覆盖 `docs/STATE.md`、release evidence、source/final manifests、官网中英文文案、隐私/权限文档、store listing 和 reviewer notes；扫描输出必须包含文件、行号、匹配声明和原因。
 
 ## Fixture 与测试数据
 
