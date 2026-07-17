@@ -13,6 +13,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Use Node.js 22.x
         uses: actions/setup-node@v4
@@ -22,6 +24,9 @@ jobs:
 
       - name: Install extension dependencies
         run: npm ci
+
+      - name: Run supply-chain baseline check
+        run: npm run supply-chain:check
 
       - name: Run unit tests
         run: npm test

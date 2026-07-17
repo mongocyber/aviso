@@ -14,6 +14,7 @@ const expectedChromeWebStoreExtensionId = "phigblobbahhecgbcifmkamglcdnghcg"
 
 const commandSteps = [
   npmStep("unit tests", ["test"]),
+  npmStep("supply-chain baseline", ["run", "supply-chain:check"]),
   {
     label: "typecheck",
     command: process.execPath,
@@ -146,7 +147,7 @@ function isDirectRun() {
 
 function main() {
   console.log("Aviso release-candidate verification")
-  console.log("Scope: local tests, typecheck, canonical package output, manifest boundary, claim scan, and hygiene scan.")
+  console.log("Scope: local tests, supply-chain baseline, typecheck, canonical package output, manifest boundary, claim scan, and hygiene scan.")
   console.log("No deploy, CWS submission, provider call, or secret read is performed.\n")
 
   if (process.argv.includes("--claim-scan-only")) {
@@ -270,25 +271,49 @@ function resolveNpmExecPath() {
   return null
 }
 
-function runCommandStep({ label, command, args, displayCommand }) {
-  console.log(`\n==> ${label}`)
-  console.log(`$ ${(displayCommand ?? [command, ...args]).join(" ")}`)
+export function runCommandStep(
+  { label, command, args, displayCommand },
+  {
+    spawnSync: spawn = spawnSync,
+    stdout = process.stdout,
+    stderr = process.stderr,
+    exit = process.exit
+  } = {}
+) {
+  writeLine(stdout, `\n==> ${label}`)
+  writeLine(stdout, `$ ${(displayCommand ?? [command, ...args]).join(" ")}`)
 
-  const result = spawnSync(command, args, {
-    stdio: "inherit"
+  const result = spawn(command, args, {
+    encoding: "utf8",
+    maxBuffer: 100 * 1024 * 1024
   })
+  const childStdout = result.stdout ?? ""
+  const childStderr = result.stderr ?? ""
+
+  if (childStdout) {
+    stdout.write(childStdout)
+  }
+  if (childStderr) {
+    stderr.write(childStderr)
+  }
 
   if (didSpawnFailBeforeCompletion(result)) {
-    console.error(`\n${label} failed before completion: ${result.error.message}`)
-    console.error(`Classification: ${classifyCommandFailure(result.error.message)}`)
-    process.exit(1)
+    const failureOutput = `${result.error?.message ?? ""}\n${childStdout}\n${childStderr}`
+    writeLine(
+      stderr,
+      `\n${label} failed before completion: ${result.error?.message ?? "unknown spawn error"}`
+    )
+    writeLine(stderr, `Classification: ${classifyCommandFailure(failureOutput)}`)
+    exit(1)
+    return
   }
 
   if (result.status !== 0) {
-    const classification = classifyCommandFailure("")
-    console.error(`\n${label} failed with exit code ${result.status ?? "unknown"}.`)
-    console.error(`Classification: ${classification}`)
-    process.exit(result.status ?? 1)
+    const output = `${childStdout}\n${childStderr}`
+    const classification = classifyCommandFailure(output)
+    writeLine(stderr, `\n${label} failed with exit code ${result.status ?? "unknown"}.`)
+    writeLine(stderr, `Classification: ${classification}`)
+    exit(result.status ?? 1)
   }
 }
 
@@ -296,7 +321,7 @@ export function didSpawnFailBeforeCompletion(result) {
   return Boolean(result.error) && result.status == null && result.signal == null
 }
 
-function classifyCommandFailure(output) {
+export function classifyCommandFailure(output) {
   if (/Operation not permitted|EACCES|EPERM/i.test(output)) {
     return "environment or sandbox permission failure; rerun in an allowed local environment before treating this as a code regression"
   }
@@ -314,6 +339,10 @@ function classifyCommandFailure(output) {
     return "missing build artifact; rerun WXT and Plasmo build/package steps"
   }
   return "command failure; inspect the command output above"
+}
+
+function writeLine(stream, line) {
+  stream.write(`${line}\n`)
 }
 
 function checkRequiredArtifacts() {

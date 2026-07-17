@@ -1,0 +1,111 @@
+{
+  "$schema": "./supply-chain-baseline.schema.json",
+  "schemaVersion": 1,
+  "updated": "2026-07-17",
+  "policy": {
+    "freshRegistryAudit": "pending-external",
+    "runtimeBuildSeparation": {
+      "plasmoMustBeDevDependency": true
+    }
+  },
+  "files": {
+    "package.json": {
+      "sha256": "f64943fcbc69534ab5eeb237e1674f9ea49c846a279322377c480e7e7ad38277"
+    },
+    "package-lock.json": {
+      "sha256": "fe7417804e2cbea8edfcb72dcae0cea060d2d6975041eaf74d74627d5ecebfad"
+    }
+  },
+  "directDependencies": {
+    "runtime": [
+      {
+        "name": "@anthropic-ai/sdk",
+        "declaredVersion": "^0.32.0",
+        "resolvedVersion": "0.32.1"
+      },
+      {
+        "name": "@mozilla/readability",
+        "declaredVersion": "^0.6.0",
+        "resolvedVersion": "0.6.0"
+      },
+      {
+        "name": "crypto-js",
+        "declaredVersion": "^4.2.0",
+        "resolvedVersion": "4.2.0"
+      },
+      {
+        "name": "openai",
+        "declaredVersion": "^4.67.0",
+        "resolvedVersion": "4.104.0"
+      },
+      {
+        "name": "react",
+        "declaredVersion": "18.2.0",
+        "resolvedVersion": "18.2.0"
+      },
+      {
+        "name": "react-dom",
+        "declaredVersion": "18.2.0",
+        "resolvedVersion": "18.2.0"
+      }
+    ],
+    "dev": [
+      {
+        "name": "@ianvs/prettier-plugin-sort-imports",
+        "declaredVersion": "4.1.1",
+        "resolvedVersion": "4.1.1"
+      },
+      {
+        "name": "@types/chrome",
+        "declaredVersion": "0.0.258",
+        "resolvedVersion": "0.0.258"
+      },
+      {
+        "name": "@types/crypto-js",
+        "declaredVersion": "^4.2.2",
+        "resolvedVersion": "4.2.2"
+      },
+      {
+        "name": "@types/mozilla__readability",
+        "declaredVersion": "^0.4.2",
+        "resolvedVersion": "0.4.2"
+      },
+      {
+        "name": "@types/node",
+        "declaredVersion": "20.11.5",
+        "resolvedVersion": "20.11.5"
+      },
+      {
+        "name": "@types/react",
+        "declaredVersion": "18.2.48",
+        "resolvedVersion": "18.2.48"
+      },
+      {
+        "name": "@types/react-dom",
+        "declaredVersion": "18.2.18",
+        "resolvedVersion": "18.2.18"
+      },
+      {
+        "name": "plasmo",
+        "declaredVersion": "0.90.5",
+        "resolvedVersion": "0.90.5"
+      },
+      {
+        "name": "prettier",
+        "declaredVersion": "3.2.4",
+        "resolvedVersion": "3.2.4"
+      },
+      {
+        "name": "typescript",
+        "declaredVersion": "5.3.3",
+        "resolvedVersion": "5.3.3"
+      },
+      {
+        "name": "wxt",
+        "declaredVersion": "^0.20.26",
+        "resolvedVersion": "0.20.26"
+      }
+    ]
+  },
+  "unresolvedHighCritical": []
+}

@@ -104,6 +104,7 @@
   "siteAbsoluteRoutes": ["/feedback/", "/en/feedback/"],
   "requiredFiles": [
     ".github/PULL_REQUEST_TEMPLATE.md",
+    ".github/CODEOWNERS",
     "CLAUDE.md",
     "AGENTS.md",
     "docs/STATE.md",
@@ -128,11 +129,15 @@
     "docs/operations/incident-response.md",
     "docs/operations/postmortem-template.md",
     "docs/security/README.md",
+    "docs/security/supply-chain-baseline.json",
+    "docs/security/supply-chain-baseline.schema.json",
     "docs/security/threat-model.md",
     "docs/security/data-classification.md",
     "docs/ai/evals.md",
     "docs/ai/model-provider-policy.md",
-    "scripts/check-docs.mjs"
+    "scripts/check-docs.mjs",
+    "scripts/check-supply-chain-baseline.mjs",
+    "scripts/run-plasmo-no-version-check.mjs"
   ],
   "freshness": { "file": "docs/STATE.md", "maxDays": 30 },
   "requiredSections": [

@@ -1,7 +1,7 @@
 # Testing & Quality Strategy
 
 Status: `active`
-Updated: 2026-07-10
+Updated: 2026-07-17
 
 本文件是 Aviso 唯一的测试/质量策略入口。release、operations、security 和 ai 文档只链接这里，不维护第二套命令或门槛。
 
@@ -20,6 +20,7 @@ Updated: 2026-07-10
 | unit | 纯逻辑、边界、错误和存储辅助 | `tests/**/*.test.ts` | `npm test` | 相关测试全部通过 |
 | integration | background/content/popup/hosted route 协作 | 同一 Node test suite 的跨模块用例 | `npm test` | 相关路径全部通过 |
 | contract | manifest、host permission、版本、frontend/backend message 约束 | manifest scripts + hosted/provider tests | `npm run check:manifests`、`npm test` | 无未解释差异 |
+| supply-chain | package/lock hash、baseline schema、merge-base base diff、直接 runtime/dev 依赖清单和未解析 High/Critical 账本 | `scripts/check-supply-chain-baseline.mjs` + `docs/security/supply-chain-baseline.json` | `npm run supply-chain:check` | 无哈希、分类、schema、base-diff 或账本漂移 |
 | package | WXT/Plasmo build、规范候选包、跨表面发布声明扫描 | `scripts/verify-release-candidate.mjs` | `npm run verify:release-candidate` | 全部子门禁通过 |
 | website | 中英文官网、文档和反馈页构建 | `website/` | `cd website && npm run build` | build 成功、链接/文案复核 |
 | manual | Chrome loaded-extension、原生菜单和用户路径 | `tests/manual-test.html` + release checklist | owner 手动执行 | 关键路径被接受或明确 hold |
@@ -35,7 +36,7 @@ Updated: 2026-07-10
 | API/message/schema | frontend contract/route tests + 后端契约对账 | 纯内部类型重命名且无 runtime 影响 |
 | manifest/permission/storage | manifest checks + storage/route tests + privacy/security review + loaded-extension | 只改文档且未改变包 |
 | provider/model/prompt | provider/hosted tests + [`../ai/evals.md`](../ai/evals.md) + owner review | 只改注释且无行为变化 |
-| release/package | package/zip/secret/manifest checks + loaded-extension + rollback 说明 | 非发布路径且不触及构建/包 |
+| release/package | supply-chain baseline + package/zip/secret/manifest checks + loaded-extension + rollback 说明 | 非发布路径且不触及构建/包 |
 | website/public copy | docs check + website build + STATE/隐私/商店口径对账 | 内部文档且不被网站包含 |
 | observability/security | 脱敏/权限/secret scan 或明确人工验证 | 无数据、权限、日志或依赖影响 |
 | performance-critical | 可复现 benchmark/summary-only 计时 + 结果边界 | 无性能路径变化 |
@@ -51,7 +52,9 @@ Updated: 2026-07-10
 | `tests/extension-surface.test.ts` | 可见入口和 content-script 契约 | `npm test` |
 | `tests/conversation-runtime.test.ts` | 结果面板、history、follow-up | `npm test` |
 | `tests/connectivity-perf-screenshot.test.ts` | 连接测试、summary-only timing、截图隐私 | `npm test` |
+| `tests/supply-chain-baseline.test.ts` | package/lock 哈希漂移、依赖分类、未解析 High/Critical 账本和脱敏证据 | `npm test` |
 | `tests/unit.test.ts` | 共享逻辑回归 | `npm test` |
+| `scripts/check-supply-chain-baseline.mjs` | 本地供应链基线 JSON 证据 | `npm run supply-chain:check` |
 | `tests/manual-test.html` | Chrome 手动 loaded-extension 验收 | 按 release checklist |
 | `website/` | 官网与公开文档 | `cd website && npm run build` |
 
@@ -66,14 +69,16 @@ Updated: 2026-07-10
 
 ## 真实网络 / 凭证隔离
 
-- `npm test`、typecheck、docs check、manifest check、build/package 默认不得调用真实 provider/OAuth/商店 API。
+- `npm test`、typecheck、docs check、manifest check、supply-chain baseline、build/package 默认不得调用真实 provider/OAuth/商店 API。
+- `npm run supply-chain:check` 不执行 fresh registry audit；它只验证本地 package/lock/baseline 一致性、schema、merge-base package/lock base diff，并输出脱敏 JSON 证据。
+- Plasmo build/dev/package scripts 使用 `scripts/run-plasmo-no-version-check.mjs`，只跳过 Plasmo latest-version metadata check；缺少本地 `node_modules/plasmo` 必须 hard fail，不能把它写成 fresh install、registry audit、Parcel 自动安装或完整网络隔离证据。
 - Provider 连接测试只能由用户在 Popup 主动触发，使用固定公开短句并输出脱敏摘要。
 - hosted production/staging 验证属于 owner-approved 外部门禁，在 aviso-backend runbook 中执行。
 - 凭证只从用户本地或平台 secret 注入，不写入仓库、日志、测试快照或失败附件。
 
 ## 慢测试
 
-- 快速默认集：`npm run docs:check && npm test && npx tsc --noEmit`。
+- 快速默认集：`npm run docs:check && npm run supply-chain:check && npm test && npx tsc --noEmit`。
 - build/package/website/release-candidate 属于慢检查，按变更类型或发布前运行。
 - 当前没有慢测试 marker 或 nightly job；不能用自动重试掩盖稳定失败。
 
@@ -98,7 +103,9 @@ Updated: 2026-07-10
 ## 性能 / 安全测试
 
 - 性能：使用现有 summary-only timing 与针对性 benchmark；不得记录输入正文或宣称未测量的真实 provider p50/p95。
-- 安全：`npm audit --audit-level=high`、secret scan、manifest/permission check、zip 内容复核；不能修复的依赖风险需要 owner 决策。
+- 安全：`npm run supply-chain:check`、secret scan、manifest/permission check、zip 内容复核；fresh registry audit 仍是外部门禁 pending，不能用本地基线或空账本宣称零漏洞。
+- Package manifest/lock、供应链 baseline policy/schema 和 checker 的 CODEOWNERS owner 是 `@mongocyber`；branch protection/code-owner enforcement 仍是外部 owner gate，同 PR 内刷新 baseline policy/schema 不能自我批准。
+- 未解析 High/Critical 依赖记录必须有 packageName、owner、impact、expiresOn、source 和 advisory；没有已验证当前 finding source 时，账本保持空并标记 fresh registry audit pending。
 - `docs:check` 不替代 SAST、依赖审计、secret scan 或 Chrome 商店审核。
 
 ## 发布门禁
@@ -108,7 +115,7 @@ Updated: 2026-07-10
 | docs/unit/type | 对应命令输出或 CI 链接 | PR author |
 | candidate package | `npm run verify:release-candidate` + 包路径/版本 | PR author + owner |
 | loaded-extension | release checklist 的手动结果 | Aviso owner |
-| privacy/security | 权限、数据、secret、依赖复核 | Aviso owner |
+| privacy/security | 权限、数据、secret、依赖复核、supply-chain baseline | Aviso owner |
 | website/public copy | website build + STATE/商店/隐私对账 | Aviso owner |
 | rollback | [`../release/README.md`](../release/README.md) 对应方案 | Aviso owner |
 | AI eval | [`../ai/evals.md`](../ai/evals.md) 的相关回归/人工审核 | Aviso owner |

@@ -66,7 +66,7 @@ Aviso 当前 Chrome 上传包版本是 `0.1.1`。它是一个 Chrome MV3 扩展�
 - 最终 manifest 已核对，普通权限和 host permissions 未扩大。
 - package zip 真实形态密钥扫描未发现 OpenAI、Anthropic、GitHub、AWS、Google、Slack 或私钥格式凭证。
 - `@mozilla/readability` 已升级到 `0.6.0`，直接运行时 DoS 审计项已移除。
-- 仍有发布前风险：Plasmo `0.90.5` 是 npm 当前最新版本，但官方 `npm audit` 仍报告其 Parcel 构建链存在 high 级审计项；`npm audit fix --force` 会降级 Plasmo，不能自动执行。
+- 2026-07-17 本地供应链基线通过：Plasmo `0.90.5` 已归类为直接 dev dependency，未保留在 runtime dependencies；baseline schema 已校验，package/lock 期望 SHA-256 已绑定，直接依赖清单完整，merge-base package/lock base diff 只允许 Plasmo runtime -> dev 移动且 package entry version/resolved/integrity 未漂移。Fresh registry audit 对当前 package/lock 仍是外部门禁 pending；未解析 High/Critical 账本因本次没有已验证当前 finding source 而保持空，这不代表零漏洞结论。
 - v0.2 loaded-extension 可见 smoke 已有 closeout 记录：历史 Popup smoke 曾显示 AI 服务、设置、记录、指令和功能开关；V02-WXT-005 复核通过了 WXT 内容脚本注入、划词工具栏、命令面板打开、双击菜单无截图入口、iframe 划词工具栏、iframe 快捷键桥接和控制台隐私摘要。Owner-assisted Chrome refresh 进一步确认 Popup Settings 主界面、功能开关、命令面板本地历史搜索和双击快捷菜单可见；Popup AI 服务/记录/指令二级页、clipboard toast、native right-click screenshot/context-menu、readability extraction 和 provider-safe floating action open 已记录 owner manual pass evidence。这不代表 WXT 默认构建批准、公开发布批准或 Chrome Web Store 审核通过。
 
 截图能力仅保留在用户主动触发的右键内部路径中。命令面板和双击快捷菜单不展示截图入口；当前文档不把截图作为普通用户主入口或公开卖点。

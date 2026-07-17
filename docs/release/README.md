@@ -1,7 +1,7 @@
 # Release
 
 Status: `active`
-Updated: 2026-07-10
+Updated: 2026-07-17
 
 本文件是 Aviso 产品仓库的稳定发布规则入口。当前版本、商店审核、公开发布和 owner 门禁状态只以 [`../STATE.md`](../STATE.md) 为准；每次发布的证据保留在 [`../../RELEASE_CHECKLIST.md`](../../RELEASE_CHECKLIST.md) 和对应版本规划中。
 
@@ -16,7 +16,7 @@ Updated: 2026-07-10
 
 | 层级 | 目标 | 入口 | 不能替代的证据 |
 | --- | --- | --- | --- |
-| 本地开发 | 验证代码和文档 | `npm test`、`npm run docs:check` | loaded-extension 体验、商店状态 |
+| 本地开发 | 验证代码、文档和本地供应链基线 | `npm test`、`npm run docs:check`、`npm run supply-chain:check` | loaded-extension 体验、商店状态、fresh registry audit |
 | 扩展候选包 | 生成可复核的目录和 zip | `npm run verify:release-candidate` | owner 手动验收、商店后台结果 |
 | 官网候选 | 构建中英文静态站点 | `cd website && npm run build` | 生产部署和页面复核 |
 | 公开发布 | 商店与官网对外可用 | owner 执行的外部流程 | [`../STATE.md`](../STATE.md) 中全部相关门禁 |
@@ -24,7 +24,7 @@ Updated: 2026-07-10
 ## 候选包与发布流程
 
 1. 以 [`../architecture/testing.md`](../architecture/testing.md) 的变更类型矩阵确定必跑检查。
-2. 生成候选包并核对 manifest、权限、版本、locale、敏感声明和 zip 内容。
+2. 运行 `npm run supply-chain:check`，确认 package/lock 相对 merge-base 的唯一允许依赖变化、baseline schema、hash 和本地冻结安装语义，再生成候选包并核对 manifest、权限、版本、locale、敏感声明和 zip 内容。
 3. 在 Chrome 中加载 `build/chrome-mv3-prod`，按 [`../../RELEASE_CHECKLIST.md`](../../RELEASE_CHECKLIST.md) 做 owner 手动验收。
 4. 对齐官网、隐私政策、数据权限说明和商店文案；状态事实仍只写入 [`../STATE.md`](../STATE.md)。
 5. owner 明确批准后，才可执行商店提交、生产部署、tag 或 GitHub Release。
@@ -59,4 +59,4 @@ Updated: 2026-07-10
 
 ## 发布证据与 Owner Gate
 
-最少证据：commit、版本、检查结果、候选包路径、manifest/权限复核、loaded-extension 结果、官网构建结果、隐私/商店文案对账、回滚方案和 owner 批准。当前状态写入 [`../STATE.md`](../STATE.md)，执行流水留在发布清单或外部系统。
+最少证据：commit、版本、检查结果、供应链基线 JSON 语义、merge-base package/lock base diff 语义、候选包路径、manifest/权限复核、loaded-extension 结果、官网构建结果、隐私/商店文案对账、fresh registry audit 外部门禁状态、回滚方案和 owner 批准。CODEOWNERS/branch protection 的实际强制是外部 owner gate；同 PR 只刷新 baseline policy/schema 不等于批准。当前状态写入 [`../STATE.md`](../STATE.md)，执行流水留在发布清单或外部系统。

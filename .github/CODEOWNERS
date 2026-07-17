@@ -1,0 +1,5 @@
+/package.json @mongocyber
+/package-lock.json @mongocyber
+/docs/security/supply-chain-baseline.json @mongocyber
+/docs/security/supply-chain-baseline.schema.json @mongocyber
+/scripts/check-supply-chain-baseline.mjs @mongocyber
