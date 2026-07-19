@@ -9,7 +9,7 @@ sidebar_position: 3
 Aviso 支持两种 AI 服务路径：
 
 - **Aviso AI**：登录后可使用免费额度，不需要自己提供模型 provider API Key。
-- **BYOK provider**：使用你自己的模型 provider API Key，请求会从浏览器扩展直连你选择的 provider。
+- **BYOK direct-provider**：使用你自己的模型 provider API Key；BYOK 请求会从浏览器扩展直连你选择的 provider。
 
 你可以在 Popup 中管理默认服务，也可以按任务切换服务。
 
@@ -65,14 +65,15 @@ Aviso 不会自动读取 provider 账号里的模型列表，也不会自动调�
 
 ## API Key 如何保存
 
-API Key 不明文保存，会经过本地加密/混淆级保护后保存在 Chrome local extension storage 中，并用于浏览器扩展直连所选 provider。
+API Key 不明文保存，会以本地加密/混淆级保护保存在当前浏览器 profile 的 Chrome local extension storage 中，并用于 BYOK direct-provider 请求。
 
 仍需理解这个边界：
 
-- API Key 存在于你的浏览器本地环境中。
-- 当前保护不防御已经能读取本机浏览器 profile、控制本机或控制当前 Chrome 用户环境的攻击者。
+- API Key 存在于当前浏览器 profile 中。
+- 当前保护只是浏览器 profile 内的便利边界，不防御可读浏览器 profile、已被控制的设备或恶意扩展。
+- 当前保护不是系统钥匙串、硬件安全模块、端到端加密或零知识保护。
 - 非敏感服务设置保存在 Chrome 同步设置中，API Key 不进入同步设置。
-- 使用模型时，请求会直接发送给你选择的 provider。
+- 使用 BYOK provider 时，请求会直接发送给你选择的 provider；使用 Aviso AI 时，请求会在你选择该路径并登录后经过 Aviso 后端和上游 provider。
 - provider 的计费、日志、数据保留和使用限制由你的 provider 账户条款决定。
 - 不要在截图、反馈、Issue、录屏或聊天中暴露 API Key。
 

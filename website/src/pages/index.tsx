@@ -188,7 +188,7 @@ const copy = {
     byokTitlePre: "登录即可使用 Aviso AI。",
     byokTitleMid: "也可以",
     byokTitleEm: "自带 API Key",
-    byokLede: "Aviso AI 适合快速开始:登录后可使用免费额度。已有模型服务账号的用户,可以继续使用 BYOK 模式,由浏览器直连当前支持的模型服务商。两种方式可以按任务切换。",
+    byokLede: "Aviso AI 适合快速开始:登录后可使用免费额度。已有模型服务账号的用户,可以继续使用 BYOK direct-provider 模式,由浏览器直连当前支持的模型服务商；选择 Aviso AI 并登录后,请求会经过 Aviso 后端和上游模型服务。两种方式可以按任务切换。",
     provCardTitle: "AI 服务",
     provCardTag: "两种路径",
     provDaily: "Volcengine Ark",
@@ -200,13 +200,13 @@ const copy = {
     privacyTag: "04 — 隐私与控制",
     privacyTitlePre: "每一种使用方式,",
     privacyTitleEm: "数据流向都清楚",
-    privacyLede: "BYOK 模式下,浏览器直连你选择的模型服务商。Aviso AI 需要登录并主动使用,请求会经过 Aviso 后端和上游模型服务。剪贴板感知默认关闭；开启后敏感内容会跳过提示,功能入口也可以在设置里关闭。",
+    privacyLede: "BYOK direct-provider 模式下,浏览器直连你选择的模型服务商。Aviso AI 需要你选择并登录后使用,请求会经过 Aviso 后端和上游模型服务。剪贴板感知默认关闭；开启后敏感内容会跳过提示,功能入口也可以在设置里关闭。",
     compareThem: "多数 AI 助手扩展",
     compareUs: "Aviso",
     privacyNote:
-      "Aviso 的隐私边界写进了实现本身:API Key 不明文保存,对话历史只存在你的浏览器里,命令面板搜索历史和书签都在本地完成。BYOK 由浏览器直连你选择的 provider；Aviso AI 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板、API Key 或完整 URL。",
+      "Aviso 的隐私边界写进了实现本身:API Key 不明文保存,仅是当前浏览器 profile 内的本地加密/混淆便利边界,不防可读 profile、已被控制设备或恶意扩展。对话历史保存在浏览器里,命令面板搜索历史和书签都在本地完成。BYOK 由浏览器直连你选择的 provider；Aviso AI 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板、API Key 或完整 URL。",
     metricBackendNum: "BYOK",
-    metricBackend: "直连路径不经过 Aviso 后端",
+    metricBackend: "路径不经过 Aviso 后端",
     metricTelemetryNum: "0",
     metricTelemetry: "个遥测或第三方分析 SDK",
     metricTriggerNum: "主动触发",
@@ -271,7 +271,7 @@ const copy = {
     byokTitleMid: "Or bring ",
     byokTitleEm: "your own API key",
     byokLede:
-      "Aviso AI is the fastest start: sign in and use free quota. If you already have a model account, BYOK keeps your browser connected directly to currently supported providers. Switch between the two paths by task.",
+      "Aviso AI is the fastest start: sign in and use free quota. If you already have a model account, BYOK direct-provider keeps your browser connected directly to currently supported providers. If you choose Aviso AI and sign in, requests pass through the Aviso backend and upstream model services. Switch between the two paths by task.",
     provCardTitle: "AI services",
     provCardTag: "two paths",
     provDaily: "Volcengine Ark",
@@ -284,13 +284,13 @@ const copy = {
     privacyTitlePre: "Every way to use Aviso",
     privacyTitleEm: "has a clear data path",
     privacyLede:
-      "In BYOK mode, your browser connects directly to the model provider you choose. Aviso AI requires sign-in and an explicit action, then requests pass through the Aviso backend and upstream model services. Clipboard-aware prompts are off by default; when enabled, sensitive clipboard content is skipped, and entry points can be turned off in settings.",
+      "In BYOK direct-provider mode, your browser connects directly to the model provider you choose. Aviso AI runs after you choose it and sign in, then requests pass through the Aviso backend and upstream model services. Clipboard-aware prompts are off by default; when enabled, sensitive clipboard content is skipped, and entry points can be turned off in settings.",
     compareThem: "Most AI assistant extensions",
     compareUs: "Aviso",
     privacyNote:
-      "Aviso's privacy boundary is built into the implementation: API keys are not stored in plaintext, chat history stays in your browser, and command-palette searches over history and bookmarks run locally. BYOK goes browser-direct to your selected provider; the Aviso AI backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, API keys, or full URLs.",
+      "Aviso's privacy boundary is built into the implementation: API keys are not stored in plaintext, but their local encryption/obfuscation is only a browser-profile convenience boundary and does not defend against a readable profile, compromised device, or malicious extension. Chat history stays in your browser, and command-palette searches over history and bookmarks run locally. BYOK goes browser-direct to your selected provider; the Aviso AI backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, API keys, or full URLs.",
     metricBackendNum: "BYOK",
-    metricBackend: "direct path does not pass through the Aviso backend",
+    metricBackend: "path does not pass through the Aviso backend",
     metricTelemetryNum: "0",
     metricTelemetry: "telemetry or third-party analytics SDKs",
     metricTriggerNum: "On trigger",
@@ -429,8 +429,8 @@ const compareRows = [
     enCrit: "Where your content goes",
     zhThem: "通常要先接受一套统一的数据处理规则",
     enThem: "Often asks you to accept one broad data policy",
-    zhUs: "BYOK 直连 provider；Aviso AI 仅在你主动触发时工作,并且不持久化正文",
-    enUs: "BYOK goes direct; Aviso AI runs only when triggered and does not persist raw content"
+    zhUs: "BYOK 直连 provider；Aviso AI 在你选择并登录后经过 Aviso 后端,且不持久化正文",
+    enUs: "BYOK goes direct; Aviso AI passes through the backend after you choose it and sign in, and does not persist raw content"
   },
   {
     zhCrit: "怎么开始",
@@ -506,8 +506,8 @@ const faqs = [
   {
     zhQ: "必须自己准备 API Key 吗?",
     enQ: "Do I need my own API key?",
-    zhA: "不一定。想快速开始,可以登录 Aviso AI 使用免费额度。已有模型服务账号时,可以添加自己的 API Key,让浏览器直连你选择的厂商。BYOK 可用性仍取决于你的 Key、模型权限和 provider 状态。",
-    enA: "Not necessarily. To start quickly, sign in to Aviso AI and use free quota. If you already have a model account, add your own API key and let the browser connect directly to your chosen provider. BYOK availability still depends on your key, model access, and provider status."
+    zhA: "不一定。想快速开始,可以登录 Aviso AI 使用免费额度。已有模型服务账号时,可以添加自己的 API Key,通过 BYOK direct-provider 让浏览器直连你选择的厂商。BYOK 可用性仍取决于你的 Key、模型权限和 provider 状态。",
+    enA: "Not necessarily. To start quickly, sign in to Aviso AI and use free quota. If you already have a model account, add your own API key and use BYOK direct-provider so the browser connects directly to your chosen provider. BYOK availability still depends on your key, model access, and provider status."
   },
   {
     zhQ: "Aviso 会收集我的浏览数据吗?",

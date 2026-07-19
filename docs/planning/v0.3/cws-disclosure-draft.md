@@ -46,7 +46,7 @@ Do not paste the staging backend host permission into a production Chrome Web St
 | --- | --- | --- | --- |
 | User-provided or page-derived AI input | Sent directly to selected provider only when the user triggers an action | Sent to Aviso backend and upstream provider only when the user triggers hosted AI | Used only to provide the requested AI result |
 | AI output | Returned from selected provider to extension | Returned from upstream provider through Aviso backend to extension | Displayed in-page; saved locally only if user saves history |
-| API keys | User BYOK key stays in Chrome local extension storage with local encryption/obfuscation-level protection | User BYOK key is not sent to Aviso backend; hosted AI does not require user provider keys | Do not disclose as uploaded to Aviso |
+| API keys | User BYOK key stays in Chrome local extension storage inside the current browser profile with local encryption/obfuscation-level protection | User BYOK key is not sent to Aviso backend; hosted AI does not require user provider keys | Not plaintext, but only a browser-profile convenience boundary; not keychain, hardware-backed, end-to-end, or zero-knowledge protection |
 | Account identity | Not required | Google sign-in is used to establish hosted session and account/quota state | Do not record raw id token, profile payload, session token, or email/profile text in project evidence |
 | Usage/quota metadata | Not applicable to BYOK path | Stored for account, quota, abuse-prevention, request-status, and operational review | Current metadata retention: 30 days |
 | Browser history/bookmarks | Local command-palette search only | Local command-palette search only | Not sent to Aviso backend or provider as search results |

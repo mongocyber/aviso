@@ -172,6 +172,66 @@ test("ui language copy lookup keeps Chinese and English surface labels", () => {
   assert.equal(getI18nMessage("settings.language.auto", "en"), "Auto")
 })
 
+test("popup privacy copy discloses local API-key boundary and BYOK/Aviso AI split", () => {
+  const zhHelper = getI18nMessage("popup.privacyBoundary.helper", "zh-CN")
+  const enHelper = getI18nMessage("popup.privacyBoundary.helper", "en")
+  const zhFull = getI18nMessage("popup.privacy.full", "zh-CN")
+  const enFull = getI18nMessage("popup.privacy.full", "en")
+  const zhZeroByok = getI18nMessage("popup.zero.byok.desc", "zh-CN")
+  const enZeroByok = getI18nMessage("popup.zero.byok.desc", "en")
+  const zhZeroPrivacy = getI18nMessage("popup.zero.privacy", "zh-CN")
+  const enZeroPrivacy = getI18nMessage("popup.zero.privacy", "en")
+  const zhByokDesc = getI18nMessage("popup.privacy.byokDesc", "zh-CN")
+  const enByokDesc = getI18nMessage("popup.privacy.byokDesc", "en")
+
+  for (const text of [
+    zhHelper,
+    enHelper,
+    zhFull,
+    enFull,
+    zhZeroByok,
+    enZeroByok,
+    zhZeroPrivacy,
+    enZeroPrivacy,
+    zhByokDesc,
+    enByokDesc
+  ]) {
+    assert.doesNotMatch(
+      text,
+      /AES-256|strong encryption|strongly encrypted|no project-owned server|没有项目方服务器|不设项目方服务器|不经过 Aviso 中间服务器|requests don't go through us|请求不经过我们/i
+    )
+  }
+
+  assert.match(zhHelper, /BYOK/)
+  assert.match(zhHelper, /Aviso AI/)
+  assert.match(zhHelper, /后端/)
+  assert.match(enHelper, /BYOK/)
+  assert.match(enHelper, /Aviso AI/)
+  assert.match(enHelper, /backend/)
+  assert.match(zhZeroPrivacy, /BYOK/)
+  assert.match(zhZeroPrivacy, /Aviso AI/)
+  assert.match(zhZeroPrivacy, /后端/)
+  assert.match(enZeroPrivacy, /BYOK/)
+  assert.match(enZeroPrivacy, /Aviso AI/)
+  assert.match(enZeroPrivacy, /backend/)
+  assert.match(zhByokDesc, /BYOK/)
+  assert.match(enByokDesc, /BYOK/)
+
+  assert.match(zhFull, /本地加密\s*\/\s*混淆级保护/)
+  assert.match(zhFull, /浏览器 profile/)
+  assert.match(zhFull, /已被控制/)
+  assert.match(zhFull, /BYOK/)
+  assert.match(zhFull, /Aviso AI/)
+  assert.match(zhFull, /后端/)
+
+  assert.match(enFull, /local encryption\/obfuscation-level protection/)
+  assert.match(enFull, /browser profile/)
+  assert.match(enFull, /compromised machine/)
+  assert.match(enFull, /BYOK/)
+  assert.match(enFull, /Aviso AI/)
+  assert.match(enFull, /backend/)
+})
+
 test("popup localization keeps user saved labels and provider display names raw", () => {
   const popupSource = readFileSync(
     new URL("../src/popup/index.tsx", import.meta.url),

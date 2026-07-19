@@ -23,7 +23,7 @@ BYOK 不强制登录。Aviso AI 需要用户主动登录后使用免费额度；
 
 | 数据 | 用途 | 当前保存方式 |
 | --- | --- | --- |
-| API Key | 调用用户选择的 provider | 不明文保存；经过本地加密/混淆级保护后保存在 Chrome local extension storage。 |
+| API Key | 调用用户选择的 BYOK provider | 不明文保存；以本地加密/混淆级保护保存在当前浏览器 profile 的 Chrome local extension storage。 |
 | Aviso AI session | 识别登录状态、账号状态和额度 | 保存在 Chrome local extension storage；可在 Popup 中退出。 |
 | 设置 | 模型、开关、界面语言、主题、模板和 provider metadata | 保存在 Chrome 同步设置中。 |
 | 历史 | 方便搜索、保存和复用过往结果 | 保存在 Chrome 本地扩展存储。 |
@@ -33,7 +33,7 @@ BYOK 不强制登录。Aviso AI 需要用户主动登录后使用免费额度；
 
 根据用户选择的功能，请求内容可能包括选中文本、页面 URL、链接 URL、图片 URL、页面正文片段、自定义提示词、继续追问时的近期对话节选，或用户直接输入的问题。
 
-BYOK 路径会把这些内容直接发送到用户选择的 provider。Aviso AI 路径会把这些内容发送到 Aviso 后端和上游 provider。Aviso 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板内容、用户 BYOK API Key 或完整 URL；账户、额度、风控、请求状态和运营排查所需 metadata 当前保留 30 天。
+BYOK direct-provider 路径会把这些内容直接发送到用户选择的 provider。用户选择 Aviso AI 并登录后，Aviso AI 路径会把这些内容发送到 Aviso 后端和上游 provider。Aviso 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板内容、用户 BYOK API Key 或完整 URL；账户、额度、风控、请求状态和运营排查所需 metadata 当前保留 30 天。
 
 以下内容不进入 provider 请求：
 
@@ -89,7 +89,7 @@ https://aviso-backend-production.vercel.app/*
 
 这不是对所有敏感信息的完整保证。用户仍应自行判断哪些内容可以发送给模型 provider。
 
-API Key 的本地保护也不是本机安全边界：它不防御已经能读取本机浏览器 profile、控制本机或控制当前 Chrome 用户环境的攻击者。
+API Key 的本地保护只是浏览器 profile 内的便利边界，不是本机安全边界：它不防御可读浏览器 profile、已被控制的设备或恶意扩展，也不是系统钥匙串、硬件安全模块、端到端加密或零知识保护。
 
 Aviso AI 不要求用户提供模型 provider API Key。Aviso AI session 保存在本地扩展存储中，用户可以在 Popup 中退出账号；退出不会删除或禁用 BYOK provider 配置。
 

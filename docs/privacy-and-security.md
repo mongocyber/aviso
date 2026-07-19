@@ -1,6 +1,6 @@
 # Aviso Privacy and Security
 
-Updated: 2026-07-17
+Updated: 2026-07-19
 
 生产级安全生命周期入口见 [`security/README.md`](./security/README.md)；本文继续持有扩展权限、存储和数据流的实现详情，当前状态以 [`STATE.md`](./STATE.md) 为准。
 
@@ -17,7 +17,7 @@ Aviso 不收集遥测，不使用分析 SDK，不出售用户数据，不把用�
 
 | 数据 | 存储位置 | 说明 |
 | --- | --- | --- |
-| API Key | `chrome.storage.local/contextai_api_keys` | 不明文保存，不同步；当前使用由扩展 ID 派生的口令做本地加密 / 混淆级保护。 |
+| API Key | `chrome.storage.local/contextai_api_keys` | 不明文保存，不同步；当前是浏览器 profile 内的本地加密 / 混淆便利边界，不是系统钥匙串、硬件安全模块、端到端加密或零知识保护。 |
 | 设置 | `chrome.storage.sync/contextai_settings` | 非敏感设置，包括功能开关、界面语言、主题、默认服务、自定义指令和 provider metadata。 |
 | 本地 AI 对话历史 | `chrome.storage.local/contextai_history` | 本地保存，不包含 API Key。 |
 | 托管 AI session/account state | `chrome.storage.local` hosted account/session records | 仅用于托管路径登录态、账号和额度展示；退出托管账号不删除 BYOK 配置。 |
@@ -90,7 +90,7 @@ Content-script frame access：
 
 ### 命令面板页面动作
 
-命令面板的当前页面总结和当前页面翻译需要用户明确选择候选后才读取页面正文，并通过既有 BYOK direct-provider 路径处理。搜索候选、浏览历史、书签或本地对话不会自动触发页面正文读取，也不会自动发送给 provider。
+命令面板的当前页面总结和当前页面翻译需要用户明确选择候选后才读取页面正文，并按当前选择的 BYOK direct-provider 或 Aviso AI 路径处理。搜索候选、浏览历史、书签或本地对话不会自动触发页面正文读取，也不会自动发送给 provider。
 
 命令面板不做联网搜索、远端链接正文抓取、自主多步浏览或自动打开危险 URL scheme。
 
@@ -125,7 +125,7 @@ Aviso 当前不收集、不远端保存：
 
 ## API Key 保护边界
 
-API Key 不明文保存，位置是 `chrome.storage.local/contextai_api_keys`，不会进入 Chrome sync。当前口令由扩展 ID 派生，属于本地加密 / 混淆级保护：它能避免普通配置同步和直接明文暴露，但不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。
+API Key 不明文保存，位置是 `chrome.storage.local/contextai_api_keys`，不会进入 Chrome sync。当前保护属于当前浏览器 profile 内的本地加密 / 混淆便利边界：它能避免普通配置同步和直接明文暴露，但不防御可读浏览器 profile、已被控制的设备或恶意扩展，也不是系统钥匙串、硬件安全模块、端到端加密或零知识保护。
 
 ## 安全维护要求
 

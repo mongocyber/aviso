@@ -14,7 +14,7 @@ Aviso is a Chrome extension. It helps users call AI inside the current webpage t
 
 Aviso currently has two AI request paths:
 
-- BYOK direct-provider: you bring your own model API key. When you actively trigger an AI request, the browser extension sends the request directly to the model provider you selected. API keys, settings, and history are stored in Chrome extension storage.
+- BYOK direct-provider: you bring your own model API key. When you choose BYOK and actively trigger an AI request, the browser extension sends the request directly to the model provider you selected. API keys, settings, and history are stored in Chrome extension storage.
 - Aviso AI: after sign-in, you can use free quota. Only when you choose Aviso AI and actively trigger a request does the request pass through the Aviso backend and then to upstream model providers. BYOK remains available regardless of Aviso AI sign-in state.
 
 ## Data Stored Locally
@@ -23,7 +23,7 @@ Aviso stores necessary data in browser extension storage:
 
 | Data type | Storage location | Notes |
 | --- | --- | --- |
-| API key | Chrome local extension storage | Not stored in plaintext; protected locally with encryption/obfuscation-level protection before storage; used only for requests to the provider you select. |
+| API key | Chrome local extension storage | Not stored in plaintext; protected locally with encryption/obfuscation-level protection inside the current browser profile; used only for BYOK requests to the provider you select. |
 | Aviso AI session | Chrome local extension storage | Used to identify sign-in state, account state, and quota; users can sign out in the Popup. |
 | Settings | Chrome sync settings | Includes UI language, theme, feature switches, custom templates, default service, and provider metadata. |
 | History | Chrome local extension storage | Stores user-saved results for later viewing, search, and reuse. |
@@ -33,7 +33,7 @@ Some internal storage keys still use `contextai_*` names for compatibility with 
 
 ## Data Sent to Model Providers or Aviso AI
 
-When you actively trigger an AI action, Aviso sends only the information needed for that action through the path you selected. The BYOK path sends it directly to the provider you selected. The Aviso AI path sends it through the Aviso backend and upstream model providers. Depending on the action, this may include:
+When you actively trigger an AI action, Aviso sends only the information needed for that action through the path you selected. The BYOK direct-provider path sends it directly to the provider you selected. After you choose Aviso AI and sign in, the Aviso AI path sends it through the Aviso backend and upstream model providers. Depending on the action, this may include:
 
 - Selected text.
 - User-entered question or prompt.
@@ -76,11 +76,11 @@ Do not submit API keys, tokens, private webpage bodies, customer data, unpublish
 
 ## API Keys
 
-BYOK API keys are not stored in plaintext. They are stored in Chrome local extension storage with local encryption/obfuscation-level protection. Aviso does not upload user BYOK API keys to Aviso servers. Aviso AI does not require users to provide model provider API keys.
+BYOK API keys are not stored in plaintext. They are stored in Chrome local extension storage inside the current browser profile with local encryption/obfuscation-level protection. Aviso does not upload user BYOK API keys to Aviso servers. Aviso AI does not require users to provide model provider API keys.
 
-This protection does not defend against an attacker who can read the local browser profile, control the device, or control the current Chrome user environment. If you suspect the device or browser profile is compromised, rotate or revoke the API key in the provider console first.
+This protection is only a convenience boundary inside the browser profile. It does not defend against a readable browser profile, a compromised device, or a malicious extension, and it is not keychain storage, hardware-backed protection, end-to-end encryption, or zero-knowledge protection. If you suspect the device or browser profile is compromised, rotate or revoke the API key in the provider console first.
 
-When you use a BYOK provider, the request goes directly from the browser extension to that provider. When you use Aviso AI, the request passes through the Aviso backend and upstream providers. Providers may process request content, logs, billing, and retention according to their own terms. Review and accept the provider’s terms and privacy policy before use.
+When you use a BYOK provider, the request goes directly from the browser extension to that provider. When you choose Aviso AI and sign in, the request passes through the Aviso backend and upstream providers. Providers may process request content, logs, billing, and retention according to their own terms. Review and accept the provider’s terms and privacy policy before use.
 
 ## Chrome Web Store Limited Use Statement
 
@@ -136,7 +136,7 @@ If you uninstall Aviso, Chrome clears the extension’s local storage. You can a
 
 ## Provider Support Scope
 
-Aviso supports configurable OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan paths. Users can enter their own API key, model ID, or endpoint in settings; requests are sent directly from the browser extension to the selected provider. OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually, and Aviso does not automatically read model lists.
+Aviso supports configurable OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan paths. Users can enter their own API key, model ID, or endpoint in settings; BYOK requests are sent directly from the browser extension to the selected provider. OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually, and Aviso does not automatically read model lists.
 
 These model services require the user's own valid API key, model ID, or endpoint. Actual availability depends on the user's account access, model access, and service status.
 

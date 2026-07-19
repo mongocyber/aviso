@@ -44,6 +44,7 @@ const releaseClaimScanRoots = [
   "docs/release/README.md",
   "docs/architecture/website-and-store-copy.md",
   "docs/privacy-and-security.md",
+  "src/utils/i18n-core.ts",
   "website/README.md",
   "website/src",
   "website/docs",
@@ -89,6 +90,14 @@ const defaultSafeNegationRegex =
 
 const freeQuotaSafeNegationRegex =
   /\b(?:not|never|pending|blocked|forbidden|excluded|unavailable|cannot|can't|isn't|aren't|hasn't|doesn't|don't|does\s+not|do\s+not|is\s+not|are\s+not|has\s+not|have\s+not|must\s+not|should\s+not)\b|不(?:是|会|能|可|应)|未|没有|尚未|待|排除|暂不可用|不可用/i
+
+const apiKeySubjectPattern = String.raw`(?:\bAPI\s*keys?\b|API\s*密钥|API\s*密匙|密钥)`
+const apiKeyProtectionPredicatePattern = String.raw`(?:AES[-\s]?256\s*(?:encrypted|加密)?|encrypted\s+with\s+AES[-\s]?256|strong(?:ly)?\s+encrypted(?:\s+locally)?|strong\s+encryption|securely\s+encrypted|military[-\s]?grade(?:\s+(?:encryption|encrypted))?|HSM|hardware\s+security\s+module|hardware[-\s]?backed|keychain|secure\s+enclave|end-to-end|zero[- ]knowledge|completely\s+secure|fully\s+secure|totally\s+secure|absolutely\s+secure|compromise-resistant|强加密|安全加密|军用级(?:加密)?(?:.{0,30}(?:硬件安全模块|HSM))?|系统钥匙串|钥匙串|secure\s+enclave|安全硬件|hardware-backed|硬件级|硬件安全模块|端到端|zero[- ]knowledge|零知识|绝对安全|完全安全)`
+const apiKeyProtectionPredicateRegex = new RegExp(apiKeyProtectionPredicatePattern, "i")
+const apiKeyProtectionOverclaimRegex = new RegExp(
+  `${apiKeySubjectPattern}.{0,80}${apiKeyProtectionPredicatePattern}`,
+  "i"
+)
 
 const releaseClaimRules = [
   {
@@ -141,6 +150,27 @@ const releaseClaimRules = [
       "Raw prompts, page bodies, screenshots/base64, clipboard content, and full URLs must not be described as retained or persisted by Aviso.",
     regex:
       /(?:(?:raw\s+prompts?|raw\s+responses?|page\s+bodies|page\s+body|screenshots?\/base64|clipboard\s+content|full\s+URLs?|页面正文|截图\/base64|剪贴板内容|完整\s*URL).{0,80}\b(?:are\s+)?(?:retained|persisted|stored|logged|saved|kept)\b|(?:Aviso|backend|hosted\s+path|Aviso\s+backend).{0,80}\b(?:retains?|persists?|stores?|logs?|saves?|keeps?)\b.{0,80}(?:raw\s+prompts?|raw\s+responses?|page\s+bodies|page\s+body|screenshots?\/base64|clipboard\s+content|full\s+URLs?)|(?:托管后端|后端|Aviso).{0,40}(?:持久化|保存|记录|留存).{0,40}(?:raw\s*prompt|raw\s*response|页面正文|截图\/base64|剪贴板内容|完整\s*URL))/i
+  },
+  {
+    label: "API-key protection overclaim",
+    reason:
+      "API-key storage is local encryption/obfuscation only; it must not be described as AES-256, strong, hardware, keychain, end-to-end, zero-knowledge, or compromise-resistant protection.",
+    regex: apiKeyProtectionOverclaimRegex
+  },
+  {
+    label: "project backend absence overclaim",
+    reason:
+      "Aviso has an optional hosted-AI backend path; public copy must not claim the project has no server or no backend.",
+    regex:
+      /(?:\bAviso\b.{0,50}\b(?:has|needs|uses)\s+no\s+(?:project-owned\s+)?(?:server|backend)\b|\bno\s+Aviso\s+(?:project-owned\s+)?(?:server|backend)\b(?:\s+involved\b(?:\s+in\s+requests?)?)?|\bAviso\b.{0,50}\b(?:serverless|no-backend)\b|Aviso.{0,20}(?:没有|不设|无需|不需要)(?:项目方)?(?:服务器|后端)|\bwithout\s+an?\s+Aviso\s+(?:middle\s+)?(?:server|backend)\b|(?:\b(?:requests?|AI\s+requests?)\b.{0,20}(?:do\s+not|does\s+not|don['’]t|doesn['’]t)\s+go\s+through\s+us\b)|(?:请求|AI\s*请求)\s*不\s*经过\s*我们|不经过\s*Aviso\s*中间服务器)/i,
+    safeNegationRegex: /$^/
+  },
+  {
+    label: "unscoped direct-provider overclaim",
+    reason:
+      "Direct browser-to-provider routing is true for BYOK; hosted AI requests pass through the Aviso backend after the user chooses hosted AI and signs in.",
+    regex:
+      /(?:\bWhen\s+(?:you|the\s+user)\s+(?:start|actively\s+triggers?)\s+an?\s+AI\s+(?:request|action)\b(?:(?:(?!\bBYOK\b|\bAviso\s+AI\b).){0,220})(?:(?:browser|browser\s+extension).{0,120}(?:connects?|sends?|sent).{0,80}(?:directly|direct).{0,120}(?:model\s+provider(?:\s+you\s+choose)?|provider(?:\s+you\s+choose)?)|(?:content|required\s+content).{0,80}(?:is\s+)?sent\s+directly.{0,80}(?:browser|browser\s+extension).{0,120}(?:model\s+provider|user-selected\s+provider|provider))|(?:\b(?:all|every)\s+(?:AI\s+)?(?:requests?|traffic)\b.{0,80}(?:go(?:es)?|route(?:s)?|flow(?:s)?|connect(?:s)?|are\s+sent|is\s+sent|send(?:s)?)\b.{0,80}(?:directly|direct).{0,80}(?:providers?|model\s+providers?))|(?:你|用户)主动发起\s*AI\s*(?:请求|操作)时(?:(?!(?:BYOK|Aviso\s+AI|托管)).){0,220}(?:浏览器|浏览器扩展).{0,120}(?:直接发送|直连).{0,120}(?:provider|模型厂商|模型\s*provider)|(?:所有|全部|每次|一切)\s*(?:AI\s*)?(?:请求|流量|操作).{0,60}(?:浏览器|浏览器扩展).{0,60}(?:直连|直接发送).{0,80}(?:所选)?(?:provider|模型厂商|模型\s*provider|厂商))/i
   },
   {
     label: "permission scope overclaim",
@@ -421,7 +451,7 @@ function checkReleaseSurfaceConsistency() {
 
   console.log("ok package.json, docs/STATE.md, and source/final manifests agree on version")
   console.log(
-    "ok release scan covers hosted-live, payment, permission, retention, install CTA, website/privacy docs, recursive Chrome Web Store text assets, release evidence, and manifest surfaces"
+    "ok release scan covers hosted-live, payment, permission, retention, API-key protection, backend/direct-routing, install CTA, website/privacy docs, Popup copy, recursive Chrome Web Store text assets, release evidence, and manifest surfaces"
   )
 }
 
@@ -447,7 +477,7 @@ function runForbiddenClaimsScan() {
   }
 
   console.log(
-    "ok no positive hosted-AI live/CWS-approved/no-login quota/payment/web-search/retention/permission/install claims found"
+    "ok no positive hosted-AI live/CWS-approved/no-login quota/payment/web-search/retention/API-key protection/backend/direct-routing/permission/install claims found"
   )
 }
 
@@ -510,7 +540,7 @@ export function splitReleaseClaimClauses(text) {
   const normalized = normalizedClaim.text
   const clauses = []
   const boundary =
-    /[|,，;；。!！?？:：()[\]{}]+|\.(?![A-Za-z0-9])|\s*[—–]\s*|\s*\/\s*|\s+(?:and|or|but|while|whereas|however|although|yet)\s+|(?:但是|并且|同时|以及|但|而)|(?:和|或|且)(?=(?:Chrome\s*Web\s*Store|CWS|hosted\s*AI|Aviso\s*AI|托管\s*AI|托管路径|已\s*(?:公开\s*上线|公开\s*上架|上线|发布)|公开(?:上线|上架|发布|可用)|正式(?:上线|上架)|审核通过|已通过|已批准|当前可用|已经可用|可用|立即安装|公开可安装|正式可安装|已上架))/giu
+    /[|,，;；。!！?？:：()[\]{}]+|\.(?![A-Za-z0-9])|\s*[—–]\s*|\s*\/\s*|\s+because\s+(?=(?:they|it|these|those)\b)|\s+(?:and|or|but|while|whereas|however|although|yet)\s+|(?:但是|并且|同时|以及|但|而)|(?:和|或|且)(?=(?:Chrome\s*Web\s*Store|CWS|hosted\s*AI|Aviso\s*AI|托管\s*AI|托管路径|已\s*(?:公开\s*上线|公开\s*上架|上线|发布)|公开(?:上线|上架|发布|可用)|正式(?:上线|上架)|审核通过|已通过|已批准|当前可用|已经可用|可用|立即安装|公开可安装|正式可安装|已上架))/giu
   let start = 0
   let previousBoundary = ""
   for (const match of normalized.matchAll(boundary)) {
@@ -518,6 +548,9 @@ export function splitReleaseClaimClauses(text) {
       continue
     }
     if (shouldKeepSlashInsideToken(normalized, match.index, match[0])) {
+      continue
+    }
+    if (shouldKeepCommaInsideUnscopedDirectClaim(normalized, match.index, match[0])) {
       continue
     }
 
@@ -651,44 +684,124 @@ function shouldScanWrappedClaimLine(line, next) {
   if (!current || !following) {
     return false
   }
-  if (/^[#>|-]/.test(following)) {
+  if (isClaimScanBlockBoundaryLine(current) || isClaimScanBlockBoundaryLine(following)) {
     return false
   }
-  return !/[.!?。！？;；:]$/.test(current)
+  if (/[.!?。！？]$/.test(current)) {
+    return false
+  }
+  if (/[;；:：]$/.test(current)) {
+    return startsWithWrappedClaimContinuation(following)
+  }
+  return true
+}
+
+function isClaimScanBlockBoundaryLine(line) {
+  return /^(?:#{1,6}\s|>\s?|[-*+]\s+|\d+[.)]\s+)/.test(line)
+}
+
+function startsWithWrappedClaimContinuation(text) {
+  return (
+    /^(?:(?:they|these|those)\s+(?:are|remain|stay|use|uses|have|has)|it\s+(?:is|remains|stays|uses|has))\s+/i.test(
+      text
+    ) ||
+    /^(?:is|are|has\s+been|have\s+been|publicly\s+available|publicly\s+listed|available\s+to\s+the\s+public|live\s+now|live|release-ready|public\s+beta|approved|published|listed|released)\b/i.test(
+      text
+    ) ||
+    /^(?:审核通过|已\s*通过|已批准|正式上架|公开上架|已\s*公开\s*上架|已\s*公开\s*上线|已\s*上线|正式上线|公开发布|公开可用|已公开|已\s*发布|可公开使用)/i.test(
+      text
+    ) ||
+    startsWithDirectProviderContinuation(text) ||
+    /^(?:requests?|AI\s+requests?)\s+(?:do\s+not|does\s+not|don['’]t|doesn['’]t)\s+go\s+through\s+us\b/i.test(
+      text
+    ) ||
+    /^(?:请求|AI\s*请求)\s*不\s*经过\s*我们/.test(text)
+  )
 }
 
 function buildScannableReleaseClaimClauses(text) {
   const clauses = splitReleaseClaimClauses(text)
   const scannable = []
-  let inheritedSubject = null
+  let inheritedReleaseSubject = null
+  let inheritedApiKeySubject = null
+  let inheritedDirectProviderIntro = null
   let previousClause = null
 
   for (const clause of clauses) {
     if (isHardSentenceBoundary(clause.previousBoundary)) {
-      inheritedSubject = null
+      inheritedReleaseSubject = null
+      inheritedApiKeySubject = null
+      inheritedDirectProviderIntro = null
       previousClause = null
     }
 
-    const subject = extractReleaseClaimSubject(clause.text)
-    const canInherit =
+    const releaseSubject = extractReleaseClaimSubject(clause.text)
+    const apiKeySubject = extractApiKeyClaimSubject(clause.text)
+    const directProviderIntro = extractDirectProviderIntro(clause.text)
+    const candidates = [clause]
+
+    const canInheritReleaseSubject =
       !isHardSentenceBoundary(clause.previousBoundary) &&
       !isNegatedOrPredicateContinuation(clause, previousClause)
-    const expandedFromInheritedSubject = !subject && canInherit
-    const expandedClause = !expandedFromInheritedSubject
-      ? clause
-      : expandElidedReleaseSubject(clause, inheritedSubject)
+    if (!releaseSubject && canInheritReleaseSubject) {
+      const expandedClause = expandElidedReleaseSubject(clause, inheritedReleaseSubject)
+      if (expandedClause !== clause) {
+        candidates.push({
+          ...clause,
+          ...expandedClause
+        })
+      }
+    }
 
-    scannable.push({
-      ...clause,
-      ...expandedClause
-    })
+    if (!apiKeySubject && canInheritApiKeySubject(clause, inheritedApiKeySubject)) {
+      const expandedClause = expandElidedApiKeySubject(clause, inheritedApiKeySubject)
+      if (expandedClause !== clause) {
+        candidates.push({
+          ...clause,
+          ...expandedClause
+        })
+      }
+    }
 
-    if (subject) {
-      inheritedSubject = {
-        text: subject.text,
+    if (!directProviderIntro && canInheritDirectProviderIntro(clause, inheritedDirectProviderIntro)) {
+      const expandedClause = expandElidedDirectProviderIntro(
+        clause,
+        inheritedDirectProviderIntro
+      )
+      if (expandedClause !== clause) {
+        candidates.push({
+          ...clause,
+          ...expandedClause
+        })
+      }
+    }
+
+    scannable.push(...candidates)
+
+    if (releaseSubject) {
+      inheritedReleaseSubject = {
+        text: releaseSubject.text,
         sourceOffsets: clause.sourceOffsets.slice(
-          subject.index,
-          subject.index + subject.text.length
+          releaseSubject.index,
+          releaseSubject.index + releaseSubject.text.length
+        )
+      }
+    }
+    if (apiKeySubject) {
+      inheritedApiKeySubject = {
+        text: apiKeySubject.text,
+        sourceOffsets: clause.sourceOffsets.slice(
+          apiKeySubject.index,
+          apiKeySubject.index + apiKeySubject.text.length
+        )
+      }
+    }
+    if (directProviderIntro) {
+      inheritedDirectProviderIntro = {
+        text: directProviderIntro.text,
+        sourceOffsets: clause.sourceOffsets.slice(
+          directProviderIntro.index,
+          directProviderIntro.index + directProviderIntro.text.length
         )
       }
     }
@@ -701,6 +814,28 @@ function buildScannableReleaseClaimClauses(text) {
 function extractReleaseClaimSubject(text) {
   const match = text.match(
     /\b(?:Chrome\s+Web\s+Store|CWS|hosted\s+AI|Aviso\s+AI)\b|(?:Chrome\s*Web\s*Store|CWS|托管\s*AI|托管路径)/i
+  )
+  return match
+    ? {
+        text: match[0],
+        index: match.index ?? 0
+      }
+    : null
+}
+
+function extractApiKeyClaimSubject(text) {
+  const match = text.match(new RegExp(apiKeySubjectPattern, "i"))
+  return match
+    ? {
+        text: match[0],
+        index: match.index ?? 0
+      }
+    : null
+}
+
+function extractDirectProviderIntro(text) {
+  const match = text.match(
+    /\bWhen\s+(?:you|the\s+user)\s+(?:start|actively\s+triggers?)\s+an?\s+AI\s+(?:request|action)(?:\s+(?:with\s+(?:BYOK|(?:(?:your|their|the\s+user'?s|users'?)\s+own|own)\s+API\s*keys?)|(?:in\s+the\s+BYOK\s+path)|(?:using\s+BYOK)))?\b|(?:你|用户)主动发起\s*AI\s*(?:请求|操作)时/i
   )
   return match
     ? {
@@ -738,6 +873,92 @@ function expandElidedReleaseSubject(clause, subject) {
   }
 
   return clause
+}
+
+function canInheritApiKeySubject(clause, subject) {
+  if (!subject || isHardSentenceBoundary(clause.previousBoundary)) {
+    return false
+  }
+
+  const continuation = stripLeadingApiKeyPronoun(clause.text, clause.sourceOffsets)
+  return Boolean(continuation && apiKeyProtectionPredicateRegex.test(continuation.text))
+}
+
+function expandElidedApiKeySubject(clause, subject) {
+  if (!subject) {
+    return clause
+  }
+
+  const continuation = stripLeadingApiKeyPronoun(clause.text, clause.sourceOffsets)
+  if (!continuation) {
+    return clause
+  }
+
+  return buildExpandedClause(subject, [apiKeySubjectLinkingVerb(subject.text)], continuation)
+}
+
+function canInheritDirectProviderIntro(clause, intro) {
+  if (!intro || isHardSentenceBoundary(clause.previousBoundary)) {
+    return false
+  }
+
+  const continuation = stripLeadingDirectProviderConnector(clause.text, clause.sourceOffsets)
+  return startsWithDirectProviderContinuation(continuation.text)
+}
+
+function expandElidedDirectProviderIntro(clause, intro) {
+  if (!intro) {
+    return clause
+  }
+
+  const continuation = stripLeadingDirectProviderConnector(clause.text, clause.sourceOffsets)
+  if (!startsWithDirectProviderContinuation(continuation.text)) {
+    return clause
+  }
+
+  return buildExpandedClause(intro, [directProviderIntroLink(intro.text)], continuation)
+}
+
+function stripLeadingDirectProviderConnector(text, sourceOffsets) {
+  const match = text.match(/^(?:and|or|but|then|so|while|whereas|however|although)\s+/i)
+  if (!match) {
+    return { text, sourceOffsets }
+  }
+
+  const start = match[0].length
+  return {
+    text: text.slice(start),
+    sourceOffsets: sourceOffsets.slice(start)
+  }
+}
+
+function startsWithDirectProviderContinuation(text) {
+  return /^(?:(?:the\s+)?browser(?:\s+extension)?|your\s+browser)\s+(?:connects?|talks?|sends?|sent|routes?|flows?)\b|^(?:content|required\s+content)\s+(?:is\s+)?sent\s+directly\b|^(?:内容|所需内容).{0,20}(?:由)?(?:浏览器|浏览器扩展)|^(?:浏览器|浏览器扩展).{0,40}(?:直接发送|直连)/i.test(
+    text
+  )
+}
+
+function directProviderIntroLink(text) {
+  return /(?:你|用户)/.test(text) ? "，" : ", "
+}
+
+function stripLeadingApiKeyPronoun(text, sourceOffsets) {
+  const match = text.match(
+    /^(?:(?:they|these|those)\s+(?:are|remain|stay|use|uses|have|has)|it\s+(?:is|remains|stays|uses|has))\s+/i
+  )
+  if (!match) {
+    return null
+  }
+
+  const start = match[0].length
+  return {
+    text: text.slice(start),
+    sourceOffsets: sourceOffsets.slice(start)
+  }
+}
+
+function apiKeySubjectLinkingVerb(subject) {
+  return /\bAPI\s*keys\b/i.test(subject) ? " are " : " is "
 }
 
 function buildExpandedClause(subject, syntheticParts, continuation) {
@@ -817,6 +1038,24 @@ function shouldKeepSlashInsideToken(text, boundaryIndex, boundary) {
   const left = text.slice(leftTokenStart, slashIndex)
   const right = text.slice(slashIndex + 1, rightTokenEnd)
   return /(?:\bscreenshots?|截图)$/i.test(left) && /^base64\b/i.test(right)
+}
+
+function shouldKeepCommaInsideUnscopedDirectClaim(text, boundaryIndex, boundary) {
+  if (!/^[,，]$/.test(boundary)) {
+    return false
+  }
+
+  const before = text.slice(Math.max(0, boundaryIndex - 90), boundaryIndex)
+  const after = text.slice(boundaryIndex + boundary.length, boundaryIndex + boundary.length + 220)
+  return (
+    /(?:\bWhen\s+(?:you|the\s+user)\s+(?:start|actively\s+triggers?)\s+an?\s+AI\s+(?:request|action)\b|(?:你|用户)主动发起\s*AI\s*(?:请求|操作)时)/i.test(
+      before
+    ) &&
+    /(?:browser|browser\s+extension|content|required\s+content|浏览器|浏览器扩展|内容|所需内容)/i.test(
+      after
+    ) &&
+    /(?:directly|direct|直接发送|直连)/i.test(after)
+  )
 }
 
 function startsWithBareReleasePredicate(text) {
@@ -909,12 +1148,22 @@ function isNegatedReleaseClaimClause(clause, match, rule, fullText, clauseStart,
   if (
     isNegatedByInstructionPrefix(fullText, clauseStart) ||
     isNegatedByReleaseStatusPrefix(fullText, clauseStart, previousBoundary) ||
+    isNonAssertionClaimContext(fullText, matchStart) ||
     isMetaClaimReference(fullText, matchStart)
   ) {
     return true
   }
 
   if (rule.label === "free quota without sign-in overclaim" && isQuotaSignInRequiredClause(clause)) {
+    return true
+  }
+  if (rule.label === "API-key protection overclaim") {
+    return isNegatedApiKeyProtectionClause(clause, match)
+  }
+  if (
+    rule.label === "unscoped direct-provider overclaim" &&
+    isScopedDirectProviderClause(clause, match, fullText, clauseStart)
+  ) {
     return true
   }
 
@@ -990,6 +1239,30 @@ function isMetaClaimReference(fullText, matchStart) {
   )
 }
 
+function isNonAssertionClaimContext(fullText, matchStart) {
+  const before = fullText.slice(Math.max(0, matchStart - 80), matchStart)
+  return (
+    /\b(?:it\s+is\s+)?false\s+that\s*$/i.test(before) ||
+    /\b(?:do\s+not|don't|must\s+not|should\s+not)\s+(?:say|imply|claim|describe|write|publish|include)\s+(?:that\s+)?$/i.test(
+      before
+    ) ||
+    /(?:不得|不能|不要|不应).{0,20}(?:宣称|声称|暗示|写成|描述|包含|发布)\s*$/.test(before)
+  )
+}
+
+function isNegatedApiKeyProtectionClause(clause, match) {
+  const matchedText = match[0]
+  const predicateMatch = matchedText.match(apiKeyProtectionPredicateRegex)
+  if (!predicateMatch) {
+    return false
+  }
+
+  const beforePredicate = matchedText.slice(0, predicateMatch.index ?? 0)
+  return /(?:\b(?:not|never|without|isn['’]?t|aren['’]?t|no)\s+|不(?:是|会|能|可|应)?\s*)$/i.test(
+    beforePredicate
+  )
+}
+
 function isQuotaSignInRequiredClause(clause) {
   const hasChineseNoLoginQuota = /免费额度.{0,30}(?:无需登录|不需要登录|免登录)|(?:无需登录|不需要登录|免登录).{0,30}免费额度/i.test(
     clause
@@ -1002,6 +1275,42 @@ function isQuotaSignInRequiredClause(clause) {
       clause
     ) ||
     (!hasChineseNoLoginQuota && /免费额度.{0,30}(?:需要登录|登录后|需登录)/i.test(clause))
+  )
+}
+
+function isScopedDirectProviderClause(clause, match, fullText, clauseStart) {
+  if (
+    /^(?:\s*\b(?:all|every)\s+(?:AI\s+)?(?:requests?|traffic)\b|\s*(?:所有|全部|每次|一切)\s*(?:AI\s*)?(?:请求|流量|操作))/i.test(
+      match[0]
+    )
+  ) {
+    return false
+  }
+
+  const matchEnd = match.index + match[0].length
+  const clauseThroughMatch = clause.slice(0, matchEnd)
+  if (hasDirectProviderScopeMarker(clauseThroughMatch)) {
+    return true
+  }
+
+  const prefix = fullText.slice(0, clauseStart)
+  const hardBoundary = Math.max(
+    prefix.lastIndexOf(";"),
+    prefix.lastIndexOf("；"),
+    prefix.lastIndexOf("."),
+    prefix.lastIndexOf("。"),
+    prefix.lastIndexOf("!"),
+    prefix.lastIndexOf("！"),
+    prefix.lastIndexOf("?"),
+    prefix.lastIndexOf("？")
+  )
+  const currentPrefix = prefix.slice(hardBoundary + 1)
+  return hasDirectProviderScopeMarker(currentPrefix)
+}
+
+function hasDirectProviderScopeMarker(text) {
+  return /\bBYOK\b|direct-provider|\b(?:your|their|the\s+user'?s|users'?|own)\s+own\s+API\s*keys?\b|\b(?:your|their|the\s+user'?s|users'?|own)\s+provider\s+keys?\b|自带\s*API\s*Key|自备\s*API\s*Key|自己的\s*API\s*Key|BYOK\s*(?:路径|模式)/i.test(
+    text
   )
 }
 

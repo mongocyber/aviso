@@ -28,7 +28,7 @@ Stop and report instead of generating if:
 - A requested scene would require inventing a page, feature, provider status, store status, or user data.
 - The generated output changes the Aviso logo shape.
 - The generated output presents screenshot capability as a main public selling point.
-- The generated output claims OpenAI/Anthropic live validation, store approval, Google endorsement, ranking, hosted AI, login, subscription, cloud sync, web search, or analytics.
+- The generated output claims OpenAI/Anthropic live validation, store approval, Google endorsement, ranking, Aviso AI public-live status, anonymous quota, subscription, cloud sync, web search, or analytics.
 
 ## Required Output Checklist
 

@@ -1,6 +1,6 @@
 # Chrome Web Store Asset Spec
 
-Updated: 2026-06-09
+Updated: 2026-07-19
 
 ## Goal
 
@@ -49,6 +49,7 @@ Allowed:
 - Result panel supports copy, save to local history, and continue asking.
 - Popup manages UI language, theme, default model, AI service configuration, API keys, feature switches, templates, and local history.
 - BYOK direct-provider model: users provide their own provider API keys and the extension calls approved provider hosts directly.
+- Optional Aviso AI path: users can choose Aviso AI and sign in; only that path uses the Aviso backend and upstream model services.
 - UI supports Chinese and English.
 
 Allowed but not hero/promotional focus:
@@ -62,11 +63,12 @@ Do not present as store-asset selling points:
 
 - Screenshot/image-question feature. It remains a right-click internal path and is not a main public entry.
 - OpenAI or Anthropic live validation. It is deferred until usable API keys are available.
+- Aviso AI sign-in or quota as the primary store-asset selling point.
 
 Do not claim or imply:
 
 - Chrome Web Store approval, ranking, award, featured status, editor selection, or Google endorsement.
-- Project-owned backend, hosted Aviso AI, anonymous quota, login, subscription, payment, provider proxy, telemetry, analytics, cloud sync, web search, or remote link-body fetching.
+- Aviso AI public-live status, anonymous/public quota availability, subscription/payment support, BYOK via an Aviso provider proxy, telemetry, analytics, cloud sync, web search, or remote link-body fetching.
 - Zero latency, guaranteed accuracy, guaranteed privacy by the selected provider, or model availability beyond user configuration.
 
 ## Design System References

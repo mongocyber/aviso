@@ -80,7 +80,7 @@ Aviso has a single purpose: provide user-triggered AI reading, translation, summ
 | --- | --- |
 | `contextMenus` | Adds the Aviso right-click actions for selected text, current page, links, image internal path, copy current context, model switching, and templates. |
 | `activeTab` | Lets the extension interact with the page the user is actively using after the user triggers an action. |
-| `storage` | Saves local settings, encrypted API keys, templates, and local conversation history in Chrome extension storage. |
+| `storage` | Saves local settings, not-plaintext BYOK API keys, templates, hosted session state, and local conversation history in Chrome extension storage. |
 | `history` | Lets the command palette search the user's local Chrome browsing history on-device. These searches are local only. |
 | `bookmarks` | Lets the command palette search the user's local Chrome bookmarks on-device. |
 | `identity` | Opens the Google authorization window only when the user chooses Aviso AI / hosted AI sign-in. BYOK use does not require this permission. |
@@ -115,10 +115,12 @@ These host permissions are limited to approved provider API domains and the exac
 - Aviso does not use user data for credit, lending, or similar eligibility decisions.
 - BYOK user content is not sent to an Aviso-owned backend.
 - Optional Aviso AI / hosted AI requests pass through the Aviso backend only after the user chooses hosted AI and signs in.
-- API keys are not stored in plaintext; they remain in `chrome.storage.local/contextai_api_keys` with local encryption / obfuscation-level protection.
+- BYOK API keys are not stored in plaintext; they remain in `chrome.storage.local/contextai_api_keys` inside the current browser profile with local encryption / obfuscation-level protection.
+- This API-key protection is only a browser-profile convenience boundary. It does not defend against a readable browser profile, a compromised device, or a malicious extension, and it is not keychain storage, hardware-backed protection, end-to-end encryption, or zero-knowledge protection.
 - Non-secret settings are stored in `chrome.storage.sync/contextai_settings`.
 - Local history is stored in `chrome.storage.local/contextai_history`.
-- When the user actively triggers an AI action, required content is sent directly from the browser extension to the user-selected provider.
+- For BYOK, when the user actively triggers an AI action, required content is sent directly from the browser extension to the user-selected provider.
+- For Aviso AI / hosted AI, required content passes through the Aviso backend and upstream model providers only after the user chooses Aviso AI and signs in.
 - Provider handling of request content depends on the user's relationship with that provider, its service terms, and its privacy policy. For Aviso AI / hosted AI, upstream provider handling depends on the provider account and policy used by the Aviso backend.
 
 This wording should stay aligned with `website/docs/privacy-policy.md` and `website/docs/data-permissions.md`.
@@ -140,7 +142,7 @@ Reviewers can still verify these non-provider flows without any external API key
 
 - For BYOK review, the reviewer must use their own valid provider key
 - For Aviso AI review, the reviewer signs in only through the user-initiated Google sign-in flow
-- If a reviewer chooses to test a BYOK provider call, they should supply their own key, model ID, and model access
+- If a reviewer chooses to test a BYOK provider call, they should supply their own key, model ID, and model access; BYOK keys are not sent to the Aviso backend
 
 ## Store Asset Checklist And Current Gaps
 
