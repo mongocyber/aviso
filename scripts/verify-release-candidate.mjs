@@ -2,12 +2,12 @@ import { spawnSync } from "node:child_process"
 import { createHash } from "node:crypto"
 import {
   existsSync,
+  lstatSync,
   readFileSync,
   readdirSync,
   realpathSync,
-  statSync
 } from "node:fs"
-import { extname, join } from "node:path"
+import { extname, isAbsolute, join, relative, sep } from "node:path"
 import { fileURLToPath } from "node:url"
 
 const expectedChromeWebStoreExtensionId = "phigblobbahhecgbcifmkamglcdnghcg"
@@ -52,9 +52,7 @@ const releaseClaimScanRoots = [
   "website/i18n/en/code.json",
   "website/i18n/en/docusaurus-theme-classic/navbar.json",
   "website/i18n/en/docusaurus-theme-classic/footer.json",
-  "store-assets/chrome-web-store/STORE_LISTING_COPY.md",
-  "store-assets/chrome-web-store/README.md",
-  "store-assets/chrome-web-store/THREAD_BRIEF.md",
+  "store-assets/chrome-web-store",
   "package.json",
   "wxt.config.ts",
   "locales",
@@ -63,6 +61,28 @@ const releaseClaimScanRoots = [
   "build/canonical-chrome-mv3-prod/manifest.json",
   ".output/chrome-mv3/manifest.json"
 ]
+
+const maxReleaseClaimWindowLines = 3
+const maxReleaseClaimWindowChars = 260
+
+const approvedReleaseScanTextExtensions = new Set([
+  ".cjs",
+  ".css",
+  ".html",
+  ".js",
+  ".json",
+  ".jsonc",
+  ".jsx",
+  ".md",
+  ".mdx",
+  ".mjs",
+  ".sh",
+  ".ts",
+  ".tsx",
+  ".txt",
+  ".yaml",
+  ".yml"
+])
 
 const defaultSafeNegationRegex =
   /\b(?:not|never|without|pending|blocked|forbidden|excluded|unavailable|cannot|can't|isn't|aren't|hasn't|doesn't|don't|does\s+not|do\s+not|is\s+not|are\s+not|has\s+not|have\s+not|must\s+not|should\s+not|no)\b|不|未|无|没有|不是|不能|不会|尚未|待|排除|暂不可用|不可用/i
@@ -332,7 +352,7 @@ export function didSpawnFailBeforeCompletion(result) {
 }
 
 export function classifyCommandFailure(output) {
-  if (/Operation not permitted|EACCES|EPERM/i.test(output)) {
+  if (/Operation not permitted|EACCES|EPERM|EROFS/i.test(output)) {
     return "environment or sandbox permission failure; rerun in an allowed local environment before treating this as a code regression"
   }
   if (/ENOTFOUND|ECONNREFUSED|ETIMEDOUT|registry\.npmjs|registry\.npmmirror|fetch failed/i.test(output)) {
@@ -401,7 +421,7 @@ function checkReleaseSurfaceConsistency() {
 
   console.log("ok package.json, docs/STATE.md, and source/final manifests agree on version")
   console.log(
-    "ok release scan covers hosted-live, payment, permission, retention, install CTA, website, privacy, store, reviewer-note, evidence, and manifest surfaces"
+    "ok release scan covers hosted-live, payment, permission, retention, install CTA, website/privacy docs, recursive Chrome Web Store text assets, release evidence, and manifest surfaces"
   )
 }
 
@@ -464,14 +484,15 @@ export function scanForbiddenReleaseClaimsInFiles(files) {
           }
 
           const matchedClaim = sanitizeClaimForOutput(match[0])
-          const key = `${filePath}:${record.line}:${rule.label}:${matchedClaim}`
+          const findingLine = record.lineForOffset(resolveReleaseClaimMatchSourceOffset(clause, match))
+          const key = `${filePath}:${findingLine}:${rule.label}:${matchedClaim}`
           if (seen.has(key)) {
             continue
           }
           seen.add(key)
           findings.push({
             filePath,
-            line: record.line,
+            line: findingLine,
             label: rule.label,
             matchedClaim,
             reason: rule.reason
@@ -485,18 +506,38 @@ export function scanForbiddenReleaseClaimsInFiles(files) {
 }
 
 export function splitReleaseClaimClauses(text) {
-  const normalized = normalizeClaimText(text)
+  const normalizedClaim = normalizeClaimTextWithSourceMap(text)
+  const normalized = normalizedClaim.text
   const clauses = []
   const boundary =
-    /[|,，;；。!！?？:：()[\]{}]+|\.(?![A-Za-z0-9])|\s+(?:and|or|but|while|whereas|however)\s+|(?:但是|并且|同时|以及|但|而)|(?:和|或|且)(?=(?:Chrome\s*Web\s*Store|CWS|hosted\s*AI|Aviso\s*AI|托管\s*AI|托管路径|已\s*(?:公开\s*上线|公开\s*上架|上线|发布)|公开(?:上线|上架|发布|可用)|正式(?:上线|上架)|审核通过|已通过|已批准|当前可用|已经可用|可用|立即安装|公开可安装|正式可安装|已上架))/giu
+    /[|,，;；。!！?？:：()[\]{}]+|\.(?![A-Za-z0-9])|\s*[—–]\s*|\s*\/\s*|\s+(?:and|or|but|while|whereas|however|although|yet)\s+|(?:但是|并且|同时|以及|但|而)|(?:和|或|且)(?=(?:Chrome\s*Web\s*Store|CWS|hosted\s*AI|Aviso\s*AI|托管\s*AI|托管路径|已\s*(?:公开\s*上线|公开\s*上架|上线|发布)|公开(?:上线|上架|发布|可用)|正式(?:上线|上架)|审核通过|已通过|已批准|当前可用|已经可用|可用|立即安装|公开可安装|正式可安装|已上架))/giu
   let start = 0
   let previousBoundary = ""
   for (const match of normalized.matchAll(boundary)) {
-    pushClause(clauses, normalized.slice(start, match.index), start, previousBoundary)
+    if (isNegatedYetPredicateBoundary(normalized, match.index, match[0])) {
+      continue
+    }
+    if (shouldKeepSlashInsideToken(normalized, match.index, match[0])) {
+      continue
+    }
+
+    pushClause(
+      clauses,
+      normalized.slice(start, match.index),
+      start,
+      previousBoundary,
+      normalizedClaim.sourceOffsets
+    )
     previousBoundary = match[0]
     start = match.index + match[0].length
   }
-  pushClause(clauses, normalized.slice(start), start, previousBoundary)
+  pushClause(
+    clauses,
+    normalized.slice(start),
+    start,
+    previousBoundary,
+    normalizedClaim.sourceOffsets
+  )
   return clauses
 }
 
@@ -510,7 +551,15 @@ export function sanitizeClaimForOutput(text) {
 }
 
 export function listReleaseClaimScanFiles() {
-  return listTextFiles(releaseClaimScanRoots)
+  return [...new Set(listTextFiles(releaseClaimScanRoots))].sort()
+}
+
+export function normalizeReleaseClaimScanPath(path) {
+  return path
+    .replace(/\\/g, "/")
+    .split("/")
+    .filter((part) => part && part !== ".")
+    .join("/")
 }
 
 function buildClaimScanRecords(content) {
@@ -519,16 +568,61 @@ function buildClaimScanRecords(content) {
 
   lines.forEach((line, index) => {
     if (line.trim()) {
-      records.push({ line: index + 1, text: line })
+      records.push(
+        buildClaimScanRecord([{ lineNumber: index + 1, text: line.trim() }])
+      )
     }
 
-    const next = lines[index + 1]
-    if (shouldScanWrappedClaimLine(line, next)) {
-      records.push({ line: index + 1, text: `${line.trim()} ${next.trim()}` })
+    const logicalWindow = [{ lineNumber: index + 1, text: line.trim() }]
+    for (
+      let end = index + 1;
+      end < lines.length && logicalWindow.length < maxReleaseClaimWindowLines;
+      end += 1
+    ) {
+      if (!shouldScanWrappedClaimLine(lines[end - 1], lines[end])) {
+        break
+      }
+
+      logicalWindow.push({ lineNumber: end + 1, text: lines[end].trim() })
+      const record = buildClaimScanRecord(logicalWindow)
+      if (record.text.length > maxReleaseClaimWindowChars) {
+        break
+      }
+      records.push(record)
     }
   })
 
   return records
+}
+
+function buildClaimScanRecord(lines) {
+  const lineStarts = []
+  let cursor = 0
+  const text = lines
+    .map((line, index) => {
+      if (index > 0) {
+        cursor += 1
+      }
+      lineStarts.push({ offset: cursor, line: line.lineNumber })
+      cursor += line.text.length
+      return line.text
+    })
+    .join(" ")
+
+  return {
+    line: lines[0]?.lineNumber ?? 1,
+    text,
+    lineForOffset(offset) {
+      let line = lineStarts[0]?.line ?? 1
+      for (const lineStart of lineStarts) {
+        if (lineStart.offset > offset) {
+          break
+        }
+        line = lineStart.line
+      }
+      return line
+    }
+  }
 }
 
 function linesWithoutFencedBlocks(content) {
@@ -579,17 +673,25 @@ function buildScannableReleaseClaimClauses(text) {
     const canInherit =
       !isHardSentenceBoundary(clause.previousBoundary) &&
       !isNegatedOrPredicateContinuation(clause, previousClause)
-    const expandedText =
-      subject || !canInherit
-        ? clause.text
-        : expandElidedReleaseSubject(clause.text, inheritedSubject)
+    const expandedFromInheritedSubject = !subject && canInherit
+    const expandedClause = !expandedFromInheritedSubject
+      ? clause
+      : expandElidedReleaseSubject(clause, inheritedSubject)
 
     scannable.push({
       ...clause,
-      text: expandedText
+      ...expandedClause
     })
 
-    inheritedSubject = subject ?? inheritedSubject
+    if (subject) {
+      inheritedSubject = {
+        text: subject.text,
+        sourceOffsets: clause.sourceOffsets.slice(
+          subject.index,
+          subject.index + subject.text.length
+        )
+      }
+    }
     previousClause = clause
   }
 
@@ -600,39 +702,74 @@ function extractReleaseClaimSubject(text) {
   const match = text.match(
     /\b(?:Chrome\s+Web\s+Store|CWS|hosted\s+AI|Aviso\s+AI)\b|(?:Chrome\s*Web\s*Store|CWS|托管\s*AI|托管路径)/i
   )
-  return match?.[0] ?? null
+  return match
+    ? {
+        text: match[0],
+        index: match.index ?? 0
+      }
+    : null
 }
 
-function expandElidedReleaseSubject(text, subject) {
+function expandElidedReleaseSubject(clause, subject) {
   if (!subject) {
-    return text
+    return clause
   }
 
-  if (/^(?:is|are|has\s+been|have\s+been)\b/i.test(text)) {
-    return `${subject} ${text}`
+  const continuation = stripLeadingReleaseConnector(clause.text, clause.sourceOffsets)
+
+  if (/^(?:is|are|has\s+been|have\s+been)\b/i.test(continuation.text)) {
+    return buildExpandedClause(subject, [" "], continuation)
   }
 
   if (
     /^(?:publicly\s+available|publicly\s+listed|available\s+to\s+the\s+public|live\s+now|live|release-ready|public\s+beta|approved|published|listed|released)\b/i.test(
-      text
+      continuation.text
     )
   ) {
-    return `${subject} is ${text}`
+    return buildExpandedClause(subject, [" is "], continuation)
   }
 
   if (
     /^(?:审核通过|已\s*通过|已批准|正式上架|公开上架|已\s*公开\s*上架|已\s*公开\s*上线|已\s*上线|正式上线|公开发布|公开可用|已公开|已\s*发布|可公开使用)/i.test(
-      text
+      continuation.text
     )
   ) {
-    return `${subject} ${text}`
+    return buildExpandedClause(subject, [" "], continuation)
   }
 
-  return text
+  return clause
+}
+
+function buildExpandedClause(subject, syntheticParts, continuation) {
+  const syntheticOffset =
+    subject.sourceOffsets[subject.sourceOffsets.length - 1] ?? continuation.sourceOffsets[0] ?? 0
+  return {
+    text: `${subject.text}${syntheticParts.join("")}${continuation.text}`,
+    start: subject.sourceOffsets[0] ?? continuation.sourceOffsets[0] ?? 0,
+    findingSourceOffset: continuation.sourceOffsets[0] ?? subject.sourceOffsets[0] ?? 0,
+    sourceOffsets: [
+      ...subject.sourceOffsets,
+      ...syntheticParts.flatMap((part) => Array.from(part, () => syntheticOffset)),
+      ...continuation.sourceOffsets
+    ]
+  }
+}
+
+function stripLeadingReleaseConnector(text, sourceOffsets) {
+  const match = text.match(/^(?:and|or|but|while|whereas|however|although)\s+/i)
+  if (!match) {
+    return { text, sourceOffsets }
+  }
+
+  const start = match[0].length
+  return {
+    text: text.slice(start),
+    sourceOffsets: sourceOffsets.slice(start)
+  }
 }
 
 function isHardSentenceBoundary(boundary) {
-  return /[。.!！?？]/.test(boundary)
+  return /[|。.!！?？]/.test(boundary)
 }
 
 function isNegatedOrPredicateContinuation(clause, previousClause) {
@@ -644,28 +781,127 @@ function isNegatedOrPredicateContinuation(clause, previousClause) {
   )
 }
 
+function isNegatedYetPredicateBoundary(text, boundaryIndex, boundary) {
+  if (!/^\s+yet\s+$/i.test(boundary)) {
+    return false
+  }
+
+  const before = text.slice(0, boundaryIndex).trimEnd()
+  const after = text.slice(boundaryIndex + boundary.length).trimStart()
+  return (
+    /\b(?:not|isn['’]?t|aren['’]?t|can['’]?t|cannot|doesn['’]?t|don['’]?t|hasn['’]?t|haven['’]?t|wasn['’]?t|weren['’]?t)$/i.test(
+      before
+    ) && startsWithBareReleasePredicate(after)
+  )
+}
+
+function shouldKeepSlashInsideToken(text, boundaryIndex, boundary) {
+  const slashOffset = boundary.indexOf("/")
+  if (slashOffset === -1) {
+    return false
+  }
+
+  const slashIndex = boundaryIndex + slashOffset
+  const tokenStart = text.slice(0, slashIndex).search(/\S+$/)
+  const tokenEndMatch = text.slice(slashIndex + 1).match(/\S+/)
+  const leftTokenStart = tokenStart === -1 ? slashIndex : tokenStart
+  const rightTokenEnd = tokenEndMatch
+    ? slashIndex + 1 + tokenEndMatch.index + tokenEndMatch[0].length
+    : slashIndex + 1
+  const token = text.slice(leftTokenStart, rightTokenEnd)
+
+  if (/^https?:\/\//i.test(token)) {
+    return true
+  }
+
+  const left = text.slice(leftTokenStart, slashIndex)
+  const right = text.slice(slashIndex + 1, rightTokenEnd)
+  return /(?:\bscreenshots?|截图)$/i.test(left) && /^base64\b/i.test(right)
+}
+
 function startsWithBareReleasePredicate(text) {
   return /^(?:publicly\s+available|publicly\s+listed|available\s+to\s+the\s+public|live\s+now|live|release-ready|public\s+beta|approved|published|listed|released)\b/i.test(
     text
   )
 }
 
-function pushClause(clauses, text, start, previousBoundary) {
+function pushClause(clauses, text, start, previousBoundary, sourceOffsets) {
   const trimmed = text.trim()
   if (trimmed) {
+    const trimStart = text.indexOf(trimmed)
+    const normalizedStart = start + trimStart
+    const normalizedEnd = normalizedStart + trimmed.length
+    const clauseSourceOffsets = sourceOffsets.slice(normalizedStart, normalizedEnd)
     clauses.push({
       text: trimmed,
-      start: start + text.indexOf(trimmed),
+      start: clauseSourceOffsets[0] ?? normalizedStart,
+      sourceOffsets: clauseSourceOffsets,
       previousBoundary
     })
   }
 }
 
 function normalizeClaimText(text) {
-  return text
-    .replace(/[`*_~]/g, "")
-    .replace(/\s+/g, " ")
-    .trim()
+  return normalizeClaimTextWithSourceMap(text).text
+}
+
+function normalizeClaimTextWithSourceMap(text) {
+  const normalized = []
+  const sourceOffsets = []
+  let pendingWhitespaceOffset = null
+
+  for (let index = 0; index < text.length; index += 1) {
+    const urlEnd = findClaimScanUrlTokenEnd(text, index)
+    if (urlEnd != null) {
+      if (pendingWhitespaceOffset != null && normalized.length > 0) {
+        normalized.push(" ")
+        sourceOffsets.push(pendingWhitespaceOffset)
+      }
+      pendingWhitespaceOffset = null
+      for (const char of "[url]") {
+        normalized.push(char)
+        sourceOffsets.push(index)
+      }
+      index = urlEnd - 1
+      continue
+    }
+
+    const char = text[index]
+    if (/[`*_~]/.test(char)) {
+      continue
+    }
+
+    if (/\s/.test(char)) {
+      pendingWhitespaceOffset ??= index
+      continue
+    }
+
+    if (pendingWhitespaceOffset != null && normalized.length > 0) {
+      normalized.push(" ")
+      sourceOffsets.push(pendingWhitespaceOffset)
+    }
+    pendingWhitespaceOffset = null
+    normalized.push(char)
+    sourceOffsets.push(index)
+  }
+
+  return {
+    text: normalized.join(""),
+    sourceOffsets
+  }
+}
+
+function findClaimScanUrlTokenEnd(text, start) {
+  const match = text.slice(start).match(/^https?:\/\/[^\s"'`<>)]+/i)
+  if (!match) {
+    return null
+  }
+
+  let end = start + match[0].length
+  while (end > start && /[.,!?;:，。！？；：]$/.test(text.slice(end - 1, end))) {
+    end -= 1
+  }
+  return end > start ? end : start + match[0].length
 }
 
 function isNegatedReleaseClaimClause(clause, match, rule, fullText, clauseStart, previousBoundary) {
@@ -690,6 +926,18 @@ function isNegatedReleaseClaimClause(clause, match, rule, fullText, clauseStart,
     .replace(/\bnot\s+only\b/gi, "")
 
   return negationRegex.test(context)
+}
+
+function resolveReleaseClaimMatchSourceOffset(clause, match) {
+  if (clause.findingSourceOffset != null) {
+    return clause.findingSourceOffset
+  }
+
+  if (clause.sourceOffsets?.[match.index] != null) {
+    return clause.sourceOffsets[match.index]
+  }
+
+  return (clause.sourceStart ?? clause.start) + (match.index ?? 0)
 }
 
 function isNegatedByInstructionPrefix(fullText, clauseStart) {
@@ -889,41 +1137,75 @@ function gitLsFiles(pathspecs) {
 
 function listTextFiles(paths) {
   const files = []
+  const canonicalRepoRoot = realpathSync(process.cwd())
   for (const path of paths) {
     if (!existsSync(path)) {
       continue
     }
-    collectTextFiles(path, files)
+    collectTextFiles(path, files, new Set(), canonicalRepoRoot)
   }
   return files
 }
 
-function collectTextFiles(path, files) {
-  const stats = statSync(path)
+function collectTextFiles(path, files, visitedDirectories, canonicalRepoRoot) {
+  const stats = lstatSync(path)
+  if (stats.isSymbolicLink()) {
+    return
+  }
+
+  let realPath
+  try {
+    realPath = realpathSync(path)
+  } catch {
+    return
+  }
+  if (!isPathInsideCanonicalRoot(canonicalRepoRoot, realPath)) {
+    return
+  }
+
+  const normalizedPath = normalizeReleaseClaimScanPath(path)
   if (stats.isDirectory()) {
-    if (shouldSkipDirectory(path)) {
+    if (shouldSkipDirectory(normalizedPath)) {
       return
     }
 
-    for (const entry of readdirSync(path)) {
-      collectTextFiles(join(path, entry), files)
+    if (visitedDirectories.has(realPath)) {
+      return
+    }
+    visitedDirectories.add(realPath)
+
+    for (const entry of readdirSync(path).sort()) {
+      collectTextFiles(join(path, entry), files, visitedDirectories, canonicalRepoRoot)
     }
     return
   }
 
-  if (!stats.isFile() || shouldSkipFile(path, stats.size)) {
+  if (!stats.isFile() || shouldSkipFile(normalizedPath, stats.size)) {
     return
   }
 
   const buffer = readFileSync(path)
   if (isLikelyText(buffer)) {
-    files.push(path)
+    files.push(normalizedPath)
   }
 }
 
+function isPathInsideCanonicalRoot(canonicalRepoRoot, realPath) {
+  const relativePath = relative(canonicalRepoRoot, realPath)
+  return (
+    relativePath === "" ||
+    (relativePath !== ".." && !relativePath.startsWith(`..${sep}`) && !isAbsolute(relativePath))
+  )
+}
+
 function shouldSkipDirectory(path) {
-  const normalized = path.split("/").filter(Boolean)
-  return normalized.some((part) =>
+  const normalizedPath = normalizeReleaseClaimScanPath(path)
+  if (normalizedPath === "store-assets/chrome-web-store/output") {
+    return true
+  }
+
+  const parts = normalizedPath.split("/").filter(Boolean)
+  return parts.some((part) =>
     [
       ".git",
       "node_modules",
@@ -931,7 +1213,9 @@ function shouldSkipDirectory(path) {
       ".parcel-cache",
       ".plasmo",
       ".wxt",
-      "coverage"
+      "coverage",
+      "generated",
+      "output"
     ].includes(part)
   )
 }
@@ -941,21 +1225,7 @@ function shouldSkipFile(path, size) {
     return true
   }
 
-  return [
-    ".png",
-    ".jpg",
-    ".jpeg",
-    ".gif",
-    ".webp",
-    ".ico",
-    ".zip",
-    ".gz",
-    ".br",
-    ".woff",
-    ".woff2",
-    ".ttf",
-    ".map"
-  ].includes(extname(path).toLowerCase())
+  return !approvedReleaseScanTextExtensions.has(extname(path).toLowerCase())
 }
 
 function isLikelyText(buffer) {

@@ -1,9 +1,19 @@
 import assert from "node:assert/strict"
-import { readFileSync } from "node:fs"
+import {
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  symlinkSync,
+  writeFileSync
+} from "node:fs"
+import { tmpdir } from "node:os"
+import { join } from "node:path"
 import { test } from "node:test"
 import {
   classifyCommandFailure,
   listReleaseClaimScanFiles,
+  normalizeReleaseClaimScanPath,
   runCommandStep,
   scanForbiddenReleaseClaimsInFiles,
   type ReleaseClaimFinding
@@ -78,6 +88,79 @@ test("release claim scanner keeps negation scoped to the matching clause", () =>
   assert.match(findings[0].reason, /must require sign-in/)
 })
 
+test("release claim scanner does not let unrelated negation cross claim boundaries", () => {
+  const probes = [
+    "Chrome Web Store is not approved — hosted AI is live.",
+    "Chrome Web Store is not approved / hosted AI is live.",
+    "Although the store is not approved, hosted AI is live.",
+    "The store is not approved yet hosted AI is live."
+  ]
+
+  const findings = scanForbiddenReleaseClaimsInFiles(
+    probes.map((content, index) => ({ filePath: `boundary-${index + 1}.md`, content }))
+  )
+
+  assert.deepEqual(
+    findings.map(({ filePath, line, label, matchedClaim }) => ({
+      filePath,
+      line,
+      label,
+      matchedClaim
+    })),
+    probes.map((_, index) => ({
+      filePath: `boundary-${index + 1}.md`,
+      line: 1,
+      label: "hosted AI live/public overclaim",
+      matchedClaim: "hosted AI is live"
+    }))
+  )
+
+  assert.deepEqual(
+    scanForbiddenReleaseClaimsInFiles([
+      { filePath: "safe-hosted.md", content: "Hosted AI is not live." },
+      { filePath: "safe-cws.md", content: "Chrome Web Store is not approved." }
+    ]),
+    []
+  )
+})
+
+test("release claim scanner treats not-yet predicate negation as safe", () => {
+  const safeFindings = scanForbiddenReleaseClaimsInFiles([
+    { filePath: "safe-hosted-not-yet.md", content: "Hosted AI is not yet live." },
+    {
+      filePath: "safe-cws-not-yet.md",
+      content: "Chrome Web Store is not yet approved."
+    },
+    { filePath: "safe-contraction.md", content: "Aviso AI isn't yet publicly available." }
+  ])
+
+  assert.deepEqual(safeFindings, [])
+
+  const unsafeFindings = scanForbiddenReleaseClaimsInFiles([
+    {
+      filePath: "unsafe-yet-boundary.md",
+      content: "The store is not approved yet hosted AI is live."
+    }
+  ])
+
+  assert.deepEqual(
+    unsafeFindings.map(({ filePath, line, label, matchedClaim }) => ({
+      filePath,
+      line,
+      label,
+      matchedClaim
+    })),
+    [
+      {
+        filePath: "unsafe-yet-boundary.md",
+        line: 1,
+        label: "hosted AI live/public overclaim",
+        matchedClaim: "hosted AI is live"
+      }
+    ]
+  )
+})
+
 test("release claim scanner reports required inline probes", () => {
   const probes = [
     "Chrome Web Store is not approved but is publicly listed.",
@@ -133,6 +216,534 @@ test("release claim scanner reports required inline probes", () => {
   )
 })
 
+test("release claim scanner treats dash slash and connector combinations as claim boundaries", () => {
+  const probes = [
+    [
+      "dash-but-cws.md",
+      "Chrome Web Store is not approved — but is publicly listed.",
+      "Chrome Web Store approval overclaim",
+      "Chrome Web Store is publicly listed"
+    ],
+    [
+      "dash-but-hosted.md",
+      "Aviso AI is not live — but is publicly available.",
+      "hosted AI live/public overclaim",
+      "Aviso AI is publicly available"
+    ],
+    [
+      "tight-slash-hosted.md",
+      "Chrome Web Store is not approved/hosted AI is live.",
+      "hosted AI live/public overclaim",
+      "hosted AI is live"
+    ],
+    [
+      "dash-and-cws.md",
+      "Chrome Web Store is not approved — and is publicly listed.",
+      "Chrome Web Store approval overclaim",
+      "Chrome Web Store is publicly listed"
+    ],
+    [
+      "slash-although-cws.md",
+      "Chrome Web Store is not approved/although publicly listed.",
+      "Chrome Web Store approval overclaim",
+      "Chrome Web Store is publicly listed"
+    ],
+    [
+      "slash-however-hosted.md",
+      "Chrome Web Store is not approved/however hosted AI is live.",
+      "hosted AI live/public overclaim",
+      "hosted AI is live"
+    ]
+  ] as const
+
+  const findings = scanForbiddenReleaseClaimsInFiles(
+    probes.map(([filePath, content]) => ({ filePath, content }))
+  )
+
+  assert.deepEqual(
+    findings.map(({ filePath, line, label, matchedClaim }) => ({
+      filePath,
+      line,
+      label,
+      matchedClaim
+    })),
+    probes.map(([filePath, , label, matchedClaim]) => ({
+      filePath,
+      line: 1,
+      label,
+      matchedClaim
+    }))
+  )
+
+  assert.deepEqual(
+    scanForbiddenReleaseClaimsInFiles([
+      {
+        filePath: "safe-dash-negated.md",
+        content: "Aviso AI is not live — and not publicly available."
+      },
+      {
+        filePath: "safe-slash-negated.md",
+        content: "Chrome Web Store is not approved/not publicly listed."
+      }
+    ]),
+    []
+  )
+})
+
+test("release claim scanner keeps screenshots/base64 retention claims intact across slash boundaries", () => {
+  const findings = scanForbiddenReleaseClaimsInFiles([
+    {
+      filePath: "english-store-compound.md",
+      content: "Aviso stores screenshots/base64."
+    },
+    {
+      filePath: "english-retained-compound.md",
+      content: "Screenshots/base64 are retained."
+    },
+    {
+      filePath: "chinese-store-compound.md",
+      content: "Aviso 保存截图/base64。"
+    },
+    {
+      filePath: "url-safe.md",
+      content: "See https://example.com/screenshots/base64 for a safe reference."
+    },
+    {
+      filePath: "slash-clause.md",
+      content: "Chrome Web Store is not approved/hosted AI is live."
+    }
+  ])
+
+  assert.deepEqual(
+    findings.map(({ filePath, line, label, matchedClaim }) => ({
+      filePath,
+      line,
+      label,
+      matchedClaim
+    })),
+    [
+      {
+        filePath: "english-store-compound.md",
+        line: 1,
+        label: "retention overclaim",
+        matchedClaim: "Aviso stores screenshots/base64"
+      },
+      {
+        filePath: "english-retained-compound.md",
+        line: 1,
+        label: "retention overclaim",
+        matchedClaim: "Screenshots/base64 are retained"
+      },
+      {
+        filePath: "chinese-store-compound.md",
+        line: 1,
+        label: "retention overclaim",
+        matchedClaim: "Aviso 保存截图/base64"
+      },
+      {
+        filePath: "slash-clause.md",
+        line: 1,
+        label: "hosted AI live/public overclaim",
+        matchedClaim: "hosted AI is live"
+      }
+    ]
+  )
+})
+
+test("release claim scanner treats complete URLs as unscannable while keeping outside retention claims", () => {
+  const findings = scanForbiddenReleaseClaimsInFiles([
+    {
+      filePath: "url-only.md",
+      content: "See https://example.com/Aviso/stores/screenshots/base64 for context."
+    },
+    {
+      filePath: "url-plus-claim.md",
+      content:
+        "See https://example.com/Aviso/stores/screenshots/base64?from=docs. Aviso stores screenshots/base64."
+    }
+  ])
+
+  assert.deepEqual(
+    findings.map(({ filePath, line, label, matchedClaim }) => ({
+      filePath,
+      line,
+      label,
+      matchedClaim
+    })),
+    [
+      {
+        filePath: "url-plus-claim.md",
+        line: 1,
+        label: "retention overclaim",
+        matchedClaim: "Aviso stores screenshots/base64"
+      }
+    ]
+  )
+})
+
+test("release claim scanner catches release assertions wrapped across three lines", () => {
+  const findings = scanForbiddenReleaseClaimsInFiles([
+    {
+      filePath: "wrapped-hosted.md",
+      content: "hosted AI\nis\nlive now."
+    },
+    {
+      filePath: "wrapped-cws.md",
+      content: "Chrome Web Store\nis publicly\nlisted."
+    },
+    {
+      filePath: "wrapped-safe.md",
+      content: [
+        "Hosted AI",
+        "is",
+        "not",
+        "live.",
+        "",
+        "Chrome Web Store",
+        "is",
+        "not publicly",
+        "listed."
+      ].join("\n")
+    }
+  ])
+
+  assert.deepEqual(
+    findings.map(({ filePath, line, label, matchedClaim }) => ({
+      filePath,
+      line,
+      label,
+      matchedClaim
+    })),
+    [
+      {
+        filePath: "wrapped-hosted.md",
+        line: 1,
+        label: "hosted AI live/public overclaim",
+        matchedClaim: "hosted AI is live now"
+      },
+      {
+        filePath: "wrapped-cws.md",
+        line: 1,
+        label: "Chrome Web Store approval overclaim",
+        matchedClaim: "Chrome Web Store is publicly listed"
+      }
+    ]
+  )
+})
+
+test("release claim scanner maps wrapped matches to source lines before dedupe", () => {
+  const findings = scanForbiddenReleaseClaimsInFiles([
+    {
+      filePath: "wrapped-offset-hosted.md",
+      content: "Introductory text\nhosted AI\nis live now."
+    },
+    {
+      filePath: "wrapped-offset-multi.md",
+      content: "Introductory text\nChrome Web Store\nis publicly listed and hosted AI\nis live now."
+    },
+    {
+      filePath: "wrapped-empty-paragraph.md",
+      content: "Chrome Web Store\n\nis publicly listed."
+    }
+  ])
+
+  assert.deepEqual(
+    findings.map(({ filePath, line, label, matchedClaim }) => ({
+      filePath,
+      line,
+      label,
+      matchedClaim
+    })),
+    [
+      {
+        filePath: "wrapped-offset-hosted.md",
+        line: 2,
+        label: "hosted AI live/public overclaim",
+        matchedClaim: "hosted AI is live now"
+      },
+      {
+        filePath: "wrapped-offset-multi.md",
+        line: 2,
+        label: "Chrome Web Store approval overclaim",
+        matchedClaim: "Chrome Web Store is publicly listed"
+      },
+      {
+        filePath: "wrapped-offset-multi.md",
+        line: 3,
+        label: "hosted AI live/public overclaim",
+        matchedClaim: "hosted AI is live now"
+      }
+    ]
+  )
+})
+
+test("release claim scanner maps inherited wrapped predicates to their source lines", () => {
+  const findings = scanForbiddenReleaseClaimsInFiles([
+    {
+      filePath: "wrapped-inherited-cws.md",
+      content: "Chrome Web Store is not approved\nbut publicly listed."
+    },
+    {
+      filePath: "wrapped-inherited-hosted.md",
+      content: "Aviso AI is not live\nbut publicly available."
+    }
+  ])
+
+  assert.deepEqual(
+    findings.map(({ filePath, line, label, matchedClaim }) => ({
+      filePath,
+      line,
+      label,
+      matchedClaim
+    })),
+    [
+      {
+        filePath: "wrapped-inherited-cws.md",
+        line: 2,
+        label: "Chrome Web Store approval overclaim",
+        matchedClaim: "Chrome Web Store is publicly listed"
+      },
+      {
+        filePath: "wrapped-inherited-hosted.md",
+        line: 2,
+        label: "hosted AI live/public overclaim",
+        matchedClaim: "Aviso AI is publicly available"
+      }
+    ]
+  )
+})
+
+test("release claim scanner maps normalized markdown and whitespace offsets to source lines", () => {
+  const findings = scanForbiddenReleaseClaimsInFiles([
+    {
+      filePath: "wrapped-markdown-offset.md",
+      content: "**Introductory text**\nhosted AI\nis live now."
+    },
+    {
+      filePath: "wrapped-spaces-offset.md",
+      content: "Introductory     text\nhosted AI\nis live now."
+    }
+  ])
+
+  assert.deepEqual(
+    findings.map(({ filePath, line, label, matchedClaim }) => ({
+      filePath,
+      line,
+      label,
+      matchedClaim
+    })),
+    [
+      {
+        filePath: "wrapped-markdown-offset.md",
+        line: 2,
+        label: "hosted AI live/public overclaim",
+        matchedClaim: "hosted AI is live now"
+      },
+      {
+        filePath: "wrapped-spaces-offset.md",
+        line: 2,
+        label: "hosted AI live/public overclaim",
+        matchedClaim: "hosted AI is live now"
+      }
+    ]
+  )
+})
+
+test("release claim scanner normalizes repository paths with platform separators", () => {
+  assert.equal(
+    normalizeReleaseClaimScanPath("store-assets\\chrome-web-store\\output\\bad.md"),
+    "store-assets/chrome-web-store/output/bad.md"
+  )
+  assert.equal(
+    normalizeReleaseClaimScanPath("./store-assets/chrome-web-store//SPEC.md"),
+    "store-assets/chrome-web-store/SPEC.md"
+  )
+})
+
+test("release claim scanner repository scan includes Chrome Web Store text assets", () => {
+  const claimPath = "store-assets/chrome-web-store/GENERATION_REPORT.md"
+  const explicitFindings = scanForbiddenReleaseClaimsInFiles([
+    { filePath: claimPath, content: "Hosted AI is live now." }
+  ])
+  assert.equal(explicitFindings.length, 1)
+
+  const previousCwd = process.cwd()
+  const root = mkdtempSync(join(tmpdir(), "aviso-release-scan-"))
+  try {
+    mkdirSync(join(root, "store-assets/chrome-web-store"), { recursive: true })
+    writeFileSync(join(root, claimPath), "Hosted AI is live now.\n")
+    writeFileSync(
+      join(root, "store-assets/chrome-web-store/STORE_LISTING_COPY.md"),
+      "Chrome Web Store is not approved.\n"
+    )
+
+    process.chdir(root)
+    const repoFiles = listReleaseClaimScanFiles()
+    assert.ok(repoFiles.includes(claimPath), `expected repository scan to include ${claimPath}`)
+
+    const repoFindings = scanForbiddenReleaseClaimsInFiles(
+      repoFiles.map((filePath) => ({
+        filePath,
+        content: readFileSync(filePath, "utf8")
+      }))
+    )
+    assert.deepEqual(
+      repoFindings.map(({ filePath, line, label, matchedClaim }) => ({
+        filePath,
+        line,
+        label,
+        matchedClaim
+      })),
+      [
+        {
+          filePath: claimPath,
+          line: 1,
+          label: "hosted AI live/public overclaim",
+          matchedClaim: "Hosted AI is live now"
+        }
+      ]
+    )
+  } finally {
+    process.chdir(previousCwd)
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test("release claim scanner skips unsafe paths while keeping stable repo-relative findings", (t) => {
+  const previousCwd = process.cwd()
+  const root = mkdtempSync(join(tmpdir(), "aviso-release-scan-safe-paths-"))
+  const chromeAssetsRoot = join(root, "store-assets/chrome-web-store")
+  const outsideRoot = join(root, "outside")
+
+  try {
+    mkdirSync(chromeAssetsRoot, { recursive: true })
+    mkdirSync(join(chromeAssetsRoot, "output"), { recursive: true })
+    mkdirSync(outsideRoot, { recursive: true })
+
+    const expectedAssets = [
+      "store-assets/chrome-web-store/ACCEPTANCE.md",
+      "store-assets/chrome-web-store/SPEC.md",
+      "store-assets/chrome-web-store/GENERATION_REPORT.md",
+      "store-assets/chrome-web-store/IMAGE2_PROMPTS.md"
+    ]
+    writeFileSync(join(root, expectedAssets[0]), "Chrome Web Store is not approved.\n")
+    writeFileSync(join(root, expectedAssets[1]), "Hosted AI is not live.\n")
+    writeFileSync(join(root, expectedAssets[2]), "Chrome Web Store is not publicly listed.\n")
+    writeFileSync(join(root, expectedAssets[3]), "Hosted AI is live now.\n")
+    writeFileSync(join(chromeAssetsRoot, "output/bad.md"), "Hosted AI is live now.\n")
+    writeFileSync(join(chromeAssetsRoot, "notes.tmp"), "Hosted AI is live now.\n")
+    writeFileSync(
+      join(chromeAssetsRoot, "binary.md"),
+      Buffer.from([0, 1, 2, 3, 72, 111, 115, 116, 101, 100])
+    )
+    writeFileSync(join(outsideRoot, "escape.md"), "Hosted AI is live now.\n")
+
+    try {
+      symlinkSync(
+        join(outsideRoot, "escape.md"),
+        join(chromeAssetsRoot, "symlink-file.md")
+      )
+      symlinkSync(outsideRoot, join(chromeAssetsRoot, "symlink-dir"), "dir")
+      symlinkSync("loop-b.md", join(chromeAssetsRoot, "loop-a.md"))
+      symlinkSync("loop-a.md", join(chromeAssetsRoot, "loop-b.md"))
+    } catch (error) {
+      t.skip(`symlink fixture unsupported: ${(error as NodeJS.ErrnoException).code ?? error}`)
+      return
+    }
+
+    process.chdir(root)
+    const repoFiles = listReleaseClaimScanFiles()
+
+    for (const asset of expectedAssets) {
+      assert.ok(repoFiles.includes(asset), `expected repository scan to include ${asset}`)
+    }
+    assert.deepEqual(
+      repoFiles.filter(
+        (filePath) =>
+          filePath.includes("output") ||
+          filePath.includes("symlink") ||
+          filePath.endsWith(".tmp") ||
+          filePath.endsWith("binary.md")
+      ),
+      []
+    )
+
+    const findings = scanForbiddenReleaseClaimsInFiles(
+      repoFiles.map((filePath) => ({
+        filePath,
+        content: readFileSync(filePath, "utf8")
+      }))
+    )
+    assert.deepEqual(
+      findings.map(({ filePath, line, label, matchedClaim }) => ({
+        filePath,
+        line,
+        label,
+        matchedClaim
+      })),
+      [
+        {
+          filePath: "store-assets/chrome-web-store/IMAGE2_PROMPTS.md",
+          line: 1,
+          label: "hosted AI live/public overclaim",
+          matchedClaim: "Hosted AI is live now"
+        }
+      ]
+    )
+  } finally {
+    process.chdir(previousCwd)
+    rmSync(root, { recursive: true, force: true })
+  }
+})
+
+test("release claim scanner rejects scan roots that resolve outside the canonical repo root", (t) => {
+  const previousCwd = process.cwd()
+  const root = mkdtempSync(join(tmpdir(), "aviso-release-scan-repo-root-"))
+  const outsideRoot = mkdtempSync(join(tmpdir(), "aviso-release-scan-outside-root-"))
+
+  try {
+    const outsideStoreAssets = join(outsideRoot, "store-assets")
+    const outsideWebsiteI18n = join(outsideRoot, "website-i18n")
+    mkdirSync(join(outsideStoreAssets, "chrome-web-store"), { recursive: true })
+    mkdirSync(join(outsideWebsiteI18n, "en"), { recursive: true })
+    mkdirSync(join(root, "website"), { recursive: true })
+    writeFileSync(
+      join(outsideStoreAssets, "chrome-web-store/escape.md"),
+      "Hosted AI is live now.\n"
+    )
+    writeFileSync(
+      join(outsideWebsiteI18n, "en/code.json"),
+      JSON.stringify({ message: "Hosted AI is live now." })
+    )
+
+    try {
+      symlinkSync(outsideStoreAssets, join(root, "store-assets"), "dir")
+      symlinkSync(outsideWebsiteI18n, join(root, "website/i18n"), "dir")
+    } catch (error) {
+      t.skip(`symlink fixture unsupported: ${(error as NodeJS.ErrnoException).code ?? error}`)
+      return
+    }
+
+    process.chdir(root)
+    const repoFiles = listReleaseClaimScanFiles()
+
+    assert.equal(repoFiles.includes("store-assets/chrome-web-store/escape.md"), false)
+    assert.equal(repoFiles.includes("website/i18n/en/code.json"), false)
+
+    const findings = scanForbiddenReleaseClaimsInFiles(
+      repoFiles.map((filePath) => ({
+        filePath,
+        content: readFileSync(filePath, "utf8")
+      }))
+    )
+    assert.deepEqual(findings, [])
+  } finally {
+    process.chdir(previousCwd)
+    rmSync(root, { recursive: true, force: true })
+    rmSync(outsideRoot, { recursive: true, force: true })
+  }
+})
+
 test("release claim scanner enumerates and accepts current repository release surfaces", () => {
   const filePaths = listReleaseClaimScanFiles()
   const expectedSurfaces = [
@@ -143,6 +754,10 @@ test("release claim scanner enumerates and accepts current repository release su
     "website/src/pages/index.tsx",
     "website/docs/privacy-policy.md",
     "website/i18n/en/docusaurus-plugin-content-docs/current/privacy-policy.md",
+    "store-assets/chrome-web-store/ACCEPTANCE.md",
+    "store-assets/chrome-web-store/SPEC.md",
+    "store-assets/chrome-web-store/GENERATION_REPORT.md",
+    "store-assets/chrome-web-store/IMAGE2_PROMPTS.md",
     "store-assets/chrome-web-store/STORE_LISTING_COPY.md",
     "store-assets/chrome-web-store/THREAD_BRIEF.md",
     "README.md",
@@ -224,6 +839,15 @@ test("release verifier classifies captured child stderr", () => {
   assert.equal(
     classifyCommandFailure('Error [ERR_MODULE_NOT_FOUND]: Cannot find package "plasmo"'),
     "missing local dependency install; restore dependencies from the lockfile before treating this as a code regression"
+  )
+})
+
+test("release verifier classifies read-only dependency builds as environment failures", () => {
+  assert.equal(
+    classifyCommandFailure(
+      "EROFS: read-only file system, open '/workspace/node_modules/@plasmohq/parcel-config/run.json'"
+    ),
+    "environment or sandbox permission failure; rerun in an allowed local environment before treating this as a code regression"
   )
 })
 
