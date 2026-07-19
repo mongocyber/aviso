@@ -10,7 +10,7 @@ The visual style must feel like a polished Chrome extension product, not a gener
 
 ## Global Negative Prompt
 
-Do not invent or alter the Aviso logo. Do not create a fake wordmark, serif "Aviso" logo, extra spiral rings, extra center dots, mascot, AI brain, robot, purple-blue AI gradient, neon glow, dark sci-fi dashboard, fake Google/Chrome endorsement, store badge, ranking badge, award badge, provider logo, cloud-sync claim, login, subscription, payment, hosted AI, analytics dashboard, screenshot feature as hero, fake page content, fake API key, raw secrets, raw private URL, or fake provider validation.
+Do not invent or alter the Aviso logo. Do not create a fake wordmark, serif "Aviso" logo, extra spiral rings, extra center dots, mascot, AI brain, robot, purple-blue AI gradient, neon glow, dark sci-fi dashboard, fake Google/Chrome endorsement, store badge, ranking badge, award badge, provider logo, cloud-sync claim, subscription, payment, Aviso AI public-live claim, analytics dashboard, screenshot feature as hero, fake page content, fake API key, raw secrets, raw private URL, or fake provider validation. If Aviso AI sign-in appears, keep it as an optional user-initiated path and do not make it the asset's hero claim.
 
 Do not add large blocks of tiny unreadable text. Do not produce blurry UI, skewed browser windows, distorted screenshots, rounded outer padding for screenshot assets, or decorative floating orbs.
 
@@ -120,7 +120,7 @@ Reference inputs:
 
 Prompt:
 
-Create a 1280x800 full-bleed Chinese screenshot showing the Aviso Chrome extension Popup over a neutral browser page. Focus on settings and AI service configuration. Show tabs or sections for 通用, AI 服务, 历史, 指令 where appropriate. Show UI language, theme, default model/service, and API key configuration shape. API key fields must be empty, masked, or demo-only with bullets. Do not show a successful OpenAI or Anthropic live validation status. Do not show login, subscription, payment, hosted AI, or cloud sync. Use the exact Aviso mark and current sage/paper/ink UI style.
+Create a 1280x800 full-bleed Chinese screenshot showing the Aviso Chrome extension Popup over a neutral browser page. Focus on settings and AI service configuration. Show tabs or sections for 通用, AI 服务, 历史, 指令 where appropriate. Show UI language, theme, default model/service, and API key configuration shape. API key fields must be empty, masked, or demo-only with bullets. Do not show a successful OpenAI or Anthropic live validation status. Do not show subscription, payment, cloud sync, or Aviso AI as public live; any visible sign-in must be optional and user-initiated. Use the exact Aviso mark and current sage/paper/ink UI style.
 
 ## Prompt 7: Chinese Screenshot 05 - Local History
 
@@ -174,7 +174,7 @@ Output:
 
 Prompt:
 
-Create a 1280x800 full-bleed English screenshot showing the Aviso Chrome extension Popup focused on settings and AI service configuration. Show Interface language, Appearance theme, default model/service, provider configuration, and masked API key fields. Do not show a successful OpenAI or Anthropic live validation status. Do not show login, subscriptions, payments, hosted AI, or cloud sync. Use exact Aviso mark, Hanken Grotesk-like UI labels, sage accent, warm paper surfaces, compact controls, and thin borders.
+Create a 1280x800 full-bleed English screenshot showing the Aviso Chrome extension Popup focused on settings and AI service configuration. Show Interface language, Appearance theme, default model/service, provider configuration, and masked API key fields. Do not show a successful OpenAI or Anthropic live validation status. Do not show subscriptions, payments, cloud sync, or Aviso AI as public live; any visible sign-in must be optional and user-initiated. Use exact Aviso mark, Hanken Grotesk-like UI labels, sage accent, warm paper surfaces, compact controls, and thin borders.
 
 ## Prompt 12: English Screenshot 05 - Local History
 

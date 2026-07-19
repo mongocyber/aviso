@@ -99,10 +99,10 @@ npm run package
 
 ## API Key 与隐私
 
-BYOK 路径下，Aviso 的 AI 请求由浏览器扩展直接发往用户选择的模型厂商。可选 Aviso AI / hosted AI 路径的当前状态和 release 边界见 [docs/STATE.md](./docs/STATE.md)。
+BYOK direct-provider 路径下，Aviso 的 AI 请求由浏览器扩展直接发往用户选择的模型厂商。用户显式选择 Aviso AI 并登录后，请求会经过 Aviso 后端和上游模型服务；当前状态和 release 边界见 [docs/STATE.md](./docs/STATE.md)。
 
 - API Key 不明文保存，保存在 `chrome.storage.local/contextai_api_keys`，不进入 Chrome sync。
-- 当前保护方式使用由扩展 ID 派生的口令，属于本地加密 / 混淆级保护；它能避免普通配置同步和直接明文暴露，但不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。
+- 当前保护属于浏览器 profile 内的本地加密 / 混淆便利边界；它避免普通配置同步和直接明文暴露，但不防御可读浏览器 profile、已被控制的设备或恶意扩展，也不是系统钥匙串、硬件安全模块、端到端加密或零知识保护。
 - 非敏感设置保存在 `chrome.storage.sync/contextai_settings`。
 - 本地 AI 对话历史保存在 `chrome.storage.local/contextai_history`。
 - 允许访问的 host 仅限已批准 provider host：OpenAI、Anthropic、火山方舟北京网关、DeepSeek、Moonshot、OpenRouter、Gemini、Tencent Hunyuan，以及 `0.1.1` production candidate 托管 AI 后端域名 `https://aviso-backend-production.vercel.app/*`。

@@ -23,7 +23,7 @@ BYOK does not force sign-in. Aviso AI requires user-initiated sign-in before fre
 
 | Data | Purpose | Current storage |
 | --- | --- | --- |
-| API key | Call the provider selected by the user | Not stored in plaintext; stored in Chrome local extension storage with local encryption/obfuscation-level protection. |
+| API key | Call the BYOK provider selected by the user | Not stored in plaintext; stored in Chrome local extension storage inside the current browser profile with local encryption/obfuscation-level protection. |
 | Aviso AI session | Identify sign-in state, account state, and quota | Stored in Chrome local extension storage; users can sign out in the Popup. |
 | Settings | Models, switches, UI language, theme, templates, and provider metadata | Stored in Chrome sync settings. |
 | History | Search, save, and reuse previous results | Stored in Chrome local extension storage. |
@@ -33,7 +33,7 @@ BYOK does not force sign-in. Aviso AI requires user-initiated sign-in before fre
 
 Depending on the selected feature, request content may include selected text, page URL, link URL, image URL, page text excerpt, custom prompt, recent conversation excerpt for follow-up, or the user’s directly entered question.
 
-The BYOK path sends this content directly to the provider selected by the user. The Aviso AI path sends this content to the Aviso backend and upstream providers. The Aviso backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, user BYOK API keys, or full URLs. Account, quota, abuse-prevention, request-status, and operational metadata is currently retained for 30 days.
+The BYOK direct-provider path sends this content directly to the provider selected by the user. After the user chooses Aviso AI and signs in, the Aviso AI path sends this content to the Aviso backend and upstream providers. The Aviso backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, user BYOK API keys, or full URLs. Account, quota, abuse-prevention, request-status, and operational metadata is currently retained for 30 days.
 
 The following do not enter provider requests:
 
@@ -89,7 +89,7 @@ Clipboard-aware prompts are off by default; when the setting is off or missing, 
 
 This is not a complete guarantee for all sensitive information. Users should still judge which content may be sent to model providers.
 
-Local API key protection is not a device-security boundary. It does not defend against an attacker who can read the local browser profile, control the device, or control the current Chrome user environment.
+Local API key protection is only a convenience boundary inside the browser profile. It is not a device-security boundary, and it does not defend against a readable browser profile, a compromised device, or a malicious extension. It is not keychain storage, hardware-backed protection, end-to-end encryption, or zero-knowledge protection.
 
 Aviso AI does not require users to provide model provider API keys. The Aviso AI session is stored in local extension storage, and the user can sign out in the Popup. Signing out does not remove or disable BYOK provider configuration.
 

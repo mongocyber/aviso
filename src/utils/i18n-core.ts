@@ -614,16 +614,16 @@ const MESSAGES = {
     en: "Already have an API key?"
   },
   "popup.zero.byok.desc": {
-    "zh-CN": "连接 OpenAI · Claude · 豆包，浏览器直连厂商，请求不经过我们。",
-    en: "Connect OpenAI · Claude · Doubao — your browser talks to providers directly; requests don't go through us."
+    "zh-CN": "连接自己的模型服务；BYOK 请求由浏览器直连所选厂商。",
+    en: "Connect your own model service; BYOK requests go directly from the browser to the selected provider."
   },
   "popup.zero.byok.cta": {
     "zh-CN": "连接自己的服务",
     en: "Connect your own service"
   },
   "popup.zero.privacy": {
-    "zh-CN": "你发起请求时，内容只发往你选择的那一个服务。",
-    en: "When you send a request, the content goes only to the one service you chose."
+    "zh-CN": "BYOK 直连所选厂商；Aviso AI 登录后经 Aviso 后端和上游模型服务。",
+    en: "BYOK goes directly to the selected provider; Aviso AI uses the Aviso backend and upstream model services after sign-in."
   },
   "popup.hosted.title": {
     "zh-CN": "Aviso AI",
@@ -947,8 +947,8 @@ const MESSAGES = {
   },
   "popup.privacyBoundary.helper": {
     "zh-CN":
-      "Aviso 没有项目方服务器。你主动发起 AI 请求时，内容会由浏览器直接发送到你选择的模型厂商。",
-    en: "Aviso has no project-owned server. When you start an AI request, the browser sends content directly to the model provider you choose."
+      "BYOK 使用自己的 Key 时，浏览器直连所选模型厂商；选择 Aviso AI 并登录后，请求会经过 Aviso 后端和上游模型服务。",
+    en: "With your own key, BYOK connects the browser directly to the selected provider. If you choose Aviso AI and sign in, requests pass through the Aviso backend and upstream model services."
   },
   "popup.privacy.hostedTitle": {
     "zh-CN": "用 Aviso AI",
@@ -963,13 +963,13 @@ const MESSAGES = {
     en: "With your own key"
   },
   "popup.privacy.byokDesc": {
-    "zh-CN": "浏览器直连厂商，请求不经过我们。",
-    en: "Your browser connects to the provider directly; requests don't go through us."
+    "zh-CN": "BYOK 请求由浏览器直连所选厂商。",
+    en: "BYOK requests go directly from the browser to the selected provider."
   },
   "popup.privacy.full": {
     "zh-CN":
-      "Aviso 不设项目方服务器，不收集或保存你的数据。API Key 经 AES-256 加密后仅存于本机；当你主动发起 AI 请求时，内容会由浏览器直连你选择的模型厂商，不经过 Aviso 中间服务器。历史记录与设置保存在浏览器本地存储中。",
-    en: "Aviso has no project-owned server and does not collect or store your data. API keys are AES-256 encrypted and stored only on this device. When you start an AI request, the browser connects directly to the provider you choose, without an Aviso middle server. History and settings are stored in your browser."
+      "BYOK 路径下，内容由浏览器扩展直连你选择的模型厂商；选择 Aviso AI 并登录后，请求会经过 Aviso 后端和上游模型服务。API Key 不明文保存，仅以本地加密 / 混淆级保护保存在当前浏览器 profile 中；这只是浏览器 profile 内的便利边界，不防御可读浏览器 profile、本机已被控制或恶意扩展。历史记录保存在浏览器本地。",
+    en: "In the BYOK path, the browser extension connects directly to the provider you choose. If you choose Aviso AI and sign in, requests pass through the Aviso backend and upstream model services. API keys are not stored in plaintext; they use local encryption/obfuscation-level protection inside the current browser profile. This is a convenience boundary within the browser profile, not protection against a readable browser profile, compromised machine, or malicious extension. History stays in your browser."
   },
   "popup.footer.saved": {
     "zh-CN": "✓ 已保存",

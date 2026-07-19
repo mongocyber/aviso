@@ -52,7 +52,7 @@ Create as many of these as can pass `ACCEPTANCE.md`:
 - Use only approved page content sources listed in `SPEC.md`.
 - Do not make screenshot capability a public hero feature.
 - Do not claim OpenAI/Anthropic live validation.
-- Do not imply store approval, Google endorsement, hosted AI, login, payment, subscription, analytics, cloud sync, or web search.
+- Do not imply store approval, Google endorsement, Aviso AI public-live status, anonymous quota, payment, subscription, analytics, cloud sync, or web search.
 - Do not use code drawing for final assets. No SVG/HTML/CSS/canvas mock assets as final output.
 
 ## Stop And Report

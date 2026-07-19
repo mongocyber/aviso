@@ -9,7 +9,7 @@ sidebar_position: 3
 Aviso supports two AI service paths:
 
 - **Aviso AI**: sign in and use free quota without providing your own model provider API key.
-- **BYOK provider**: use your own model provider API key. Requests are sent directly from the browser extension to the provider you select.
+- **BYOK direct-provider**: use your own model provider API key. BYOK requests are sent directly from the browser extension to the provider you select.
 
 You can manage the default service in the Popup and switch services by task.
 
@@ -65,14 +65,15 @@ Aviso does not automatically read model lists from your provider account and doe
 
 ## How API Keys Are Stored
 
-API keys are not stored in plaintext. They are stored in Chrome local extension storage with local encryption/obfuscation-level protection and are used for direct browser-to-provider requests.
+API keys are not stored in plaintext. They are stored in Chrome local extension storage inside the current browser profile with local encryption/obfuscation-level protection and are used for BYOK direct-provider requests.
 
 Important boundaries:
 
-- The API key exists in your local browser environment.
-- This protection does not defend against an attacker who can read the local browser profile, control the device, or control the current Chrome user environment.
+- The API key exists inside the current browser profile.
+- This protection is a convenience boundary inside the browser profile. It does not defend against a readable browser profile, a compromised device, or a malicious extension.
+- It is not keychain storage, hardware-backed protection, end-to-end encryption, or zero-knowledge protection.
 - Non-secret service settings are stored in Chrome sync settings; API keys are not stored there.
-- When you use a model, the request is sent directly to the provider you selected.
+- When you use a BYOK provider, the request is sent directly to the provider you selected. When you use Aviso AI, requests pass through the Aviso backend and upstream providers after you choose that path and sign in.
 - Provider billing, logs, retention, and limits follow your provider account terms.
 - Do not expose API keys in screenshots, feedback, issues, recordings, or chat messages.
 

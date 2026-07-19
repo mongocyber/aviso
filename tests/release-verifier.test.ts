@@ -56,6 +56,391 @@ test("release claim scanner accepts legitimate same-clause negation and gated qu
   assert.deepEqual(findings, [])
 })
 
+test("release claim scanner reports MON-45 API-key protection and backend overclaims", () => {
+  const unsafeFindings = scanForbiddenReleaseClaimsInFiles([
+    {
+      filePath: "popup-en.ts",
+      content: "API keys are AES-256 encrypted and stored only on this device."
+    },
+    {
+      filePath: "popup-zh.ts",
+      content: "API Key 经 AES-256 加密后仅存于本机。"
+    },
+    {
+      filePath: "popup-helper-en.ts",
+      content:
+        "Aviso has no project-owned server. When you start an AI request, the browser sends content directly to the model provider you choose."
+    },
+    {
+      filePath: "popup-helper-zh.ts",
+      content:
+        "Aviso 没有项目方服务器。你主动发起 AI 请求时，内容会由浏览器直接发送到你选择的模型厂商。"
+    },
+    {
+      filePath: "store-listing.md",
+      content:
+        "When the user actively triggers an AI action, required content is sent directly from the browser extension to the user-selected provider."
+    }
+  ])
+
+  assert.deepEqual(
+    unsafeFindings.map(({ filePath, line, label, matchedClaim }) => ({
+      filePath,
+      line,
+      label,
+      matchedClaim
+    })),
+    [
+      {
+        filePath: "popup-en.ts",
+        line: 1,
+        label: "API-key protection overclaim",
+        matchedClaim: "API keys are AES-256 encrypted"
+      },
+      {
+        filePath: "popup-zh.ts",
+        line: 1,
+        label: "API-key protection overclaim",
+        matchedClaim: "API Key 经 AES-256 加密"
+      },
+      {
+        filePath: "popup-helper-en.ts",
+        line: 1,
+        label: "project backend absence overclaim",
+        matchedClaim: "Aviso has no project-owned server"
+      },
+      {
+        filePath: "popup-helper-en.ts",
+        line: 1,
+        label: "unscoped direct-provider overclaim",
+        matchedClaim:
+          "When you start an AI request, the browser sends content directly to the model provider you choose"
+      },
+      {
+        filePath: "popup-helper-zh.ts",
+        line: 1,
+        label: "project backend absence overclaim",
+        matchedClaim: "Aviso 没有项目方服务器"
+      },
+      {
+        filePath: "popup-helper-zh.ts",
+        line: 1,
+        label: "unscoped direct-provider overclaim",
+        matchedClaim: "你主动发起 AI 请求时，内容会由浏览器直接发送到你选择的模型厂商"
+      },
+      {
+        filePath: "store-listing.md",
+        line: 1,
+        label: "unscoped direct-provider overclaim",
+        matchedClaim:
+          "When the user actively triggers an AI action, required content is sent directly from the browser extension to the user-selected provider"
+      }
+    ]
+  )
+
+  const safeFindings = scanForbiddenReleaseClaimsInFiles([
+    {
+      filePath: "safe-key-boundary.md",
+      content:
+        "API keys are not stored in plaintext; they use local encryption/obfuscation-level protection and do not defend against a compromised machine or readable browser profile."
+    },
+    {
+      filePath: "safe-routing.md",
+      content:
+        "BYOK requests go directly to the selected provider; Aviso AI requests pass through the Aviso backend after the user chooses that path and signs in."
+    },
+    {
+      filePath: "safe-limited-use.md",
+      content:
+        "When the user actively triggers an AI action, the BYOK path sends required content directly from the browser extension to the selected model provider. The Aviso AI path sends required content to the Aviso backend and upstream model providers."
+    },
+    {
+      filePath: "safe-zh.md",
+      content:
+        "BYOK 路径由浏览器直连所选 provider；Aviso AI 路径在用户主动选择并登录后经过 Aviso 后端。API Key 仅是本地加密 / 混淆级保护，不防御可读浏览器 profile。"
+    },
+    {
+      filePath: "safe-key-negated-details.md",
+      content:
+        "API keys are not keychain storage, hardware-backed protection, end-to-end encryption, or zero-knowledge protection."
+    },
+    {
+      filePath: "safe-negated.md",
+      content:
+        "Do not claim API keys are AES-256 encrypted, and do not claim Aviso has no project-owned server."
+    }
+  ])
+
+  assert.deepEqual(safeFindings, [])
+})
+
+test("release claim scanner reports MON-45 independent blocker false negatives", () => {
+  const findings = scanForbiddenReleaseClaimsInFiles([
+    {
+      filePath: "mon45-byok-prefix.md",
+      content:
+        "BYOK provider settings are available; When you start an AI request, the browser sends content directly to the model provider you choose."
+    },
+    {
+      filePath: "mon45-no-backend-all-traffic.md",
+      content:
+        "There is no Aviso backend involved in requests; all traffic goes directly to providers."
+    },
+    {
+      filePath: "mon45-zh-all-requests.md",
+      content: "所有 AI 请求均由浏览器直连所选模型厂商。"
+    },
+    {
+      filePath: "mon45-key-inherited-aes.md",
+      content: "API keys are not stored in plaintext; they are AES-256 encrypted."
+    },
+    {
+      filePath: "mon45-key-unrelated-negation.md",
+      content: "API keys are not synced because they are strongly encrypted locally."
+    },
+    {
+      filePath: "mon45-key-aes-word-order.md",
+      content: "API keys are encrypted with AES 256."
+    },
+    {
+      filePath: "mon45-key-zh-overclaim.md",
+      content: "API 密钥采用军用级加密并存入硬件安全模块，完全安全。"
+    }
+  ])
+
+  assert.deepEqual(
+    findings.map(({ filePath, line, label, matchedClaim }) => ({
+      filePath,
+      line,
+      label,
+      matchedClaim
+    })),
+    [
+      {
+        filePath: "mon45-byok-prefix.md",
+        line: 1,
+        label: "unscoped direct-provider overclaim",
+        matchedClaim:
+          "When you start an AI request, the browser sends content directly to the model provider you choose"
+      },
+      {
+        filePath: "mon45-no-backend-all-traffic.md",
+        line: 1,
+        label: "project backend absence overclaim",
+        matchedClaim: "no Aviso backend involved in requests"
+      },
+      {
+        filePath: "mon45-no-backend-all-traffic.md",
+        line: 1,
+        label: "unscoped direct-provider overclaim",
+        matchedClaim: "all traffic goes directly to providers"
+      },
+      {
+        filePath: "mon45-zh-all-requests.md",
+        line: 1,
+        label: "unscoped direct-provider overclaim",
+        matchedClaim: "所有 AI 请求均由浏览器直连所选模型厂商"
+      },
+      {
+        filePath: "mon45-key-inherited-aes.md",
+        line: 1,
+        label: "API-key protection overclaim",
+        matchedClaim: "API keys are AES-256 encrypted"
+      },
+      {
+        filePath: "mon45-key-unrelated-negation.md",
+        line: 1,
+        label: "API-key protection overclaim",
+        matchedClaim: "API keys are strongly encrypted locally"
+      },
+      {
+        filePath: "mon45-key-aes-word-order.md",
+        line: 1,
+        label: "API-key protection overclaim",
+        matchedClaim: "API keys are encrypted with AES 256"
+      },
+      {
+        filePath: "mon45-key-zh-overclaim.md",
+        line: 1,
+        label: "API-key protection overclaim",
+        matchedClaim: "API 密钥采用军用级加密并存入硬件安全模块"
+      }
+    ]
+  )
+})
+
+test("release claim scanner reports MON-45 round3 popup and wrapped false negatives", () => {
+  const findings = scanForbiddenReleaseClaimsInFiles([
+    {
+      filePath: "mon45-round3-popup-old-en.md",
+      content:
+        "Connect OpenAI; your browser talks to providers directly; requests don't go through us."
+    },
+    {
+      filePath: "mon45-round3-popup-old-zh.md",
+      content: "连接 OpenAI，浏览器直连厂商，请求不经过我们。"
+    },
+    {
+      filePath: "mon45-round3-wrapped-key.md",
+      content: "API keys are not stored in plaintext;\nthey are AES-256 encrypted."
+    },
+    {
+      filePath: "mon45-round3-wrapped-direct-en.md",
+      content:
+        "When you start an AI request:\nthe browser sends content directly to the model provider you choose."
+    },
+    {
+      filePath: "mon45-round3-wrapped-direct-zh.md",
+      content:
+        "你主动发起 AI 请求时：\n内容会由浏览器直接发送到你选择的模型厂商。"
+    },
+    {
+      filePath: "mon45-round4-byok-prefix-all-traffic.md",
+      content: "BYOK provider settings are available and all traffic goes directly to providers."
+    },
+    {
+      filePath: "mon45-round4-own-key-prefix-all-requests.md",
+      content: "Bring your own API key and all requests are sent directly to providers."
+    }
+  ])
+
+  assert.deepEqual(
+    findings.map(({ filePath, line, label, matchedClaim }) => ({
+      filePath,
+      line,
+      label,
+      matchedClaim
+    })),
+    [
+      {
+        filePath: "mon45-round3-popup-old-en.md",
+        line: 1,
+        label: "project backend absence overclaim",
+        matchedClaim: "requests don't go through us"
+      },
+      {
+        filePath: "mon45-round3-popup-old-zh.md",
+        line: 1,
+        label: "project backend absence overclaim",
+        matchedClaim: "请求不经过我们"
+      },
+      {
+        filePath: "mon45-round3-wrapped-key.md",
+        line: 2,
+        label: "API-key protection overclaim",
+        matchedClaim: "API keys are AES-256 encrypted"
+      },
+      {
+        filePath: "mon45-round3-wrapped-direct-en.md",
+        line: 2,
+        label: "unscoped direct-provider overclaim",
+        matchedClaim:
+          "When you start an AI request, the browser sends content directly to the model provider you choose"
+      },
+      {
+        filePath: "mon45-round3-wrapped-direct-zh.md",
+        line: 2,
+        label: "unscoped direct-provider overclaim",
+        matchedClaim: "你主动发起 AI 请求时，内容会由浏览器直接发送到你选择的模型厂商"
+      },
+      {
+        filePath: "mon45-round4-byok-prefix-all-traffic.md",
+        line: 1,
+        label: "unscoped direct-provider overclaim",
+        matchedClaim: "all traffic goes directly to providers"
+      },
+      {
+        filePath: "mon45-round4-own-key-prefix-all-requests.md",
+        line: 1,
+        label: "unscoped direct-provider overclaim",
+        matchedClaim: "all requests are sent directly to providers"
+      }
+    ]
+  )
+})
+
+test("release claim scanner accepts MON-45 scoped and policy negation controls", () => {
+  const findings = scanForbiddenReleaseClaimsInFiles([
+    {
+      filePath: "safe-own-api-key-routing.md",
+      content:
+        "When you start an AI request with your own API key, the browser sends content directly to the model provider you choose."
+    },
+    {
+      filePath: "safe-false-that-backend.md",
+      content: "It is false that Aviso has no project-owned backend."
+    },
+    {
+      filePath: "safe-zh-do-not-claim-backend.md",
+      content: "不要宣称 Aviso 没有项目方服务器。"
+    },
+    {
+      filePath: "safe-zh-do-not-claim-aes.md",
+      content: "不得声称 API Key 使用 AES-256 加密。"
+    },
+    {
+      filePath: "safe-current-byok-split-en.md",
+      content:
+        "BYOK requests go directly to the selected provider; Aviso AI requests pass through the Aviso backend after the user chooses that path and signs in."
+    },
+    {
+      filePath: "safe-current-byok-split-zh.md",
+      content:
+        "BYOK 路径由浏览器直连所选 provider；Aviso AI 路径在用户主动选择并登录后经过 Aviso 后端。"
+    },
+    {
+      filePath: "safe-current-local-protection-en.md",
+      content:
+        "API keys are not stored in plaintext; they use local encryption/obfuscation-level protection and do not defend against a compromised machine or readable browser profile."
+    },
+    {
+      filePath: "safe-current-local-protection-zh.md",
+      content:
+        "API Key 不明文保存，仅是当前浏览器 profile 内的本地加密/混淆便利边界，不防可读 profile、已被控制设备或恶意扩展。"
+    },
+    {
+      filePath: "safe-round3-do-not-claim-requests.md",
+      content: "Do not claim requests don't go through us."
+    },
+    {
+      filePath: "safe-round3-zh-do-not-claim-requests.md",
+      content: "不要宣称请求不经过我们。"
+    },
+    {
+      filePath: "safe-round3-wrapped-own-key-colon.md",
+      content:
+        "When you start an AI request with your own API key:\nthe browser sends content directly to the model provider you choose."
+    },
+    {
+      filePath: "safe-round3-wrapped-own-key-semicolon.md",
+      content:
+        "When you start an AI request with your own API key;\nthe browser sends content directly to the model provider you choose."
+    },
+    {
+      filePath: "safe-round4-wrapped-byok-colon.md",
+      content:
+        "When you start an AI request with BYOK:\nthe browser sends content directly to the model provider you choose."
+    },
+    {
+      filePath: "safe-round4-wrapped-byok-path-colon.md",
+      content:
+        "When you start an AI request in the BYOK path:\nthe browser sends content directly to the model provider you choose."
+    },
+    {
+      filePath: "safe-round3-wrapped-current-byok-split-en.md",
+      content:
+        "BYOK requests go directly to the selected provider;\nAviso AI requests pass through the Aviso backend after the user chooses that path and signs in."
+    },
+    {
+      filePath: "safe-round3-wrapped-current-byok-split-zh.md",
+      content:
+        "BYOK 路径由浏览器直连所选 provider；\nAviso AI 路径在用户主动选择并登录后经过 Aviso 后端。"
+    }
+  ])
+
+  assert.deepEqual(findings, [])
+})
+
 test("release claim scanner avoids over-splitting words and long safe negatives", () => {
   const longSafeNegative = `${"Chrome Web Store is not approved and not publicly listed. ".repeat(
     200
@@ -751,6 +1136,7 @@ test("release claim scanner enumerates and accepts current repository release su
     "docs/privacy-and-security.md",
     "docs/release/README.md",
     "docs/planning/v0.3/cws-disclosure-draft.md",
+    "src/utils/i18n-core.ts",
     "website/src/pages/index.tsx",
     "website/docs/privacy-policy.md",
     "website/i18n/en/docusaurus-plugin-content-docs/current/privacy-policy.md",

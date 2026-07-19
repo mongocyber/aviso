@@ -14,7 +14,7 @@ Aviso 是一个 Chrome 浏览器扩展。它帮助用户在当前网页中调用
 
 Aviso 目前保留两条 AI 请求路径：
 
-- BYOK direct-provider：你提供自己的模型 API Key。你主动发起 AI 请求时，请求由浏览器扩展直接发送到你选择的模型 provider；API Key、设置和历史记录保存在浏览器扩展存储中。
+- BYOK direct-provider：你提供自己的模型 API Key。你选择 BYOK 并主动发起 AI 请求时，请求由浏览器扩展直接发送到你选择的模型 provider；API Key、设置和历史记录保存在浏览器扩展存储中。
 - Aviso AI：你登录后可使用免费额度。只有当你选择 Aviso AI 并主动发起请求时，请求才会经过 Aviso 后端，再路由到上游模型 provider。BYOK 不会被 Aviso AI 登录状态拦住。
 
 ## 本地保存的数据
@@ -23,7 +23,7 @@ Aviso 会在浏览器扩展存储中保存必要数据：
 
 | 数据类型 | 保存位置 | 说明 |
 | --- | --- | --- |
-| API Key | Chrome local extension storage | 不明文保存；保存前会经过本地加密/混淆级保护，仅用于你选择的模型 provider 请求。 |
+| API Key | Chrome local extension storage | 不明文保存；以本地加密/混淆级保护保存在当前浏览器 profile 中，仅用于你选择的 BYOK provider 请求。 |
 | Aviso AI session | Chrome local extension storage | 用于识别登录状态、账号状态和额度；用户可以在 Popup 中退出。 |
 | 设置 | Chrome 同步设置 | 包括界面语言、外观主题、功能开关、自定义模板、默认服务和 provider metadata。 |
 | 历史记录 | Chrome 本地扩展存储 | 保存用户主动触发并保存的请求结果，便于后续查看、搜索和复用。 |
@@ -33,7 +33,7 @@ Aviso 会在浏览器扩展存储中保存必要数据：
 
 ## 会发送给模型 provider 或托管路径的数据
 
-当用户主动触发 AI 操作时，Aviso 会把完成该操作所需的信息发送到当前选择的路径。BYOK 路径会直接发送给用户选择的模型 provider；Aviso AI 路径会经过 Aviso 后端和上游模型 provider。可能包含：
+当用户主动触发 AI 操作时，Aviso 会把完成该操作所需的信息发送到当前选择的路径。BYOK direct-provider 路径会直接发送给用户选择的模型 provider；用户选择 Aviso AI 并登录后，Aviso AI 路径会经过 Aviso 后端和上游模型 provider。可能包含：
 
 - 选中的文本。
 - 用户输入的问题或提示词。
@@ -76,11 +76,11 @@ Aviso AI 路径会在用户主动选择并登录后经过 Aviso 后端。Aviso �
 
 ## API Key
 
-BYOK API Key 不明文保存，会经过本地加密/混淆级保护后保存在 Chrome local extension storage 中。Aviso 不会把用户的 BYOK API Key 上传到 Aviso 服务器。Aviso AI 不要求用户提供模型 provider API Key。
+BYOK API Key 不明文保存，会以本地加密/混淆级保护保存在当前浏览器 profile 的 Chrome local extension storage 中。Aviso 不会把用户的 BYOK API Key 上传到 Aviso 服务器。Aviso AI 不要求用户提供模型 provider API Key。
 
-这类保护不防御已经能读取本机浏览器 profile、控制本机或控制当前 Chrome 用户环境的攻击者。如果你怀疑本机或浏览器 profile 已被控制，请先在 provider 后台轮换或撤销 API Key。
+这类保护只是浏览器 profile 内的便利边界，不防御可读浏览器 profile、已被控制的设备或恶意扩展，也不是系统钥匙串、硬件安全模块、端到端加密或零知识保护。如果你怀疑本机或浏览器 profile 已被控制，请先在 provider 后台轮换或撤销 API Key。
 
-当你使用 BYOK provider 时，请求会从浏览器扩展直接发送到该 provider。当你使用 Aviso AI 时，请求会经过 Aviso 后端和上游 provider。provider 可能会按照其服务条款处理请求内容、日志、计费和滞留数据。使用前，请自行阅读并接受对应 provider 的条款和隐私政策。
+当你使用 BYOK provider 时，请求会从浏览器扩展直接发送到该 provider。当你选择 Aviso AI 并登录后，请求会经过 Aviso 后端和上游 provider。provider 可能会按照其服务条款处理请求内容、日志、计费和滞留数据。使用前，请自行阅读并接受对应 provider 的条款和隐私政策。
 
 ## Chrome Web Store Limited Use 说明
 
@@ -136,7 +136,7 @@ https://aviso-backend-production.vercel.app/*
 
 ## Provider 支持范围
 
-Aviso 支持配置 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan。用户可以在设置中填写自己的 API Key、模型 ID 或接入点；请求由浏览器扩展直连用户选择的 provider。OpenRouter、Gemini 和 Tencent Hunyuan 的模型 ID 需要用户手动填写，Aviso 不自动读取模型列表。
+Aviso 支持配置 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan。用户可以在设置中填写自己的 API Key、模型 ID 或接入点；BYOK 请求由浏览器扩展直连用户选择的 provider。OpenRouter、Gemini 和 Tencent Hunyuan 的模型 ID 需要用户手动填写，Aviso 不自动读取模型列表。
 
 这些模型服务需要用户填写自己的可用 API Key、模型 ID 或接入点。实际可用性取决于用户自己的账号权限、模型权限和服务状态。
 
