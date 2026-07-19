@@ -142,12 +142,13 @@ v0.3 hosted path 只在 request route 明确为 `hosted` 时触发：background 
 
 - `npm run dev` / `npm run build`：Plasmo 路径，用于本地开发、基础构建检查和 rollback 参考。
 - `npm run dev:wxt` / `npm run build:wxt`：WXT 构建路径，产物位于 `.output/chrome-mv3`。
-- `npm run package`：规范 release package 入口。该命令运行 `scripts/package-production.mjs`，从 WXT `.output/chrome-mv3` 生成 `build/chrome-mv3-prod`，注入 Chrome Web Store public key，生成 `build/chrome-mv3-prod.zip`，并运行 manifest 检查。
+- `npm run package`：规范 release package 入口。该命令运行 `scripts/package-production.mjs`，从 WXT `.output/chrome-mv3` 生成 `build/canonical-chrome-mv3-prod`，注入 Chrome Web Store public key，生成 `build/canonical-chrome-mv3-prod.zip`，并运行 manifest 检查。
 
 当前 package 状态：
 
-- `build/chrome-mv3-prod` 是 owner loaded-extension smoke 应加载的规范目录。
-- `build/chrome-mv3-prod.zip` 是当前规范候选 zip。
+- `build/canonical-chrome-mv3-prod` 是 owner loaded-extension smoke 应加载的规范目录。
+- `build/canonical-chrome-mv3-prod.zip` 是当前规范候选 zip。
+- `build/chrome-mv3-prod` 是 Plasmo 默认输出目录；它可由 `npm run build` 重写，不是规范候选目录。
 - `.output/chrome-mv3` 是 WXT 中间产物，不是本轮优先加载目录。
 - WXT manifest host permissions 与当前批准范围一致，包含 OpenAI、Anthropic、火山方舟、DeepSeek、Moonshot、OpenRouter、Gemini、Tencent Hunyuan 和 production hosted backend host。
 - 历史 v0.2 曾保留 Plasmo default-build 决策；这不覆盖当前 `npm run package` 的 WXT 规范包事实，也不代表公开发布批准或 Chrome Web Store 审核通过。

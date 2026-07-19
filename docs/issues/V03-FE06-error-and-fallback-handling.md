@@ -71,7 +71,7 @@ Stop before:
 
 ## CTO Acceptance / Review Notes
 
-CTO review accepts `V03-FE06` as completed for the local-only error and fallback handling slice. Local validation passed with `npm test` (`185/185`) and `npx tsc --noEmit`; however, this is not release-ready because `npm run build` remains blocked by the managed sandbox `Operation not permitted` error, and `npm run check:manifests` cannot run until `build/chrome-mv3-prod/manifest.json` exists.
+CTO review accepts `V03-FE06` as completed for the local-only error and fallback handling slice. Local validation passed with `npm test` (`185/185`) and `npx tsc --noEmit`; however, this is not release-ready because `npm run build` remains blocked by the managed sandbox `Operation not permitted` error, and `npm run check:manifests` cannot run until `build/canonical-chrome-mv3-prod/manifest.json` exists.
 
 ## Acceptance Criteria
 
@@ -96,7 +96,7 @@ Blocked:
 
 - `npm run build` failed in the managed sandbox with `Operation not permitted`.
 - Unsandboxed build approval was rejected by policy, so no equivalent build workaround was run.
-- `npm run check:manifests` failed because `build/chrome-mv3-prod/manifest.json` is missing and the manifest checker requires build output first.
+- `npm run check:manifests` failed because `build/canonical-chrome-mv3-prod/manifest.json` is missing and the manifest checker requires build output first.
 
 ## Remaining Gate
 

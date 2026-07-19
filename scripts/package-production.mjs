@@ -11,8 +11,9 @@ import {
 import { join } from "node:path"
 
 const intermediateWxtDir = ".output/chrome-mv3"
-const canonicalLoadDir = "build/chrome-mv3-prod"
-const canonicalZip = "build/chrome-mv3-prod.zip"
+const plasmoBuildDir = "build/chrome-mv3-prod"
+const canonicalLoadDir = "build/canonical-chrome-mv3-prod"
+const canonicalZip = "build/canonical-chrome-mv3-prod.zip"
 const manifestEvidenceDir = "build/manifest-evidence"
 const plasmoManifestEvidencePath = join(
   manifestEvidenceDir,
@@ -35,7 +36,7 @@ cpSync(intermediateWxtDir, canonicalLoadDir, { recursive: true })
 
 const extensionId = injectChromeWebStoreKey(canonicalLoadDir)
 
-run("zip", ["-qr", "../chrome-mv3-prod.zip", "."], {
+run("zip", ["-qr", "../canonical-chrome-mv3-prod.zip", "."], {
   cwd: canonicalLoadDir
 })
 
@@ -72,7 +73,7 @@ function injectChromeWebStoreKey(dir) {
 }
 
 function preservePlasmoManifestEvidence() {
-  const manifestPath = join(canonicalLoadDir, "manifest.json")
+  const manifestPath = join(plasmoBuildDir, "manifest.json")
   if (!existsSync(manifestPath) || !isPlasmoManifest(manifestPath)) {
     run("npm", ["run", "build:plasmo"])
   }

@@ -1,6 +1,10 @@
 import type { Settings } from "~types/history"
+import { CLIPBOARD_SENSE_CONSENT_VERSION } from "~utils/storage"
 
-type ClipboardSenseSettings = Pick<Partial<Settings>, "enableClipboardSense">
+type ClipboardSenseSettings = Pick<
+  Partial<Settings>,
+  "enableClipboardSense" | "clipboardSenseConsentVersion"
+>
 
 type ClipboardSenseListenerControllerOptions = {
   listener: () => void
@@ -11,7 +15,10 @@ type ClipboardSenseListenerControllerOptions = {
 export function isClipboardSenseEnabled(
   settings?: ClipboardSenseSettings | null
 ): boolean {
-  return settings?.enableClipboardSense === true
+  return (
+    settings?.enableClipboardSense === true &&
+    settings.clipboardSenseConsentVersion === CLIPBOARD_SENSE_CONSENT_VERSION
+  )
 }
 
 export function createClipboardSenseListenerController({

@@ -21,7 +21,7 @@ The current release gates are final public-release evidence for the `0.1.1` pack
 - Describe hosted AI only as an optional `0.1.1 production candidate` path, `pre-release`, or `not live`.
 - Use existing evidence from `STATUS.md`, `RELEASE_CHECKLIST.md`, `docs/ai/PROJECT_CONTEXT.md`, `docs/planning/v0.3/status.md`, and `docs/planning/v0.3/release-gates.md`; treat `docs/planning/v0.3` as historical/internal planning evidence, not as the upload version.
 - Make docs/status wording fixes that preserve the gate boundaries above.
-- Ask the owner to validate the canonical unpacked package directory `build/chrome-mv3-prod`; if Chrome already points at that directory, a browser extension refresh is enough.
+- Ask the owner to validate the canonical unpacked package directory `build/canonical-chrome-mv3-prod`; if Chrome already points at that directory, a browser extension refresh is enough.
 
 ## Forbidden
 

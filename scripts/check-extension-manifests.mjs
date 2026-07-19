@@ -108,11 +108,11 @@ const generatedManifestRefs = {
   },
   canonical: {
     label: "Canonical release candidate",
-    path: "build/chrome-mv3-prod/manifest.json"
+    path: "build/canonical-chrome-mv3-prod/manifest.json"
   },
   zip: {
     label: "Canonical release candidate zip",
-    path: "build/chrome-mv3-prod.zip",
+    path: "build/canonical-chrome-mv3-prod.zip",
     type: "zip"
   }
 }

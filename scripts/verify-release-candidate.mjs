@@ -28,8 +28,8 @@ const commandSteps = [
 ]
 
 const requiredArtifacts = [
-  "build/chrome-mv3-prod/manifest.json",
-  "build/chrome-mv3-prod.zip",
+  "build/canonical-chrome-mv3-prod/manifest.json",
+  "build/canonical-chrome-mv3-prod.zip",
   "build/manifest-evidence/plasmo-manifest.json",
   ".output/chrome-mv3/manifest.json"
 ]
@@ -60,6 +60,7 @@ const releaseClaimScanRoots = [
   "locales",
   "public/_locales",
   "build/chrome-mv3-prod/manifest.json",
+  "build/canonical-chrome-mv3-prod/manifest.json",
   ".output/chrome-mv3/manifest.json"
 ]
 
@@ -175,15 +176,15 @@ function main() {
 function checkCanonicalLoadDirectory() {
   console.log("\n==> canonical load directory check")
 
-  const manifestPath = "build/chrome-mv3-prod/manifest.json"
+  const manifestPath = "build/canonical-chrome-mv3-prod/manifest.json"
   const manifest = JSON.parse(readFileSync(manifestPath, "utf8"))
   const serviceWorker = manifest.background?.service_worker
 
   if (serviceWorker === "static/background/index.js") {
     console.error(
-      "build/chrome-mv3-prod looks like stale/direct Plasmo output: background.service_worker is static/background/index.js"
+      "build/canonical-chrome-mv3-prod looks like stale/direct Plasmo output: background.service_worker is static/background/index.js"
     )
-    console.error("Run npm run package and load build/chrome-mv3-prod only after it has been regenerated from WXT.")
+    console.error("Run npm run package and load build/canonical-chrome-mv3-prod only after it has been regenerated from WXT.")
     process.exit(1)
   }
 
@@ -209,7 +210,7 @@ function checkCanonicalLoadDirectory() {
     process.exit(1)
   }
 
-  console.log("ok load build/chrome-mv3-prod, not .output/chrome-mv3")
+  console.log("ok load build/canonical-chrome-mv3-prod, not .output/chrome-mv3")
   console.log("ok canonical background is background.js")
   console.log("ok manifest key present")
   console.log(`ok derived extension ID ${extensionId}`)
@@ -332,7 +333,7 @@ export function classifyCommandFailure(output) {
     return "missing local dependency install; restore dependencies from the lockfile before treating this as a code regression"
   }
   if (
-    /missing .*manifest\.json|missing .*chrome-mv3-prod\.zip|run both build paths first|regenerate the final directory and zip/i.test(
+    /missing .*manifest\.json|missing .*chrome-mv3-prod\.zip|missing .*canonical-chrome-mv3-prod\.zip|run both build paths first|regenerate the final directory and zip/i.test(
       output
     )
   ) {
@@ -377,7 +378,7 @@ function checkReleaseSurfaceConsistency() {
   }
 
   for (const manifestPath of [
-    "build/chrome-mv3-prod/manifest.json",
+    "build/canonical-chrome-mv3-prod/manifest.json",
     ".output/chrome-mv3/manifest.json"
   ]) {
     const manifest = JSON.parse(readFileSync(manifestPath, "utf8"))
@@ -798,6 +799,7 @@ function runSecretAndArtifactHygieneScan() {
     "config",
     "package.json",
     "build/chrome-mv3-prod",
+    "build/canonical-chrome-mv3-prod",
     ".output/chrome-mv3"
   ]
 

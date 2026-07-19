@@ -1,7 +1,7 @@
 # Release
 
 Status: `active`
-Updated: 2026-07-17
+Updated: 2026-07-19
 
 本文件是 Aviso 产品仓库的稳定发布规则入口。当前版本、商店审核、公开发布和 owner 门禁状态只以 [`../STATE.md`](../STATE.md) 为准；每次发布的证据保留在 [`../../RELEASE_CHECKLIST.md`](../../RELEASE_CHECKLIST.md) 和对应版本规划中。
 
@@ -25,7 +25,7 @@ Updated: 2026-07-17
 
 1. 以 [`../architecture/testing.md`](../architecture/testing.md) 的变更类型矩阵确定必跑检查。
 2. 运行 `npm run supply-chain:check`，确认 package/lock 相对 merge-base 的唯一允许依赖变化、baseline schema、hash 和本地冻结安装语义，再生成候选包并核对 manifest、权限、版本、locale、敏感声明和 zip 内容。
-3. 在 Chrome 中加载 `build/chrome-mv3-prod`，按 [`../../RELEASE_CHECKLIST.md`](../../RELEASE_CHECKLIST.md) 做 owner 手动验收。
+3. 在 Chrome 中加载 `build/canonical-chrome-mv3-prod`，按 [`../../RELEASE_CHECKLIST.md`](../../RELEASE_CHECKLIST.md) 做 owner 手动验收；不要把 Plasmo 默认输出 `build/chrome-mv3-prod` 当作规范候选包。
 4. 对齐官网、隐私政策、数据权限说明和商店文案；状态事实仍只写入 [`../STATE.md`](../STATE.md)。
 5. owner 明确批准后，才可执行商店提交、生产部署、tag 或 GitHub Release。
 6. 外部审核或发布结果回写 [`../STATE.md`](../STATE.md) Gates，并链接脱敏证据。

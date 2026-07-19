@@ -255,7 +255,10 @@ function ClipboardToast() {
       if (area !== "sync" || !changes.contextai_settings) return
       copyListenerController.applySettings(
         changes.contextai_settings.newValue as
-          | { enableClipboardSense?: boolean }
+          | {
+              enableClipboardSense?: boolean
+              clipboardSenseConsentVersion?: number
+            }
           | undefined
       )
     }

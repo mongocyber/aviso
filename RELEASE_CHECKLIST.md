@@ -83,7 +83,7 @@ npm run verify:release-candidate
 
 2026-06-13 CTO 自动门禁复跑通过：`git diff --check`、`npm test`（159 passed）、`npx tsc --noEmit`、`npx tsc --noEmit -p tsconfig.wxt.json`、`npm run build`、`npm run build:wxt`、`npm run check:manifests`。其中 `npm run build` 在沙箱内会遇到 `Operation not permitted`，非沙箱复跑通过；这不关闭任何 loaded-extension manual release gate。
 
-2026-07-02 maintenance pass 通过：前端 `git diff --check`、`npm test`（214/214）、`npx tsc --noEmit`；后端 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（387/387）、`git diff --check`。本次覆盖前端安全口径收口、纯逻辑 i18n 测试解耦、frontend hosted OAuth challenge 接入、backend OAuth challenge gate、CWS listing copy 和 disclosure draft 更新；`npm run verify:release-candidate` 已重新生成并验证 `build/chrome-mv3-prod.zip`，`website` `npm run build` 通过；当日未上传 CWS，网站部署 gate 当时尚未完成，也未标记 hosted AI live。
+2026-07-02 maintenance pass 通过：前端 `git diff --check`、`npm test`（214/214）、`npx tsc --noEmit`；后端 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（387/387）、`git diff --check`。本次覆盖前端安全口径收口、纯逻辑 i18n 测试解耦、frontend hosted OAuth challenge 接入、backend OAuth challenge gate、CWS listing copy 和 disclosure draft 更新；`npm run verify:release-candidate` 当时已重新生成并验证候选包 zip，当前 canonical zip 路径为 `build/canonical-chrome-mv3-prod.zip`；`website` `npm run build` 通过；当日未上传 CWS，网站部署 gate 当时尚未完成，也未标记 hosted AI live。
 
 2026-07-03 production validation pass 通过：后端 `corepack pnpm lint`、`corepack pnpm typecheck`、`corepack pnpm test`（392/392）、`git diff --check`；production deployment 完成，sanitized challenge smoke 通过。Owner-loaded extension 验证 Aviso AI 登录、翻译和发送给 AI 可用。官网页面 owner 复核通过，Vercel production deployment 完成并验证新版首页/文档内容。当时 CWS upload/submission/disclosure 尚未完成；后续 owner 已完成 `0.1.1` 上传并提交审核。2026-07-07 收到商品说明关键词问题拒审，公开商品说明已按拒审原因清理，owner 已反馈最新包已重新上传，并于 2026-07-08 确认已重新进入审核；当前仍需等待最终审核结果、审核通过证据和最终 release approval。
 
@@ -106,7 +106,7 @@ npm run verify:release-candidate
 - Provider：DeepSeek、Kimi / Moonshot、OpenRouter、Gemini 和 Tencent Hunyuan 已实现 BYOK direct-provider 配置支持；provider ids 为 `deepseek`、`moonshot`、`openrouter`、`gemini`、`hunyuan`，base URLs 为 `https://api.deepseek.com`、`https://api.moonshot.cn/v1`、`https://openrouter.ai/api/v1`、`https://generativelanguage.googleapis.com/v1beta/openai/`、`https://api.hunyuan.cloud.tencent.com/v1`。OpenRouter、Gemini 和 Tencent Hunyuan 模型 ID 需用户手动填写，Aviso 不自动读取模型列表。除 DeepSeek 的一次 owner 手动 connectivity pass 外，这些配置支持不能写成 live provider validation。
 - 速度体验：已实现更明确的等待状态、summary-only 本地 TTFT 方法，以及短文本 translate / explain / polish 在用户显式选择 fast provider config 时的 operation-level route override；当前 v0.2 只承认感知等待优化和 summary-only 方法，未执行真实 provider 采样，不宣称 p50 / p95 达标。
 - 命令面板：本地确定性候选、confirm-first 打开/页面动作、危险 URL 拦截和本地对话恢复已实现；不包含自主浏览、联网搜索或远端链接正文抓取。
-- WXT：自动构建和 manifest checks 已通过；当前 `npm run package` 通过 WXT 输出生成 `build/chrome-mv3-prod` 和 `build/chrome-mv3-prod.zip`。历史 v0.2 曾决定保留 Plasmo default-build；该历史决策不覆盖当前 0.1.1 规范包事实。
+- WXT：自动构建和 manifest checks 已通过；当前 `npm run package` 通过 WXT 输出生成 `build/canonical-chrome-mv3-prod` 和 `build/canonical-chrome-mv3-prod.zip`。Plasmo default build 仍写入 `build/chrome-mv3-prod`，但该目录不是当前 0.1.1 规范候选包。历史 v0.2 曾决定保留 Plasmo default-build；该历史决策不覆盖当前 0.1.1 规范包事实。
 - Loaded-extension 可见 smoke：历史 Popup smoke 曾显示 AI 服务、设置、记录、指令和功能开关；V02-WXT-005 最新复核通过了 WXT 内容脚本注入、划词工具栏、命令面板打开和 Esc 关闭、危险 URL 拦截、安全 URL confirm-first、无截图普通入口、iframe 划词工具栏、iframe 快捷键桥接和控制台隐私摘要。Popup AI 服务/历史/指令页、provider-safe floating action open、clipboard toast、native right-click screenshot/context-menu、readability extraction 和 iframe native context-menu 记录为 owner manual pass，不是自动化证据或 release approval。
 - 公开发布：v0.2 未公开发布，未通过 Chrome Web Store 公开上架，没有正式商店 URL。
 - Owner decisions / gates：`docs/planning/v0.2-owner-gated-decision-pack.md` 已记录 owner 对 WXT default、reasoning/thinking request-parameter control、TTFT sampling 和 custom base URL 的当前 v0.2 决策；V02-009 已记录 DeepSeek owner 手动 connectivity pass 和 OpenRouter `unauthorized`，进一步 provider live validation 仍需单独 owner 选择和 summary-only evidence 批准，且不是当前 v0.2 wording 的必要条件。
@@ -135,7 +135,7 @@ npm run verify:release-candidate
 构建路径：
 
 ```text
-build/chrome-mv3-prod
+build/canonical-chrome-mv3-prod
 ```
 
 测试页面：

@@ -110,6 +110,28 @@ const contentScripts = [
 const publicKeyPath = resolve(
   fileURLToPath(new URL("../config/chrome-web-store-public-key.txt", import.meta.url))
 )
+const plasmoDefaultBuildDir = "build/chrome-mv3-prod"
+
+function readReleaseArtifactPaths() {
+  const source = readFileSync(
+    new URL("../scripts/package-production.mjs", import.meta.url),
+    "utf8"
+  )
+  return {
+    canonicalLoadDir: readStringConst(source, "canonicalLoadDir"),
+    canonicalZip: readStringConst(source, "canonicalZip")
+  }
+}
+
+function readStringConst(source: string, name: string) {
+  const match = source.match(new RegExp(`const ${name} = "([^"]+)"`))
+  assert.ok(match, `missing ${name} in package-production.mjs`)
+  return match[1]
+}
+
+function escapeRegex(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")
+}
 
 test("manifest checker compares real Plasmo, WXT intermediate, and canonical final semantics", async () => {
   const mod = await import("../scripts/check-extension-manifests.mjs")
@@ -127,6 +149,25 @@ test("manifest checker compares real Plasmo, WXT intermediate, and canonical fin
   })
 
   assert.deepEqual(failures, [])
+})
+
+test("Plasmo build after packaging cannot overwrite the canonical WXT candidate", async () => {
+  const mod = await import("../scripts/check-extension-manifests.mjs")
+  const { canonicalLoadDir, canonicalZip } = readReleaseArtifactPaths()
+
+  assert.notEqual(canonicalLoadDir, plasmoDefaultBuildDir)
+  assert.notEqual(canonicalZip, `${plasmoDefaultBuildDir}.zip`)
+
+  const fixture = createManifestCheckerFixture()
+  try {
+    writeJson(join(fixture, plasmoDefaultBuildDir, "manifest.json"), createPlasmoManifest())
+    const result = runManifestChecker(fixture, mod)
+
+    assert.equal(result.status, 0, result.stderr || result.stdout)
+    assert.match(result.stdout, /Manifest checks passed/)
+  } finally {
+    rmSync(fixture, { recursive: true, force: true })
+  }
 })
 
 test("production manifest checker passes when canonical zip manifest matches final directory", async () => {
@@ -168,7 +209,11 @@ test("production manifest checker rejects malformed canonical zip manifest input
     {
       name: "missing zip",
       options: { skipZip: true },
-      pattern: /Canonical release candidate zip: missing build\/chrome-mv3-prod\.zip/
+      pattern: new RegExp(
+        `Canonical release candidate zip: missing ${escapeRegex(
+          readReleaseArtifactPaths().canonicalZip
+        )}`
+      )
     },
     {
       name: "missing manifest entry",
@@ -637,6 +682,7 @@ function createManifestCheckerFixture({
   zipMutator?: (buffer: Buffer) => Buffer
 } = {}) {
   const root = mkdtempSync(join(tmpdir(), "aviso-manifest-checker-"))
+  const { canonicalLoadDir, canonicalZip } = readReleaseArtifactPaths()
 
   writeJson(join(root, "package.json"), {
     version: "0.1.1",
@@ -704,13 +750,13 @@ export const config: PlasmoCSConfig = {
     createPlasmoManifest()
   )
   writeJson(join(root, ".output/chrome-mv3/manifest.json"), createWxtManifest())
-  writeJson(join(root, "build/chrome-mv3-prod/manifest.json"), {
+  writeJson(join(root, canonicalLoadDir, "manifest.json"), {
     ...createWxtManifest(),
     key: readPublicKey()
   })
   if (!skipZip) {
     writeZip(
-      join(root, "build/chrome-mv3-prod.zip"),
+      join(root, canonicalZip),
       zipEntries ?? [
         {
           name: "manifest.json",

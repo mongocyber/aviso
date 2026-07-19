@@ -28,6 +28,8 @@ function normalizeApiKeyInput(value: string): string {
 
 // ── Settings ────────────────────────────────────────────────────────────────
 
+export const CLIPBOARD_SENSE_CONSENT_VERSION = 1
+
 const DEFAULT_SETTINGS: Settings = {
   defaultModel: "gpt-4o-mini",
   defaultProviderConfigId: "",
@@ -45,16 +47,30 @@ const DEFAULT_SETTINGS: Settings = {
   templates: []
 }
 
+export function normalizeSettings(value: unknown): Settings {
+  const raw = value && typeof value === "object" ? value : {}
+  const merged = { ...DEFAULT_SETTINGS, ...raw } as Settings
+  if (
+    merged.enableClipboardSense === true &&
+    merged.clipboardSenseConsentVersion !== CLIPBOARD_SENSE_CONSENT_VERSION
+  ) {
+    const { clipboardSenseConsentVersion: _legacyConsent, ...next } = merged
+    return { ...next, enableClipboardSense: false }
+  }
+  return merged
+}
+
 export async function getSettings(): Promise<Settings> {
   // Keep legacy storage keys for upgrade compatibility after the Aviso rename.
   const result = await chrome.storage.sync.get("contextai_settings")
-  return { ...DEFAULT_SETTINGS, ...(result.contextai_settings ?? {}) }
+  return normalizeSettings(result.contextai_settings)
 }
 
 export async function saveSettings(settings: Partial<Settings>): Promise<void> {
   const current = await getSettings()
+  const next = normalizeSettings({ ...current, ...settings })
   await chrome.storage.sync.set({
-    contextai_settings: { ...current, ...settings }
+    contextai_settings: next
   })
 }
 

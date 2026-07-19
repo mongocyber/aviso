@@ -47,7 +47,7 @@ npm run docs:check
 - 英文 Chrome 下扩展描述和 UI 为英文。
 - 快捷键说明英文正常。
 - 权限没有变化。
-- 构建通过；release package 场景下 `npm run package` 也通过，并加载 `build/chrome-mv3-prod`。
+- 构建通过；release package 场景下 `npm run package` 也通过，并加载 `build/canonical-chrome-mv3-prod`。
 - OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 模型 ID 可以手动编辑；OpenRouter、Gemini 和 Tencent Hunyuan 不自动读取模型列表。
 - 当前文档只引用实际存在的 roadmap、planning、design-system、archive 和 decisions 入口；不再引用已删除的 store、brand 或旧 specs 目录。
 

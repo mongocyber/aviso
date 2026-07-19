@@ -1,24 +1,35 @@
 import assert from "node:assert/strict"
 import { test } from "node:test"
-import { getSettings } from "../src/utils/storage.ts"
+import { getSettings, saveSettings } from "../src/utils/storage.ts"
 import "./helpers/register-aliases.ts"
 
 type ChromeLike = typeof globalThis.chrome
 
 function installSyncStorageForSettings(contextaiSettings: unknown) {
   const previousChrome = (globalThis as { chrome?: ChromeLike }).chrome
+  let storedSettings = contextaiSettings
 
   ;(globalThis as { chrome?: unknown }).chrome = {
     runtime: { id: "aviso-test-extension" },
     storage: {
       sync: {
-        get: async (key: string) => ({ [key]: contextaiSettings })
+        get: async (key: string) => ({ [key]: storedSettings }),
+        set: async (items: Record<string, unknown>) => {
+          if ("contextai_settings" in items) {
+            storedSettings = items.contextai_settings
+          }
+        }
       }
     }
   }
 
-  return () => {
-    ;(globalThis as { chrome?: ChromeLike }).chrome = previousChrome
+  return {
+    get storedSettings() {
+      return storedSettings
+    },
+    restore() {
+      ;(globalThis as { chrome?: ChromeLike }).chrome = previousChrome
+    }
   }
 }
 
@@ -31,35 +42,83 @@ async function importClipboardWriteModule() {
 }
 
 test("clipboard sense defaults off when the setting is missing", async () => {
-  const restore = installSyncStorageForSettings({})
+  const harness = installSyncStorageForSettings({})
 
   try {
     const settings = await getSettings()
     assert.equal(settings.enableClipboardSense, false)
   } finally {
-    restore()
+    harness.restore()
   }
 })
 
-test("clipboard sense preserves explicit true and explicit false", async () => {
-  const restoreTrue = installSyncStorageForSettings({
+test("clipboard sense fails closed for historical true without consent marker", async () => {
+  const harness = installSyncStorageForSettings({
     enableClipboardSense: true
+  })
+
+  try {
+    const settings = await getSettings()
+    assert.equal(settings.enableClipboardSense, false)
+
+    const mod = await importClipboardSenseModule()
+    assert.ok(mod, "clipboard sense policy module should exist")
+    const added: Array<() => void> = []
+    const copyListener = () => undefined
+    const controller = mod.createClipboardSenseListenerController({
+      listener: copyListener,
+      addCopyListener: (listener: () => void) => added.push(listener),
+      removeCopyListener: () => undefined
+    })
+    controller.applySettings(settings)
+    assert.deepEqual(added, [])
+  } finally {
+    harness.restore()
+  }
+})
+
+test("saving unrelated settings does not grant clipboard sense consent", async () => {
+  const harness = installSyncStorageForSettings({
+    enableClipboardSense: true,
+    enableToolbar: true
+  })
+
+  try {
+    await saveSettings({ appearanceTheme: "dark" })
+    const storedSettings = harness.storedSettings as {
+      enableClipboardSense?: boolean
+      clipboardSenseConsentVersion?: number
+      appearanceTheme?: string
+    }
+
+    assert.equal(storedSettings.enableClipboardSense, false)
+    assert.equal(storedSettings.clipboardSenseConsentVersion, undefined)
+    assert.equal(storedSettings.appearanceTheme, "dark")
+  } finally {
+    harness.restore()
+  }
+})
+
+test("clipboard sense preserves explicit consented true and explicit false", async () => {
+  const harnessTrue = installSyncStorageForSettings({
+    enableClipboardSense: true,
+    clipboardSenseConsentVersion: 1
   })
 
   try {
     assert.equal((await getSettings()).enableClipboardSense, true)
   } finally {
-    restoreTrue()
+    harnessTrue.restore()
   }
 
-  const restoreFalse = installSyncStorageForSettings({
+  const harnessFalse = installSyncStorageForSettings({
     enableClipboardSense: false
   })
 
   try {
     assert.equal((await getSettings()).enableClipboardSense, false)
   } finally {
-    restoreFalse()
+    harnessFalse.restore()
   }
 })
 
@@ -81,16 +140,28 @@ test("clipboard sense listener registers only after explicit enable and removes 
   assert.deepEqual(added, [])
 
   controller.applySettings({ enableClipboardSense: true })
+  assert.deepEqual(added, [])
+
+  controller.applySettings({
+    enableClipboardSense: true,
+    clipboardSenseConsentVersion: 1
+  })
   assert.deepEqual(added, [copyListener])
 
-  controller.applySettings({ enableClipboardSense: true })
+  controller.applySettings({
+    enableClipboardSense: true,
+    clipboardSenseConsentVersion: 1
+  })
   assert.deepEqual(added, [copyListener])
   assert.deepEqual(removed, [])
 
   controller.applySettings({ enableClipboardSense: false })
   assert.deepEqual(removed, [copyListener])
 
-  controller.applySettings({ enableClipboardSense: true })
+  controller.applySettings({
+    enableClipboardSense: true,
+    clipboardSenseConsentVersion: 1
+  })
   controller.dispose()
   assert.deepEqual(removed, [copyListener, copyListener])
 })

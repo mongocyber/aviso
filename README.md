@@ -71,8 +71,10 @@ npm run package
 Chrome 加载规范包目录：
 
 ```text
-build/chrome-mv3-prod
+build/canonical-chrome-mv3-prod
 ```
+
+`build/chrome-mv3-prod` 是 Plasmo 默认构建输出，不是当前规范 release candidate。
 
 ## 检查
 
@@ -90,7 +92,7 @@ npm run package
 ## 手动验收
 
 1. 运行 `npm run package`。
-2. 在 Chrome 扩展管理页加载 `build/chrome-mv3-prod`。
+2. 在 Chrome 扩展管理页加载 `build/canonical-chrome-mv3-prod`。
 3. 打开 `tests/manual-test.html`。
 4. 按 A-G 清单验证右键菜单、划词工具栏、命令面板、剪贴板提示、自定义指令、结果面板和 iframe 场景。
 5. 把结论记录到 [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)。

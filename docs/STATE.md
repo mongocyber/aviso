@@ -1,12 +1,12 @@
 # Aviso State
 
-Updated: 2026-07-17
+Updated: 2026-07-19
 
 This is the L1 current-facts registry for Aviso. Other docs should link here instead of repeating release state, Chrome Web Store state, or hosted-AI live status.
 
 ## Release Line
 
-- Product identity: Aviso is a Chrome MV3 extension built with React 18 and TypeScript; local dev/build still use Plasmo paths, while the canonical release package is generated through the WXT package gate.
+- Product identity: Aviso is a Chrome MV3 extension built with React 18 and TypeScript; local dev/build still use Plasmo paths, while the canonical release package is generated through the WXT package gate at a separate canonical output path.
 - Build-tool classification: Plasmo `0.90.5` is a direct dev dependency, not a runtime dependency; no resolved dependency versions changed in the local lockfile regeneration for this classification change.
 - Current upload/package version: `0.1.1`; `package.json`, manifest, and Popup-visible version are aligned to `0.1.1`.
 - Default usable path: BYOK direct-provider remains the default path; users provide their own API Keys and the browser extension calls approved provider hosts directly.
@@ -41,11 +41,11 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 | 能力 | 状态 | 备注 |
 | --- | --- | --- |
 | Right-click menu, selection toolbar, command palette, clipboard prompt, in-page result panel, history, custom instructions, and Popup settings | `implemented` | Product surface summary is maintained in [STATUS](../STATUS.md) and [README](../README.md). |
-| Content-script frame minimization | `implemented` | MON-41 keeps existing user-triggered iframe behavior all-frame for the selection toolbar / inline translation, optional double-click menu, clipboard host / copy writer, Readability extraction, and iframe command-palette bridge. Command palette UI, result panel, and screenshot selector remain top-frame only. Clipboard Sense is default-off for missing settings, registers the copy listener only after an explicit enabled setting resolves, and removes it when disabled. DOM clipboard fallback is explicit top-frame opt-in only. Manifest/package evidence lives in [content surfaces](./architecture/content-surfaces.md), [runtime contract](./architecture/extension-runtime.md), [manifest checks](../scripts/check-extension-manifests.mjs), and [surface tests](../tests/extension-surface.test.ts). Generated package facts must come from local build/package checks; owner desktop loaded-extension review remains pending. |
+| Content-script frame minimization | `implemented` | MON-41 keeps existing user-triggered iframe behavior all-frame for the selection toolbar / inline translation, optional double-click menu, clipboard host / copy writer, Readability extraction, and iframe command-palette bridge. Command palette UI, result panel, and screenshot selector remain top-frame only. Clipboard Sense is default-off for missing settings and for historical `enableClipboardSense: true` values without `clipboardSenseConsentVersion: 1`; it registers the copy listener only when both enabled and consent-versioned, and removes it when disabled. DOM clipboard fallback is explicit top-frame opt-in only. Manifest/package evidence lives in [content surfaces](./architecture/content-surfaces.md), [runtime contract](./architecture/extension-runtime.md), [manifest checks](../scripts/check-extension-manifests.mjs), and [surface tests](../tests/extension-surface.test.ts). Generated package facts must come from local build/package checks; owner desktop loaded-extension review remains pending. |
 | BYOK direct-provider requests | `implemented` | Provider and storage boundaries are recorded in [STATUS](../STATUS.md) and [privacy/security](./privacy-and-security.md). |
 | Multiple provider configurations and manual model ID editing | `implemented` | Provider status and live-validation boundaries are recorded in [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md). |
 | Chinese and English UI plus manifest localization | `implemented` | Locale and manifest status are recorded in [STATUS](../STATUS.md). |
-| Canonical production package directory and zip | `implemented` | `npm run package` generates `build/chrome-mv3-prod` and `build/chrome-mv3-prod.zip`; release package evidence is recorded in [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md). |
+| Canonical production package directory and zip | `implemented` | `npm run package` generates `build/canonical-chrome-mv3-prod` and `build/canonical-chrome-mv3-prod.zip`; Plasmo local `npm run build` remains isolated at `build/chrome-mv3-prod`. Release package evidence is recorded in [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md). |
 | Local supply-chain baseline command | `implemented` | `npm run supply-chain:check` validates package/lock consistency, SHA-256 hashes, tracked baseline schema, direct dependency inventory, Plasmo dev classification, unresolved High/Critical ledger schema, merge-base package/lock base diff, and sanitized JSON evidence; see [security baseline](./security/supply-chain-baseline.json). |
 | Optional Aviso AI / hosted AI candidate path | `implemented` | Candidate-only path; public/live limits are recorded in [CURRENT_GATE](./ai/CURRENT_GATE.md). |
 | Chrome Web Store public install | `unverified` | Review state and approval are pending; see [CURRENT_GATE](./ai/CURRENT_GATE.md). |
@@ -67,7 +67,7 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 | 数据 | 位置 | 敏感级别 | 规则 |
 | --- | --- | --- | --- |
 | BYOK API Keys | `chrome.storage.local/contextai_api_keys` | secret | Not plaintext; local encryption/obfuscation only, not protection against a compromised machine or readable browser profile. |
-| Non-secret settings | `chrome.storage.sync/contextai_settings` | normal | Sync-safe settings only. |
+| Non-secret settings | `chrome.storage.sync/contextai_settings` | normal | Sync-safe settings only. Clipboard Sense requires both `enableClipboardSense: true` and `clipboardSenseConsentVersion: 1`; historical true values without that marker normalize disabled. |
 | Local AI conversation history | `chrome.storage.local/contextai_history` | user content | Local storage only; do not log raw prompts/responses into docs or remote systems. |
 | Hosted-AI session state | `chrome.storage.local/aviso_hosted_session` | sensitive session | Used only for the user-selected hosted path. |
 | Runtime short cache | in-memory only | transient | Used to reduce repeated preparation work; not persistent storage. |

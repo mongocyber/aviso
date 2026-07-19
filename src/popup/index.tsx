@@ -82,6 +82,7 @@ import {
   type ConnectivityValidationSummary
 } from "~utils/provider-connectivity"
 import {
+  CLIPBOARD_SENSE_CONSENT_VERSION,
   deleteProviderConfigApiKey,
   getApiKeys,
   getSettings,
@@ -192,6 +193,7 @@ const settingsSignature = (value: Settings) =>
     appearanceTheme: value.appearanceTheme,
     uiLanguage: value.uiLanguage,
     enableClipboardSense: value.enableClipboardSense,
+    clipboardSenseConsentVersion: value.clipboardSenseConsentVersion,
     enableToolbar: value.enableToolbar,
     enableCommandPalette: value.enableCommandPalette,
     enableDoubleClickMenu: value.enableDoubleClickMenu,
@@ -1803,6 +1805,13 @@ function Popup() {
       }
       if (key === "enableInlineTranslation" && value) {
         return { ...prev, enableInlineTranslation: true, enableToolbar: false }
+      }
+      if (key === "enableClipboardSense" && value) {
+        return {
+          ...prev,
+          enableClipboardSense: true,
+          clipboardSenseConsentVersion: CLIPBOARD_SENSE_CONSENT_VERSION
+        }
       }
       return { ...prev, [key]: value }
     })
