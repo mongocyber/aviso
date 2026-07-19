@@ -97,7 +97,9 @@ npm run verify:release-candidate
 - 最终 package zip 已核对内容，只包含扩展运行文件和 Chrome `_locales`。
 - 最终 manifest 已核对权限边界，普通权限和 host permissions 未扩大。
 
-2026-07-17 本地供应链基线通过：Plasmo `0.90.5` 已归类为直接 dev dependency，未保留在 runtime dependencies；baseline schema 已校验，package/lock 期望 SHA-256 已绑定，直接依赖清单完整，merge-base package/lock base diff 只允许 Plasmo runtime -> dev 移动且 package entry version/resolved/integrity 未漂移。Fresh registry audit 对当前 package/lock 仍是外部门禁 pending；未解析 High/Critical 账本因本次没有已验证当前 finding source 而保持空，这不代表零漏洞结论。
+2026-07-19 本地供应链基线终审修复：CI 和 submit 在 checkout 后、任何 setup/install/`npm ci`/test/build 前，先用系统 Node 直接运行 `node scripts/check-supply-chain-baseline.mjs`；`npm ci` 仍在 baseline 通过后执行，不被本地 baseline 取代。`npm run verify:release-candidate` 的首个 child command 也是同一个 dependency-free baseline checker，早于 test/typecheck/build/package。
+
+Plasmo `0.90.5` 已归类为直接 dev dependency，未保留在 runtime dependencies；baseline schema 已校验，package/lock 期望 SHA-256 已绑定，直接依赖清单完整，merge-base package/lock base diff 只允许 Plasmo runtime -> dev 移动且 package entry version/resolved/integrity 未漂移。Fresh registry audit 对当前 package/lock 仍是外部门禁 pending，baseline evidence 仍输出 `freshRegistryAudit: "pending-external"` 和 `npmAuditCommandRun: false`。本轮从 git 历史恢复 `49ef781` 的 Plasmo/Parcel build-chain high 风险记录，账本使用稳定 `riskId` 与 Plasmo `0.90.5` 受影响包语义指纹，review deadline 为 2026-08-16；当前没有可验证 `closedHighCritical` record，不能用 pending fresh audit、本地 baseline 或字符串说明写成已关闭、零漏洞或无需复核。
 
 当前仍未完成公开发布级收口：Chrome Web Store 最终审核结果、审核通过证据、正式商店链接、正式 `v0.1.1` tag、GitHub Release 和人工发布批准。
 

@@ -1,9 +1,11 @@
 {
   "$schema": "./supply-chain-baseline.schema.json",
   "schemaVersion": 1,
-  "updated": "2026-07-17",
+  "updated": "2026-07-19",
   "policy": {
-    "freshRegistryAudit": "pending-external",
+    "freshRegistryAudit": {
+      "status": "pending-external"
+    },
     "runtimeBuildSeparation": {
       "plasmoMustBeDevDependency": true
     }
@@ -107,5 +109,23 @@
       }
     ]
   },
-  "unresolvedHighCritical": []
+  "unresolvedHighCritical": [
+    {
+      "riskId": "historic-plasmo-parcel-build-chain-high-2026-06-10",
+      "severity": "high",
+      "packageName": "plasmo",
+      "affectedPackage": {
+        "packageName": "plasmo",
+        "resolvedVersion": "0.90.5",
+        "resolved": "https://registry.npmmirror.com/plasmo/-/plasmo-0.90.5.tgz",
+        "integrity": "sha512-VRFsRCHTKCDSRz7ZGmN4hCFqrHE8z7vDYqJK63v5gjRs+EUFdfEciQyGhPmG5NkT+yPvmMZO+R/j1HU/pg2BKA=="
+      },
+      "owner": "Aviso owner",
+      "impact": "Plasmo 0.90.5 keeps a Parcel build-chain high audit finding in the local build/package toolchain; not an extension runtime manifest-permission expansion.",
+      "reviewDeadline": "2026-08-16",
+      "source": "git 49ef781 RELEASE_CHECKLIST.md:97 and STATUS.md:69; 1392a83 later removed this without fresh audit closure",
+      "advisory": "2026-06-10 audit-level high finding for Plasmo 0.90.5 Parcel build chain; exact GHSA/CVE id was not preserved in repo history"
+    }
+  ],
+  "closedHighCritical": []
 }

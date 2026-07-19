@@ -13,7 +13,7 @@ The runtime is a Chrome MV3 extension with Plasmo kept for local dev/build compa
 - `scripts/package-production.mjs` preserves the real Plasmo generated manifest from the Plasmo default output at `build/chrome-mv3-prod/manifest.json` into `build/manifest-evidence/plasmo-manifest.json` before WXT packaging writes canonical output.
 - `scripts/package-production.mjs:13` defines `.output/chrome-mv3` as the intermediate WXT output and `build/canonical-chrome-mv3-prod` / `build/canonical-chrome-mv3-prod.zip` as canonical owner-loaded artifacts. The Plasmo default output remains `build/chrome-mv3-prod` and is not the canonical release candidate.
 - `scripts/check-extension-manifests.mjs` checks source content-script policy, the preserved Plasmo generated manifest, the WXT intermediate manifest, and the canonical final / zip manifest semantics.
-- `scripts/verify-release-candidate.mjs:13` sequences tests, typecheck, WXT build, Plasmo build, canonical package, manifest checks, claim scan, and artifact hygiene.
+- `scripts/verify-release-candidate.mjs:13` sequences the dependency-free supply-chain baseline before tests, typecheck, WXT build, Plasmo build, canonical package, manifest checks, claim scan, and artifact hygiene.
 
 ## Invariants
 

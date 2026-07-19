@@ -13,8 +13,8 @@ import { fileURLToPath } from "node:url"
 const expectedChromeWebStoreExtensionId = "phigblobbahhecgbcifmkamglcdnghcg"
 
 const commandSteps = [
+  nodeStep("supply-chain baseline", ["scripts/check-supply-chain-baseline.mjs"]),
   npmStep("unit tests", ["test"]),
-  npmStep("supply-chain baseline", ["run", "supply-chain:check"]),
   {
     label: "typecheck",
     command: process.execPath,
@@ -243,6 +243,15 @@ function npmStep(label, args) {
     command: "npm",
     args,
     displayCommand: ["npm", ...args]
+  }
+}
+
+function nodeStep(label, args) {
+  return {
+    label,
+    command: process.execPath,
+    args,
+    displayCommand: ["node", ...args]
   }
 }
 

@@ -1,7 +1,7 @@
 # Security
 
 Status: `active`
-Updated: 2026-07-17
+Updated: 2026-07-19
 
 本目录是 Aviso 产品仓库的安全生命周期入口。扩展当前权限、数据流、存储和“不收集”边界的详细实现说明仍以 [`../privacy-and-security.md`](../privacy-and-security.md) 为准；当前能力与门禁状态见 [`../STATE.md`](../STATE.md)。
 
@@ -45,12 +45,14 @@ Updated: 2026-07-17
 
 - 依赖新增需要说明用途、维护状态、许可证、运行时/构建时范围和替代方案。
 - 锁文件只能由对应包管理器生成。
-- `npm run supply-chain:check` 是本仓库的确定性本地供应链基线：验证 `package.json`/`package-lock.json` 一致性、两者 SHA-256、基线 schema、直接 runtime/dev 依赖清单、Plasmo dev 分类、未解析 High/Critical 账本 schema、相对 `origin/main`/`main` merge-base 的 package/lock base diff，并输出脱敏 JSON 证据。
+- `npm run supply-chain:check` 是本仓库的确定性本地供应链基线：验证 `package.json`/`package-lock.json` 一致性、两者 SHA-256、基线 schema、直接 runtime/dev 依赖清单、Plasmo dev 分类、未解析/已关闭 High/Critical 账本 schema、稳定 `riskId` continuity、受影响包语义指纹、严格 UTC review/audit/closure calendar date、fresh-audit evidence instant、相对 `origin/main`/`main` merge-base 的 package/lock base diff，并输出脱敏 JSON 证据。
+- CI 和 submit workflow 必须在 checkout 后、任何 setup/install/`npm ci`/test/build 前，先用系统 Node 直接运行 `node scripts/check-supply-chain-baseline.mjs`；这不替代 lockfile install，`npm ci` 仍在 baseline 通过后执行。
 - 当前允许的 package/lock base diff 只有 Plasmo `0.90.5` 从直接 runtime dependency 移到直接 dev dependency，或没有 package/lock diff；package-lock package entry set、每个 package entry 的 version/resolved/integrity 必须保持不变，非 dev 分类 metadata 不能漂移。
 - 基线策略和期望哈希位于 [`supply-chain-baseline.json`](./supply-chain-baseline.json)，账本结构见 [`supply-chain-baseline.schema.json`](./supply-chain-baseline.schema.json)。
 - `package.json`、`package-lock.json`、基线 JSON/schema 和 checker 在 [CODEOWNERS](../../.github/CODEOWNERS) 中归属 `@mongocyber`。Branch protection/code-owner enforcement 是外部 owner gate；同一个 PR 内单独刷新基线策略或 schema 不等于 owner 批准。
 - Plasmo 本地脚本通过 `scripts/run-plasmo-no-version-check.mjs` 只跳过 Plasmo latest-version metadata check，并要求 `node_modules/plasmo` 已按 lockfile 本地安装；它不替代 package manager/Parcel 的依赖行为复核。
-- Fresh registry audit 当前是外部门禁 pending；本地基线不运行 `npm audit`，空 High/Critical 账本也不能写成零漏洞结论。
+- Fresh registry audit 当前是外部门禁 pending；本地基线不运行 `npm audit`，High/Critical 账本状态也不能写成零漏洞结论。当前账本保留从 git 历史恢复的 Plasmo/Parcel build-chain high 风险，使用稳定 `riskId`、Plasmo `0.90.5` 语义指纹和 owner review deadline；没有可验证 `closedHighCritical` record 前不得清空。
+- `closedHighCritical` 只能用结构化字段关闭历史 High/Critical：`dependency_changed` 必须由当前解析出的受影响 package/version 不再匹配来证明；`fresh_registry_audit` 必须有 `verified`/`completed` policy、严格 UTC audit date 和仓库内受控 audit artifact reference。Artifact 必须位于 `docs/security/audit-evidence/`，不能越根或经 symlink 解析，reference SHA-256 必须匹配文件内容，JSON 内容必须绑定当前 `package.json`/`package-lock.json` SHA，记录 audit tool/command、runAt/generatedAt、result summary 和 `riskIds`；closure evidence 还必须引用同一 artifact 和同一 `riskId`。`auditDate`/`closedOn` 按严格 UTC calendar date 比较且不能晚于当前 UTC 日期；artifact `runAt`/`generatedAt` 按完整 UTC instant 毫秒比较且必须满足 `runAt <= generatedAt <= now`。Validator `now` 优先使用严格 UTC timestamp；date-only 兼容输入按 UTC 00:00:00Z fail-closed 处理，不能放过同日未来 artifact。Pending fresh audit 或任意字符串不能作为 closure。
 - 发布候选必须执行本地供应链基线、fresh registry audit 外部门禁、secret scan、manifest/permission 检查和最终 zip 内容复核；入口见 [`../architecture/testing.md`](../architecture/testing.md)。
 - 不能自动修复的构建链风险必须在发布证据中记录 owner 接受、隔离措施或上游跟踪，不能被“仅开发依赖”一句话关闭。
 

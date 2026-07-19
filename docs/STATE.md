@@ -33,7 +33,7 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 | Website owner review and production deployment evidence | `passed` | [STATUS](../STATUS.md), [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md) |
 | Owner-loaded hosted-AI production-candidate smoke | `passed` | [STATUS](../STATUS.md), [release status](./planning/v0.3/status.md) |
 | Billing/payment excluded from first hosted-AI release | `waived` | [STATUS](../STATUS.md), [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md) |
-| Local supply-chain baseline | `passed` | `npm run supply-chain:check`; [baseline](./security/supply-chain-baseline.json), [testing](./architecture/testing.md) |
+| Local supply-chain baseline | `passed` | `node scripts/check-supply-chain-baseline.mjs` before CI/submit install plus `npm run supply-chain:check`; [baseline](./security/supply-chain-baseline.json), [testing](./architecture/testing.md) |
 | Fresh registry dependency audit | `pending` | External pending; local baseline does not run `npm audit` or claim zero vulnerabilities. |
 
 ## Capabilities
@@ -46,7 +46,7 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 | Multiple provider configurations and manual model ID editing | `implemented` | Provider status and live-validation boundaries are recorded in [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md). |
 | Chinese and English UI plus manifest localization | `implemented` | Locale and manifest status are recorded in [STATUS](../STATUS.md). |
 | Canonical production package directory and zip | `implemented` | `npm run package` generates `build/canonical-chrome-mv3-prod` and `build/canonical-chrome-mv3-prod.zip`; Plasmo local `npm run build` remains isolated at `build/chrome-mv3-prod`. Release package evidence is recorded in [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md). |
-| Local supply-chain baseline command | `implemented` | `npm run supply-chain:check` validates package/lock consistency, SHA-256 hashes, tracked baseline schema, direct dependency inventory, Plasmo dev classification, unresolved High/Critical ledger schema, merge-base package/lock base diff, and sanitized JSON evidence; see [security baseline](./security/supply-chain-baseline.json). |
+| Local supply-chain baseline command | `implemented` | `npm run supply-chain:check` validates package/lock consistency, SHA-256 hashes, tracked baseline schema, direct dependency inventory, Plasmo dev classification, unresolved/closed High/Critical ledger schema, stable riskId continuity, affected-package semantic fingerprints, structured fresh-audit artifact binding, strict UTC review/audit/closure calendar dates, fresh-audit evidence instants, merge-base package/lock base diff, and sanitized JSON evidence; CI/submit run the dependency-free Node checker immediately after checkout and before setup/install. Evidence: [checker](../scripts/check-supply-chain-baseline.mjs), [baseline](./security/supply-chain-baseline.json), [CI workflow](../.github/workflows/ci.yml), and [submit workflow](../.github/workflows/submit.yml). |
 | Optional Aviso AI / hosted AI candidate path | `implemented` | Candidate-only path; public/live limits are recorded in [CURRENT_GATE](./ai/CURRENT_GATE.md). |
 | Chrome Web Store public install | `unverified` | Review state and approval are pending; see [CURRENT_GATE](./ai/CURRENT_GATE.md). |
 | Subscription, payment, and public anonymous quota | `not-planned` | Excluded from the first hosted-AI release; see [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md). |
@@ -60,7 +60,7 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 - Do not expand manifest permissions, host permissions, storage-key behavior, production config, public copy, CWS submission state, provider calls, or secrets handling without owner approval.
 - Do not write raw API Keys, raw prompts, raw provider responses, private page bodies, screenshot/base64 payloads, full URLs, clipboard content, or sensitive logs into docs, console, storage, release artifacts, or remote services.
 - Do not present screenshot as an ordinary-user primary entry or public selling point; it remains an internal right-click path only.
-- Do not treat the local supply-chain baseline or empty unresolved High/Critical ledger as a fresh registry audit or zero-vulnerability claim; fresh registry audit remains external pending.
+- Do not treat the local supply-chain baseline or unresolved High/Critical ledger state as a fresh registry audit, closure evidence, or zero-vulnerability claim; fresh registry audit remains external pending.
 
 ## Storage & Data
 
