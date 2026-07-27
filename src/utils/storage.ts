@@ -30,6 +30,10 @@ function normalizeApiKeyInput(value: string): string {
 
 export const CLIPBOARD_SENSE_CONSENT_VERSION = 1
 
+type SaveSettingsOptions = {
+  allowClipboardSenseConsentGrant?: boolean
+}
+
 const DEFAULT_SETTINGS: Settings = {
   defaultModel: "gpt-4o-mini",
   defaultProviderConfigId: "",
@@ -50,6 +54,10 @@ const DEFAULT_SETTINGS: Settings = {
 export function normalizeSettings(value: unknown): Settings {
   const raw = value && typeof value === "object" ? value : {}
   const merged = { ...DEFAULT_SETTINGS, ...raw } as Settings
+  if (merged.enableClipboardSense !== true) {
+    const { clipboardSenseConsentVersion: _revokedConsent, ...next } = merged
+    return { ...next, enableClipboardSense: false }
+  }
   if (
     merged.enableClipboardSense === true &&
     merged.clipboardSenseConsentVersion !== CLIPBOARD_SENSE_CONSENT_VERSION
@@ -66,9 +74,23 @@ export async function getSettings(): Promise<Settings> {
   return normalizeSettings(result.contextai_settings)
 }
 
-export async function saveSettings(settings: Partial<Settings>): Promise<void> {
+export async function saveSettings(
+  settings: Partial<Settings>,
+  options: SaveSettingsOptions = {}
+): Promise<void> {
   const current = await getSettings()
-  const next = normalizeSettings({ ...current, ...settings })
+  const incoming = { ...settings }
+  if (
+    current.enableClipboardSense !== true &&
+    incoming.enableClipboardSense === true &&
+    incoming.clipboardSenseConsentVersion ===
+      CLIPBOARD_SENSE_CONSENT_VERSION &&
+    !options.allowClipboardSenseConsentGrant
+  ) {
+    incoming.enableClipboardSense = false
+    delete incoming.clipboardSenseConsentVersion
+  }
+  const next = normalizeSettings({ ...current, ...incoming })
   await chrome.storage.sync.set({
     contextai_settings: next
   })

@@ -122,6 +122,122 @@ test("clipboard sense preserves explicit consented true and explicit false", asy
   }
 })
 
+test("disabling clipboard sense clears the stored consent marker", async () => {
+  const harness = installSyncStorageForSettings({
+    enableClipboardSense: true,
+    clipboardSenseConsentVersion: 1
+  })
+
+  try {
+    await saveSettings({ enableClipboardSense: false })
+    const storedSettings = harness.storedSettings as {
+      enableClipboardSense?: boolean
+      clipboardSenseConsentVersion?: number
+    }
+
+    assert.equal(storedSettings.enableClipboardSense, false)
+    assert.equal(storedSettings.clipboardSenseConsentVersion, undefined)
+  } finally {
+    harness.restore()
+  }
+})
+
+test("partial clipboard sense true after disable does not reuse old consent", async () => {
+  const mod = await importClipboardSenseModule()
+  assert.ok(mod, "clipboard sense policy module should exist")
+
+  const harness = installSyncStorageForSettings({
+    enableClipboardSense: true,
+    clipboardSenseConsentVersion: 1
+  })
+  const added: Array<() => void> = []
+  const removed: Array<() => void> = []
+  const copyListener = () => undefined
+  const controller = mod.createClipboardSenseListenerController({
+    listener: copyListener,
+    addCopyListener: (listener: () => void) => added.push(listener),
+    removeCopyListener: (listener: () => void) => removed.push(listener)
+  })
+
+  try {
+    controller.applySettings(await getSettings())
+    assert.deepEqual(added, [copyListener])
+
+    await saveSettings({ enableClipboardSense: false })
+    controller.applySettings(harness.storedSettings as Record<string, unknown>)
+    assert.deepEqual(removed, [copyListener])
+
+    await saveSettings({ enableClipboardSense: true })
+    controller.applySettings(harness.storedSettings as Record<string, unknown>)
+
+    const storedSettings = harness.storedSettings as {
+      enableClipboardSense?: boolean
+      clipboardSenseConsentVersion?: number
+    }
+    assert.equal(storedSettings.enableClipboardSense, false)
+    assert.equal(storedSettings.clipboardSenseConsentVersion, undefined)
+    assert.deepEqual(added, [copyListener])
+    assert.equal((await getSettings()).enableClipboardSense, false)
+  } finally {
+    controller.dispose()
+    harness.restore()
+  }
+})
+
+test("stale full settings autosave cannot re-enable clipboard sense after disable", async () => {
+  const harness = installSyncStorageForSettings({
+    enableClipboardSense: true,
+    clipboardSenseConsentVersion: 1,
+    appearanceTheme: "light"
+  })
+
+  try {
+    const staleAutosaveSettings = await getSettings()
+    await saveSettings({ enableClipboardSense: false })
+    await saveSettings({ ...staleAutosaveSettings, appearanceTheme: "dark" })
+
+    const storedSettings = harness.storedSettings as {
+      enableClipboardSense?: boolean
+      clipboardSenseConsentVersion?: number
+      appearanceTheme?: string
+    }
+    assert.equal(storedSettings.enableClipboardSense, false)
+    assert.equal(storedSettings.clipboardSenseConsentVersion, undefined)
+    assert.equal(storedSettings.appearanceTheme, "dark")
+    assert.equal((await getSettings()).enableClipboardSense, false)
+  } finally {
+    harness.restore()
+  }
+})
+
+test("explicit clipboard sense consent grant can re-enable after disable", async () => {
+  const harness = installSyncStorageForSettings({
+    enableClipboardSense: true,
+    clipboardSenseConsentVersion: 1
+  })
+
+  try {
+    await saveSettings({ enableClipboardSense: false })
+    await saveSettings(
+      {
+        enableClipboardSense: true,
+        clipboardSenseConsentVersion: 1
+      },
+      { allowClipboardSenseConsentGrant: true }
+    )
+
+    const storedSettings = harness.storedSettings as {
+      enableClipboardSense?: boolean
+      clipboardSenseConsentVersion?: number
+    }
+    assert.equal(storedSettings.enableClipboardSense, true)
+    assert.equal(storedSettings.clipboardSenseConsentVersion, 1)
+    assert.equal((await getSettings()).enableClipboardSense, true)
+  } finally {
+    harness.restore()
+  }
+})
+
 test("clipboard sense listener registers only after explicit enable and removes on disable", async () => {
   const mod = await importClipboardSenseModule()
   assert.ok(mod, "clipboard sense policy module should exist")

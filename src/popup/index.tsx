@@ -1807,11 +1807,25 @@ function Popup() {
         return { ...prev, enableInlineTranslation: true, enableToolbar: false }
       }
       if (key === "enableClipboardSense" && value) {
-        return {
+        const next = {
           ...prev,
           enableClipboardSense: true,
           clipboardSenseConsentVersion: CLIPBOARD_SENSE_CONSENT_VERSION
         }
+        const nextSignature = settingsSignature(next)
+        persistedSettingsSignature.current = nextSignature
+        void saveSettings(next, {
+          allowClipboardSenseConsentGrant: true
+        })
+          .then(() => {
+            chrome.runtime.sendMessage({ action: "UPDATE_TEMPLATES" })
+            flashSaved()
+          })
+          .catch(() => {
+            persistedSettingsSignature.current = ""
+            flashSaveError()
+          })
+        return next
       }
       return { ...prev, [key]: value }
     })
