@@ -729,6 +729,80 @@ test("explicit clipboard sense consent grant can re-enable after disable", async
   }
 })
 
+test("clipboard sense listener registers for first-time consent at epoch zero", async () => {
+  const mod = await importClipboardSenseModule()
+  assert.ok(mod, "clipboard sense policy module should exist")
+
+  const harness = installSyncStorageForSettings({
+    enableClipboardSense: true,
+    clipboardSenseConsentVersion: 1
+  })
+  const added: Array<() => void> = []
+  const copyListener = () => undefined
+  const controller = mod.createClipboardSenseListenerController({
+    listener: copyListener,
+    addCopyListener: (listener: () => void) => added.push(listener),
+    removeCopyListener: () => undefined
+  })
+
+  try {
+    const settings = await getSettings()
+    assert.equal(settings.enableClipboardSense, true)
+    assert.equal(settings.clipboardSenseConsentEpoch, 0)
+
+    controller.applySettings(settings)
+    assert.deepEqual(added, [copyListener])
+  } finally {
+    controller.dispose()
+    harness.restore()
+  }
+})
+
+test("clipboard sense listener registers after revoke and explicit re-consent", async () => {
+  const mod = await importClipboardSenseModule()
+  assert.ok(mod, "clipboard sense policy module should exist")
+
+  const harness = installSyncStorageForSettings({
+    enableClipboardSense: true,
+    clipboardSenseConsentVersion: 1
+  })
+  const added: Array<() => void> = []
+  const removed: Array<() => void> = []
+  const copyListener = () => undefined
+  const controller = mod.createClipboardSenseListenerController({
+    listener: copyListener,
+    addCopyListener: (listener: () => void) => added.push(listener),
+    removeCopyListener: (listener: () => void) => removed.push(listener)
+  })
+
+  try {
+    controller.applySettings(await getSettings())
+    assert.deepEqual(added, [copyListener])
+
+    await saveSettings({ enableClipboardSense: false })
+    controller.applySettings(await getSettings())
+    assert.deepEqual(removed, [copyListener])
+
+    await saveSettings(
+      {
+        enableClipboardSense: true,
+        clipboardSenseConsentVersion: 1
+      },
+      { allowClipboardSenseConsentGrant: true }
+    )
+
+    const settings = await getSettings()
+    assert.equal(settings.enableClipboardSense, true)
+    assert.equal(settings.clipboardSenseConsentEpoch, 1)
+
+    controller.applySettings(settings)
+    assert.deepEqual(added, [copyListener, copyListener])
+  } finally {
+    controller.dispose()
+    harness.restore()
+  }
+})
+
 test("clipboard sense listener registers only after explicit enable and removes on disable", async () => {
   const mod = await importClipboardSenseModule()
   assert.ok(mod, "clipboard sense policy module should exist")

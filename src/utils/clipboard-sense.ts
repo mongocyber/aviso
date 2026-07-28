@@ -33,6 +33,15 @@ export function isClipboardSenseEnabled(
   )
 }
 
+function isNormalizedClipboardSenseEnabled(
+  settings?: ClipboardSenseSettings | null
+): boolean {
+  return (
+    settings?.enableClipboardSense === true &&
+    settings.clipboardSenseConsentVersion === CLIPBOARD_SENSE_CONSENT_VERSION
+  )
+}
+
 export function createClipboardSenseListenerController({
   listener,
   addCopyListener,
@@ -55,7 +64,7 @@ export function createClipboardSenseListenerController({
 
   return {
     applySettings(settings?: ClipboardSenseSettings | null) {
-      setEnabled(isClipboardSenseEnabled(settings))
+      setEnabled(isNormalizedClipboardSenseEnabled(settings))
     },
     dispose() {
       if (disposed) return
