@@ -540,7 +540,7 @@ export function splitReleaseClaimClauses(text) {
   const normalized = normalizedClaim.text
   const clauses = []
   const boundary =
-    /[|,，;；。!！?？:：()[\]{}]+|\.(?![A-Za-z0-9])|\s*[—–]\s*|\s*\/\s*|\s+because\s+(?=(?:they|it|these|those)\b)|\s+(?:and|or|but|while|whereas|however|although|yet)\s+|(?:但是|并且|同时|以及|但|而)|(?:和|或|且)(?=(?:Chrome\s*Web\s*Store|CWS|hosted\s*AI|Aviso\s*AI|托管\s*AI|托管路径|已\s*(?:公开\s*上线|公开\s*上架|上线|发布)|公开(?:上线|上架|发布|可用)|正式(?:上线|上架)|审核通过|已通过|已批准|当前可用|已经可用|可用|立即安装|公开可安装|正式可安装|已上架))/giu
+    /[|,，;；。!！?？:：()[\]{}]+|\.(?![A-Za-z0-9])|\s*[—–]\s*|\s+[-+&]\s+|\s*\/\s*|\s+because\s+(?=(?:they|it|these|those)\b)|\s+(?:and|or|but|while|whereas|however|although|yet|then)\s+|(?:但是|并且|同时|以及|但|而)|(?:和|或|且)(?=(?:Chrome\s*Web\s*Store|CWS|hosted\s*AI|Aviso\s*AI|托管\s*AI|托管路径|已\s*(?:公开\s*上线|公开\s*上架|上线|发布)|公开(?:上线|上架|发布|可用)|正式(?:上线|上架)|审核通过|已通过|已批准|当前可用|已经可用|可用|立即安装|公开可安装|正式可安装|已上架))/giu
   let start = 0
   let previousBoundary = ""
   for (const match of normalized.matchAll(boundary)) {

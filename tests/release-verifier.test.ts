@@ -16,6 +16,7 @@ import {
   normalizeReleaseClaimScanPath,
   runCommandStep,
   scanForbiddenReleaseClaimsInFiles,
+  splitReleaseClaimClauses,
   type ReleaseClaimFinding
 } from "../scripts/verify-release-candidate.mjs"
 
@@ -459,6 +460,15 @@ test("release claim scanner avoids over-splitting words and long safe negatives"
   assert.deepEqual(findings, [])
 })
 
+test("release claim scanner keeps intra-word ASCII hyphens inside one clause", () => {
+  assert.deepEqual(
+    splitReleaseClaimClauses("Use a well-known provider; hosted AI is not live.").map(
+      (clause) => clause.text
+    ),
+    ["Use a well-known provider", "hosted AI is not live"]
+  )
+})
+
 test("release claim scanner keeps negation scoped to the matching clause", () => {
   const findings = scanForbiddenReleaseClaimsInFiles([
     {
@@ -476,6 +486,7 @@ test("release claim scanner keeps negation scoped to the matching clause", () =>
 test("release claim scanner does not let unrelated negation cross claim boundaries", () => {
   const probes = [
     "Chrome Web Store is not approved — hosted AI is live.",
+    "Chrome Web Store is not approved - hosted AI is live.",
     "Chrome Web Store is not approved / hosted AI is live.",
     "Although the store is not approved, hosted AI is live.",
     "The store is not approved yet hosted AI is live."
@@ -636,6 +647,30 @@ test("release claim scanner treats dash slash and connector combinations as clai
     [
       "slash-however-hosted.md",
       "Chrome Web Store is not approved/however hosted AI is live.",
+      "hosted AI live/public overclaim",
+      "hosted AI is live"
+    ],
+    [
+      "ascii-hyphen-hosted.md",
+      "Chrome Web Store is not approved - hosted AI is live.",
+      "hosted AI live/public overclaim",
+      "hosted AI is live"
+    ],
+    [
+      "plus-hosted.md",
+      "Chrome Web Store is not approved + hosted AI is live.",
+      "hosted AI live/public overclaim",
+      "hosted AI is live"
+    ],
+    [
+      "ampersand-hosted.md",
+      "Chrome Web Store is not approved & hosted AI is live.",
+      "hosted AI live/public overclaim",
+      "hosted AI is live"
+    ],
+    [
+      "then-hosted.md",
+      "Chrome Web Store is not approved then hosted AI is live.",
       "hosted AI live/public overclaim",
       "hosted AI is live"
     ]
