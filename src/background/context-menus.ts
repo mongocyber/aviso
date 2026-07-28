@@ -26,7 +26,7 @@ import {
   isHostedSessionUsable,
   readHostedSession
 } from "~utils/hosted-session"
-import { getApiKeys, getSettings, saveSettings } from "~utils/storage"
+import { getApiKeys, getSettings, saveSettingsDirect } from "~utils/storage"
 import { logTiming, markTiming, startTiming } from "~utils/timing"
 import { createI18n, resolveSettingsUiLanguage } from "~utils/i18n-core"
 
@@ -755,7 +755,7 @@ async function handleModelSwitch(providerConfigId: string) {
   const config = providerConfigs.find((item) => item.id === providerConfigId)
   if (!config) return
 
-  await saveSettings({
+  await saveSettingsDirect({
     defaultProviderConfigId: providerConfigId,
     defaultModel: getModelForProviderConfig(config)
   })

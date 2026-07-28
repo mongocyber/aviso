@@ -3,7 +3,9 @@ import { CLIPBOARD_SENSE_CONSENT_VERSION } from "~utils/storage"
 
 type ClipboardSenseSettings = Pick<
   Partial<Settings>,
-  "enableClipboardSense" | "clipboardSenseConsentVersion"
+  | "enableClipboardSense"
+  | "clipboardSenseConsentVersion"
+  | "clipboardSenseConsentEpoch"
 >
 
 type ClipboardSenseListenerControllerOptions = {
@@ -13,6 +15,25 @@ type ClipboardSenseListenerControllerOptions = {
 }
 
 export function isClipboardSenseEnabled(
+  settings?: ClipboardSenseSettings | null,
+  currentRevocationEpoch = 0
+): boolean {
+  const consentEpoch =
+    typeof settings?.clipboardSenseConsentEpoch === "number" &&
+    Number.isSafeInteger(settings.clipboardSenseConsentEpoch) &&
+    settings.clipboardSenseConsentEpoch >= 0
+      ? settings.clipboardSenseConsentEpoch
+      : 0
+
+  return (
+    settings?.enableClipboardSense === true &&
+    settings.clipboardSenseConsentVersion ===
+      CLIPBOARD_SENSE_CONSENT_VERSION &&
+    consentEpoch === currentRevocationEpoch
+  )
+}
+
+function isNormalizedClipboardSenseEnabled(
   settings?: ClipboardSenseSettings | null
 ): boolean {
   return (
@@ -43,7 +64,7 @@ export function createClipboardSenseListenerController({
 
   return {
     applySettings(settings?: ClipboardSenseSettings | null) {
-      setEnabled(isClipboardSenseEnabled(settings))
+      setEnabled(isNormalizedClipboardSenseEnabled(settings))
     },
     dispose() {
       if (disposed) return

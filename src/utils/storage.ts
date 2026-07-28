@@ -1,5 +1,6 @@
 import CryptoJS from "crypto-js"
 import type { PromptTemplate, ProviderConfig, Settings } from "~types/history"
+import type { MessageResponse } from "~types/messages"
 
 // API key storage is local obfuscation, not a confidentiality boundary.
 // The release extension id is public/stable, so code that can read the local
@@ -28,7 +29,17 @@ function normalizeApiKeyInput(value: string): string {
 
 // ── Settings ────────────────────────────────────────────────────────────────
 
+export const SETTINGS_STORAGE_KEY = "contextai_settings"
+export const CLIPBOARD_SENSE_REVOCATION_EPOCH_STORAGE_KEY =
+  "contextai_clipboard_sense_revocation_epoch"
 export const CLIPBOARD_SENSE_CONSENT_VERSION = 1
+
+export type SaveSettingsOptions = {
+  // Only set this from the direct, explicit user action that grants Clipboard Sense consent.
+  allowClipboardSenseConsentGrant?: boolean
+}
+
+const SAVE_SETTINGS_MESSAGE_TIMEOUT_MS = 10_000
 
 const DEFAULT_SETTINGS: Settings = {
   defaultModel: "gpt-4o-mini",
@@ -47,30 +58,180 @@ const DEFAULT_SETTINGS: Settings = {
   templates: []
 }
 
-export function normalizeSettings(value: unknown): Settings {
+function normalizeClipboardSenseEpoch(value: unknown): number {
+  return typeof value === "number" &&
+    Number.isSafeInteger(value) &&
+    value >= 0
+    ? value
+    : 0
+}
+
+function omitClipboardSenseConsent(settings: Settings): Settings {
+  const {
+    clipboardSenseConsentVersion: _consentVersion,
+    clipboardSenseConsentEpoch: _consentEpoch,
+    ...next
+  } = settings
+  return { ...next, enableClipboardSense: false }
+}
+
+export function normalizeSettings(
+  value: unknown,
+  revocationEpoch: unknown = 0
+): Settings {
   const raw = value && typeof value === "object" ? value : {}
+  const currentRevocationEpoch = normalizeClipboardSenseEpoch(revocationEpoch)
   const merged = { ...DEFAULT_SETTINGS, ...raw } as Settings
-  if (
-    merged.enableClipboardSense === true &&
-    merged.clipboardSenseConsentVersion !== CLIPBOARD_SENSE_CONSENT_VERSION
-  ) {
-    const { clipboardSenseConsentVersion: _legacyConsent, ...next } = merged
-    return { ...next, enableClipboardSense: false }
+  if (merged.enableClipboardSense !== true) {
+    return omitClipboardSenseConsent(merged)
   }
-  return merged
+
+  const consentEpoch = normalizeClipboardSenseEpoch(
+    merged.clipboardSenseConsentEpoch
+  )
+  if (
+    merged.clipboardSenseConsentVersion !== CLIPBOARD_SENSE_CONSENT_VERSION ||
+    consentEpoch !== currentRevocationEpoch
+  ) {
+    return omitClipboardSenseConsent(merged)
+  }
+  return { ...merged, clipboardSenseConsentEpoch: consentEpoch }
+}
+
+async function getSettingsSnapshot(): Promise<{
+  settings: Settings
+  revocationEpoch: number
+}> {
+  // Keep legacy storage keys for upgrade compatibility after the Aviso rename.
+  const result = await chrome.storage.sync.get([
+    SETTINGS_STORAGE_KEY,
+    CLIPBOARD_SENSE_REVOCATION_EPOCH_STORAGE_KEY
+  ])
+  const revocationEpoch = normalizeClipboardSenseEpoch(
+    result[CLIPBOARD_SENSE_REVOCATION_EPOCH_STORAGE_KEY]
+  )
+  return {
+    settings: normalizeSettings(result[SETTINGS_STORAGE_KEY], revocationEpoch),
+    revocationEpoch
+  }
 }
 
 export async function getSettings(): Promise<Settings> {
-  // Keep legacy storage keys for upgrade compatibility after the Aviso rename.
-  const result = await chrome.storage.sync.get("contextai_settings")
-  return normalizeSettings(result.contextai_settings)
+  return (await getSettingsSnapshot()).settings
 }
 
-export async function saveSettings(settings: Partial<Settings>): Promise<void> {
-  const current = await getSettings()
-  const next = normalizeSettings({ ...current, ...settings })
+let settingsWriteQueue: Promise<void> = Promise.resolve()
+
+export async function saveSettings(
+  settings: Partial<Settings>,
+  options: SaveSettingsOptions = {}
+): Promise<void> {
+  const response = await sendSaveSettingsMessage(settings, options)
+  if (!response.success) {
+    throw new Error(
+      typeof response.error === "string" && response.error
+        ? response.error
+        : "settings_save_failed"
+    )
+  }
+}
+
+export async function saveSettingsDirect(
+  settings: Partial<Settings>,
+  options: SaveSettingsOptions = {}
+): Promise<void> {
+  const requestedSettings = { ...settings }
+  const requestedOptions = { ...options }
+  const write = settingsWriteQueue.then(
+    () => saveSettingsUnlocked(requestedSettings, requestedOptions),
+    () => saveSettingsUnlocked(requestedSettings, requestedOptions)
+  )
+  settingsWriteQueue = write.catch(() => undefined)
+  await write
+}
+
+function sendSaveSettingsMessage(
+  settings: Partial<Settings>,
+  options: SaveSettingsOptions
+): Promise<MessageResponse> {
+  const requestedSettings = { ...settings }
+  const requestedOptions = { ...options }
+  return new Promise((resolve, reject) => {
+    let settled = false
+    const timeout = setTimeout(() => {
+      if (settled) return
+      settled = true
+      reject(new Error("settings_save_timeout"))
+    }, SAVE_SETTINGS_MESSAGE_TIMEOUT_MS)
+
+    chrome.runtime.sendMessage(
+      {
+        action: "SAVE_SETTINGS",
+        payload: {
+          settings: requestedSettings,
+          options: requestedOptions
+        }
+      },
+      (response?: MessageResponse) => {
+        if (settled) return
+        settled = true
+        clearTimeout(timeout)
+        const runtimeError = chrome.runtime.lastError
+        if (runtimeError) {
+          reject(new Error("runtime_message_failed"))
+          return
+        }
+        resolve(response ?? { success: false, error: "empty_response" })
+      }
+    )
+  })
+}
+
+async function saveSettingsUnlocked(
+  settings: Partial<Settings>,
+  options: SaveSettingsOptions
+): Promise<void> {
+  const { settings: current, revocationEpoch } = await getSettingsSnapshot()
+  let nextRevocationEpoch = revocationEpoch
+  const incoming = { ...settings }
+
+  if (incoming.enableClipboardSense === false) {
+    incoming.enableClipboardSense = false
+    delete incoming.clipboardSenseConsentVersion
+    delete incoming.clipboardSenseConsentEpoch
+    if (current.enableClipboardSense === true) {
+      nextRevocationEpoch += 1
+      await chrome.storage.sync.set({
+        [CLIPBOARD_SENSE_REVOCATION_EPOCH_STORAGE_KEY]: nextRevocationEpoch
+      })
+    }
+  }
+
+  if (
+    incoming.enableClipboardSense === true &&
+    options.allowClipboardSenseConsentGrant === true
+  ) {
+    incoming.clipboardSenseConsentVersion = CLIPBOARD_SENSE_CONSENT_VERSION
+    incoming.clipboardSenseConsentEpoch = nextRevocationEpoch
+  }
+
+  if (
+    current.enableClipboardSense !== true &&
+    incoming.enableClipboardSense === true &&
+    incoming.clipboardSenseConsentVersion ===
+      CLIPBOARD_SENSE_CONSENT_VERSION &&
+    options.allowClipboardSenseConsentGrant !== true
+  ) {
+    incoming.enableClipboardSense = false
+    delete incoming.clipboardSenseConsentVersion
+    delete incoming.clipboardSenseConsentEpoch
+  }
+  const next = normalizeSettings(
+    { ...current, ...incoming },
+    nextRevocationEpoch
+  )
   await chrome.storage.sync.set({
-    contextai_settings: next
+    [SETTINGS_STORAGE_KEY]: next
   })
 }
 

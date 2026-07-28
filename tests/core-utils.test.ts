@@ -368,6 +368,29 @@ test("background message boundary validates sender id, frame and action policy",
       { ok: true, action: "GET_HISTORY" }
     )
 
+    assert.deepEqual(
+      validateBackgroundMessageBoundary(
+        {
+          action: "SAVE_SETTINGS",
+          payload: { settings: { enableClipboardSense: false } }
+        },
+        { id: "aviso-extension-id" } as chrome.runtime.MessageSender
+      ),
+      { ok: true, action: "SAVE_SETTINGS" }
+    )
+
+    const contentSettingsWrite = validateBackgroundMessageBoundary(
+      {
+        action: "SAVE_SETTINGS",
+        payload: { settings: { enableClipboardSense: false } }
+      },
+      topFrameSender
+    )
+    assert.equal(contentSettingsWrite.ok, false)
+    if (contentSettingsWrite.ok === false) {
+      assert.equal(contentSettingsWrite.log.reason, "unexpected_sender_tab")
+    }
+
     const unknown = validateBackgroundMessageBoundary(
       { action: "https://private.example.com/do-not-log?token=abc" },
       topFrameSender
