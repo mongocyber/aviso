@@ -33,6 +33,83 @@ function installSyncStorageForSettings(contextaiSettings: unknown) {
   }
 }
 
+function installControlledSyncStorageForSettings(contextaiSettings: unknown) {
+  const previousChrome = (globalThis as { chrome?: ChromeLike }).chrome
+  let storedSettings = contextaiSettings
+  const pendingSets: Array<{
+    items: Record<string, unknown>
+    resolve: () => void
+  }> = []
+  const setWaiters: Array<{
+    count: number
+    resolve: () => void
+  }> = []
+
+  function notifySetWaiters() {
+    for (let i = setWaiters.length - 1; i >= 0; i -= 1) {
+      if (pendingSets.length >= setWaiters[i].count) {
+        const [waiter] = setWaiters.splice(i, 1)
+        waiter.resolve()
+      }
+    }
+  }
+
+  ;(globalThis as { chrome?: unknown }).chrome = {
+    runtime: { id: "aviso-test-extension" },
+    storage: {
+      sync: {
+        get: async (key: string) => ({ [key]: storedSettings }),
+        set: async (items: Record<string, unknown>) =>
+          new Promise<void>((resolve) => {
+            pendingSets.push({ items, resolve })
+            notifySetWaiters()
+          })
+      }
+    }
+  }
+
+  return {
+    get storedSettings() {
+      return storedSettings
+    },
+    get pendingSetCount() {
+      return pendingSets.length
+    },
+    waitForSetCount(count: number) {
+      if (pendingSets.length >= count) {
+        return Promise.resolve()
+      }
+      return new Promise<void>((resolve) => {
+        setWaiters.push({ count, resolve })
+      })
+    },
+    completeSet(index: number) {
+      const [pending] = pendingSets.splice(index, 1)
+      assert.ok(pending, `expected pending set at index ${index}`)
+      if ("contextai_settings" in pending.items) {
+        storedSettings = pending.items.contextai_settings
+      }
+      pending.resolve()
+    },
+    restore() {
+      ;(globalThis as { chrome?: ChromeLike }).chrome = previousChrome
+    }
+  }
+}
+
+async function waitForSetCountWithin(
+  waitForSetCount: (count: number) => Promise<void>,
+  count: number,
+  ms: number
+): Promise<boolean> {
+  return Promise.race([
+    waitForSetCount(count).then(() => true),
+    new Promise<boolean>((resolve) => {
+      setTimeout(() => resolve(false), ms)
+    })
+  ])
+}
+
 async function importClipboardSenseModule() {
   return import("../src/utils/clipboard-sense.ts").catch(() => null)
 }
@@ -195,6 +272,51 @@ test("stale full settings autosave cannot re-enable clipboard sense after disabl
     const staleAutosaveSettings = await getSettings()
     await saveSettings({ enableClipboardSense: false })
     await saveSettings({ ...staleAutosaveSettings, appearanceTheme: "dark" })
+
+    const storedSettings = harness.storedSettings as {
+      enableClipboardSense?: boolean
+      clipboardSenseConsentVersion?: number
+      appearanceTheme?: string
+    }
+    assert.equal(storedSettings.enableClipboardSense, false)
+    assert.equal(storedSettings.clipboardSenseConsentVersion, undefined)
+    assert.equal(storedSettings.appearanceTheme, "dark")
+    assert.equal((await getSettings()).enableClipboardSense, false)
+  } finally {
+    harness.restore()
+  }
+})
+
+test("overlapping stale autosave cannot overwrite newer clipboard sense disable", async () => {
+  const harness = installControlledSyncStorageForSettings({
+    enableClipboardSense: true,
+    clipboardSenseConsentVersion: 1,
+    appearanceTheme: "light"
+  })
+
+  try {
+    const staleAutosave = saveSettings({
+      enableClipboardSense: true,
+      clipboardSenseConsentVersion: 1,
+      appearanceTheme: "dark"
+    })
+    await harness.waitForSetCount(1)
+
+    const disable = saveSettings({ enableClipboardSense: false })
+
+    if (await waitForSetCountWithin(harness.waitForSetCount, 2, 25)) {
+      harness.completeSet(1)
+      await disable
+      harness.completeSet(0)
+      await staleAutosave
+    } else {
+      assert.equal(harness.pendingSetCount, 1)
+      harness.completeSet(0)
+      await staleAutosave
+      await harness.waitForSetCount(1)
+      harness.completeSet(0)
+      await disable
+    }
 
     const storedSettings = harness.storedSettings as {
       enableClipboardSense?: boolean

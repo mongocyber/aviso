@@ -31,6 +31,7 @@ function normalizeApiKeyInput(value: string): string {
 export const CLIPBOARD_SENSE_CONSENT_VERSION = 1
 
 type SaveSettingsOptions = {
+  // Only set this from the direct, explicit user action that grants Clipboard Sense consent.
   allowClipboardSenseConsentGrant?: boolean
 }
 
@@ -74,9 +75,25 @@ export async function getSettings(): Promise<Settings> {
   return normalizeSettings(result.contextai_settings)
 }
 
+let settingsWriteQueue: Promise<void> = Promise.resolve()
+
 export async function saveSettings(
   settings: Partial<Settings>,
   options: SaveSettingsOptions = {}
+): Promise<void> {
+  const requestedSettings = { ...settings }
+  const requestedOptions = { ...options }
+  const write = settingsWriteQueue.then(
+    () => saveSettingsUnlocked(requestedSettings, requestedOptions),
+    () => saveSettingsUnlocked(requestedSettings, requestedOptions)
+  )
+  settingsWriteQueue = write.catch(() => undefined)
+  await write
+}
+
+async function saveSettingsUnlocked(
+  settings: Partial<Settings>,
+  options: SaveSettingsOptions
 ): Promise<void> {
   const current = await getSettings()
   const incoming = { ...settings }
@@ -85,7 +102,7 @@ export async function saveSettings(
     incoming.enableClipboardSense === true &&
     incoming.clipboardSenseConsentVersion ===
       CLIPBOARD_SENSE_CONSENT_VERSION &&
-    !options.allowClipboardSenseConsentGrant
+    options.allowClipboardSenseConsentGrant !== true
   ) {
     incoming.enableClipboardSense = false
     delete incoming.clipboardSenseConsentVersion
