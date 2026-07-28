@@ -19,7 +19,7 @@ import {
   haveProviderConfigMenusChanged,
   haveTemplatesChanged
 } from "~utils/settings-change"
-import { getSettings } from "~utils/storage"
+import { getSettings, saveSettingsDirect } from "~utils/storage"
 import {
   logTiming,
   markTiming,
@@ -704,6 +704,32 @@ async function handleMessage(
           data: result,
           error: result.error?.code
         })
+        break
+      }
+
+      case "SAVE_SETTINGS": {
+        const payload = request.payload as {
+          settings?: unknown
+          options?: { allowClipboardSenseConsentGrant?: unknown }
+        }
+        if (
+          !payload ||
+          typeof payload.settings !== "object" ||
+          payload.settings === null ||
+          Array.isArray(payload.settings)
+        ) {
+          sendResponse({
+            success: false,
+            error: "Invalid settings payload"
+          })
+          break
+        }
+
+        await saveSettingsDirect(payload.settings as Partial<Settings>, {
+          allowClipboardSenseConsentGrant:
+            payload.options?.allowClipboardSenseConsentGrant === true
+        })
+        sendResponse({ success: true })
         break
       }
 

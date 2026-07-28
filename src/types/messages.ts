@@ -7,6 +7,7 @@ import type {
 } from "~utils/hosted-session"
 import type { AiUnavailableGuidance } from "~utils/ai-unavailable-guidance"
 import type { ProviderId } from "~utils/model-registry"
+import type { SaveSettingsOptions } from "~utils/storage"
 import type { PerfSummary, RequestTiming } from "~utils/timing"
 
 export type ContextMenuContext =
@@ -79,6 +80,13 @@ export type MessageRequest =
   | {
       action: "WARM_RUNTIME_CONFIG"
       payload?: { requestId?: string }
+    }
+  | {
+      action: "SAVE_SETTINGS"
+      payload: {
+        settings: Partial<import("~types/history").Settings>
+        options?: SaveSettingsOptions
+      }
     }
   | { action: "SAVE_HISTORY"; payload: import("~types/history").HistoryEntry }
   | { action: "GET_HISTORY" }

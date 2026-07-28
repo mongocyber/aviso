@@ -194,6 +194,7 @@ const settingsSignature = (value: Settings) =>
     uiLanguage: value.uiLanguage,
     enableClipboardSense: value.enableClipboardSense,
     clipboardSenseConsentVersion: value.clipboardSenseConsentVersion,
+    clipboardSenseConsentEpoch: value.clipboardSenseConsentEpoch,
     enableToolbar: value.enableToolbar,
     enableCommandPalette: value.enableCommandPalette,
     enableDoubleClickMenu: value.enableDoubleClickMenu,
@@ -372,6 +373,32 @@ const normalizeCommonFeatureSettings = (value: Settings): Settings =>
   value.enableToolbar && value.enableInlineTranslation
     ? { ...value, enableToolbar: false }
     : value
+
+function applyClipboardSenseFields(
+  settings: Settings,
+  clipboardSenseSettings: Settings
+): Settings {
+  const next = {
+    ...settings,
+    enableClipboardSense: clipboardSenseSettings.enableClipboardSense
+  }
+
+  if (clipboardSenseSettings.clipboardSenseConsentVersion === undefined) {
+    delete next.clipboardSenseConsentVersion
+  } else {
+    next.clipboardSenseConsentVersion =
+      clipboardSenseSettings.clipboardSenseConsentVersion
+  }
+
+  if (clipboardSenseSettings.clipboardSenseConsentEpoch === undefined) {
+    delete next.clipboardSenseConsentEpoch
+  } else {
+    next.clipboardSenseConsentEpoch =
+      clipboardSenseSettings.clipboardSenseConsentEpoch
+  }
+
+  return next
+}
 
 function ThemeModeIcon({ name }: { name: ThemeModeIconName }) {
   const paths: Record<ThemeModeIconName, string> = {
@@ -1799,33 +1826,45 @@ function Popup() {
       | "enableDoubleClickMenu",
     value: boolean
   ) => {
+    if (key === "enableClipboardSense") {
+      clearTimeout(saveTimer.current)
+      const requestedSettings = {
+        ...settings,
+        enableClipboardSense: value
+      }
+      if (value) {
+        requestedSettings.clipboardSenseConsentVersion =
+          CLIPBOARD_SENSE_CONSENT_VERSION
+        delete requestedSettings.clipboardSenseConsentEpoch
+      } else {
+        delete requestedSettings.clipboardSenseConsentVersion
+        delete requestedSettings.clipboardSenseConsentEpoch
+      }
+
+      void (async () => {
+        try {
+          await saveSettings(
+            requestedSettings,
+            value ? { allowClipboardSenseConsentGrant: true } : {}
+          )
+          const savedSettings = normalizeCommonFeatureSettings(await getSettings())
+          persistedSettingsSignature.current = settingsSignature(savedSettings)
+          setSettings((prev) => applyClipboardSenseFields(prev, savedSettings))
+          chrome.runtime.sendMessage({ action: "UPDATE_TEMPLATES" })
+          flashSaved()
+        } catch {
+          flashSaveError()
+        }
+      })()
+      return
+    }
+
     setSettings((prev) => {
       if (key === "enableToolbar" && value) {
         return { ...prev, enableToolbar: true, enableInlineTranslation: false }
       }
       if (key === "enableInlineTranslation" && value) {
         return { ...prev, enableInlineTranslation: true, enableToolbar: false }
-      }
-      if (key === "enableClipboardSense" && value) {
-        const next = {
-          ...prev,
-          enableClipboardSense: true,
-          clipboardSenseConsentVersion: CLIPBOARD_SENSE_CONSENT_VERSION
-        }
-        const nextSignature = settingsSignature(next)
-        persistedSettingsSignature.current = nextSignature
-        void saveSettings(next, {
-          allowClipboardSenseConsentGrant: true
-        })
-          .then(() => {
-            chrome.runtime.sendMessage({ action: "UPDATE_TEMPLATES" })
-            flashSaved()
-          })
-          .catch(() => {
-            persistedSettingsSignature.current = ""
-            flashSaveError()
-          })
-        return next
       }
       return { ...prev, [key]: value }
     })

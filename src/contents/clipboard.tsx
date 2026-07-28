@@ -13,7 +13,10 @@ import {
 import { useSyncedAvisoLanguage, type I18nKey } from "~utils/i18n"
 import { createClipboardSenseListenerController } from "~utils/clipboard-sense"
 import { writeTextToClipboard } from "~utils/clipboard-write"
-import { getSettings } from "~utils/storage"
+import {
+  CLIPBOARD_SENSE_REVOCATION_EPOCH_STORAGE_KEY,
+  getSettings
+} from "~utils/storage"
 import { logTiming, startTiming } from "~utils/timing"
 
 export const config: PlasmoCSConfig = {
@@ -252,15 +255,22 @@ function ClipboardToast() {
       changes: Record<string, chrome.storage.StorageChange>,
       area: string
     ) => {
-      if (area !== "sync" || !changes.contextai_settings) return
-      copyListenerController.applySettings(
-        changes.contextai_settings.newValue as
-          | {
-              enableClipboardSense?: boolean
-              clipboardSenseConsentVersion?: number
-            }
-          | undefined
-      )
+      if (
+        area !== "sync" ||
+        (!changes.contextai_settings &&
+          !changes[CLIPBOARD_SENSE_REVOCATION_EPOCH_STORAGE_KEY])
+      ) {
+        return
+      }
+      getSettings()
+        .then((settings) => {
+          if (!disposed) copyListenerController.applySettings(settings)
+        })
+        .catch(() => {
+          if (!disposed) {
+            copyListenerController.applySettings({ enableClipboardSense: false })
+          }
+        })
     }
 
     chrome.storage.onChanged.addListener(handleSettingsChange)

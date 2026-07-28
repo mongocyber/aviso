@@ -53,6 +53,7 @@ export type Settings = {
   doubaoModel?: string
   enableClipboardSense: boolean
   clipboardSenseConsentVersion?: number
+  clipboardSenseConsentEpoch?: number
   enableToolbar: boolean
   enableCommandPalette: boolean
   enableDoubleClickMenu: boolean
