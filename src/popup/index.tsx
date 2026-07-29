@@ -25,6 +25,14 @@ import {
   HostedAiClientError
 } from "~utils/hosted-ai-client"
 import {
+  buildHostedSignInFailureView,
+  getHostedSignInDialogState,
+  getHostedSignInFailureCategoryLabelKey,
+  runHostedSignInDialogAction,
+  type HostedSignInDialogAction,
+  type HostedSignInFailureView
+} from "~utils/hosted-sign-in-ux"
+import {
   buildHostedAccountQuotaDisplay,
   clearHostedSignInResult,
   clearHostedSession,
@@ -525,6 +533,10 @@ function Popup() {
   const [hostedMessageKey, setHostedMessageKey] = useState<I18nKey>(
     "popup.hosted.status.signedOut"
   )
+  const [hostedSignInExplicit, setHostedSignInExplicit] = useState(false)
+  const [hostedSignInFailure, setHostedSignInFailure] =
+    useState<HostedSignInFailureView | null>(null)
+  const [hostedTraceCopied, setHostedTraceCopied] = useState(false)
   const [accountPanelOpen, setAccountPanelOpen] = useState(false)
   const [systemPrefersDark, setSystemPrefersDark] = useState(true)
   const [popupRuntimeHeight, setPopupRuntimeHeight] = useState<number>(
@@ -762,6 +774,11 @@ function Popup() {
   ) => {
     const stored = await readHostedSession()
     const status = deriveHostedAccountStatus({ session: stored })
+    if (status === "signed_in") {
+      setHostedSignInExplicit(false)
+      setHostedSignInFailure(null)
+      setHostedTraceCopied(false)
+    }
     setHostedAccountResult(
       status,
       status === "signed_in" && signedInMessageKey
@@ -773,14 +790,21 @@ function Popup() {
   }
 
   const applyHostedSignInResult = (
-    result: StoredHostedSignInResult | HostedGoogleSignInData | null
+    result: StoredHostedSignInResult | HostedGoogleSignInData | null,
+    exposeDialog = false
   ) => {
     if (!result || result.status === "signed_in") return false
+    const failure = buildHostedSignInFailureView(result)
     setHostedAccountResult(
-      result.status,
-      getHostedSignInFailureMessageKey(result, false),
+      failure.status,
+      failure.messageKey,
       null
     )
+    if (exposeDialog) {
+      setHostedSignInFailure(failure)
+      setHostedSignInExplicit(true)
+      setHostedTraceCopied(false)
+    }
     return true
   }
 
@@ -795,6 +819,10 @@ function Popup() {
   }
 
   const signInHosted = async () => {
+    setTab("api")
+    setHostedSignInExplicit(true)
+    setHostedSignInFailure(null)
+    setHostedTraceCopied(false)
     setHostedBusy(true)
     void clearHostedSignInResult()
     setHostedAccountResult("signing_in", "popup.hosted.status.signingIn")
@@ -817,10 +845,12 @@ function Popup() {
       }
       if (!response.success) {
         const result = response.data
-        if (!applyHostedSignInResult(result ?? null)) {
+        if (!applyHostedSignInResult(result ?? null, true)) {
+          const failure = buildHostedSignInFailureView(result ?? null)
+          setHostedSignInFailure(failure)
           setHostedAccountResult(
-            "local_backend_unavailable",
-            getHostedSignInFailureMessageKey(result, false),
+            failure.status,
+            failure.messageKey,
             null
           )
         }
@@ -834,12 +864,25 @@ function Popup() {
               errorCode: error.normalized.code
             })
           : "local_backend_unavailable"
-      setHostedAccountResult(
-        status,
+      const failure = buildHostedSignInFailureView(
         error instanceof HostedAiClientError
-          ? getHostedAccountStatusMessageKey(status)
-          : "popup.hosted.status.runtimeUnavailable"
+          ? {
+              status,
+              stage: "client",
+              error: {
+                source: "backend",
+                code: error.normalized.code,
+                httpStatusClass: "unknown"
+              }
+            }
+          : error
       )
+      setHostedAccountResult(
+        failure.status,
+        failure.messageKey,
+        null
+      )
+      setHostedSignInFailure(failure)
     } finally {
       setHostedBusy(false)
     }
@@ -1949,6 +1992,14 @@ function Popup() {
     ? providerConfigConnectivityResults[selectedProviderConfig.id]
     : undefined
   const hostedStatusTone = getHostedAccountStatusTone(hostedStatus)
+  const hostedSignInDialog = getHostedSignInDialogState({
+    explicitHostedChoice: hostedSignInExplicit,
+    busy: hostedBusy,
+    failure: hostedSignInFailure,
+    hasHostedSession: Boolean(hostedSession)
+  })
+  const hostedInlineStatusVisible =
+    hostedBusy || hostedSignInDialog.visible || hostedSignInExplicit
   const hostedSelectedModelAvailability: ModelAvailability = {
     disabled: hostedStatus !== "signed_in",
     status: t(`popup.hosted.statusLabel.${hostedStatus}` as I18nKey),
@@ -2013,6 +2064,72 @@ function Popup() {
   const configuredProviderConfigOptions = providerConfigs.filter(
     (config) => providerConfigModes[config.id] !== "add"
   )
+  const firstConfiguredByokConfig = configuredProviderConfigOptions.find(
+    (config) => !isHostedAiProviderConfigId(config.id)
+  )
+  const showByokFromHostedDialog = async () => {
+    setHostedSignInExplicit(false)
+    setHostedSignInFailure(null)
+    setHostedTraceCopied(false)
+    setTab("api")
+
+    if (firstConfiguredByokConfig) {
+      await setDefaultProviderConfig(firstConfiguredByokConfig)
+      setActiveProviderConfigId(firstConfiguredByokConfig.id)
+      window.setTimeout(() => {
+        providerConfigCardRefs.current[
+          firstConfiguredByokConfig.id
+        ]?.scrollIntoView({
+          block: "nearest",
+          behavior: "smooth"
+        })
+      }, 50)
+      return
+    }
+
+    setActiveProvider(firstProviderNeedingConfig)
+    setProviderCardMode(
+      firstProviderNeedingConfig,
+      savedProviderKeys[firstProviderNeedingConfig] ? "edit" : "add"
+    )
+    setProviderDropdownOpen(true)
+    setOpenHint(
+      `${t("popup.hint.addingService")}${getProviderCopy(
+        firstProviderNeedingConfig,
+        t
+      ).title}`
+    )
+  }
+  const handleHostedSignInDialogAction = async (
+    action: HostedSignInDialogAction
+  ) => {
+    await runHostedSignInDialogAction(
+      action,
+      {
+        retrySignIn: () => void signInHosted(),
+        showByok: showByokFromHostedDialog,
+        openHelp: (url) => {
+          window.open(url, "_blank", "noopener,noreferrer")
+        },
+        copyTrace: async (text) => {
+          try {
+            if (!text || !navigator.clipboard?.writeText) {
+              setOpenHint(t("popup.hosted.dialog.copyTraceUnavailable"))
+              return
+            }
+            await navigator.clipboard.writeText(text)
+            setHostedTraceCopied(true)
+            setOpenHint(t("popup.hosted.dialog.copyTraceDone"))
+          } catch {
+            setOpenHint(t("popup.hosted.dialog.copyTraceUnavailable"))
+          } finally {
+            window.setTimeout(() => setOpenHint(""), 2500)
+          }
+        }
+      },
+      hostedSignInFailure
+    )
+  }
   const selectedFastProviderConfigId = settings.fastProviderConfigId ?? ""
   const isHostedFastSelected = isHostedAiProviderConfigId(
     selectedFastProviderConfigId
@@ -2121,6 +2238,116 @@ function Popup() {
     tab === "api" || tab === "templates"
       ? { ...styles.section, ...styles.expandedSection }
       : styles.section
+  const renderHostedSignInDialog = () => {
+    if (!hostedSignInDialog.visible) return null
+
+    const isFailure = hostedSignInDialog.mode === "failed"
+    const categoryKey = isFailure
+      ? getHostedSignInFailureCategoryLabelKey(
+          hostedSignInDialog.failure.category
+        )
+      : ("popup.hosted.statusLabel.signing_in" as I18nKey)
+
+    return (
+      <div
+        role="dialog"
+        aria-live="polite"
+        aria-label={t("popup.hosted.dialog.title")}
+        style={{
+          ...styles.hostedSignInDialog,
+          background: isFailure ? ui.dangerBg : ui.accentSoft,
+          borderColor: isFailure ? ui.dangerBorder : ui.accentBorder
+        }}>
+        <div style={styles.hostedDialogTop}>
+          <span
+            style={{
+              ...styles.hostedDialogIcon,
+              background: ui.card,
+              color: isFailure ? ui.danger : ui.accent
+            }}>
+            <AvisoIcon name={isFailure ? "warning" : "shield"} size={15} />
+          </span>
+          <strong style={{ ...styles.hostedDialogTitle, color: ui.text }}>
+            {t("popup.hosted.dialog.title")}
+          </strong>
+          <span
+            style={{
+              ...styles.statusPill,
+              ...getDropdownStatusStyle(
+                isFailure ? hostedStatusTone : "warning",
+                ui
+              ),
+              marginLeft: "auto"
+            }}>
+            {t(categoryKey)}
+          </span>
+        </div>
+        <p style={{ ...styles.hostedDialogText, color: ui.text2 }}>
+          {isFailure
+            ? t(hostedSignInDialog.failure.messageKey)
+            : t("popup.hosted.status.signingIn")}
+        </p>
+        {isFailure && (
+          <div style={styles.hostedDialogActions}>
+            <button
+              type="button"
+              className="aviso-popup-button"
+              onClick={() => void handleHostedSignInDialogAction("retry")}
+              style={{
+                ...styles.hostedDialogActionBtn,
+                background: ui.card,
+                borderColor: ui.line,
+                color: ui.text
+              }}>
+              <AvisoIcon name="refresh" size={13} />
+              {t("popup.hosted.dialog.retry")}
+            </button>
+            <button
+              type="button"
+              className="aviso-popup-button"
+              onClick={() => void handleHostedSignInDialogAction("byok")}
+              style={{
+                ...styles.hostedDialogActionBtn,
+                background: ui.card,
+                borderColor: ui.line,
+                color: ui.text
+              }}>
+              <AvisoIcon name="key" size={13} />
+              {t("popup.hosted.dialog.byok")}
+            </button>
+            <button
+              type="button"
+              className="aviso-popup-button"
+              onClick={() => void handleHostedSignInDialogAction("help")}
+              style={{
+                ...styles.hostedDialogIconBtn,
+                background: ui.card,
+                borderColor: ui.line,
+                color: ui.text2
+              }}
+              aria-label={t("popup.hosted.dialog.help")}>
+              <AvisoIcon name="explain" size={14} />
+            </button>
+            <button
+              type="button"
+              className="aviso-popup-button"
+              onClick={() => void handleHostedSignInDialogAction("copy_trace")}
+              style={{
+                ...styles.hostedDialogActionBtn,
+                background: ui.card,
+                borderColor: ui.line,
+                color: ui.text2
+              }}>
+              <AvisoIcon name={hostedTraceCopied ? "check" : "copy"} size={13} />
+              {hostedTraceCopied
+                ? t("popup.hosted.dialog.copied")
+                : t("popup.hosted.dialog.copyTrace")}
+            </button>
+          </div>
+        )}
+      </div>
+    )
+  }
   const renderTemplateForm = (formDraft: PromptTemplate, key?: string) => (
     <div
       key={key}
@@ -3383,7 +3610,7 @@ function Popup() {
                       ? t("popup.hosted.statusLabel.signing_in")
                       : t("popup.zero.hosted.cta")}
                   </button>
-                  {(hostedBusy || hostedStatus !== "signed_out") && (
+                  {hostedInlineStatusVisible && (
                     <p
                       role={hostedStatusTone === "danger" ? "alert" : "status"}
                       style={{
@@ -3398,6 +3625,7 @@ function Popup() {
                       {t(hostedMessageKey)}
                     </p>
                   )}
+                  {renderHostedSignInDialog()}
                 </div>
                 <div style={styles.orRow}>
                   <span style={{ ...styles.orLine, background: ui.line }} />
@@ -3613,7 +3841,7 @@ function Popup() {
                       ? t("popup.hosted.statusLabel.signing_in")
                       : t("popup.zero.hosted.cta")}
                   </button>
-                  {(hostedBusy || hostedStatus !== "signed_out") && (
+                  {hostedInlineStatusVisible && (
                     <p
                       role={hostedStatusTone === "danger" ? "alert" : "status"}
                       style={{
@@ -3628,6 +3856,7 @@ function Popup() {
                       {t(hostedMessageKey)}
                     </p>
                   )}
+                  {renderHostedSignInDialog()}
                 </div>
               ))}
             {!showZeroState && (
@@ -4930,46 +5159,6 @@ function getHostedAccountStatusMessageKey(
   return `popup.hosted.status.${status}` as I18nKey
 }
 
-function getHostedSignInFailureMessageKey(
-  result:
-    | Pick<HostedGoogleSignInData, "status" | "stage" | "error">
-    | undefined,
-  hasStoredSession: boolean
-): I18nKey {
-  if (!result) return "popup.hosted.status.runtimeUnavailable"
-  if (hasStoredSession) return "popup.hosted.status.refreshed"
-
-  if (result.error?.source === "oauth") {
-    if (result.error.code === "user_cancelled") {
-      return "popup.hosted.status.oauthCanceled"
-    }
-    if (result.error.code === "config_missing") {
-      return "popup.hosted.status.oauthConfigMissing"
-    }
-    if (result.error.code === "state_mismatch") {
-      return "popup.hosted.status.oauthStateMismatch"
-    }
-    return "popup.hosted.status.oauthUnavailable"
-  }
-
-  if (result.error?.source === "backend") {
-    if (result.stage === "client") {
-      return "popup.hosted.status.authClientUnavailable"
-    }
-    if (result.stage === "challenge") {
-      return getHostedAccountStatusMessageKey(result.status)
-    }
-    if (result.stage === "auth_google" && result.error.httpStatusClass === "4xx") {
-      return "popup.hosted.status.authRejected"
-    }
-    if (result.stage === "me") return "popup.hosted.status.accountReadFailed"
-    return "popup.hosted.status.authBackendUnavailable"
-  }
-
-  if (result.stage === "storage") return "popup.hosted.status.sessionSaveFailed"
-  return getHostedAccountStatusMessageKey(result.status)
-}
-
 function sendRuntimeMessage<TData = unknown>(
   message: unknown
 ): Promise<PopupRuntimeResponse<TData>> {
@@ -5479,6 +5668,80 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.45,
     margin: "9px 2px 0",
     overflowWrap: "anywhere"
+  },
+  hostedSignInDialog: {
+    marginTop: 10,
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 10,
+    padding: "10px",
+    boxSizing: "border-box",
+    minWidth: 0
+  },
+  hostedDialogTop: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    minWidth: 0
+  },
+  hostedDialogIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 8,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    flex: "0 0 auto"
+  },
+  hostedDialogTitle: {
+    fontFamily: aviso.font,
+    fontSize: 13,
+    fontWeight: 700,
+    minWidth: 0,
+    overflowWrap: "anywhere"
+  },
+  hostedDialogText: {
+    fontFamily: aviso.font,
+    fontSize: 12,
+    lineHeight: 1.45,
+    margin: "8px 0 0",
+    overflowWrap: "anywhere"
+  },
+  hostedDialogActions: {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr) 34px minmax(0, 1fr)",
+    gap: 7,
+    marginTop: 10,
+    alignItems: "stretch",
+    minWidth: 0
+  },
+  hostedDialogActionBtn: {
+    minWidth: 0,
+    minHeight: 32,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 8,
+    padding: "0 7px",
+    fontFamily: aviso.font,
+    fontSize: 11.5,
+    fontWeight: 650,
+    lineHeight: 1.15,
+    cursor: "pointer",
+    whiteSpace: "normal",
+    textAlign: "center"
+  },
+  hostedDialogIconBtn: {
+    width: 34,
+    minHeight: 32,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 8,
+    padding: 0,
+    cursor: "pointer"
   },
   orRow: {
     display: "flex",

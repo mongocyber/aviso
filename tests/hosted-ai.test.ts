@@ -127,7 +127,8 @@ test("popup surfaces explicit account chip and zero-state dual entry (MON-26)", 
   assert.match(popupSource, /popup\.zero\.hosted\.cta/)
   assert.match(popupSource, /popup\.zero\.byok\.cta/)
   assert.match(popupSource, /styles\.recStatus/)
-  assert.match(popupSource, /hostedBusy \|\| hostedStatus !== "signed_out"/)
+  assert.match(popupSource, /getHostedSignInDialogState/)
+  assert.match(popupSource, /hostedInlineStatusVisible/)
   assert.match(popupSource, /t\(hostedMessageKey\)/)
   // Jargon stays in i18n, not hardcoded in source
   assert.equal(popupSource.includes("BYOK"), false)
@@ -146,25 +147,22 @@ test("popup surfaces explicit account chip and zero-state dual entry (MON-26)", 
   )
 })
 
-test("popup hosted sign-in failure feedback is visible and stage-aware", () => {
+test("popup hosted sign-in failure feedback uses safe category UI state", () => {
   const popupSource = readFileSync(
     new URL("../src/popup/index.tsx", import.meta.url),
     "utf8"
   )
-  const failureMapperBlock =
-    popupSource.match(
-      /function getHostedSignInFailureMessageKey\([\s\S]*?\n\}/
-    )?.[0] ?? ""
+  const uxSource = readFileSync(
+    new URL("../src/utils/hosted-sign-in-ux.ts", import.meta.url),
+    "utf8"
+  )
 
-  assert.match(failureMapperBlock, /result\.stage === "challenge"/)
-  assert.match(
-    failureMapperBlock,
-    /getHostedAccountStatusMessageKey\(result\.status\)/
-  )
-  assert.match(
-    failureMapperBlock,
-    /result\.stage === "auth_google" && result\.error\.httpStatusClass === "4xx"/
-  )
+  assert.match(uxSource, /buildHostedSignInFailureView/)
+  assert.match(uxSource, /popup\.hosted\.dialog\.message\.\$\{category\}/)
+  assert.match(uxSource, /value === "challenge"/)
+  assert.match(uxSource, /value === "auth_google"/)
+  assert.match(uxSource, /httpStatusClass === "5xx"/)
+  assert.match(uxSource, /HOSTED_SIGN_IN_FAILURE_CATEGORIES/)
   assert.match(popupSource, /readHostedSignInResult/)
   assert.match(popupSource, /HOSTED_SIGN_IN_RESULT_STORAGE_KEY/)
   assert.match(popupSource, /applyHostedSignInResult/)
