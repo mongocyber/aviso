@@ -825,6 +825,78 @@ const MESSAGES = {
     "zh-CN": "托管请求格式不可用，请检查联调配置。",
     en: "Hosted request format is unavailable. Check the integration configuration."
   },
+  "popup.hosted.dialog.title": {
+    "zh-CN": "Aviso AI 登录",
+    en: "Aviso AI sign-in"
+  },
+  "popup.hosted.dialog.category.cancelled": {
+    "zh-CN": "已取消",
+    en: "Cancelled"
+  },
+  "popup.hosted.dialog.category.invalid": {
+    "zh-CN": "校验失败",
+    en: "Invalid"
+  },
+  "popup.hosted.dialog.category.network": {
+    "zh-CN": "网络不可用",
+    en: "Network"
+  },
+  "popup.hosted.dialog.category.rate_limited": {
+    "zh-CN": "限流",
+    en: "Rate limited"
+  },
+  "popup.hosted.dialog.category.unavailable": {
+    "zh-CN": "暂不可用",
+    en: "Unavailable"
+  },
+  "popup.hosted.dialog.message.cancelled": {
+    "zh-CN": "登录已取消；你仍可使用自己的 AI 服务配置。",
+    en: "Sign-in was cancelled; your own AI service configuration still works."
+  },
+  "popup.hosted.dialog.message.invalid": {
+    "zh-CN": "这次登录未能通过安全校验。请重试，或切换到自己的 AI 服务配置。",
+    en: "This sign-in could not be verified. Retry, or switch to your own AI service configuration."
+  },
+  "popup.hosted.dialog.message.network": {
+    "zh-CN": "连接失败。请稍后重试，或切换到自己的 AI 服务配置。",
+    en: "Connection failed. Retry later, or switch to your own AI service configuration."
+  },
+  "popup.hosted.dialog.message.rate_limited": {
+    "zh-CN": "登录尝试过于频繁。请稍后重试，或切换到自己的 AI 服务配置。",
+    en: "Too many sign-in attempts. Retry later, or switch to your own AI service configuration."
+  },
+  "popup.hosted.dialog.message.unavailable": {
+    "zh-CN": "登录暂不可用。请稍后重试，或切换到自己的 AI 服务配置。",
+    en: "Sign-in is temporarily unavailable. Retry later, or switch to your own AI service configuration."
+  },
+  "popup.hosted.dialog.retry": {
+    "zh-CN": "重试",
+    en: "Retry"
+  },
+  "popup.hosted.dialog.byok": {
+    "zh-CN": "用自己的 Key",
+    en: "Use own key"
+  },
+  "popup.hosted.dialog.help": {
+    "zh-CN": "查看帮助",
+    en: "Open help"
+  },
+  "popup.hosted.dialog.copyTrace": {
+    "zh-CN": "复制诊断",
+    en: "Copy trace"
+  },
+  "popup.hosted.dialog.copied": {
+    "zh-CN": "已复制",
+    en: "Copied"
+  },
+  "popup.hosted.dialog.copyTraceDone": {
+    "zh-CN": "已复制脱敏诊断信息。",
+    en: "Sanitized diagnostic trace copied."
+  },
+  "popup.hosted.dialog.copyTraceUnavailable": {
+    "zh-CN": "当前浏览器无法写入剪贴板。",
+    en: "Clipboard write is unavailable in this browser."
+  },
   "popup.service.fastTitle": {
     "zh-CN": "快速任务服务",
     en: "Fast task service"
