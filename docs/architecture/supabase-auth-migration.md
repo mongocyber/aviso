@@ -138,7 +138,7 @@ adapter in `src/utils/hosted-auth-adapter.ts`:
 
 ```ts
 interface HostedAuthAdapter {
-  providerId: "supabase" | string
+  providerId: string
   startHostedSignIn(options?: HostedSignInOptions): Promise<HostedSignInResult>
   getHostedSession(): Promise<StoredHostedSession | null>
   refreshHostedAccount(

@@ -3,7 +3,7 @@ import type {
   StoredHostedSession
 } from "~utils/hosted-session"
 
-export type HostedAuthProviderId = "supabase" | (string & {})
+export type HostedAuthProviderId = string
 
 export type ProviderNeutralHostedSignInStage =
   | "client"
