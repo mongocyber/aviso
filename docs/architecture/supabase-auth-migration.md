@@ -156,11 +156,29 @@ Adapter responsibilities:
 
 - Encapsulate Supabase Auth specifics, redirect parsing, token refresh, logout,
   and provider error normalization.
+- Bind and resolve its hosted backend URL internally. Token-bearing adapter
+  operations must not accept a caller-supplied raw `baseUrl` string; any
+  implementation-level local-dev override must be normalized through the
+  existing hosted base URL resolver before constructing clients or attaching a
+  hosted bearer.
 - Return or persist only the frontend-normalized hosted session shape.
 - Keep `/v1/me` account refresh behind `refreshHostedAccount`.
 - Sanitize provider errors before saving `aviso_hosted_sign_in_result` or
   showing MON-42 UI.
 - Leave route selection, BYOK fallback, and provider config storage untouched.
+
+Security decision for MON-119 review fix:
+
+- Chosen approach: remove the raw `baseUrl` option from the public
+  `HostedAuthAdapter` operation options.
+- Rationale: backend origin selection is already a security boundary in the
+  hosted runtime. Keeping URL binding inside the adapter lets MON-121 reuse the
+  existing resolver at one implementation boundary instead of requiring every
+  caller of sign-in, account refresh, or sign-out to remember the allowlist
+  before a token-bearing request.
+- Compile-only invariant: `src/utils/hosted-auth-adapter.typecheck.ts` asserts
+  that `HostedSignInOptions`, `RefreshHostedAccountOptions`, and
+  `SignOutHostedOptions` do not expose `baseUrl`.
 
 ## MON-42 Failure Mapping
 

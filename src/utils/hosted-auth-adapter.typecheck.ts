@@ -11,6 +11,7 @@ import type { StoredHostedSession } from "~utils/hosted-session"
 
 type IsAssignable<T, U> = T extends U ? true : false
 type Assert<T extends true> = T
+type HasNoBaseUrl<T> = "baseUrl" extends keyof T ? false : true
 
 type SupabaseAdapterSketch = {
   providerId: "supabase"
@@ -28,4 +29,14 @@ type SupabaseAdapterSketch = {
 
 export type HostedAuthAdapterCompileCheck = Assert<
   IsAssignable<SupabaseAdapterSketch, HostedAuthAdapter>
+>
+
+export type HostedSignInOptionsDoNotExposeRawBaseUrl = Assert<
+  HasNoBaseUrl<HostedSignInOptions>
+>
+export type RefreshHostedAccountOptionsDoNotExposeRawBaseUrl = Assert<
+  HasNoBaseUrl<RefreshHostedAccountOptions>
+>
+export type SignOutHostedOptionsDoNotExposeRawBaseUrl = Assert<
+  HasNoBaseUrl<SignOutHostedOptions>
 >

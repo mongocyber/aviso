@@ -41,19 +41,16 @@ export type ProviderNeutralHostedSignInFailure = {
 }
 
 export type HostedSignInOptions = {
-  baseUrl?: string
   interactive?: boolean
   signal?: AbortSignal
 }
 
 export type RefreshHostedAccountOptions = {
-  baseUrl?: string
   session?: StoredHostedSession | null
   signal?: AbortSignal
 }
 
 export type SignOutHostedOptions = {
-  baseUrl?: string
   session?: StoredHostedSession | null
   signal?: AbortSignal
 }
