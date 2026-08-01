@@ -1,6 +1,6 @@
 # Aviso State
 
-Updated: 2026-07-28
+Updated: 2026-08-01
 
 This is the L1 current-facts registry for Aviso. Other docs should link here instead of repeating release state, Chrome Web Store state, or hosted-AI live status.
 
@@ -20,6 +20,7 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 
 - Current blocker: wait for the final Chrome Web Store review result for the cleaned/reuploaded `0.1.1` package.
 - Next action: once the owner confirms the final CWS review result, update this file plus the matching release evidence docs before changing any public release wording.
+- V013 Supabase Auth migration: MON-121 is a default-disabled frontend foundation. It keeps the provider-neutral adapter, hosted-session v2 migration, and safe failure mapping, but does not add a Supabase host permission, does not fill a Supabase project origin or anon key, and does not enable live Supabase sign-in. Exact Supabase origin/anon key, redirect allowlist, and manifest activation remain owner-gated follow-up work.
 
 ## Gates
 
@@ -48,6 +49,7 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 | Canonical production package directory and zip | `implemented` | `npm run package` generates `build/canonical-chrome-mv3-prod` and `build/canonical-chrome-mv3-prod.zip`; Plasmo local `npm run build` remains isolated at `build/chrome-mv3-prod`. Release package evidence is recorded in [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md). |
 | Local supply-chain baseline command | `implemented` | `npm run supply-chain:check` validates package/lock consistency, SHA-256 hashes, tracked baseline schema, direct dependency inventory, Plasmo dev classification, unresolved/closed High/Critical ledger schema, stable riskId continuity, affected-package semantic fingerprints, structured fresh-audit artifact binding, strict UTC review/audit/closure calendar dates, fresh-audit evidence instants, merge-base package/lock base diff, and sanitized JSON evidence; CI/submit run the dependency-free Node checker immediately after checkout and before setup/install. Evidence: [checker](../scripts/check-supply-chain-baseline.mjs), [baseline](./security/supply-chain-baseline.json), [CI workflow](../.github/workflows/ci.yml), and [submit workflow](../.github/workflows/submit.yml). |
 | Optional Aviso AI / hosted AI candidate path | `implemented` | Candidate-only path; public/live limits are recorded in [CURRENT_GATE](./ai/CURRENT_GATE.md). |
+| Supabase Auth frontend foundation | `configured-only` | MON-121 keeps the adapter/storage/message foundation default-disabled. Exact Supabase project origin/anon key, redirect allowlist, live sign-in validation, and manifest host-permission activation are owner-gated follow-up work. |
 | Chrome Web Store public install | `unverified` | Review state and approval are pending; see [CURRENT_GATE](./ai/CURRENT_GATE.md). |
 | Subscription, payment, and public anonymous quota | `not-planned` | Excluded from the first hosted-AI release; see [RELEASE_CHECKLIST](../RELEASE_CHECKLIST.md). |
 | Telemetry, analytics SDK, web search, and remote link-body fetching | `not-planned` | Current public/store copy says these are not included; see [STORE_LISTING_COPY](../store-assets/chrome-web-store/STORE_LISTING_COPY.md). |
@@ -58,6 +60,7 @@ This is the L1 current-facts registry for Aviso. Other docs should link here ins
 - Do not say hosted AI, Aviso AI, provider proxy, subscription/payment, or public anonymous quota is live.
 - Do not imply telemetry, analytics SDK, web search, remote link-body fetching, advertising, or remote content logging is included.
 - Do not expand manifest permissions, host permissions, storage-key behavior, production config, public copy, CWS submission state, provider calls, or secrets handling without owner approval.
+- Do not add Supabase host permissions, Supabase project origins, anon keys, redirect allowlists, or live Supabase sign-in behavior before the owner-gated activation follow-up.
 - Do not write raw API Keys, raw prompts, raw provider responses, private page bodies, screenshot/base64 payloads, full URLs, clipboard content, or sensitive logs into docs, console, storage, release artifacts, or remote services.
 - Do not present screenshot as an ordinary-user primary entry or public selling point; it remains an internal right-click path only.
 - Do not treat the local supply-chain baseline or unresolved High/Critical ledger state as a fresh registry audit, closure evidence, or zero-vulnerability claim; fresh registry audit remains external pending.

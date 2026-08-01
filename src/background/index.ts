@@ -67,7 +67,7 @@ import {
   pinHistoryEntry,
   searchHistory
 } from "./history"
-import { handleHostedGoogleSignIn } from "./hosted-auth"
+import { handleHostedSignIn } from "./hosted-auth"
 import {
   getSafeMessageActionLabel,
   validateBackgroundMessageBoundary
@@ -697,8 +697,8 @@ async function handleMessage(
         break
       }
 
-      case "HOSTED_GOOGLE_SIGN_IN": {
-        const result = await handleHostedGoogleSignIn()
+      case "HOSTED_SIGN_IN": {
+        const result = await handleHostedSignIn()
         sendResponse({
           success: result.status === "signed_in",
           data: result,

@@ -10,7 +10,7 @@ The background service worker owns privileged Chrome APIs, AI request routing, c
 - `src/background/index.ts:50` imports context-menu registration and frame-aware page actions.
 - `src/background/index.ts:57` imports frame routing helpers for display-frame and source-frame messages.
 - `src/background/index.ts:62` imports local history CRUD/search handlers.
-- `src/background/index.ts:70` imports hosted Google sign-in handling.
+- `src/background/index.ts:70` imports provider-neutral hosted sign-in handling.
 - `src/background/index.ts:113` resolves whether an AI request should remain BYOK or route to hosted AI.
 - `src/types/messages.ts:68` defines the background message union.
 

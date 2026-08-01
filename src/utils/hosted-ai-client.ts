@@ -73,13 +73,6 @@ export type HostedAiSession = {
   user: HostedAiUser
 }
 
-export type HostedAiGoogleChallenge = {
-  state: string
-  nonce: string
-  client_id: string
-  expires_at: string
-}
-
 export type HostedAiQuotaWindow = {
   limit: number
   used: number
@@ -230,23 +223,6 @@ export function createHostedAiClient(options: HostedAiClientOptions = {}) {
 
   return {
     baseUrl,
-    async createGoogleAuthChallenge(): Promise<HostedAiGoogleChallenge> {
-      return normalizeHostedAiGoogleChallenge(
-        await requestJson<unknown>("/auth/google/challenge", {
-          method: "POST"
-        })
-      )
-    },
-    authGoogle(body: {
-      id_token: string
-      state: string
-      nonce: string
-    }): Promise<HostedAiSession> {
-      return requestJson<HostedAiSession>("/auth/google", {
-        method: "POST",
-        body: JSON.stringify(body)
-      })
-    },
     logout(sessionToken?: string): Promise<void> {
       return requestJson<void>("/auth/logout", {
         method: "POST",
@@ -637,36 +613,6 @@ function isHostedAiUsage(value: unknown): value is HostedAiUsage {
     Number.isFinite(usage.tokens_in) &&
     Number.isFinite(usage.tokens_out)
   )
-}
-
-function normalizeHostedAiGoogleChallenge(
-  value: unknown
-): HostedAiGoogleChallenge {
-  if (typeof value !== "object" || value === null) {
-    throw new HostedAiClientError(normalizeHostedAiError("bad_request"))
-  }
-
-  const candidate = value as Partial<HostedAiGoogleChallenge>
-  if (
-    !isNonEmptyString(candidate.state) ||
-    !isNonEmptyString(candidate.nonce) ||
-    !isNonEmptyString(candidate.client_id) ||
-    !isNonEmptyString(candidate.expires_at) ||
-    !Number.isFinite(Date.parse(candidate.expires_at))
-  ) {
-    throw new HostedAiClientError(normalizeHostedAiError("bad_request"))
-  }
-
-  return {
-    state: candidate.state,
-    nonce: candidate.nonce,
-    client_id: candidate.client_id,
-    expires_at: candidate.expires_at
-  }
-}
-
-function isNonEmptyString(value: unknown): value is string {
-  return typeof value === "string" && value.trim().length > 0
 }
 
 function isHostedAiErrorCode(code: unknown): code is HostedAiErrorCode {

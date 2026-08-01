@@ -3,6 +3,8 @@ import type { ClipboardType } from "~utils/clipboard-detect"
 import type { CommandQuickActionId } from "~utils/command-access"
 import type {
   HostedAccountStatus,
+  HostedHttpStatusClass,
+  HostedSignInFailureSource,
   HostedSignInStage
 } from "~utils/hosted-session"
 import type { AiUnavailableGuidance } from "~utils/ai-unavailable-guidance"
@@ -49,13 +51,13 @@ export type ProviderConnectivityPayload = {
   providerConfigId?: string
 }
 
-export type HostedGoogleSignInData = {
+export type HostedSignInData = {
   status: HostedAccountStatus
   stage: HostedSignInStage
   error?: {
-    source: "oauth" | "backend" | "storage" | "unknown"
+    source: HostedSignInFailureSource
     code: string
-    httpStatusClass?: "1xx" | "2xx" | "3xx" | "4xx" | "5xx" | "unknown"
+    httpStatusClass?: HostedHttpStatusClass
   }
 }
 
@@ -100,7 +102,7 @@ export type MessageRequest =
       action: "VALIDATE_PROVIDER_CONNECTIVITY"
       payload: ProviderConnectivityPayload
     }
-  | { action: "HOSTED_GOOGLE_SIGN_IN" }
+  | { action: "HOSTED_SIGN_IN" }
   | {
       action: "START_SCREENSHOT_SELECTION"
       payload: {

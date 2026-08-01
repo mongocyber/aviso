@@ -1,7 +1,19 @@
 # Supabase Auth Migration ADR
 
-Status: accepted frontend migration spec for MON-119. Runtime implementation is
-deferred to MON-121.
+Status: accepted frontend migration spec for MON-119. MON-121 implements the
+default-disabled frontend foundation only.
+
+## MON-121 Implementation Note
+
+MON-121 keeps the provider-neutral adapter, message/type rename, v2 hosted
+session migration, and MON-42 safe failure mapping, but does not enable a real
+Supabase sign-in path. The default adapter constants for the Supabase project
+origin, anon key, and Google client ID intentionally remain empty. The exact
+Supabase project origin/anon key, redirect allowlist, and manifest
+host-permission activation are split into a separate owner-gated follow-up.
+
+No Supabase host permission is added by MON-121, no real Supabase credentials
+are committed, and tests use mocked/local fixtures only.
 
 ## Context
 

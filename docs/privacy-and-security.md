@@ -1,6 +1,6 @@
 # Aviso Privacy and Security
 
-Updated: 2026-07-19
+Updated: 2026-08-01
 
 生产级安全生命周期入口见 [`security/README.md`](./security/README.md)；本文继续持有扩展权限、存储和数据流的实现详情，当前状态以 [`STATE.md`](./STATE.md) 为准。
 
@@ -49,6 +49,8 @@ Host permissions：
 
 `identity` 和 `https://aviso-backend-production.vercel.app/*` 仅在 production candidate 托管 AI gate 中批准。它们不代表公开发布、Chrome Web Store 批准或 hosted AI live；当前 release gate 以 [STATE.md](./STATE.md) 为准。
 
+V013 Supabase Auth 的 MON-121 前端 foundation 默认禁用：本 PR 不新增 Supabase host permission，不填入 Supabase project origin 或 anon key，也不启用真实 Supabase 登录。精确 Supabase origin/anon key、redirect allowlist 和 manifest host-permission activation 属于后续 owner-gated 任务。
+
 Content-script frame access：
 
 - Top-frame only：命令面板、结果浮窗和截图选区。
@@ -73,8 +75,8 @@ Content-script frame access：
 ### 托管 AI 请求
 
 1. 用户主动选择托管 AI 路径。
-2. 若未登录，用户通过 Chrome identity / Google 授权窗口登录托管账号；BYOK 路径不需要该登录。
-3. Background 使用临时 id token 与 production 后端交换托管 session，并只保存托管 session/account state。
+2. 若未登录，用户通过托管登录进入账号流程；BYOK 路径不需要该登录。MON-121 的 Supabase Auth foundation 在缺少 owner-gated Supabase 配置时保持默认禁用，不会启用真实 Supabase 登录。
+3. Background 只通过 provider-neutral hosted auth adapter 获取托管 session，并只保存 v2 托管 session/account state。
 4. 请求发送到 Aviso 后端，再路由到上游 provider。
 5. 后端返回流式结果，页面内结果面板展示。
 
@@ -130,7 +132,8 @@ API Key 不明文保存，位置是 `chrome.storage.local/contextai_api_keys`，
 ## 安全维护要求
 
 - 修改权限、host permissions、API Key 存储、provider route 或真实 provider 调用前必须单独确认。
-- 修改托管 AI metadata 字段、保留窗口、provider logging、OAuth 数据处理或 production backend 前必须单独确认。
+- 修改托管 AI metadata 字段、保留窗口、provider logging、hosted auth 数据处理或 production backend 前必须单独确认。
+- 启用 Supabase Auth 真实登录前，必须先由 owner 冻结精确 Supabase project origin、anon key、redirect allowlist 和最小 manifest host permission。
 - 新增用户数据流时必须同步更新 `docs/tech-spec.md`、本文档和 `RELEASE_CHECKLIST.md`。
 - 不把当前内部试用记录写成公开发布批准。
 - 不把 DeepSeek、Kimi / Moonshot、OpenRouter、Gemini、Tencent Hunyuan 等配置支持写成真实 provider live validation；DeepSeek 的 owner 手动 connectivity pass 只能按单次 summary-only evidence 描述。

@@ -749,37 +749,9 @@ const MESSAGES = {
     "zh-CN": "正在连接后端...",
     en: "Connecting to hosted backend..."
   },
-  "popup.hosted.status.oauthCanceled": {
-    "zh-CN": "托管登录已取消；你仍可使用自己的 AI 服务配置。",
-    en: "Hosted sign-in was cancelled; your own AI service configuration still works."
-  },
-  "popup.hosted.status.oauthConfigMissing": {
-    "zh-CN": "托管登录配置缺失；你仍可使用自己的 AI 服务配置。",
-    en: "Hosted sign-in configuration is missing; your own AI service configuration still works."
-  },
-  "popup.hosted.status.oauthStateMismatch": {
-    "zh-CN": "托管登录校验失败，请重试；你仍可使用自己的 AI 服务配置。",
-    en: "Hosted sign-in validation failed. Retry; your own AI service configuration still works."
-  },
-  "popup.hosted.status.oauthUnavailable": {
-    "zh-CN": "托管登录暂不可用；你仍可使用自己的 AI 服务配置。",
-    en: "Hosted sign-in is unavailable; your own AI service configuration still works."
-  },
   "popup.hosted.status.runtimeUnavailable": {
     "zh-CN": "扩展后台未响应，请在扩展程序页面重新加载 Aviso 后重试。",
     en: "Extension background did not respond. Reload Aviso on the extensions page and retry."
-  },
-  "popup.hosted.status.authBackendUnavailable": {
-    "zh-CN": "授权窗口已打开，但后端换取 session 未完成；请稍后重试。",
-    en: "Authorization opened, but the backend did not complete session exchange. Retry later."
-  },
-  "popup.hosted.status.authClientUnavailable": {
-    "zh-CN": "托管后端配置不可用，请重新加载 Aviso 后重试。",
-    en: "Hosted backend configuration is unavailable. Reload Aviso and retry."
-  },
-  "popup.hosted.status.authRejected": {
-    "zh-CN": "后端未接受这次 Google 登录；请重试，或切换到自己的 AI 服务配置。",
-    en: "The backend did not accept this Google sign-in. Retry, or switch to your own AI service configuration."
   },
   "popup.hosted.status.accountReadFailed": {
     "zh-CN": "登录后读取账户状态失败；请稍后刷新。",
