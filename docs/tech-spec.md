@@ -1,6 +1,6 @@
 # Aviso Tech Spec
 
-Updated: 2026-07-17
+Updated: 2026-08-01
 
 ## 技术栈
 
@@ -21,7 +21,7 @@ Updated: 2026-07-17
 | `src/background/index.ts` | Background service worker 入口。 |
 | `src/background/ai-client.ts` | Provider 调用、流式响应、连接测试和取消逻辑。 |
 | `src/background/context-menus.ts` | Chrome 原生右键菜单注册与更新。 |
-| `src/background/hosted-auth.ts` | v0.3 hosted AI Google OAuth / session 交换后台处理。 |
+| `src/background/hosted-auth.ts` | Provider-neutral hosted sign-in 后台处理。 |
 | `src/background/hosted-chat-routing.ts` | 显式 hosted route 的 chat request 组装和错误处理。 |
 | `src/background/history.ts` | 本地历史相关 background 处理。 |
 | `src/contents/toolbar.tsx` | 划词工具栏。 |
@@ -36,6 +36,7 @@ Updated: 2026-07-17
 | `src/utils/storage.ts` | 设置、API Key 和历史存储辅助。 |
 | `src/utils/provider-configs.ts` | AI 服务配置解析。 |
 | `src/utils/hosted-ai-client.ts` | v0.3 hosted AI typed client。 |
+| `src/utils/hosted-supabase-auth.ts` | 默认禁用的 Supabase Auth frontend adapter foundation；真实 Supabase origin/anon key、redirect allowlist 和 host permission activation 是 owner-gated follow-up。 |
 | `src/utils/hosted-session.ts` | v0.3 hosted session/account 本地状态。 |
 | `src/utils/model-registry.ts` | 当前 provider / model registry。 |
 | `src/utils/translation.ts` | 翻译 payload 与目标语言处理。 |
@@ -76,7 +77,9 @@ Updated: 2026-07-17
 }
 ```
 
-`identity` 和 `https://aviso-backend-production.vercel.app/*` 仅用于 production candidate Aviso AI / hosted AI gate：Google 授权窗口、production session 交换和 production hosted chat 请求。它们不代表公开发布、Chrome Web Store 批准或 hosted AI live；当前 release gate 以 [STATE.md](./STATE.md) 为准。
+`identity` 和 `https://aviso-backend-production.vercel.app/*` 仅用于 production candidate Aviso AI / hosted AI gate：托管登录、production session/account 请求和 production hosted chat 请求。它们不代表公开发布、Chrome Web Store 批准或 hosted AI live；当前 release gate 以 [STATE.md](./STATE.md) 为准。
+
+MON-121 不新增 Supabase host permission，不填入 Supabase project origin 或 anon key，也不启用真实 Supabase 登录。精确 Supabase project origin/anon key、redirect allowlist 和 manifest host-permission activation 是单独 owner-gated follow-up。
 
 命令：
 

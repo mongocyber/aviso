@@ -1,4 +1,4 @@
-import type { HostedGoogleSignInData } from "~types/messages"
+import type { HostedSignInData } from "~types/messages"
 import type { HostedAccountStatus } from "~utils/hosted-session"
 import type { I18nKey } from "~utils/i18n-core"
 
@@ -19,7 +19,7 @@ export type HostedSignInFailureCategory =
 export type HostedSignInFailureView = {
   category: HostedSignInFailureCategory
   status: HostedAccountStatus
-  stage: HostedGoogleSignInData["stage"]
+  stage: HostedSignInData["stage"]
   messageKey: I18nKey
   traceId: string
   occurredAt: string
@@ -44,9 +44,14 @@ export type HostedSignInDialogState =
 
 type NormalizedHostedSignInFailureInput = {
   status?: HostedAccountStatus
-  stage: HostedGoogleSignInData["stage"]
+  stage: HostedSignInData["stage"]
   error?: {
-    source?: "oauth" | "backend" | "storage" | "unknown"
+    source?:
+      | "identity_provider"
+      | "hosted_backend"
+      | "storage"
+      | "network"
+      | "unknown"
     code?: string
     httpStatusClass?: "1xx" | "2xx" | "3xx" | "4xx" | "5xx" | "unknown"
   }
@@ -171,20 +176,37 @@ function categorizeHostedSignInFailure(
   const status = normalized.status
 
   if (normalized.stage === "storage") return "unavailable"
-  if (normalized.error?.source === "oauth") {
-    if (code === "user_cancelled") return "cancelled"
+  if (normalized.error?.source === "identity_provider") {
+    if (code === "user_cancelled" || code === "access_denied") {
+      return "cancelled"
+    }
     if (
       code === "config_missing" ||
       code === "redirect_invalid" ||
       code === "id_token_missing" ||
-      code === "state_mismatch"
+      code === "state_mismatch" ||
+      code === "invalid_credentials" ||
+      code === "invalid_token" ||
+      code === "bad_request" ||
+      code === "unauthorized" ||
+      code === "session_expired" ||
+      code === "refresh_failed"
     ) {
       return "invalid"
+    }
+    if (code === "rate_limited" || status === "rate_limited") {
+      return "rate_limited"
+    }
+    if (
+      code === "service_unavailable" ||
+      normalized.error.httpStatusClass === "5xx"
+    ) {
+      return "unavailable"
     }
     return "unavailable"
   }
 
-  if (normalized.error?.source === "backend") {
+  if (normalized.error?.source === "hosted_backend") {
     if (code === "rate_limited" || status === "rate_limited") {
       return "rate_limited"
     }
@@ -202,6 +224,7 @@ function categorizeHostedSignInFailure(
     return "unavailable"
   }
 
+  if (normalized.error?.source === "network") return "network"
   if (status === "rate_limited") return "rate_limited"
   if (status === "expired" || status === "request_invalid") return "invalid"
   if (status === "local_backend_unavailable") return "network"
@@ -268,13 +291,13 @@ function isHostedAccountStatus(value: unknown): value is HostedAccountStatus {
 
 function isHostedSignInStage(
   value: unknown
-): value is HostedGoogleSignInData["stage"] {
+): value is HostedSignInData["stage"] {
   return (
     value === "client" ||
-    value === "challenge" ||
-    value === "oauth" ||
-    value === "auth_google" ||
-    value === "me" ||
+    value === "sign_in_prepare" ||
+    value === "provider_auth" ||
+    value === "session_exchange" ||
+    value === "account_refresh" ||
     value === "storage" ||
     value === "done"
   )
@@ -282,18 +305,19 @@ function isHostedSignInStage(
 
 function isHostedErrorSource(
   value: unknown
-): value is NonNullable<HostedGoogleSignInData["error"]>["source"] {
+): value is NonNullable<HostedSignInData["error"]>["source"] {
   return (
-    value === "oauth" ||
-    value === "backend" ||
+    value === "identity_provider" ||
+    value === "hosted_backend" ||
     value === "storage" ||
+    value === "network" ||
     value === "unknown"
   )
 }
 
 function isHostedHttpStatusClass(
   value: unknown
-): value is NonNullable<HostedGoogleSignInData["error"]>["httpStatusClass"] {
+): value is NonNullable<HostedSignInData["error"]>["httpStatusClass"] {
   return (
     value === "1xx" ||
     value === "2xx" ||

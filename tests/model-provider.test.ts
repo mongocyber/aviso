@@ -1013,6 +1013,12 @@ test("package host_permissions 精确匹配批准 provider 边界", () => {
       HOSTED_AI_PRODUCTION_HOST_PERMISSION
     ].sort()
   )
+  assert.equal(
+    pkg.manifest.host_permissions.some((permission: string) =>
+      permission.includes("supabase")
+    ),
+    false
+  )
 })
 
 test("WXT host_permissions 与批准 provider 边界保持一致", () => {
@@ -1031,6 +1037,10 @@ test("WXT host_permissions 与批准 provider 边界保持一致", () => {
       ...APPROVED_PROVIDER_HOST_PERMISSIONS,
       HOSTED_AI_PRODUCTION_HOST_PERMISSION
     ].sort()
+  )
+  assert.equal(
+    hostPermissions.some((permission) => permission.includes("supabase")),
+    false
   )
 })
 

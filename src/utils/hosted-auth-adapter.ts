@@ -1,33 +1,16 @@
 import type {
+  HostedHttpStatusClass,
   HostedAccountStatus,
+  HostedSignInFailureSource,
+  HostedSignInStage,
   StoredHostedSession
 } from "~utils/hosted-session"
 
 export type HostedAuthProviderId = string
 
-export type ProviderNeutralHostedSignInStage =
-  | "client"
-  | "sign_in_prepare"
-  | "provider_auth"
-  | "session_exchange"
-  | "account_refresh"
-  | "storage"
-  | "done"
+export type ProviderNeutralHostedSignInStage = HostedSignInStage
 
-export type ProviderNeutralHostedFailureSource =
-  | "identity_provider"
-  | "hosted_backend"
-  | "storage"
-  | "network"
-  | "unknown"
-
-export type HostedHttpStatusClass =
-  | "1xx"
-  | "2xx"
-  | "3xx"
-  | "4xx"
-  | "5xx"
-  | "unknown"
+export type ProviderNeutralHostedFailureSource = HostedSignInFailureSource
 
 export type ProviderNeutralHostedSignInFailure = {
   status: HostedAccountStatus

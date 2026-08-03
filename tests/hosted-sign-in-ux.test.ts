@@ -18,20 +18,21 @@ import "./helpers/register-aliases.ts"
 
 const FIXED_NOW = Date.parse("2026-07-28T12:34:56.000Z")
 const RAW_SECRET_PATTERN =
-  /invalid_grant|ya29\.secret|backend-stack|accounts\.google\.com|mock-id-token|backend-state|backend-nonce/i
-const RAW_MECHANIC_PATTERN = /oauth|backend|auth_google|challenge/i
+  /invalid_grant|ya29\.secret|provider-stack|accounts\.google\.com|supabase\.co|mock-id-token|provider-state|provider-nonce/i
+const RAW_MECHANIC_PATTERN =
+  /identity_provider|hosted_backend|session_exchange|provider_auth/i
 
 test("hosted sign-in failures map raw shapes to fixed safe categories without leaking details", () => {
   const scenarios = [
     {
       input: {
         status: "expired",
-        stage: "auth_google",
+        stage: "session_exchange",
         error: {
-          source: "backend",
+          source: "hosted_backend",
           code: "unauthorized",
           httpStatusClass: "4xx",
-          raw: "backend-stack invalid_grant"
+          raw: "provider-stack invalid_grant"
         }
       },
       category: "invalid"
@@ -39,17 +40,21 @@ test("hosted sign-in failures map raw shapes to fixed safe categories without le
     {
       input: {
         status: "rate_limited",
-        stage: "challenge",
-        error: { source: "backend", code: "rate_limited", httpStatusClass: "4xx" }
+        stage: "sign_in_prepare",
+        error: {
+          source: "hosted_backend",
+          code: "rate_limited",
+          httpStatusClass: "4xx"
+        }
       },
       category: "rate_limited"
     },
     {
       input: {
         status: "local_backend_unavailable",
-        stage: "challenge",
+        stage: "sign_in_prepare",
         error: {
-          source: "backend",
+          source: "hosted_backend",
           code: "service_unavailable",
           httpStatusClass: "unknown"
         }
@@ -59,10 +64,10 @@ test("hosted sign-in failures map raw shapes to fixed safe categories without le
     {
       input: {
         status: "hosted_route_unavailable",
-        stage: "oauth",
+        stage: "provider_auth",
         error: {
-          source: "oauth",
-          code: "oauth_error",
+          source: "identity_provider",
+          code: "provider_error",
           message:
             "invalid_grant ya29.secret https://accounts.google.com/o/oauth2"
         }
@@ -72,8 +77,8 @@ test("hosted sign-in failures map raw shapes to fixed safe categories without le
     {
       input: {
         status: "signed_out",
-        stage: "oauth",
-        error: { source: "oauth", code: "user_cancelled" }
+        stage: "provider_auth",
+        error: { source: "identity_provider", code: "user_cancelled" }
       },
       category: "cancelled"
     },
@@ -140,11 +145,11 @@ test("hosted sign-in copy-trace action copies sanitized category, timestamp, and
   const failure = buildHostedSignInFailureView(
     {
       status: "expired",
-      stage: "auth_google",
+      stage: "session_exchange",
       error: {
-        source: "backend",
+        source: "hosted_backend",
         code: "unauthorized",
-        message: "backend-stack mock-id-token backend-state backend-nonce"
+        message: "provider-stack mock-id-token provider-state provider-nonce"
       }
     },
     {
@@ -174,8 +179,8 @@ test("hosted sign-in dialog stays hidden until Hosted is explicitly chosen", () 
   const failure = buildHostedSignInFailureView(
     {
       status: "hosted_route_unavailable",
-      stage: "oauth",
-      error: { source: "oauth", code: "oauth_error" }
+      stage: "provider_auth",
+      error: { source: "identity_provider", code: "provider_error" }
     },
     { now: FIXED_NOW }
   )
@@ -213,8 +218,12 @@ test("BYOK remains available without Aviso login even after hosted sign-in failu
   const failure = buildHostedSignInFailureView(
     {
       status: "expired",
-      stage: "auth_google",
-      error: { source: "backend", code: "unauthorized", httpStatusClass: "4xx" }
+      stage: "session_exchange",
+      error: {
+        source: "hosted_backend",
+        code: "unauthorized",
+        httpStatusClass: "4xx"
+      }
     },
     { now: FIXED_NOW }
   )

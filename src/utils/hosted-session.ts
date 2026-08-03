@@ -8,6 +8,9 @@ export const HOSTED_AI_PROVIDER_CONFIG_ID = "aviso-hosted-ai"
 export const HOSTED_AI_DEFAULT_MODEL = "free-small"
 export const HOSTED_SESSION_STORAGE_KEY = "aviso_hosted_session"
 export const HOSTED_SIGN_IN_RESULT_STORAGE_KEY = "aviso_hosted_sign_in_result"
+export const HOSTED_SESSION_SCHEMA_VERSION = 2
+export const HOSTED_AUTH_PROVIDER = "supabase"
+export const HOSTED_SESSION_TOKEN_KIND = "hosted_bearer"
 
 const LOCAL_HOSTNAMES = new Set(["localhost", "127.0.0.1", "::1"])
 const PRODUCTION_ORIGIN = new URL(HOSTED_AI_PRODUCTION_BASE_URL).origin
@@ -45,6 +48,9 @@ type HostedAiMe = {
 }
 
 export type StoredHostedSession = {
+  schemaVersion?: typeof HOSTED_SESSION_SCHEMA_VERSION
+  authProvider?: typeof HOSTED_AUTH_PROVIDER
+  tokenKind?: typeof HOSTED_SESSION_TOKEN_KIND
   session: HostedAiSession
   me?: HostedAiMe
   baseUrl: string
@@ -66,20 +72,37 @@ export type HostedRouteSelection = "byok" | "hosted"
 
 export type HostedSignInStage =
   | "client"
-  | "challenge"
-  | "oauth"
-  | "auth_google"
-  | "me"
+  | "sign_in_prepare"
+  | "provider_auth"
+  | "session_exchange"
+  | "account_refresh"
   | "storage"
   | "done"
 
+export type HostedSignInFailureSource =
+  | "identity_provider"
+  | "hosted_backend"
+  | "storage"
+  | "network"
+  | "unknown"
+
+export type HostedHttpStatusClass =
+  | "1xx"
+  | "2xx"
+  | "3xx"
+  | "4xx"
+  | "5xx"
+  | "unknown"
+
 export type StoredHostedSignInResult = {
+  schemaVersion?: typeof HOSTED_SESSION_SCHEMA_VERSION
+  authProvider?: typeof HOSTED_AUTH_PROVIDER
   status: HostedAccountStatus
   stage: HostedSignInStage
   error?: {
-    source: "oauth" | "backend" | "storage" | "unknown"
+    source: HostedSignInFailureSource
     code: string
-    httpStatusClass?: "1xx" | "2xx" | "3xx" | "4xx" | "5xx" | "unknown"
+    httpStatusClass?: HostedHttpStatusClass
   }
   updatedAt: number
 }
@@ -130,14 +153,22 @@ export function resolveLocalHostedBaseUrl(
 
 export async function readHostedSession(): Promise<StoredHostedSession | null> {
   const result = await chrome.storage.local.get(HOSTED_SESSION_STORAGE_KEY)
-  return normalizeStoredHostedSession(result[HOSTED_SESSION_STORAGE_KEY])
+  const raw = result[HOSTED_SESSION_STORAGE_KEY]
+  const normalized = normalizeStoredHostedSession(raw)
+  if (raw !== undefined && !normalized) {
+    await clearHostedSession()
+  }
+  return normalized
 }
 
 export async function readHostedSignInResult(): Promise<StoredHostedSignInResult | null> {
   const result = await chrome.storage.local.get(HOSTED_SIGN_IN_RESULT_STORAGE_KEY)
-  return normalizeStoredHostedSignInResult(
-    result[HOSTED_SIGN_IN_RESULT_STORAGE_KEY]
-  )
+  const raw = result[HOSTED_SIGN_IN_RESULT_STORAGE_KEY]
+  const normalized = normalizeStoredHostedSignInResult(raw)
+  if (raw !== undefined && !normalized) {
+    await clearHostedSignInResult()
+  }
+  return normalized
 }
 
 export async function saveHostedSession(
@@ -150,6 +181,9 @@ export async function saveHostedSession(
   }
 
   const value: StoredHostedSession = {
+    schemaVersion: HOSTED_SESSION_SCHEMA_VERSION,
+    authProvider: HOSTED_AUTH_PROVIDER,
+    tokenKind: HOSTED_SESSION_TOKEN_KIND,
     session,
     me: options.me,
     baseUrl,
@@ -166,6 +200,9 @@ export async function updateHostedSessionMe(
 ): Promise<StoredHostedSession> {
   const value: StoredHostedSession = {
     ...current,
+    schemaVersion: HOSTED_SESSION_SCHEMA_VERSION,
+    authProvider: HOSTED_AUTH_PROVIDER,
+    tokenKind: HOSTED_SESSION_TOKEN_KIND,
     me,
     updatedAt: Date.now()
   }
@@ -181,6 +218,8 @@ export async function saveHostedSignInResult(
   result: Omit<StoredHostedSignInResult, "updatedAt">
 ): Promise<StoredHostedSignInResult> {
   const value: StoredHostedSignInResult = {
+    schemaVersion: HOSTED_SESSION_SCHEMA_VERSION,
+    authProvider: HOSTED_AUTH_PROVIDER,
     status: result.status,
     stage: result.stage,
     error: normalizeHostedSignInError(result.error),
@@ -341,6 +380,9 @@ function normalizeStoredHostedSession(
   const token = candidate.session?.session_token
   const baseUrl = candidate.baseUrl
 
+  if (candidate.schemaVersion !== HOSTED_SESSION_SCHEMA_VERSION) return null
+  if (candidate.authProvider !== HOSTED_AUTH_PROVIDER) return null
+  if (candidate.tokenKind !== HOSTED_SESSION_TOKEN_KIND) return null
   if (typeof token !== "string" || !token.trim()) return null
   if (typeof baseUrl !== "string" || !resolveLocalHostedBaseUrl(baseUrl)) {
     return null
@@ -354,11 +396,15 @@ function normalizeStoredHostedSignInResult(
 ): StoredHostedSignInResult | null {
   if (!value || typeof value !== "object") return null
   const candidate = value as Partial<StoredHostedSignInResult>
+  if (candidate.schemaVersion !== HOSTED_SESSION_SCHEMA_VERSION) return null
+  if (candidate.authProvider !== HOSTED_AUTH_PROVIDER) return null
   if (!isHostedAccountStatus(candidate.status)) return null
   if (!isHostedSignInStage(candidate.stage)) return null
   if (!isFiniteQuotaNumber(candidate.updatedAt)) return null
 
   return {
+    schemaVersion: HOSTED_SESSION_SCHEMA_VERSION,
+    authProvider: HOSTED_AUTH_PROVIDER,
     status: candidate.status,
     stage: candidate.stage,
     error: normalizeHostedSignInError(candidate.error),
@@ -372,9 +418,10 @@ function normalizeHostedSignInError(
   if (!value || typeof value !== "object") return undefined
   const candidate = value as Partial<StoredHostedSignInResult["error"]>
   if (
-    candidate.source !== "oauth" &&
-    candidate.source !== "backend" &&
+    candidate.source !== "identity_provider" &&
+    candidate.source !== "hosted_backend" &&
     candidate.source !== "storage" &&
+    candidate.source !== "network" &&
     candidate.source !== "unknown"
   ) {
     return undefined
@@ -409,10 +456,10 @@ function isHostedAccountStatus(value: unknown): value is HostedAccountStatus {
 function isHostedSignInStage(value: unknown): value is HostedSignInStage {
   return (
     value === "client" ||
-    value === "challenge" ||
-    value === "oauth" ||
-    value === "auth_google" ||
-    value === "me" ||
+    value === "sign_in_prepare" ||
+    value === "provider_auth" ||
+    value === "session_exchange" ||
+    value === "account_refresh" ||
     value === "storage" ||
     value === "done"
   )

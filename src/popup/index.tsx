@@ -19,11 +19,9 @@ import type {
   ProviderConfig,
   Settings
 } from "~types/history"
-import type { HostedGoogleSignInData, MessageResponse } from "~types/messages"
-import {
-  createHostedAiClient,
-  HostedAiClientError
-} from "~utils/hosted-ai-client"
+import type { HostedSignInData, MessageResponse } from "~types/messages"
+import { HostedAiClientError } from "~utils/hosted-ai-client"
+import { hostedAuthAdapter } from "~utils/hosted-supabase-auth"
 import {
   buildHostedSignInFailureView,
   getHostedSignInDialogState,
@@ -35,10 +33,8 @@ import {
 import {
   buildHostedAccountQuotaDisplay,
   clearHostedSignInResult,
-  clearHostedSession,
   deriveHostedAccountStatus,
   getHostedMonthlyQuotaWindow,
-  HOSTED_AI_DEFAULT_BASE_URL,
   HOSTED_AI_DEFAULT_MODEL,
   HOSTED_AI_PROVIDER_CONFIG_ID,
   HOSTED_SIGN_IN_RESULT_STORAGE_KEY,
@@ -47,7 +43,6 @@ import {
   isHostedSessionUsable,
   readHostedSignInResult,
   readHostedSession,
-  updateHostedSessionMe,
   type HostedAccountStatus,
   type StoredHostedSignInResult,
   type StoredHostedSession
@@ -763,12 +758,6 @@ function Popup() {
     setHostedSession(session)
   }
 
-  const createLocalHostedClient = (session?: StoredHostedSession | null) =>
-    createHostedAiClient({
-      baseUrl: session?.baseUrl ?? HOSTED_AI_DEFAULT_BASE_URL,
-      sessionToken: session?.session.session_token
-    })
-
   const refreshHostedSessionStateFromStorage = async (
     signedInMessageKey?: I18nKey
   ) => {
@@ -790,7 +779,7 @@ function Popup() {
   }
 
   const applyHostedSignInResult = (
-    result: StoredHostedSignInResult | HostedGoogleSignInData | null,
+    result: StoredHostedSignInResult | HostedSignInData | null,
     exposeDialog = false
   ) => {
     if (!result || result.status === "signed_in") return false
@@ -827,8 +816,8 @@ function Popup() {
     void clearHostedSignInResult()
     setHostedAccountResult("signing_in", "popup.hosted.status.signingIn")
     try {
-      const response = await sendRuntimeMessage<HostedGoogleSignInData>({
-        action: "HOSTED_GOOGLE_SIGN_IN"
+      const response = await sendRuntimeMessage<HostedSignInData>({
+        action: "HOSTED_SIGN_IN"
       })
       const stored = await refreshHostedSessionStateFromStorage(
         "popup.hosted.status.signedIn"
@@ -870,7 +859,7 @@ function Popup() {
               status,
               stage: "client",
               error: {
-                source: "backend",
+                source: "hosted_backend",
                 code: error.normalized.code,
                 httpStatusClass: "unknown"
               }
@@ -921,14 +910,22 @@ function Popup() {
     setHostedBusy(true)
     setHostedAccountResult("signing_in", "popup.hosted.status.refreshing")
     try {
-      const client = createLocalHostedClient(hostedSession)
-      const me = await client.me(hostedSession.session.session_token)
-      const stored = await updateHostedSessionMe(hostedSession, me)
-      setHostedAccountResult(
-        "signed_in",
-        "popup.hosted.status.refreshed",
-        stored
-      )
+      const stored = await hostedAuthAdapter.refreshHostedAccount({
+        session: hostedSession
+      })
+      if (stored) {
+        setHostedAccountResult(
+          "signed_in",
+          "popup.hosted.status.refreshed",
+          stored
+        )
+      } else {
+        setHostedAccountResult(
+          "signed_out",
+          "popup.hosted.status.signedOut",
+          null
+        )
+      }
     } catch (error) {
       const status =
         error instanceof HostedAiClientError
@@ -946,15 +943,10 @@ function Popup() {
   const signOutHostedLocal = async () => {
     setHostedBusy(true)
     try {
-      if (hostedSession) {
-        const client = createLocalHostedClient(hostedSession)
-        await client.logout(hostedSession.session.session_token)
-      }
+      await hostedAuthAdapter.signOutHosted({ session: hostedSession })
     } catch {
       // Local sign-out should not leave a stale token when the backend is down.
     } finally {
-      await clearHostedSession()
-      await clearHostedSignInResult()
       setHostedAccountResult(
         "signed_out",
         "popup.hosted.status.signedOut",
