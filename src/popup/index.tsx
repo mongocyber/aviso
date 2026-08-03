@@ -20,6 +20,15 @@ import type {
   Settings
 } from "~types/history"
 import type { HostedSignInData, MessageResponse } from "~types/messages"
+import {
+  getAccountDeletionStateLabelKey,
+  requestAccountDeletion,
+  resolveAccountDeletionDialogAction,
+  type AccountDeletionBackendState,
+  type AccountDeletionDialogAction,
+  type AccountDeletionDialogStep,
+  type AccountDeletionRequestResult
+} from "~utils/account-deletion"
 import { HostedAiClientError } from "~utils/hosted-ai-client"
 import { hostedAuthAdapter } from "~utils/hosted-supabase-auth"
 import {
@@ -149,6 +158,16 @@ const PROVIDER_ORDER: ProviderId[] = [
   "gemini",
   "hunyuan"
 ]
+
+const ACCOUNT_DELETION_STATE_LABEL_KEYS: Record<
+  AccountDeletionBackendState,
+  I18nKey
+> = {
+  accepted: "popup.accountDeletion.state.accepted",
+  processing: "popup.accountDeletion.state.processing",
+  completed: "popup.accountDeletion.state.completed",
+  retry: "popup.accountDeletion.state.retry"
+}
 
 function resolvePopupRuntimeHeight() {
   if (typeof window === "undefined") return POPUP_FRAME.safeMaxHeight
@@ -532,6 +551,11 @@ function Popup() {
   const [hostedSignInFailure, setHostedSignInFailure] =
     useState<HostedSignInFailureView | null>(null)
   const [hostedTraceCopied, setHostedTraceCopied] = useState(false)
+  const [accountDeletionStep, setAccountDeletionStep] =
+    useState<AccountDeletionDialogStep>("idle")
+  const [accountDeletionBusy, setAccountDeletionBusy] = useState(false)
+  const [accountDeletionResult, setAccountDeletionResult] =
+    useState<AccountDeletionRequestResult | null>(null)
   const [accountPanelOpen, setAccountPanelOpen] = useState(false)
   const [systemPrefersDark, setSystemPrefersDark] = useState(true)
   const [popupRuntimeHeight, setPopupRuntimeHeight] = useState<number>(
@@ -954,6 +978,83 @@ function Popup() {
       )
       setHostedBusy(false)
     }
+  }
+
+  const openAccountDeletionDialog = () => {
+    if (accountDeletionBusy) return
+    const effect = resolveAccountDeletionDialogAction("open", {
+      step: accountDeletionStep
+    })
+    setTab("api")
+    setAccountPanelOpen(false)
+    setAccountDeletionResult(null)
+    setAccountDeletionStep(effect.nextStep)
+  }
+
+  const closeAccountDeletionDialog = () => {
+    if (accountDeletionBusy) return
+    const effect = resolveAccountDeletionDialogAction("close", {
+      step: accountDeletionStep
+    })
+    setAccountDeletionResult(null)
+    setAccountDeletionStep(effect.nextStep)
+  }
+
+  const submitAccountDeletion = async () => {
+    setAccountDeletionBusy(true)
+    setAccountDeletionStep("processing")
+    setAccountDeletionResult(null)
+    try {
+      const result = await requestAccountDeletion()
+      setAccountDeletionResult(result)
+      if (result.kind === "local_auth") {
+        setHostedSignInExplicit(false)
+        setHostedSignInFailure(null)
+        setHostedTraceCopied(false)
+        setHostedAccountResult(
+          result.reason === "unauthorized" ? "expired" : "signed_out",
+          result.reason === "unauthorized"
+            ? "popup.hosted.status.expired"
+            : "popup.hosted.status.signedOut",
+          null
+        )
+        return
+      }
+      if (result.kind === "backend" && result.clearedHostedState) {
+        setHostedSignInExplicit(false)
+        setHostedSignInFailure(null)
+        setHostedTraceCopied(false)
+        setHostedAccountResult(
+          "signed_out",
+          "popup.hosted.status.signedOut",
+          null
+        )
+      }
+    } catch {
+      setAccountDeletionResult({
+        kind: "safe_retry",
+        state: "retry",
+        reason: "network",
+        clearedHostedState: false
+      })
+    } finally {
+      setAccountDeletionBusy(false)
+    }
+  }
+
+  const handleAccountDeletionDialogAction = (
+    action: AccountDeletionDialogAction
+  ) => {
+    if (accountDeletionBusy && action !== "close" && action !== "cancel") return
+    const effect = resolveAccountDeletionDialogAction(action, {
+      step: accountDeletionStep
+    })
+    if (effect.closeDialog) {
+      closeAccountDeletionDialog()
+      return
+    }
+    setAccountDeletionStep(effect.nextStep)
+    if (effect.submit) void submitAccountDeletion()
   }
 
   useEffect(() => {
@@ -1990,6 +2091,21 @@ function Popup() {
     failure: hostedSignInFailure,
     hasHostedSession: Boolean(hostedSession)
   })
+  const accountDeletionVisible = accountDeletionStep !== "idle"
+  const accountDeletionBackendState: AccountDeletionBackendState | null =
+    accountDeletionBusy || accountDeletionStep === "processing"
+      ? accountDeletionResult?.kind === "backend" ||
+        accountDeletionResult?.kind === "safe_retry"
+        ? accountDeletionResult.state
+        : "processing"
+      : accountDeletionResult?.kind === "backend" ||
+          accountDeletionResult?.kind === "safe_retry"
+        ? accountDeletionResult.state
+        : null
+  const accountDeletionStateKey = accountDeletionBackendState
+    ? ACCOUNT_DELETION_STATE_LABEL_KEYS[accountDeletionBackendState] ??
+      getAccountDeletionStateLabelKey(accountDeletionBackendState)
+    : null
   const hostedInlineStatusVisible =
     hostedBusy || hostedSignInDialog.visible || hostedSignInExplicit
   const hostedSelectedModelAvailability: ModelAvailability = {
@@ -2335,6 +2451,256 @@ function Popup() {
                 ? t("popup.hosted.dialog.copied")
                 : t("popup.hosted.dialog.copyTrace")}
             </button>
+          </div>
+        )}
+      </div>
+    )
+  }
+  const renderAccountDeletionDialog = () => {
+    if (!accountDeletionVisible) return null
+
+    const localAuthResult = accountDeletionResult?.kind === "local_auth"
+    const isRetry = accountDeletionBackendState === "retry"
+    const isProcessing =
+      accountDeletionBusy || accountDeletionBackendState === "processing"
+    const tone =
+      localAuthResult || isRetry
+        ? "danger"
+        : isProcessing
+          ? "warning"
+          : accountDeletionBackendState
+            ? "ok"
+            : "danger"
+    const titleKey: I18nKey =
+      accountDeletionStep === "scope"
+        ? "popup.accountDeletion.scopeTitle"
+        : accountDeletionStep === "second_confirm"
+          ? "popup.accountDeletion.secondConfirmTitle"
+          : localAuthResult
+            ? "popup.accountDeletion.authExpiredTitle"
+            : isRetry
+              ? "popup.accountDeletion.retryTitle"
+              : "popup.accountDeletion.resultTitle"
+    const messageKey: I18nKey =
+      accountDeletionStep === "scope"
+        ? "popup.accountDeletion.scopeDesc"
+        : accountDeletionStep === "second_confirm"
+          ? "popup.accountDeletion.secondConfirmDesc"
+          : localAuthResult
+            ? "popup.accountDeletion.authExpiredDesc"
+            : isRetry
+              ? "popup.accountDeletion.retryDesc"
+              : accountDeletionBackendState === "accepted"
+                ? "popup.accountDeletion.message.accepted"
+                : accountDeletionBackendState === "completed"
+                  ? "popup.accountDeletion.message.completed"
+                  : "popup.accountDeletion.message.processing"
+
+    return (
+      <div
+        role="dialog"
+        aria-live="polite"
+        aria-label={t("popup.accountDeletion.dialogTitle")}
+        style={{
+          ...styles.accountDeletionDialog,
+          background:
+            tone === "danger"
+              ? ui.dangerBg
+              : tone === "warning"
+                ? ui.warningBg
+                : ui.accentSoft,
+          borderColor:
+            tone === "danger"
+              ? ui.dangerBorder
+              : tone === "warning"
+                ? ui.warningBorder
+                : ui.accentBorder
+        }}>
+        <div style={styles.hostedDialogTop}>
+          <span
+            style={{
+              ...styles.hostedDialogIcon,
+              background: ui.card,
+              color: tone === "danger" ? ui.danger : ui.accent
+            }}>
+            <AvisoIcon
+              name={tone === "danger" ? "warning" : "shield"}
+              size={15}
+            />
+          </span>
+          <strong style={{ ...styles.hostedDialogTitle, color: ui.text }}>
+            {t(titleKey)}
+          </strong>
+          {accountDeletionStateKey && (
+            <span
+              style={{
+                ...styles.statusPill,
+                ...getDropdownStatusStyle(tone, ui),
+                marginLeft: "auto"
+              }}>
+              {t(accountDeletionStateKey)}
+            </span>
+          )}
+        </div>
+        <p style={{ ...styles.hostedDialogText, color: ui.text2 }}>
+          {t(messageKey)}
+        </p>
+        {accountDeletionStep === "scope" && (
+          <ul style={{ ...styles.accountDeletionList, color: ui.text2 }}>
+            <li style={styles.accountDeletionListItem}>
+              {t("popup.accountDeletion.scopeHosted")}
+            </li>
+            <li style={styles.accountDeletionListItem}>
+              {t("popup.accountDeletion.scopeSession")}
+            </li>
+            <li style={styles.accountDeletionListItem}>
+              {t("popup.accountDeletion.scopeByok")}
+            </li>
+          </ul>
+        )}
+        {accountDeletionStep === "second_confirm" && (
+          <p style={{ ...styles.accountDeletionWarning, color: ui.danger }}>
+            {t("popup.accountDeletion.secondConfirmWarning")}
+          </p>
+        )}
+        {isProcessing && !accountDeletionResult ? (
+          <div style={{ ...styles.accountDeletionProgress, color: ui.text3 }}>
+            {t("popup.accountDeletion.processing")}
+          </div>
+        ) : (
+          <div style={styles.accountDeletionActions}>
+            {accountDeletionStep === "scope" && (
+              <>
+                <button
+                  type="button"
+                  className="aviso-popup-button"
+                  onClick={() => handleAccountDeletionDialogAction("cancel")}
+                  style={{
+                    ...styles.accountDeletionSecondaryBtn,
+                    borderColor: ui.line,
+                    color: ui.text2
+                  }}>
+                  {t("common.cancel")}
+                </button>
+                <button
+                  type="button"
+                  className="aviso-popup-button"
+                  onClick={() => handleAccountDeletionDialogAction("continue")}
+                  style={{
+                    ...styles.accountDeletionSecondaryBtn,
+                    borderColor: ui.line,
+                    color: ui.text
+                  }}>
+                  {t("popup.accountDeletion.reviewScope")}
+                </button>
+              </>
+            )}
+            {accountDeletionStep === "second_confirm" && (
+              <>
+                <button
+                  type="button"
+                  className="aviso-popup-button"
+                  onClick={() => handleAccountDeletionDialogAction("cancel")}
+                  style={{
+                    ...styles.accountDeletionSecondaryBtn,
+                    borderColor: ui.line,
+                    color: ui.text2
+                  }}>
+                  {t("common.cancel")}
+                </button>
+                <button
+                  type="button"
+                  className="aviso-popup-button"
+                  onClick={() => handleAccountDeletionDialogAction("confirm")}
+                  disabled={accountDeletionBusy}
+                  style={{
+                    ...styles.accountDeletionDangerBtn,
+                    borderColor: ui.dangerBorder,
+                    color: ui.danger,
+                    ...(accountDeletionBusy ? styles.disabledBtn : {})
+                  }}>
+                  <AvisoIcon name="trash" size={13} />
+                  {t("popup.accountDeletion.confirm")}
+                </button>
+              </>
+            )}
+            {accountDeletionStep === "processing" && localAuthResult && (
+              <>
+                <button
+                  type="button"
+                  className="aviso-popup-button"
+                  onClick={closeAccountDeletionDialog}
+                  style={{
+                    ...styles.accountDeletionSecondaryBtn,
+                    borderColor: ui.line,
+                    color: ui.text2
+                  }}>
+                  {t("common.close")}
+                </button>
+                <button
+                  type="button"
+                  className="aviso-popup-button"
+                  onClick={() => {
+                    closeAccountDeletionDialog()
+                    void signInHosted()
+                  }}
+                  style={{
+                    ...styles.accountDeletionSecondaryBtn,
+                    borderColor: ui.line,
+                    color: ui.text
+                  }}>
+                  {t("popup.hosted.signIn")}
+                </button>
+              </>
+            )}
+            {accountDeletionStep === "processing" &&
+              !localAuthResult &&
+              isRetry && (
+                <>
+                  <button
+                    type="button"
+                    className="aviso-popup-button"
+                    onClick={closeAccountDeletionDialog}
+                    style={{
+                      ...styles.accountDeletionSecondaryBtn,
+                      borderColor: ui.line,
+                      color: ui.text2
+                    }}>
+                    {t("common.close")}
+                  </button>
+                  <button
+                    type="button"
+                    className="aviso-popup-button"
+                    onClick={() => handleAccountDeletionDialogAction("retry")}
+                    disabled={accountDeletionBusy}
+                    style={{
+                      ...styles.accountDeletionSecondaryBtn,
+                      borderColor: ui.line,
+                      color: ui.text,
+                      ...(accountDeletionBusy ? styles.disabledBtn : {})
+                    }}>
+                    <AvisoIcon name="refresh" size={13} />
+                    {t("common.retry")}
+                  </button>
+                </>
+              )}
+            {accountDeletionStep === "processing" &&
+              !localAuthResult &&
+              !isRetry &&
+              accountDeletionResult && (
+                <button
+                  type="button"
+                  className="aviso-popup-button"
+                  onClick={closeAccountDeletionDialog}
+                  style={{
+                    ...styles.accountDeletionSecondaryBtn,
+                    gridColumn: "1 / -1",
+                    borderColor: ui.line,
+                    color: ui.text
+                  }}>
+                  {t("common.close")}
+                </button>
+              )}
           </div>
         )}
       </div>
@@ -2714,6 +3080,19 @@ function Popup() {
                       {t("popup.account.manage")}
                     </button>
                   </div>
+                  <button
+                    type="button"
+                    className="aviso-popup-button"
+                    onClick={openAccountDeletionDialog}
+                    disabled={accountDeletionBusy}
+                    style={{
+                      ...styles.accountSignOutBtn,
+                      color: ui.danger,
+                      ...(accountDeletionBusy ? styles.disabledBtn : {})
+                    }}>
+                    <AvisoIcon name="trash" size={13} />
+                    {t("popup.accountDeletion.open")}
+                  </button>
                   <button
                     type="button"
                     className="aviso-popup-button"
@@ -3698,6 +4077,7 @@ function Popup() {
                 </div>
               </>
             )}
+            {renderAccountDeletionDialog()}
             {(!showZeroState || hasOpenAddDraft) && (
             <>
             {!showZeroState &&
@@ -3782,6 +4162,22 @@ function Popup() {
                       {" · "}
                       {t("popup.hosted.resetTiming")}:{" "}
                       {hostedQuotaDisplay.resetLabel}
+                    </div>
+                    <div style={styles.hostedAccountActions}>
+                      <button
+                        type="button"
+                        className="aviso-popup-button"
+                        onClick={openAccountDeletionDialog}
+                        disabled={accountDeletionBusy}
+                        style={{
+                          ...styles.accountDeletionInlineBtn,
+                          borderColor: ui.dangerBorder,
+                          color: ui.danger,
+                          ...(accountDeletionBusy ? styles.disabledBtn : {})
+                        }}>
+                        <AvisoIcon name="trash" size={13} />
+                        {t("popup.accountDeletion.open")}
+                      </button>
                     </div>
                   </div>
                 </>
@@ -5668,6 +6064,102 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "10px",
     boxSizing: "border-box",
     minWidth: 0
+  },
+  accountDeletionDialog: {
+    margin: "10px 0 12px",
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 10,
+    padding: "10px",
+    boxSizing: "border-box",
+    minWidth: 0
+  },
+  accountDeletionList: {
+    display: "grid",
+    gap: 6,
+    margin: "9px 0 0",
+    padding: "0 0 0 18px",
+    fontFamily: aviso.font,
+    fontSize: 11.5,
+    lineHeight: 1.45,
+    overflowWrap: "anywhere"
+  },
+  accountDeletionListItem: {
+    paddingLeft: 2
+  },
+  accountDeletionWarning: {
+    margin: "8px 0 0",
+    fontFamily: aviso.font,
+    fontSize: 11.5,
+    fontWeight: 650,
+    lineHeight: 1.45,
+    overflowWrap: "anywhere"
+  },
+  accountDeletionProgress: {
+    marginTop: 10,
+    fontFamily: aviso.font,
+    fontSize: 11.5,
+    lineHeight: 1.45
+  },
+  accountDeletionActions: {
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)",
+    gap: 7,
+    marginTop: 10,
+    alignItems: "stretch",
+    minWidth: 0
+  },
+  accountDeletionSecondaryBtn: {
+    minWidth: 0,
+    minHeight: 32,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 8,
+    background: "transparent",
+    padding: "0 8px",
+    fontFamily: aviso.font,
+    fontSize: 11.5,
+    fontWeight: 650,
+    lineHeight: 1.15,
+    cursor: "pointer",
+    whiteSpace: "normal",
+    textAlign: "center"
+  },
+  accountDeletionDangerBtn: {
+    minWidth: 0,
+    minHeight: 32,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 5,
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 8,
+    background: "transparent",
+    padding: "0 8px",
+    fontFamily: aviso.font,
+    fontSize: 11.5,
+    fontWeight: 750,
+    lineHeight: 1.15,
+    cursor: "pointer",
+    whiteSpace: "normal",
+    textAlign: "center"
+  },
+  accountDeletionInlineBtn: {
+    minHeight: 30,
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    border: `1px solid var(--aviso-line)`,
+    borderRadius: 8,
+    background: "transparent",
+    padding: "0 10px",
+    fontFamily: aviso.font,
+    fontSize: 12,
+    fontWeight: 650,
+    cursor: "pointer"
   },
   hostedDialogTop: {
     display: "flex",
