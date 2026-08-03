@@ -38,6 +38,7 @@ Updated: 2026-08-01
 | `src/utils/hosted-ai-client.ts` | v0.3 hosted AI typed client。 |
 | `src/utils/hosted-supabase-auth.ts` | 默认禁用的 Supabase Auth frontend adapter foundation；真实 Supabase origin/anon key、redirect allowlist 和 host permission activation 是 owner-gated follow-up。 |
 | `src/utils/hosted-session.ts` | v0.3 hosted session/account 本地状态。 |
+| `src/utils/billing-subscription.ts` | Creem checkout / portal 请求、受信任外部 URL 校验和 checkout return 后 backend account refresh。 |
 | `src/utils/model-registry.ts` | 当前 provider / model registry。 |
 | `src/utils/translation.ts` | 翻译 payload 与目标语言处理。 |
 | `locales/zh_CN/messages.json` | Chrome manifest 中文本地化源码。 |
@@ -81,6 +82,8 @@ Updated: 2026-08-01
 
 MON-121 不新增 Supabase host permission，不填入 Supabase project origin 或 anon key，也不启用真实 Supabase 登录。精确 Supabase project origin/anon key、redirect allowlist 和 manifest host-permission activation 是单独 owner-gated follow-up。
 
+MON-124 Creem checkout / subscription-status 前端 MVP 不新增权限或 host permission。Checkout / portal 请求复用既有 Aviso backend host permission；后端返回的 Creem hosted URL 先校验 HTTPS trusted origin，再作为用户触发的外部页面打开。
+
 命令：
 
 - `open-command-palette`
@@ -111,7 +114,8 @@ Aviso 不自动调用 provider 的 list-models API，也不自动读取用户账
 | API Key | `chrome.storage.local/contextai_api_keys` | 不明文保存，不进入 sync；当前使用由扩展 ID 派生的口令做本地加密 / 混淆级保护，不防御已能读取本机浏览器 profile 或本机已被控制的攻击者。 |
 | 非敏感设置 | `chrome.storage.sync/contextai_settings` | 包括功能开关、默认模型、界面语言、主题、自定义指令和 provider metadata。 |
 | 本地对话历史 | `chrome.storage.local/contextai_history` | 本地保存，不同步。 |
-| 托管 AI session/account state | `chrome.storage.local/aviso_hosted_session` | 仅用于 v0.3 hosted path 的登录态、账号和额度展示；退出托管账号不删除 BYOK 配置。 |
+| 托管 AI session/account state | `chrome.storage.local/aviso_hosted_session` | 仅用于 v0.3 hosted path 的登录态、账号、档位和额度展示；退出托管账号不删除 BYOK 配置。 |
+| Billing checkout / portal transient state | 不持久化 | Popup 内存提示；不保存 Creem customer ID、subscription ID、price ID 或返回的 billing URL。 |
 | 运行时短缓存 | Service worker 内存 | 用于 settings、route、translation 和 page content 短期复用；不持久化。 |
 
 ## 消息流
@@ -124,6 +128,8 @@ Aviso 不自动调用 provider 的 list-models API，也不自动读取用户账
 6. 用户可以复制、保存或继续追问；对话历史写入本地 storage。
 
 v0.3 hosted path 只在 request route 明确为 `hosted` 时触发：background 读取本地 hosted session，把请求发往 `https://aviso-backend-production.vercel.app/v1`，再由后端路由到上游 provider。BYOK path 不因托管账号未登录、额度或后端状态而被全局阻断。
+
+Creem checkout / subscription-status MVP 只在已登录 hosted account 的 Popup 内触发。Popup 调 Aviso 后端 `POST /v1/billing/checkout` 或 `POST /v1/billing/portal` 获取 hosted URL；客户端不构造价格、entitlement、customer ID、subscription ID 或 portal URL。用户从 checkout 完成或取消后，Popup 只刷新 backend account data，并以 `/v1/me` 的 normalized tier/account state 为准。
 
 ## 输入边界
 

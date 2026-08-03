@@ -20,7 +20,8 @@ Aviso 不收集遥测，不使用分析 SDK，不出售用户数据，不把用�
 | API Key | `chrome.storage.local/contextai_api_keys` | 不明文保存，不同步；当前是浏览器 profile 内的本地加密 / 混淆便利边界，不是系统钥匙串、硬件安全模块、端到端加密或零知识保护。 |
 | 设置 | `chrome.storage.sync/contextai_settings` | 非敏感设置，包括功能开关、界面语言、主题、默认服务、自定义指令和 provider metadata。 |
 | 本地 AI 对话历史 | `chrome.storage.local/contextai_history` | 本地保存，不包含 API Key。 |
-| 托管 AI session/account state | `chrome.storage.local` hosted account/session records | 仅用于托管路径登录态、账号和额度展示；退出托管账号不删除 BYOK 配置。 |
+| 托管 AI session/account state | `chrome.storage.local` hosted account/session records | 仅用于托管路径登录态、账号、档位和额度展示；退出托管账号不删除 BYOK 配置。 |
+| 账单 checkout / portal UI 状态 | 不持久化 | Popup 内存状态；不保存 Creem customer ID、subscription ID、price ID 或后端返回的账单 URL。 |
 | 运行时短缓存 | Service worker 内存 | 随运行时失效，不持久化。 |
 
 ## 权限
@@ -60,7 +61,7 @@ Content-script frame access：
 
 跨 frame 的“复制当前上下文”会从来源 frame 抽取内容，再通过显示 frame 写入剪贴板；DOM textarea fallback 默认禁止，只有确认来源为 top frame 的调用方才能显式启用，避免把子 frame 上下文临时插入父页面 DOM。
 
-本轮 MON-41 frame / clipboard / manifest 修复不新增普通权限、host permissions、provider/network call、storage key、依赖或 production config。
+MON-124 Creem checkout / subscription-status 前端 MVP 不新增普通权限、host permissions、storage key、依赖或 production config。Checkout / portal 请求使用既有的 Aviso production backend host permission；打开后端返回的 Creem hosted 页面属于用户触发的外部导航，先校验 `https://checkout.creem.io` / `https://creem.io` / `https://www.creem.io` origin，再通过浏览器打开，不需要扩展读取该页面内容。
 
 ## 数据流
 
@@ -81,6 +82,14 @@ Content-script frame access：
 5. 后端返回流式结果，页面内结果面板展示。
 
 托管后端不持久化 raw prompt、raw provider response、页面正文、截图/base64、剪贴板内容、用户 BYOK API Key 或完整 URL。账户、额度、风控、请求状态和运营排查所需 metadata 当前保留 30 天。
+
+### Creem checkout / subscription-status MVP
+
+1. 仅已登录的 Aviso AI / hosted 用户可以在 Popup 请求升级或账单管理；BYOK 不要求登录或订阅。
+2. Popup 用 hosted bearer 调 Aviso 后端 `POST /v1/billing/checkout` 或 `POST /v1/billing/portal`。客户端不传 `customer_id`、`subscription_id`、`user_id`、价格、金额或 entitlement。
+3. 后端返回 `{ checkout_url }` 或 `{ portal_url }` 后，扩展只接受受信任的 Creem HTTPS origin 并打开外部页面；不构造 Creem URL。
+4. 用户从 checkout 完成或取消后，Popup 只触发 backend account refresh。计划/权益状态来自 `/v1/me` 的 normalized account data，不从 URL 参数、本地文案或客户端状态推断。
+5. 失败状态只显示固定安全类别文案；不展示 raw backend/provider message。BYOK API Key storage 不读取、不迁移、不清理。
 
 ### 本地搜索
 

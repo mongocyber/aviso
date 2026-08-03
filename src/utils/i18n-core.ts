@@ -705,6 +705,78 @@ const MESSAGES = {
     "zh-CN": "刷新",
     en: "Refresh"
   },
+  "popup.billing.plan": {
+    "zh-CN": "计划",
+    en: "Plan"
+  },
+  "popup.billing.plan.free": {
+    "zh-CN": "免费计划",
+    en: "Free plan"
+  },
+  "popup.billing.plan.paid": {
+    "zh-CN": "付费计划",
+    en: "Paid plan"
+  },
+  "popup.billing.checkout": {
+    "zh-CN": "升级",
+    en: "Upgrade"
+  },
+  "popup.billing.portal": {
+    "zh-CN": "管理账单",
+    en: "Manage billing"
+  },
+  "popup.billing.refresh": {
+    "zh-CN": "刷新计划",
+    en: "Refresh plan"
+  },
+  "popup.billing.returnSafe": {
+    "zh-CN": "结账完成或取消？请在这里刷新计划状态。Aviso 只会使用后端账户状态更新计划。",
+    en: "Checkout completed or cancelled? Refresh plan status here. Aviso updates your plan only from backend account status."
+  },
+  "popup.billing.status.checkoutOpening": {
+    "zh-CN": "正在打开安全结账页...",
+    en: "Opening secure checkout..."
+  },
+  "popup.billing.status.portalOpening": {
+    "zh-CN": "正在打开账单管理页...",
+    en: "Opening billing portal..."
+  },
+  "popup.billing.status.opened": {
+    "zh-CN": "已打开安全页面。完成或取消后，请回到这里刷新计划状态。",
+    en: "Secure page opened. After completing or cancelling, return here and refresh plan status."
+  },
+  "popup.billing.status.refreshed": {
+    "zh-CN": "计划状态已从后端刷新。",
+    en: "Plan status refreshed from the backend."
+  },
+  "popup.billing.status.signedOut": {
+    "zh-CN": "请先登录 Aviso AI；你仍可继续使用自己的 AI 服务。",
+    en: "Sign in to Aviso AI first; your own AI services still work."
+  },
+  "popup.billing.status.network": {
+    "zh-CN": "连接后端失败。请稍后重试；你仍可使用自己的 AI 服务。",
+    en: "Could not reach the backend. Retry later; your own AI services still work."
+  },
+  "popup.billing.status.unavailable": {
+    "zh-CN": "账单服务暂不可用。请稍后重试。",
+    en: "Billing is temporarily unavailable. Retry later."
+  },
+  "popup.billing.status.portalUnavailable": {
+    "zh-CN": "当前账户还没有可管理的订阅。请刷新计划状态或稍后再试。",
+    en: "No manageable subscription is available for this account. Refresh plan status or retry later."
+  },
+  "popup.billing.status.invalid": {
+    "zh-CN": "这次账单操作未能安全开始。请刷新状态或稍后重试。",
+    en: "This billing action could not start safely. Refresh status or retry later."
+  },
+  "popup.billing.status.untrustedUrl": {
+    "zh-CN": "Aviso 已拦截一个非预期账单链接。",
+    en: "Aviso blocked an unexpected billing link."
+  },
+  "popup.billing.status.navigationFailed": {
+    "zh-CN": "浏览器未能打开账单页面。请稍后重试。",
+    en: "The browser could not open the billing page. Retry later."
+  },
   "popup.hosted.statusLabel.signed_out": {
     "zh-CN": "未登录",
     en: "Signed out"

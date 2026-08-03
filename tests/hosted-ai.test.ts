@@ -132,9 +132,12 @@ test("popup surfaces explicit account chip and zero-state dual entry (MON-26)", 
   assert.match(popupSource, /t\(hostedMessageKey\)/)
   // Jargon stays in i18n, not hardcoded in source
   assert.equal(popupSource.includes("BYOK"), false)
-  // Subscription stays deferred: no upgrade/checkout entry shipped
-  assert.equal(popupSource.includes("升级"), false)
-  assert.equal(/\bUpgrade\b/.test(popupSource), false)
+  // MON-124 adds the minimum safe billing entry points without prices or
+  // local entitlement grants.
+  assert.match(popupSource, /requestBillingCheckout/)
+  assert.match(popupSource, /requestBillingPortal/)
+  assert.match(popupSource, /refreshHostedSubscriptionStatus/)
+  assert.equal(/\$[0-9]|price_id|customer_id|subscription_id/i.test(popupSource), false)
   // i18n strings exist for the new surfaces
   assert.equal(getI18nMessage("popup.zero.title", "zh-CN"), "开始使用")
   assert.equal(
