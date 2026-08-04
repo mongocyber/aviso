@@ -49,7 +49,7 @@ Allowed:
 - Result panel supports copy, save to local history, and continue asking.
 - Popup manages UI language, theme, default model, AI service configuration, API keys, feature switches, templates, and local history.
 - BYOK direct-provider model: users provide their own provider API keys and the extension calls approved provider hosts directly.
-- Optional Aviso AI path: users can choose Aviso AI and sign in; only that path uses the Aviso backend and upstream model services.
+- Optional Aviso AI path: candidate-only and default-disabled; only after users choose the hosted path, usable sign-in state exists, and owner-gated activation is complete does that path use the Aviso backend and upstream model services.
 - UI supports Chinese and English.
 
 Allowed but not hero/promotional focus:

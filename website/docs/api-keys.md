@@ -15,7 +15,7 @@ Aviso 支持两种 AI 服务路径：
 
 ## 托管账号候选路径
 
-托管账号路径当前用于候选审核。Popup 中已有账号状态、计划/额度状态、刷新和退出的前端基础，但真实 Supabase 登录需要 owner-gated 配置后才能启用。使用该路径时，请求只会在用户选择该路径且登录状态可用后经过 Aviso 后端和上游模型 provider。
+托管账号路径当前用于候选审核且默认关闭。Popup 中已有账号状态、计划/额度状态、刷新和退出的前端基础，但真实 Supabase 登录需要 owner-gated 配置后才能启用。使用该路径时，只有用户选择托管路径、登录状态可用且 owner-gated 激活完成后，请求才会经过 Aviso 后端和上游模型 provider。
 
 需要注意：
 
@@ -71,7 +71,7 @@ API Key 不明文保存，会以本地加密/混淆级保护保存在当前浏�
 - 当前保护只是浏览器 profile 内的便利边界，不防御可读浏览器 profile、已被控制的设备或恶意扩展。
 - 当前保护不是系统钥匙串、硬件安全模块、端到端加密或零知识保护。
 - 非敏感服务设置保存在 Chrome 同步设置中，API Key 不进入同步设置。
-- 使用 BYOK provider 时，请求会直接发送给你选择的 provider；使用 Aviso AI 时，请求会在你选择该路径并登录后经过 Aviso 后端和上游 provider。
+- 使用 BYOK provider 时，请求会直接发送给你选择的 provider；使用 Aviso AI 时，只有在你选择托管路径、登录状态可用且 owner-gated 激活完成后，请求才会经过 Aviso 后端和上游 provider。
 - provider 的计费、日志、数据保留和使用限制由你的 provider 账户条款决定。
 - 不要在截图、反馈、Issue、录屏或聊天中暴露 API Key。
 

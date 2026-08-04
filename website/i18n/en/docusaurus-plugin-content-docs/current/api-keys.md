@@ -15,7 +15,7 @@ You can manage the default service in the Popup and switch services by task.
 
 ## Hosted Account Candidate Path
 
-The hosted account path is currently for candidate review. The Popup has frontend foundations for account status, plan/quota status, refresh, and sign-out, but live Supabase sign-in remains disabled until owner-gated configuration exists. Requests use the Aviso backend and upstream model providers only after the user chooses that path and usable sign-in state exists.
+The hosted account path is currently candidate-only and default-disabled. The Popup has frontend foundations for account status, plan/quota status, refresh, and sign-out, but live Supabase sign-in remains disabled until owner-gated configuration exists. Requests use the Aviso backend and upstream model providers only after the user chooses the hosted path, usable sign-in state exists, and owner-gated activation is complete.
 
 Important boundaries:
 
@@ -71,7 +71,7 @@ Important boundaries:
 - This protection is a convenience boundary inside the browser profile. It does not defend against a readable browser profile, a compromised device, or a malicious extension.
 - It is not keychain storage, hardware-backed protection, end-to-end encryption, or zero-knowledge protection.
 - Non-secret service settings are stored in Chrome sync settings; API keys are not stored there.
-- When you use a BYOK provider, the request is sent directly to the provider you selected. When you use Aviso AI, requests pass through the Aviso backend and upstream providers after you choose that path and sign in.
+- When you use a BYOK provider, the request is sent directly to the provider you selected. When you use Aviso AI, requests pass through the Aviso backend and upstream providers only after you choose the hosted path, usable sign-in state exists, and owner-gated activation is complete.
 - Provider billing, logs, retention, and limits follow your provider account terms.
 - Do not expose API keys in screenshots, feedback, issues, recordings, or chat messages.
 
