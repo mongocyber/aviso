@@ -303,8 +303,28 @@ test("MON-49 verifier rejects embedded mutable references in command strings", (
       expected: "integration/aviso-v013"
     },
     {
+      command: "git checkout main && npm test",
+      expected: "main"
+    },
+    {
+      command: "git pull origin main",
+      expected: "main"
+    },
+    {
+      command: "npx tool@1 --check",
+      expected: "tool@1"
+    },
+    {
+      command: "npx tool@1.2 --check",
+      expected: "tool@1.2"
+    },
+    {
       command: "git show refs/tags/latest:release/evidence.json",
       expected: "refs/tags/latest"
+    },
+    {
+      command: "git checkout refs/tags/v1.2.3 && npm test",
+      expected: "refs/tags/v1.2.3"
     }
   ]
 
@@ -318,6 +338,29 @@ test("MON-49 verifier rejects embedded mutable references in command strings", (
       assert.equal(result.status, "BLOCKED", command)
       assert.match(joinedReasons(result), /verificationCommands\[0\]\.command mutable reference/)
       assert.ok(joinedReasons(result).includes(`"${expected}"`), command)
+    }
+  } finally {
+    rmSync(frontendRoot, { force: true, recursive: true })
+    rmSync(backendRoot, { force: true, recursive: true })
+  }
+})
+
+test("MON-49 verifier accepts exact package versions and embedded commit SHAs in command strings", () => {
+  const { backendRoot, frontendRoot, pack } = completeSyntheticPack()
+  const immutableCommands = [
+    "npx package@1.2.3 --check",
+    "git checkout 0123456789abcdef0123456789abcdef01234567 && npm test"
+  ]
+
+  try {
+    for (const command of immutableCommands) {
+      const immutablePack = structuredClone(pack)
+      immutablePack.verificationCommands[0].command = command
+
+      const result = verify(immutablePack, frontendRoot, backendRoot)
+
+      assert.equal(result.status, "PASS", command)
+      assert.deepEqual(result.reasons, [], command)
     }
   } finally {
     rmSync(frontendRoot, { force: true, recursive: true })

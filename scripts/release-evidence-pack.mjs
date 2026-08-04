@@ -951,7 +951,7 @@ function embeddedMutableReferenceLabel(value) {
   const tokenEnd = "(?=$|[\\s\"'`,;:)\\]}])"
   const packageName = String.raw`(?:@[a-z0-9._-]+\/)?[a-z0-9._-]+`
   const mutableDistTag = String.raw`(?:latest|next|beta|alpha|rc|canary|dev|nightly|experimental|stable)`
-  const mutableSemverRange = String.raw`(?:[\^~]\d+(?:\.\d+){0,2}(?:[-+][0-9a-z.-]+)?|\*|[xX]|\d+(?:\.(?:[xX]|\*))+(?:[-+][0-9a-z.-]+)?)`
+  const mutableSemverRange = String.raw`(?:[\^~]\d+(?:\.\d+){0,2}(?:[-+][0-9a-z.-]+)?|\*|[xX]|\d+(?:\.(?:[xX]|\*))+(?:[-+][0-9a-z.-]+)?|\d+(?:\.\d+)?)`
 
   const embeddedPackageRef = new RegExp(
     `${tokenBoundary}(${packageName}@(?:${mutableDistTag}|${mutableSemverRange}))${tokenEnd}`,
@@ -963,9 +963,8 @@ function embeddedMutableReferenceLabel(value) {
   }
 
   const gitRefTail = "[^\\s\"'`,;:)\\]}]+"
-  const gitTagTail = "[^\\s\"'`,;:)\\]}]*"
   const embeddedGitRef = new RegExp(
-    `${tokenBoundary}((?:origin|refs\\/(?:heads|remotes))\\/${gitRefTail}|refs\\/tags\\/${mutableDistTag}${gitTagTail}|integration\\/[a-z0-9._/-]+)${tokenEnd}`,
+    `${tokenBoundary}((?:origin|refs\\/(?:heads|remotes|tags))\\/${gitRefTail}|integration\\/[a-z0-9._/-]+)${tokenEnd}`,
     "i"
   )
   const gitRefMatch = value.match(embeddedGitRef)
@@ -973,7 +972,91 @@ function embeddedMutableReferenceLabel(value) {
     return gitRefMatch[1]
   }
 
+  const gitCommandOperand = embeddedGitCommandOperandLabel(value)
+  if (gitCommandOperand) {
+    return gitCommandOperand
+  }
+
   return null
+}
+
+function embeddedGitCommandOperandLabel(value) {
+  const gitRefOperandCommands = new Set([
+    "checkout",
+    "diff",
+    "log",
+    "merge",
+    "pull",
+    "rebase",
+    "reset",
+    "show",
+    "switch"
+  ])
+  const mutableBranchOperands = new Set(["head", "main", "master"])
+  const tokens = commandTokens(value)
+
+  for (let index = 0; index < tokens.length; index += 1) {
+    if (tokens[index].toLowerCase() !== "git") {
+      continue
+    }
+
+    for (let commandIndex = index + 1; commandIndex < tokens.length; commandIndex += 1) {
+      const commandToken = tokens[commandIndex]
+      if (isCommandSeparator(commandToken)) {
+        break
+      }
+      if (commandToken.startsWith("-")) {
+        commandIndex += gitOptionValueCount(commandToken)
+        continue
+      }
+
+      const command = commandToken.toLowerCase()
+      if (!gitRefOperandCommands.has(command)) {
+        break
+      }
+
+      for (let operandIndex = commandIndex + 1; operandIndex < tokens.length; operandIndex += 1) {
+        const operandToken = tokens[operandIndex]
+        if (isCommandSeparator(operandToken)) {
+          break
+        }
+        if (operandToken.startsWith("-")) {
+          operandIndex += gitOptionValueCount(operandToken)
+          continue
+        }
+
+        const refOperand = normalizeGitRefOperandToken(operandToken)
+        if (mutableBranchOperands.has(refOperand.toLowerCase())) {
+          return refOperand
+        }
+      }
+      break
+    }
+  }
+
+  return null
+}
+
+function commandTokens(value) {
+  return value.match(/&&|\|\||[;|]|[^\s"'`,;|()[\]{}]+/g) ?? []
+}
+
+function isCommandSeparator(token) {
+  return token === "&&" || token === "||" || token === ";" || token === "|"
+}
+
+function gitOptionValueCount(option) {
+  if (option.includes("=")) {
+    return 0
+  }
+  return new Set(["-C", "-c", "--config-env", "--git-dir", "--namespace", "--work-tree"]).has(option)
+    ? 1
+    : 0
+}
+
+function normalizeGitRefOperandToken(token) {
+  const colonIndex = token.indexOf(":")
+  return colonIndex === -1 ? token : token.slice(0, colonIndex)
 }
 
 function normalizeEvidencePath(path) {
