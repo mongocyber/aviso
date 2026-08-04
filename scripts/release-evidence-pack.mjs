@@ -932,9 +932,45 @@ function mutableReferenceLabel(value) {
     lower.startsWith("origin/") ||
     lower.startsWith("refs/heads/") ||
     lower.startsWith("refs/remotes/") ||
+    lower.startsWith("refs/tags/latest") ||
     /^integration\/[a-z0-9._/-]+$/i.test(trimmed)
   ) {
     return trimmed
+  }
+
+  const embedded = embeddedMutableReferenceLabel(trimmed)
+  if (embedded) {
+    return embedded
+  }
+
+  return null
+}
+
+function embeddedMutableReferenceLabel(value) {
+  const tokenBoundary = "(?:^|[\\s\"'`=,;:([{])"
+  const tokenEnd = "(?=$|[\\s\"'`,;:)\\]}])"
+  const packageName = String.raw`(?:@[a-z0-9._-]+\/)?[a-z0-9._-]+`
+  const mutableDistTag = String.raw`(?:latest|next|beta|alpha|rc|canary|dev|nightly|experimental|stable)`
+  const mutableSemverRange = String.raw`(?:[\^~]\d+(?:\.\d+){0,2}(?:[-+][0-9a-z.-]+)?|\*|[xX]|\d+(?:\.(?:[xX]|\*))+(?:[-+][0-9a-z.-]+)?)`
+
+  const embeddedPackageRef = new RegExp(
+    `${tokenBoundary}(${packageName}@(?:${mutableDistTag}|${mutableSemverRange}))${tokenEnd}`,
+    "i"
+  )
+  const packageRefMatch = value.match(embeddedPackageRef)
+  if (packageRefMatch) {
+    return packageRefMatch[1]
+  }
+
+  const gitRefTail = "[^\\s\"'`,;:)\\]}]+"
+  const gitTagTail = "[^\\s\"'`,;:)\\]}]*"
+  const embeddedGitRef = new RegExp(
+    `${tokenBoundary}((?:origin|refs\\/(?:heads|remotes))\\/${gitRefTail}|refs\\/tags\\/${mutableDistTag}${gitTagTail}|integration\\/[a-z0-9._/-]+)${tokenEnd}`,
+    "i"
+  )
+  const gitRefMatch = value.match(embeddedGitRef)
+  if (gitRefMatch) {
+    return gitRefMatch[1]
   }
 
   return null

@@ -223,6 +223,19 @@ function joinedReasons(result: EvidencePackVerificationResult): string {
   return result.reasons.join("\n")
 }
 
+test("MON-49 package evidence scripts bind the current candidate defaults", () => {
+  const packageJson = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"))
+
+  assert.equal(
+    packageJson.scripts["evidence:generate"],
+    `node scripts/release-evidence-pack.mjs generate --backend-sha ${minimumBackendSha} --out build/release-evidence/v013-evidence-pack.json`
+  )
+  assert.equal(
+    packageJson.scripts["evidence:verify"],
+    "node scripts/release-evidence-pack.mjs verify --pack build/release-evidence/v013-evidence-pack.json"
+  )
+})
+
 test("MON-49 verifier blocks the current real V013 candidate while required external evidence is incomplete", () => {
   const pack = generateEvidencePack({
     backendSha: minimumBackendSha,
@@ -268,6 +281,44 @@ test("MON-49 verifier rejects mutable branch/latest references even if other evi
     assert.equal(result.status, "BLOCKED")
     assert.match(joinedReasons(result), /repositories\.frontend\.commit must be a 40-character commit SHA/)
     assert.match(joinedReasons(result), /mutable reference "latest" is not allowed/)
+  } finally {
+    rmSync(frontendRoot, { force: true, recursive: true })
+    rmSync(backendRoot, { force: true, recursive: true })
+  }
+})
+
+test("MON-49 verifier rejects embedded mutable references in command strings", () => {
+  const { backendRoot, frontendRoot, pack } = completeSyntheticPack()
+  const mutableCommands = [
+    {
+      command: "npx tool@latest --check",
+      expected: "tool@latest"
+    },
+    {
+      command: "npx tool@^1 --check",
+      expected: "tool@^1"
+    },
+    {
+      command: "git checkout integration/aviso-v013 && npm test",
+      expected: "integration/aviso-v013"
+    },
+    {
+      command: "git show refs/tags/latest:release/evidence.json",
+      expected: "refs/tags/latest"
+    }
+  ]
+
+  try {
+    for (const { command, expected } of mutableCommands) {
+      const mutablePack = structuredClone(pack)
+      mutablePack.verificationCommands[0].command = command
+
+      const result = verify(mutablePack, frontendRoot, backendRoot)
+
+      assert.equal(result.status, "BLOCKED", command)
+      assert.match(joinedReasons(result), /verificationCommands\[0\]\.command mutable reference/)
+      assert.ok(joinedReasons(result).includes(`"${expected}"`), command)
+    }
   } finally {
     rmSync(frontendRoot, { force: true, recursive: true })
     rmSync(backendRoot, { force: true, recursive: true })
