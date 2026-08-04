@@ -15,7 +15,7 @@ Aviso is a Chrome extension. It helps users call AI inside the current webpage t
 Aviso currently has two AI request paths:
 
 - BYOK direct-provider: you bring your own model API key. When you choose BYOK and actively trigger an AI request, the browser extension sends the request directly to the model provider you selected. API keys, settings, and history are stored in Chrome extension storage.
-- Aviso AI: after sign-in, you can use free quota. Only when you choose Aviso AI and actively trigger a request does the request pass through the Aviso backend and then to upstream model providers. BYOK remains available regardless of Aviso AI sign-in state.
+- Hosted account candidate path: the Supabase frontend foundation is default-disabled, and live sign-in requires owner-gated configuration. Only when you choose that path, usable sign-in state exists, and you actively trigger a request does the request pass through the Aviso backend and then to upstream model providers. BYOK remains available regardless of hosted account state.
 
 ## Data Stored Locally
 
@@ -24,7 +24,7 @@ Aviso stores necessary data in browser extension storage:
 | Data type | Storage location | Notes |
 | --- | --- | --- |
 | API key | Chrome local extension storage | Not stored in plaintext; protected locally with encryption/obfuscation-level protection inside the current browser profile; used only for BYOK requests to the provider you select. |
-| Aviso AI session | Chrome local extension storage | Used to identify sign-in state, account state, and quota; users can sign out in the Popup. |
+| Hosted account session | Chrome local extension storage | Used to identify sign-in state, account state, and plan/quota; users can sign out in the Popup. |
 | Settings | Chrome sync settings | Includes UI language, theme, feature switches, custom templates, default service, and provider metadata. |
 | History | Chrome local extension storage | Stores user-saved results for later viewing, search, and reuse. |
 | Runtime short cache | Extension runtime memory | Reduces repeated preparation cost; not persisted. |
@@ -68,9 +68,9 @@ Aviso’s performance summary is only written to the local extension console for
 
 The BYOK direct-provider path does not send user text, history, API keys, page content, or model requests to Aviso project servers.
 
-The Aviso AI path passes through the Aviso backend only after the user actively chooses Aviso AI and signs in. The backend processes transient request content needed to complete the request, and stores account, quota, abuse-prevention, request-status, and operational metadata. Metadata is currently retained for 30 days. The Aviso backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, user BYOK API keys, or full URLs. Upstream providers may process request content according to their own terms and account configuration.
+The hosted path passes through the Aviso backend only after the user actively chooses it, usable sign-in state exists, and owner-gated activation is complete. The backend processes transient request content needed to complete the request, and stores account, plan/quota, abuse-prevention, request-status, and operational metadata. Metadata is currently retained for 30 days. The Aviso backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, user BYOK API keys, or full URLs. Upstream providers may process request content according to their own terms and account configuration.
 
-The website feedback form is a separate website email channel. Only when a user actively submits feedback, the issue description, optional issue tag, optional contact email, and user-uploaded images or screenshots are sent through a Vercel Function and Resend email service to the maintainer mailbox. The feedback form does not read extension history, API keys, Chrome extension storage, or model request content, and it is not extension telemetry.
+The website feedback form is a separate website email channel. Only when a user actively submits feedback, the issue description, optional issue tag, optional contact email, and user-uploaded redacted PNG/JPG images or screenshots are sent through a Vercel Function and Resend email service to the maintainer mailbox. The endpoint first blocks high-confidence API keys, tokens, private body markers, and original model input/output dumps, and strips common image metadata from PNG/JPG attachments before forwarding. The feedback form does not read extension history, API keys, Chrome extension storage, or model request content, and it is not extension telemetry.
 
 Do not submit API keys, tokens, private webpage bodies, customer data, unpublished documents, or unredacted screenshots in the feedback form. Feedback emails are retained in the maintainer mailbox for issue triage and replies.
 
@@ -80,7 +80,7 @@ BYOK API keys are not stored in plaintext. They are stored in Chrome local exten
 
 This protection is only a convenience boundary inside the browser profile. It does not defend against a readable browser profile, a compromised device, or a malicious extension, and it is not keychain storage, hardware-backed protection, end-to-end encryption, or zero-knowledge protection. If you suspect the device or browser profile is compromised, rotate or revoke the API key in the provider console first.
 
-When you use a BYOK provider, the request goes directly from the browser extension to that provider. When you choose Aviso AI and sign in, the request passes through the Aviso backend and upstream providers. Providers may process request content, logs, billing, and retention according to their own terms. Review and accept the provider’s terms and privacy policy before use.
+When you use a BYOK provider, the request goes directly from the browser extension to that provider. When you choose the hosted path and owner-gated activation is complete, the request passes through the Aviso backend and upstream providers. Providers may process request content, logs, billing, and retention according to their own terms. Review and accept the provider’s terms and privacy policy before use.
 
 ## Chrome Web Store Limited Use Statement
 
@@ -97,7 +97,7 @@ Aviso currently uses these permissions:
 - `storage`: save settings, API keys, and history.
 - `history`: search Chrome browsing history in the command palette; search runs locally.
 - `bookmarks`: search bookmarks in the command palette.
-- `identity`: open the Google authorization window and exchange for a session only when the user actively signs in to Aviso AI; BYOK does not require this sign-in.
+- `identity`: open the authorization window and exchange for a session only when the user actively uses the hosted account candidate path and owner-gated configuration exists; BYOK does not require this sign-in.
 - `clipboardWrite`: copy results from the floating panel.
 
 Aviso content scripts match webpage URLs to show the selection toolbar, selection translation card, default-off double-click quick menu, command palette, in-page result panel, explicitly enabled clipboard prompt, iframe bridge, and the screenshot selection UI used by the internal right-click path. Clipboard-aware prompts are off by default, and Aviso does not keep a copy listener registered when the setting is off or missing. This site access is not used to fetch arbitrary remote link bodies, serve ads, run telemetry, or run analytics. Only when the user actively triggers an AI action that requires page content does Aviso send relevant content through the selected BYOK or Aviso AI path.
@@ -130,7 +130,7 @@ In the Aviso Popup, users can:
 - Switch UI language and theme.
 - Manage custom templates.
 - View and manage local history.
-- Sign in to, refresh, or sign out of Aviso AI; BYOK provider configuration is not blocked by Aviso AI sign-in state.
+- Refresh or sign out of the hosted account candidate state; BYOK provider configuration is not blocked by hosted account state.
 
 If you uninstall Aviso, Chrome clears the extension’s local storage. You can also rotate or revoke unused API keys in the provider console.
 
@@ -140,4 +140,4 @@ Aviso supports configurable OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek
 
 These model services require the user's own valid API key, model ID, or endpoint. Actual availability depends on the user's account access, model access, and service status.
 
-Aviso AI free quota requires sign-in.
+Hosted account live sign-in, plan/quota, and Creem billing launch still require owner-gated activation plus backend and deployment evidence.

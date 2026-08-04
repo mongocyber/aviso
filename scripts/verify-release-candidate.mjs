@@ -14,6 +14,7 @@ const expectedChromeWebStoreExtensionId = "phigblobbahhecgbcifmkamglcdnghcg"
 
 const commandSteps = [
   nodeStep("supply-chain baseline", ["scripts/check-supply-chain-baseline.mjs"]),
+  nodeStep("Chrome Web Store asset metadata", ["scripts/check-cws-assets.mjs"]),
   npmStep("unit tests", ["test"]),
   {
     label: "typecheck",

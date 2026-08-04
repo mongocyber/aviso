@@ -6,17 +6,17 @@ sidebar_position: 4
 
 # First Use
 
-After installing Aviso, start from a normal public webpage that does not contain private information. You can sign in to Aviso AI and use free quota, or add your own API key for a BYOK provider.
+After installing Aviso, start from a normal public webpage that does not contain private information. The default usable path is adding your own API key for a BYOK provider; the hosted account path remains governed by candidate reviewer boundaries.
 
 ## Choose An AI Service First
 
-### Option 1: Sign In To Aviso AI
+### Option 1: Confirm Hosted Account Candidate Boundaries
 
 1. Click the Aviso icon in the Chrome toolbar.
 2. Open the AI services area in the Popup.
-3. Sign in to Aviso AI.
-4. After sign-in, confirm account status and free quota are visible.
-5. Return to the page and trigger an action through selection, right-click, or the command palette.
+3. Review hosted account status, plan/quota status, refresh, and sign-out surfaces.
+4. The current Supabase frontend foundation is default-disabled; without owner-gated configuration, live sign-in should fail safely.
+5. Use a BYOK provider to run a model request.
 
 ### Option 2: Add Your Own API Key
 
@@ -26,7 +26,7 @@ After installing Aviso, start from a normal public webpage that does not contain
 4. Save it and optionally make it the default service.
 5. Return to the page and trigger an action through selection, right-click, or the command palette.
 
-BYOK does not require Aviso AI sign-in. Signing out of Aviso AI does not delete your BYOK config.
+BYOK does not require hosted account sign-in. Signing out of the hosted account candidate state does not delete your BYOK config.
 
 ## Option 1: Use the Selection Toolbar
 
@@ -96,7 +96,7 @@ Clipboard-aware prompts are off by default. First enable Clipboard-aware prompts
 Check:
 
 - The extension is enabled in `chrome://extensions/`.
-- If you use Aviso AI, you are signed in and quota is available.
+- If you use the hosted account candidate path, it is in an owner-gated activation environment and account or plan/quota state is available.
 - If you use BYOK, the API key is saved and the provider account is usable.
 - The current webpage allows extension content scripts.
 - The feature switch is enabled.

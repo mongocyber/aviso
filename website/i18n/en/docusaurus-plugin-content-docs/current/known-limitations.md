@@ -53,13 +53,13 @@ Screenshot capability is kept only in a user-triggered internal right-click path
 
 Screenshot questions also depend on whether the selected model supports visual input.
 
-## Aviso AI And Release Status
+## Hosted Account Candidate Path And Release Status
 
-Aviso AI supports free quota after sign-in.
+The hosted account path remains a candidate capability; live Supabase sign-in, plan/quota, and Creem billing launch require owner-gated activation plus backend and deployment evidence.
 
 The official Chrome Web Store install link is not available yet. The website will update the install entry when the official link is available.
 
-Being signed out of Aviso AI does not prevent users from continuing with their own API key. Signing out of Aviso AI also does not remove BYOK configs.
+Being signed out of the hosted account candidate path does not prevent users from continuing with their own API key. Signing out of the hosted account candidate state also does not remove BYOK configs.
 
 ## Provider Support Scope
 

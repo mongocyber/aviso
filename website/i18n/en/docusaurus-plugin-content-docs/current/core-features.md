@@ -12,10 +12,10 @@ Aviso currently focuses on connecting common webpage objects to AI and keeping t
 
 Aviso supports two AI service paths:
 
-- Aviso AI: sign in and use free quota, useful for starting quickly.
+- Hosted account candidate path: the Supabase frontend foundation is default-disabled, and live sign-in plus hosted requests require owner-gated activation.
 - BYOK direct-provider: enter your own model API key, and the browser extension calls the selected provider directly without forcing sign-in.
 
-Only when the user chooses Aviso AI and signs in does the request pass through the Aviso backend and upstream model providers. BYOK configuration and direct-provider requests are not blocked by Aviso AI sign-in state.
+Only after the user chooses the hosted path, usable sign-in state exists, and owner-gated activation is complete does a request pass through the Aviso backend and upstream model providers. BYOK configuration and direct-provider requests are not blocked by hosted account state.
 
 ## Right-Click Menu
 
@@ -92,7 +92,7 @@ The Popup manages:
 - API keys.
 - OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan model IDs.
 - Doubao / Volcengine Ark endpoint and model fields.
-- Aviso AI account sign-in, refresh, sign-out, account status, and quota status.
+- Hosted account refresh, sign-out, account status, plan/quota status, and the default-disabled Supabase sign-in foundation.
 - Feature switches.
 - Translation target language.
 - Custom templates.

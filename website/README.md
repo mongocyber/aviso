@@ -26,10 +26,10 @@ This site contains user documentation and a website-only feedback endpoint. It d
 
 ## Feedback email settings
 
-The feedback form posts to `website/api/feedback.js`. It sends the issue description, optional contact email, optional tag, and up to three image attachments. On Vercel, configure these environment variables for the website project:
+The feedback form posts to `website/api/feedback.js`. It sends the issue description, optional contact email, optional tag, and up to three redacted PNG/JPG image attachments. The endpoint rejects high-confidence secrets/private-content markers and strips common PNG/JPG metadata before forwarding. On Vercel, configure these environment variables for the website project:
 
 ```bash
-RESEND_API_KEY=re_xxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+RESEND_API_KEY=<resend-api-key>
 FEEDBACK_TO_EMAIL=you@example.com
 FEEDBACK_FROM_EMAIL=Aviso Feedback <feedback@your-domain.example>
 ```

@@ -8,20 +8,19 @@ sidebar_position: 3
 
 Aviso 支持两种 AI 服务路径：
 
-- **Aviso AI**：登录后可使用免费额度，不需要自己提供模型 provider API Key。
+- **托管账号候选路径**：Supabase 前端基础默认关闭，真实登录需要 owner-gated 配置；启用后不要求用户提供模型 provider API Key。
 - **BYOK direct-provider**：使用你自己的模型 provider API Key；BYOK 请求会从浏览器扩展直连你选择的 provider。
 
 你可以在 Popup 中管理默认服务，也可以按任务切换服务。
 
-## Aviso AI
+## 托管账号候选路径
 
-Aviso AI 适合想快速开始的用户。登录后，Popup 会显示账号状态、额度信息、刷新和退出入口。使用 Aviso AI 时，请求会经过 Aviso 后端和上游模型 provider。
+托管账号路径当前用于候选审核。Popup 中已有账号状态、计划/额度状态、刷新和退出的前端基础，但真实 Supabase 登录需要 owner-gated 配置后才能启用。使用该路径时，请求只会在用户选择该路径且登录状态可用后经过 Aviso 后端和上游模型 provider。
 
 需要注意：
 
-- 免费额度需要登录后使用。
 - 退出 Aviso AI 不会删除或禁用 BYOK provider 配置。
-- 如果额度不可用或服务暂时不可用，可以切回 BYOK provider。
+- 如果账号、计划/额度或服务状态不可用，可以切回 BYOK provider。
 
 ## 支持的 provider
 
@@ -44,8 +43,7 @@ Aviso AI 适合想快速开始的用户。登录后，Popup 会显示账号状�
 
 Popup 支持多 AI 服务配置。你可以：
 
-- 登录、刷新或退出 Aviso AI。
-- 查看 Aviso AI 账号状态和额度状态。
+- 查看托管账号状态、计划/额度状态，并在候选路径中执行刷新或退出。
 - 为同一个 provider 保存多个配置。
 - 设置当前默认服务。
 - 手动编辑 OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 的模型 ID。
@@ -77,7 +75,7 @@ API Key 不明文保存，会以本地加密/混淆级保护保存在当前浏�
 - provider 的计费、日志、数据保留和使用限制由你的 provider 账户条款决定。
 - 不要在截图、反馈、Issue、录屏或聊天中暴露 API Key。
 
-Aviso AI 不需要你提供模型 provider API Key；Aviso AI session 保存在本地扩展存储中，可以在 Popup 中退出。
+托管账号路径不要求你提供模型 provider API Key；托管 session 保存在本地扩展存储中，可以在 Popup 中退出。真实 Supabase 激活仍需 owner-gated 配置。
 
 ## 更换或移除 Key
 

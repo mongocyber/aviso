@@ -146,16 +146,16 @@ function GlyphProvider(): JSX.Element {
 
 const copy = {
   zh: {
-    pageDescription: "Aviso 是一个在当前网页直接使用 AI 的 Chrome 扩展。登录 Aviso AI 可使用免费额度,也支持添加自己的 API Key。",
+    pageDescription: "Aviso 是一个在当前网页直接使用 AI 的 Chrome 扩展。BYOK 默认可用，托管账号路径为候选功能。",
     badge: "Chrome 扩展 · 网页 AI 助手",
     heroLine1: "在当前网页里,",
     heroLine2Pre: "直接使用 ",
     heroEm: "AI",
-    sub: "选中文本、打开右键菜单或唤起命令面板,就能翻译、解释、总结、追问和复制上下文。登录 Aviso AI 可使用免费额度,也可以添加自己的 API Key。",
+    sub: "选中文本、打开右键菜单或唤起命令面板,就能翻译、解释、总结、追问和复制上下文。可以添加自己的 API Key；托管账号路径仍按候选审核边界开放。",
     install: "查看安装指南",
     readDocs: "产品文档",
     viewDocs: "查看文档",
-    micro: "Aviso AI 登录可用免费额度 · 支持自带 API Key · Chrome 桌面版",
+    micro: "BYOK 默认可用 · 托管账号候选路径 · Chrome 桌面版",
     shortcutPre: "在任意网页按下",
     cmdPlaceholder: "搜索浏览历史、书签、AI 对话…",
     cmdStatus: "AI 可用",
@@ -164,7 +164,7 @@ const copy = {
     cmdHint: "无结果时可发给 AI",
     cmdNoMatch: "无匹配结果 — 回车把输入交给",
     cmdNoMatchTail: "按意图处理",
-    providerLab: "登录使用 Aviso AI,或连接你自己的模型服务",
+    providerLab: "连接你自己的模型服务，或查看托管账号候选边界",
     doubao: "豆包",
     ark: "Volcengine Ark",
     entriesTag: "01 — 网页内操作",
@@ -185,10 +185,10 @@ const copy = {
     followup: "继续追问…",
     sendLabel: "发送",
     byokTag: "03 — 两种开始方式",
-    byokTitlePre: "登录即可使用 Aviso AI。",
+    byokTitlePre: "BYOK 默认可用。",
     byokTitleMid: "也可以",
     byokTitleEm: "自带 API Key",
-    byokLede: "Aviso AI 适合快速开始:登录后可使用免费额度。已有模型服务账号的用户,可以继续使用 BYOK direct-provider 模式,由浏览器直连当前支持的模型服务商；选择 Aviso AI 并登录后,请求会经过 Aviso 后端和上游模型服务。两种方式可以按任务切换。",
+    byokLede: "已有模型服务账号的用户，可以继续使用 BYOK direct-provider 模式，由浏览器直连当前支持的模型服务商。托管账号路径是候选功能：Supabase 前端基础默认关闭，Creem 计费入口仍受后端、部署和 owner gate 约束。两种路径的公开状态以当前审核说明为准。",
     provCardTitle: "AI 服务",
     provCardTag: "两种路径",
     provDaily: "Volcengine Ark",
@@ -213,29 +213,29 @@ const copy = {
     metricTrigger: "才发送 —— 托管路径不持久化正文",
     docsTag: "产品文档",
     docsTitle: "几分钟上手,每条路径都讲清楚",
-    docsLede: "从安装、首次使用、Aviso AI 登录、API Key 配置到数据权限,文档会说明每个入口能做什么、哪些内容会发送给哪个服务。",
+    docsLede: "从安装、首次使用、API Key 配置到托管账号候选边界和数据权限,文档会说明每个入口能做什么、哪些内容会发送给哪个服务。",
     docRead: "阅读 →",
     faqTag: "常见问题",
     faqTitle: "还有疑问?",
     finalTitle: "在下一次阅读网页时,直接用上 AI",
-    finalLede: "登录 Aviso AI 可使用免费额度；也可以添加自己的 API Key。按指南装好后,划词、右键或按 ⌘⇧Space 就能开始。",
-    badgeKey: "Aviso AI 免费额度",
+    finalLede: "添加自己的 API Key 后，按指南装好扩展，划词、右键或按 ⌘⇧Space 就能开始；托管账号路径仍按候选审核边界处理。",
+    badgeKey: "BYOK 默认可用",
     badgeNoData: "不持久化正文",
     badgeNoAccount: "BYOK 可选",
     cmdReady: "AI 可用"
   },
   en: {
     pageDescription:
-      "Aviso is a Chrome extension for using AI inside the page you are reading. Sign in to Aviso AI for free quota, or add your own API key.",
+      "Aviso is a Chrome extension for using AI inside the page you are reading. BYOK is available by default; the hosted account path remains candidate-only.",
     badge: "Chrome extension · In-page AI assistant",
     heroLine1: "Use AI right",
     heroLine2Pre: "inside the page ",
     heroEm: "you are on",
-    sub: "Select text, open the right-click menu, or launch the command palette to translate, explain, summarize, follow up, and copy page context. Sign in to Aviso AI for free quota, or add your own API key.",
+    sub: "Select text, open the right-click menu, or launch the command palette to translate, explain, summarize, follow up, and copy page context. Add your own API key, with the hosted account path kept behind candidate review gates.",
     install: "View install guide",
     readDocs: "Read the docs",
     viewDocs: "View docs",
-    micro: "Aviso AI free quota after sign-in · Bring your own API key · Chrome desktop",
+    micro: "BYOK available by default · Hosted account candidate path · Chrome desktop",
     shortcutPre: "On any page, press",
     cmdPlaceholder: "Search browser history, bookmarks, AI chats…",
     cmdStatus: "AI ready",
@@ -244,7 +244,7 @@ const copy = {
     cmdHint: "Send to AI when no results",
     cmdNoMatch: "No match — press Enter to hand it to",
     cmdNoMatchTail: "",
-    providerLab: "Sign in to Aviso AI, or connect your own model service",
+    providerLab: "Connect your own model service, or review the hosted account candidate boundary",
     doubao: "Doubao",
     ark: "Volcengine Ark",
     entriesTag: "01 — In-page actions",
@@ -267,11 +267,11 @@ const copy = {
     followup: "Ask a follow-up…",
     sendLabel: "Send",
     byokTag: "03 — Two ways to start",
-    byokTitlePre: "Sign in for Aviso AI.",
+    byokTitlePre: "BYOK is available by default.",
     byokTitleMid: "Or bring ",
     byokTitleEm: "your own API key",
     byokLede:
-      "Aviso AI is the fastest start: sign in and use free quota. If you already have a model account, BYOK direct-provider keeps your browser connected directly to currently supported providers. If you choose Aviso AI and sign in, requests pass through the Aviso backend and upstream model services. Switch between the two paths by task.",
+      "If you already have a model account, BYOK direct-provider keeps your browser connected directly to currently supported providers. The hosted account path is candidate-only: the Supabase frontend foundation is default-disabled, and Creem billing entries remain gated by backend, deployment, and owner approval. Public status follows the current reviewer notes.",
     provCardTitle: "AI services",
     provCardTag: "two paths",
     provDaily: "Volcengine Ark",
@@ -298,13 +298,13 @@ const copy = {
     docsTag: "Documentation",
     docsTitle: "Set up in minutes, with every path explained",
     docsLede:
-      "From install and first use to Aviso AI sign-in, API keys, and data permissions, the docs explain what each entry can do and which service receives which content.",
+      "From install and first use to API keys, hosted account candidate boundaries, and data permissions, the docs explain what each entry can do and which service receives which content.",
     docRead: "Read →",
     faqTag: "FAQ",
     faqTitle: "Still wondering?",
     finalTitle: "Use AI on the next page you read",
-    finalLede: "Sign in to Aviso AI for free quota, or add your own API key. Follow the install guide, then select text, right-click, or press ⌘⇧Space to start.",
-    badgeKey: "Aviso AI free quota",
+    finalLede: "Add your own API key, follow the install guide, then select text, right-click, or press ⌘⇧Space to start. The hosted account path remains candidate-gated.",
+    badgeKey: "BYOK available by default",
     badgeNoData: "No raw content persisted",
     badgeNoAccount: "BYOK available",
     cmdReady: "AI ready"
@@ -402,10 +402,10 @@ const caps = [
 const byokPoints = [
   {
     icon: "model",
-    zhTitle: "登录 Aviso AI",
-    enTitle: "Sign in to Aviso AI",
-    zhText: "登录后可使用免费额度,适合先试起来、先完成手头任务。",
-    enText: "Sign in for free quota, ideal when you want to start quickly and finish the task at hand."
+    zhTitle: "托管账号候选路径",
+    enTitle: "Hosted account candidate path",
+    zhText: "Supabase 前端基础默认关闭，需 owner-gated 配置后才能启用真实登录。",
+    enText: "The Supabase frontend foundation is default-disabled until owner-gated live sign-in configuration exists."
   },
   {
     icon: "key",
@@ -437,8 +437,8 @@ const compareRows = [
     enCrit: "How you start",
     zhThem: "常需要先理解模型、Key、额度和配置",
     enThem: "Often starts with models, keys, quotas, and setup choices",
-    zhUs: "登录 Aviso AI 可用免费额度；已有模型账号也可以 BYOK",
-    enUs: "Sign in to Aviso AI for free quota, or use BYOK if you already have a model account"
+    zhUs: "BYOK 默认可用；托管账号路径按候选 gate 审核",
+    enUs: "BYOK is available by default; the hosted account path stays behind candidate gates"
   },
   {
     zhCrit: "要不要账号",
@@ -473,8 +473,8 @@ const docsCards = [
     href: "/docs/install/",
     zhTitle: "安装与首次使用",
     enTitle: "Install & first use",
-    zhText: "加载扩展、登录 Aviso AI 或添加 API Key、跑通第一个动作。",
-    enText: "Load the extension, sign in to Aviso AI or add an API key, and run your first action."
+    zhText: "加载扩展、添加 API Key、查看托管账号候选边界并跑通第一个动作。",
+    enText: "Load the extension, add an API key, review hosted account candidate boundaries, and run your first action."
   },
   {
     no: "02",
@@ -500,14 +500,14 @@ const faqs = [
   {
     zhQ: "Aviso 收费吗?",
     enQ: "Does Aviso cost money?",
-    zhA: "扩展本身当前不收费。登录 Aviso AI 可使用免费额度；BYOK 路径使用你自己的 provider Key,费用按厂商规则结算。免费额度需要登录后使用。",
-    enA: "The extension itself currently does not charge. Sign in to Aviso AI for free quota; BYOK uses your own provider key and is billed by that provider. Free quota is available after sign-in."
+    zhA: "扩展本身当前不收费。BYOK 路径使用你自己的 provider Key，费用按厂商规则结算。Creem 结账和账单入口仍是候选功能，不代表公开付费结算已经上线。",
+    enA: "The extension itself currently does not charge. BYOK uses your own provider key and is billed by that provider. Creem checkout and billing entries are candidate features, not a public paid-billing launch."
   },
   {
     zhQ: "必须自己准备 API Key 吗?",
     enQ: "Do I need my own API key?",
-    zhA: "不一定。想快速开始,可以登录 Aviso AI 使用免费额度。已有模型服务账号时,可以添加自己的 API Key,通过 BYOK direct-provider 让浏览器直连你选择的厂商。BYOK 可用性仍取决于你的 Key、模型权限和 provider 状态。",
-    enA: "Not necessarily. To start quickly, sign in to Aviso AI and use free quota. If you already have a model account, add your own API key and use BYOK direct-provider so the browser connects directly to your chosen provider. BYOK availability still depends on your key, model access, and provider status."
+    zhA: "不一定。已有模型服务账号时，可以添加自己的 API Key，通过 BYOK direct-provider 让浏览器直连你选择的厂商。托管账号路径仍是候选状态，真实 Supabase 激活和 Creem 付费结算需要 owner-gated 后续证据。",
+    enA: "Not necessarily. If you already have a model account, add your own API key and use BYOK direct-provider so the browser connects directly to your chosen provider. The hosted account path remains candidate-only; live Supabase activation and Creem paid billing need later owner-gated evidence."
   },
   {
     zhQ: "Aviso 会收集我的浏览数据吗?",

@@ -15,7 +15,7 @@ Aviso 是一个 Chrome 浏览器扩展。它帮助用户在当前网页中调用
 Aviso 目前保留两条 AI 请求路径：
 
 - BYOK direct-provider：你提供自己的模型 API Key。你选择 BYOK 并主动发起 AI 请求时，请求由浏览器扩展直接发送到你选择的模型 provider；API Key、设置和历史记录保存在浏览器扩展存储中。
-- Aviso AI：你登录后可使用免费额度。只有当你选择 Aviso AI 并主动发起请求时，请求才会经过 Aviso 后端，再路由到上游模型 provider。BYOK 不会被 Aviso AI 登录状态拦住。
+- 托管账号候选路径：Supabase 前端基础默认关闭，真实登录需要 owner-gated 配置。只有当你选择该路径、登录状态可用并主动发起请求时，请求才会经过 Aviso 后端，再路由到上游模型 provider。BYOK 不会被托管账号状态拦住。
 
 ## 本地保存的数据
 
@@ -24,7 +24,7 @@ Aviso 会在浏览器扩展存储中保存必要数据：
 | 数据类型 | 保存位置 | 说明 |
 | --- | --- | --- |
 | API Key | Chrome local extension storage | 不明文保存；以本地加密/混淆级保护保存在当前浏览器 profile 中，仅用于你选择的 BYOK provider 请求。 |
-| Aviso AI session | Chrome local extension storage | 用于识别登录状态、账号状态和额度；用户可以在 Popup 中退出。 |
+| 托管账号 session | Chrome local extension storage | 用于识别登录状态、账号状态和计划/额度；用户可以在 Popup 中退出。 |
 | 设置 | Chrome 同步设置 | 包括界面语言、外观主题、功能开关、自定义模板、默认服务和 provider metadata。 |
 | 历史记录 | Chrome 本地扩展存储 | 保存用户主动触发并保存的请求结果，便于后续查看、搜索和复用。 |
 | 运行时短缓存 | 扩展运行时内存 | 用于降低重复准备成本，不持久化。 |
@@ -68,9 +68,9 @@ Aviso 的性能摘要只输出到本地扩展 console，用于内部排查等待
 
 BYOK direct-provider 路径不会把用户文本、历史、API Key、页面内容或模型请求发送到 Aviso 项目方服务器。
 
-Aviso AI 路径会在用户主动选择并登录后经过 Aviso 后端。Aviso 后端会处理完成请求所需的临时内容，并保存账户、额度、风控、请求状态和运营排查所需的 metadata；metadata 当前保留 30 天。Aviso 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板内容、用户 BYOK API Key 或完整 URL。Aviso AI 的上游 provider 可能按照其服务条款和账户配置处理请求内容。
+托管路径会在用户主动选择、登录状态可用且 owner-gated 激活完成后经过 Aviso 后端。Aviso 后端会处理完成请求所需的临时内容，并保存账户、计划/额度、风控、请求状态和运营排查所需的 metadata；metadata 当前保留 30 天。Aviso 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板内容、用户 BYOK API Key 或完整 URL。托管路径的上游 provider 可能按照其服务条款和账户配置处理请求内容。
 
-官网的反馈表单是独立的网站邮件通道。只有当用户主动提交反馈时，表单中填写的问题描述、可选问题类型标签、可选联系邮箱和用户主动上传的插图或截图，会通过 Vercel 函数调用 Resend 邮件服务，发送到维护者邮箱。反馈表单不会读取扩展本地历史、API Key、浏览器扩展存储或模型请求内容，也不属于扩展遥测。
+官网的反馈表单是独立的网站邮件通道。只有当用户主动提交反馈时，表单中填写的问题描述、可选问题类型标签、可选联系邮箱和用户主动上传的脱敏 PNG/JPG 插图或截图，会通过 Vercel 函数调用 Resend 邮件服务，发送到维护者邮箱。反馈端点会先拦截高置信度 API Key、token、私人正文和原始模型输入/输出转储，并在转发 PNG/JPG 附件前移除常见图片 metadata。反馈表单不会读取扩展本地历史、API Key、浏览器扩展存储或模型请求内容，也不属于扩展遥测。
 
 请不要在反馈表单中提交 API Key、token、私人网页正文、客户资料、未公开文档或未脱敏截图。反馈邮件会保存在维护者邮箱中，用于定位问题和回复用户。
 
@@ -80,7 +80,7 @@ BYOK API Key 不明文保存，会以本地加密/混淆级保护保存在当前
 
 这类保护只是浏览器 profile 内的便利边界，不防御可读浏览器 profile、已被控制的设备或恶意扩展，也不是系统钥匙串、硬件安全模块、端到端加密或零知识保护。如果你怀疑本机或浏览器 profile 已被控制，请先在 provider 后台轮换或撤销 API Key。
 
-当你使用 BYOK provider 时，请求会从浏览器扩展直接发送到该 provider。当你选择 Aviso AI 并登录后，请求会经过 Aviso 后端和上游 provider。provider 可能会按照其服务条款处理请求内容、日志、计费和滞留数据。使用前，请自行阅读并接受对应 provider 的条款和隐私政策。
+当你使用 BYOK provider 时，请求会从浏览器扩展直接发送到该 provider。当你选择托管路径且 owner-gated 激活完成后，请求会经过 Aviso 后端和上游 provider。provider 可能会按照其服务条款处理请求内容、日志、计费和滞留数据。使用前，请自行阅读并接受对应 provider 的条款和隐私政策。
 
 ## Chrome Web Store Limited Use 说明
 
@@ -97,7 +97,7 @@ Aviso 当前使用的主要权限包括：
 - `storage`：保存设置、API Key 和历史。
 - `history`：在命令面板中搜索 Chrome 浏览历史；搜索只在本地执行。
 - `bookmarks`：在命令面板中搜索书签。
-- `identity`：仅用于用户主动登录 Aviso AI 时打开 Google 授权窗口并换取 session；BYOK 不需要该登录。
+- `identity`：仅用于用户主动使用托管账号候选路径且 owner-gated 配置存在时打开授权窗口并换取 session；BYOK 不需要该登录。
 - `clipboardWrite`：支持从浮窗复制结果。
 
 Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页面上显示划词工具栏、划词翻译卡、默认关闭的双击快捷菜单、命令面板、页面内结果面板、显式开启后的剪贴板提示、iframe 桥接，以及右键内部路径需要的截图框选界面。剪贴板感知默认关闭，关闭或缺失设置时不会常驻注册 copy listener。这类站点访问不会用于抓取任意远端链接正文、投放广告、遥测或分析。只有当用户主动触发需要页面内容的 AI 操作时，相关内容才会按当前选择的 BYOK 或 Aviso AI 路径发送。
@@ -130,7 +130,7 @@ https://aviso-backend-production.vercel.app/*
 - 切换界面语言和外观主题。
 - 管理自定义模板。
 - 查看和管理本地历史记录。
-- 登录、刷新或退出 Aviso AI 账号；BYOK 配置不受 Aviso AI 登录状态影响。
+- 刷新或退出托管账号候选状态；BYOK 配置不受托管账号状态影响。
 
 如果卸载 Aviso，Chrome 会清理该扩展的本地存储。你也可以在 provider 后台轮换或撤销不再使用的 API Key。
 
@@ -140,4 +140,4 @@ Aviso 支持配置 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kim
 
 这些模型服务需要用户填写自己的可用 API Key、模型 ID 或接入点。实际可用性取决于用户自己的账号权限、模型权限和服务状态。
 
-Aviso AI 免费额度需要登录后使用。
+托管账号路径的真实登录、计划/额度和 Creem 计费启动仍需要 owner-gated 激活、后端和部署证据。

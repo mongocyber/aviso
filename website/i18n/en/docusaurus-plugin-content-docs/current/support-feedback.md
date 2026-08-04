@@ -19,7 +19,7 @@ If you are an invited tester, you can also use the feedback channel provided by 
 If Aviso does not work as expected, first check:
 
 - The extension is enabled in `chrome://extensions/`.
-- If you use Aviso AI, you are signed in, quota is available, and you have tried refreshing account status.
+- If you use the hosted account candidate path, it is in an owner-gated activation environment, account or plan/quota state is available, and you have tried refreshing account status.
 - If you use BYOK, the API key is saved and the provider account is usable.
 - The current webpage allows extension content scripts.
 - If the issue is the clipboard prompt, Clipboard-aware prompts are enabled in the Popup and the page/content is not being skipped as sensitive.
@@ -31,7 +31,7 @@ If Aviso does not work as expected, first check:
 The website feedback form supports:
 
 - One issue description field for reproduction steps, expected result, and actual behavior.
-- Optional image or screenshot attachments; redact them before uploading.
+- Optional PNG/JPG image or screenshot attachments; redact them before uploading. The endpoint strips common image metadata.
 - Optional issue type tags, such as bug, suggestion, install, or privacy.
 - Optional contact email for replies.
 
@@ -64,8 +64,8 @@ Do not send:
 
 | Symptom | Possible cause |
 | --- | --- |
-| Floating panel appears but keeps waiting | Slow Aviso AI or provider response, API key issue, network problem, or long input. |
-| Aviso AI is unavailable | Not signed in, quota unavailable, account status needs refresh, or service is temporarily unavailable. |
+| Floating panel appears but keeps waiting | Slow hosted path or provider response, API key issue, network problem, or long input. |
+| Hosted account path is unavailable | Not in an owner-gated activation environment, account or plan/quota state unavailable, account status needs refresh, or service is temporarily unavailable. |
 | Selection toolbar does not appear | Page blocks selection, content is inside a complex iframe, extension is not loaded, or feature switch is off. |
 | Selection translation card does not appear | Feature switch is off, selection is too long, page is not suitable for injection, or provider is unavailable. |
 | Double-click quick menu does not appear | Feature switch is off, or the target is an input, editable area, code editor, or Aviso UI. |
@@ -76,7 +76,7 @@ Do not send:
 
 ## Feedback Safety
 
-Before sending screenshots or recordings, redact API keys, private webpages, real accounts, customer data, and unpublished materials.
+Before sending screenshots or recordings, redact API keys, private webpages, real accounts, customer data, and unpublished materials. The feedback endpoint rejects high-confidence keys, tokens, private body markers, and original model input/output dumps.
 
 ## Support Entry
 

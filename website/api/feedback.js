@@ -2,7 +2,25 @@ const MAX_BODY_BYTES = 6 * 1024 * 1024;
 const MAX_ATTACHMENTS = 3;
 const MAX_ATTACHMENT_BYTES = 2 * 1024 * 1024;
 const VALID_CATEGORIES = new Set(["bug", "idea", "install", "privacy"]);
-const VALID_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+const CATEGORY_LABELS = {
+  bug: "Bug",
+  idea: "Idea",
+  install: "Install help",
+  privacy: "Privacy"
+};
+const VALID_IMAGE_TYPES = new Set(["image/png", "image/jpeg"]);
+const PNG_SIGNATURE = Buffer.from("89504e470d0a1a0a", "hex");
+const SENSITIVE_FEEDBACK_PATTERNS = [
+  /\b(?:api[_\s-]?key|secret|token|authorization)\s*[:=]\s*(?:bearer\s+)?[A-Za-z0-9._~+/=-]{16,}/i,
+  /\bBearer\s+[A-Za-z0-9._~+/=-]{24,}/i,
+  /\bsk-(?:proj-)?[A-Za-z0-9_-]{24,}/i,
+  /\bsk-ant-[A-Za-z0-9_-]{24,}/i,
+  /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/,
+  /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+  /\braw\s+(?:prompt|response)\s*:/i,
+  /\bprovider\s+(?:request|response)\s*:/i,
+  /(?:私人网页正文|客户资料|未公开文档|原始\s*(?:prompt|response)|原始请求|原始响应)/
+];
 
 function sendJson(res, statusCode, body) {
   res.statusCode = statusCode;
@@ -26,6 +44,14 @@ function isValidEmail(value) {
   }
 
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function containsSensitiveFeedbackContent(value) {
+  if (typeof value !== "string" || !value.trim()) {
+    return false;
+  }
+
+  return SENSITIVE_FEEDBACK_PATTERNS.some((pattern) => pattern.test(value));
 }
 
 function escapeHtml(value) {
@@ -67,6 +93,126 @@ async function readBody(req) {
   return JSON.parse(raw || "{}");
 }
 
+function decodeBase64Image(data) {
+  const compact = normalize(data, MAX_ATTACHMENT_BYTES * 2).replace(/\s+/g, "");
+  if (!compact || compact.length % 4 !== 0 || !/^[A-Za-z0-9+/]+={0,2}$/.test(compact)) {
+    return null;
+  }
+
+  const decoded = Buffer.from(compact, "base64");
+  if (!decoded.length || decoded.toString("base64").replace(/=+$/, "") !== compact.replace(/=+$/, "")) {
+    return null;
+  }
+  return decoded;
+}
+
+function stripPngMetadata(buffer) {
+  if (buffer.length < PNG_SIGNATURE.length + 12 || !buffer.subarray(0, PNG_SIGNATURE.length).equals(PNG_SIGNATURE)) {
+    return null;
+  }
+
+  const chunks = [PNG_SIGNATURE];
+  let offset = PNG_SIGNATURE.length;
+  let sawIhdr = false;
+  let sawIdat = false;
+  let sawIend = false;
+
+  while (offset + 12 <= buffer.length) {
+    const length = buffer.readUInt32BE(offset);
+    const typeStart = offset + 4;
+    const dataStart = offset + 8;
+    const chunkEnd = dataStart + length + 4;
+    if (chunkEnd > buffer.length) {
+      return null;
+    }
+
+    const type = buffer.toString("ascii", typeStart, typeStart + 4);
+    const isCritical = /^[A-Z]/.test(type);
+    if (isCritical) {
+      chunks.push(buffer.subarray(offset, chunkEnd));
+    }
+    if (type === "IHDR") sawIhdr = true;
+    if (type === "IDAT") sawIdat = true;
+    if (type === "IEND") {
+      sawIend = true;
+      break;
+    }
+    offset = chunkEnd;
+  }
+
+  if (!sawIhdr || !sawIdat || !sawIend) {
+    return null;
+  }
+  return Buffer.concat(chunks);
+}
+
+function stripJpegMetadata(buffer) {
+  if (buffer.length < 4 || buffer[0] !== 0xff || buffer[1] !== 0xd8) {
+    return null;
+  }
+
+  const chunks = [buffer.subarray(0, 2)];
+  let offset = 2;
+
+  while (offset < buffer.length) {
+    if (buffer[offset] !== 0xff) {
+      chunks.push(buffer.subarray(offset));
+      break;
+    }
+
+    let markerOffset = offset;
+    while (buffer[markerOffset] === 0xff && markerOffset < buffer.length) {
+      markerOffset += 1;
+    }
+    if (markerOffset >= buffer.length) {
+      break;
+    }
+
+    const marker = buffer[markerOffset];
+    const segmentStart = offset;
+    offset = markerOffset + 1;
+
+    if (marker === 0xd9 || marker === 0xda) {
+      chunks.push(buffer.subarray(segmentStart));
+      break;
+    }
+    if ((marker >= 0xd0 && marker <= 0xd7) || marker === 0x01) {
+      chunks.push(buffer.subarray(segmentStart, offset));
+      continue;
+    }
+    if (offset + 2 > buffer.length) {
+      return null;
+    }
+
+    const length = buffer.readUInt16BE(offset);
+    const segmentEnd = offset + length;
+    if (length < 2 || segmentEnd > buffer.length) {
+      return null;
+    }
+
+    const isMetadataSegment =
+      marker === 0xe1 ||
+      marker === 0xed ||
+      marker === 0xfe;
+    if (!isMetadataSegment) {
+      chunks.push(buffer.subarray(segmentStart, segmentEnd));
+    }
+    offset = segmentEnd;
+  }
+
+  return Buffer.concat(chunks);
+}
+
+function stripImageMetadata(buffer, type) {
+  if (type === "image/png") {
+    return stripPngMetadata(buffer);
+  }
+  if (type === "image/jpeg") {
+    return stripJpegMetadata(buffer);
+  }
+  return null;
+}
+
 function normalizeAttachments(value) {
   if (!Array.isArray(value)) {
     return [];
@@ -74,33 +220,37 @@ function normalizeAttachments(value) {
 
   return value.slice(0, MAX_ATTACHMENTS).flatMap((item, index) => {
     const type = normalize(item?.type, 40);
-    const data = normalize(item?.data, MAX_ATTACHMENT_BYTES * 2);
-    const size = Number(item?.size) || 0;
+    const raw = decodeBase64Image(item?.data);
+    const size = raw?.byteLength ?? 0;
 
-    if (!VALID_IMAGE_TYPES.has(type) || !data || size <= 0 || size > MAX_ATTACHMENT_BYTES) {
+    if (!VALID_IMAGE_TYPES.has(type) || !raw || size <= 0 || size > MAX_ATTACHMENT_BYTES) {
+      return [];
+    }
+
+    const sanitized = stripImageMetadata(raw, type);
+    if (!sanitized) {
       return [];
     }
 
     const fallbackName = `aviso-feedback-${index + 1}.${type.split("/")[1] || "png"}`;
     const name = normalize(item?.name, 120).replace(/[^\w.\-()\u4e00-\u9fa5 ]/g, "") || fallbackName;
+    if (containsSensitiveFeedbackContent(name)) {
+      return [];
+    }
 
     return [
       {
         filename: name,
-        content: data,
+        content: sanitized.toString("base64"),
         content_type: type
       }
     ];
   });
 }
 
-function subjectFromMessage(message) {
-  const firstLine = message
-    .split("\n")
-    .map((line) => line.trim())
-    .find(Boolean);
-
-  return `[Aviso feedback] ${(firstLine || "New feedback").replace(/[\r\n]+/g, " ").slice(0, 96)}`;
+function subjectFromPayload(payload) {
+  const label = CATEGORY_LABELS[payload.category] || "General";
+  return `[Aviso feedback] ${label || "New feedback"}`;
 }
 
 function buildMessage(payload) {
@@ -127,7 +277,54 @@ function buildMessage(payload) {
   };
 }
 
-module.exports = async function handler(req, res) {
+function normalizeFeedbackPayload(body) {
+  const message = normalize(body.message || body.description, 5000);
+  const email = normalize(body.email, 160);
+  const locale = normalize(body.locale, 20);
+  const category = VALID_CATEGORIES.has(body.category) ? body.category : "";
+  const categoryLabel = CATEGORY_LABELS[category] || "General";
+  const attachments = normalizeAttachments(body.attachments);
+
+  if (message.length < 5 || !isValidEmail(email)) {
+    return {ok: false, reason: "invalid_input"};
+  }
+  if (containsSensitiveFeedbackContent(message) || containsSensitiveFeedbackContent(email)) {
+    return {ok: false, reason: "sensitive_content"};
+  }
+
+  return {
+    ok: true,
+    payload: {
+      message,
+      email,
+      locale,
+      category,
+      categoryLabel,
+      attachmentCount: attachments.length,
+      attachments
+    }
+  };
+}
+
+function buildResendBody(payload, {from, to}) {
+  const renderedMessage = buildMessage(payload);
+  const resendBody = {
+    from,
+    to: [to],
+    subject: subjectFromPayload(payload),
+    text: renderedMessage.text,
+    html: renderedMessage.html,
+    attachments: payload.attachments
+  };
+
+  if (payload.email) {
+    resendBody.reply_to = payload.email;
+  }
+
+  return resendBody;
+}
+
+async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("Allow", "POST");
     sendJson(res, 405, {ok: false});
@@ -147,15 +344,9 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const message = normalize(body.message || body.description, 5000);
-  const email = normalize(body.email, 160);
-  const locale = normalize(body.locale, 20);
-  const category = VALID_CATEGORIES.has(body.category) ? body.category : "";
-  const categoryLabel = normalize(body.categoryLabel, 80);
-  const attachments = normalizeAttachments(body.attachments);
-
-  if (message.length < 5 || !isValidEmail(email)) {
-    sendJson(res, 400, {ok: false});
+  const normalized = normalizeFeedbackPayload(body);
+  if (!normalized.ok) {
+    sendJson(res, 400, {ok: false, reason: normalized.reason});
     return;
   }
 
@@ -168,27 +359,7 @@ module.exports = async function handler(req, res) {
     return;
   }
 
-  const payload = {
-    message,
-    email,
-    locale,
-    category,
-    categoryLabel,
-    attachmentCount: attachments.length
-  };
-  const renderedMessage = buildMessage(payload);
-  const resendBody = {
-    from,
-    to: [to],
-    subject: subjectFromMessage(message),
-    text: renderedMessage.text,
-    html: renderedMessage.html,
-    attachments
-  };
-
-  if (email) {
-    resendBody.reply_to = email;
-  }
+  const resendBody = buildResendBody(normalized.payload, {from, to});
 
   try {
     const response = await fetch("https://api.resend.com/emails", {
@@ -209,4 +380,13 @@ module.exports = async function handler(req, res) {
   } catch {
     sendJson(res, 502, {ok: false});
   }
+}
+
+module.exports = handler;
+module.exports.__test = {
+  buildResendBody,
+  containsSensitiveFeedbackContent,
+  normalizeAttachments,
+  normalizeFeedbackPayload,
+  stripImageMetadata
 };

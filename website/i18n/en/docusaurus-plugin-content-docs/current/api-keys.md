@@ -8,20 +8,19 @@ sidebar_position: 3
 
 Aviso supports two AI service paths:
 
-- **Aviso AI**: sign in and use free quota without providing your own model provider API key.
+- **Hosted account candidate path**: the Supabase frontend foundation is default-disabled, and live sign-in requires owner-gated configuration. After activation, this path does not require the user to provide a model provider API key.
 - **BYOK direct-provider**: use your own model provider API key. BYOK requests are sent directly from the browser extension to the provider you select.
 
 You can manage the default service in the Popup and switch services by task.
 
-## Aviso AI
+## Hosted Account Candidate Path
 
-Aviso AI is the quickest way to start. After sign-in, the Popup shows account status, quota status, refresh, and sign-out controls. When you use Aviso AI, requests pass through the Aviso backend and upstream model providers.
+The hosted account path is currently for candidate review. The Popup has frontend foundations for account status, plan/quota status, refresh, and sign-out, but live Supabase sign-in remains disabled until owner-gated configuration exists. Requests use the Aviso backend and upstream model providers only after the user chooses that path and usable sign-in state exists.
 
 Important boundaries:
 
-- Free quota is available after sign-in.
 - Signing out of Aviso AI does not remove or disable BYOK provider configs.
-- If quota or service availability blocks a task, you can switch back to a BYOK provider.
+- If account, plan/quota, or service availability blocks a task, you can switch back to a BYOK provider.
 
 ## Supported Providers
 
@@ -44,8 +43,7 @@ These services require your own valid API key. You can trigger a connection test
 
 The Popup supports multiple AI service configs. You can:
 
-- Sign in to, refresh, or sign out of Aviso AI.
-- View Aviso AI account status and quota status.
+- View hosted account status and plan/quota status, and refresh or sign out in the candidate path.
 - Save multiple configs for the same provider.
 - Set the current default service.
 - Manually edit OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan model IDs.
@@ -77,7 +75,7 @@ Important boundaries:
 - Provider billing, logs, retention, and limits follow your provider account terms.
 - Do not expose API keys in screenshots, feedback, issues, recordings, or chat messages.
 
-Aviso AI does not require a model provider API key from you. Its session is stored in local extension storage and can be signed out from the Popup.
+The hosted account path does not require a model provider API key from you. Its session is stored in local extension storage and can be signed out from the Popup. Live Supabase activation still needs owner-gated configuration.
 
 ## Replace or Remove a Key
 

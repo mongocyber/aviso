@@ -17,14 +17,14 @@ Aviso 的权限设计遵循最小可用原则：只申请当前功能需要的�
 5. provider 返回结果后，Aviso 在当前页面浮窗中展示。
 6. 如果用户保存结果，历史记录保存在浏览器本地。
 
-BYOK 不强制登录。Aviso AI 需要用户主动登录后使用免费额度；两条路径可以按任务切换。
+BYOK 不强制登录。托管账号路径需要用户主动选择并处于 owner-gated 激活环境后才能使用；两条路径可以按任务切换。
 
 ## 本地数据
 
 | 数据 | 用途 | 当前保存方式 |
 | --- | --- | --- |
 | API Key | 调用用户选择的 BYOK provider | 不明文保存；以本地加密/混淆级保护保存在当前浏览器 profile 的 Chrome local extension storage。 |
-| Aviso AI session | 识别登录状态、账号状态和额度 | 保存在 Chrome local extension storage；可在 Popup 中退出。 |
+| 托管账号 session | 识别登录状态、账号状态和计划/额度 | 保存在 Chrome local extension storage；可在 Popup 中退出。 |
 | 设置 | 模型、开关、界面语言、主题、模板和 provider metadata | 保存在 Chrome 同步设置中。 |
 | 历史 | 方便搜索、保存和复用过往结果 | 保存在 Chrome 本地扩展存储。 |
 | 运行时短缓存 | 降低重复准备成本 | 只存在于扩展运行时内存，不持久化。 |
@@ -33,7 +33,7 @@ BYOK 不强制登录。Aviso AI 需要用户主动登录后使用免费额度；
 
 根据用户选择的功能，请求内容可能包括选中文本、页面 URL、链接 URL、图片 URL、页面正文片段、自定义提示词、继续追问时的近期对话节选，或用户直接输入的问题。
 
-BYOK direct-provider 路径会把这些内容直接发送到用户选择的 provider。用户选择 Aviso AI 并登录后，Aviso AI 路径会把这些内容发送到 Aviso 后端和上游 provider。Aviso 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板内容、用户 BYOK API Key 或完整 URL；账户、额度、风控、请求状态和运营排查所需 metadata 当前保留 30 天。
+BYOK direct-provider 路径会把这些内容直接发送到用户选择的 provider。用户选择托管路径、登录状态可用且 owner-gated 激活完成后，托管路径会把这些内容发送到 Aviso 后端和上游 provider。Aviso 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板内容、用户 BYOK API Key 或完整 URL；账户、计划/额度、风控、请求状态和运营排查所需 metadata 当前保留 30 天。
 
 以下内容不进入 provider 请求：
 
@@ -52,7 +52,7 @@ BYOK direct-provider 路径会把这些内容直接发送到用户选择的 prov
 | `storage` | 保存设置、API Key、模板和历史。 |
 | `history` | 在命令面板中搜索用户 Chrome 浏览历史；搜索只在本地执行，不发送给 Aviso 服务器或 AI provider。 |
 | `bookmarks` | 在命令面板中搜索用户书签。 |
-| `identity` | 仅在用户主动登录 Aviso AI 时打开 Google 授权窗口并换取 session；BYOK 不需要该登录。 |
+| `identity` | 仅在用户主动使用托管账号候选路径且 owner-gated 配置存在时打开授权窗口并换取 session；BYOK 不需要该登录。 |
 | `clipboardWrite` | 允许从浮窗复制结果。 |
 
 ## 站点访问

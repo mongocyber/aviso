@@ -25,7 +25,7 @@ type Attachment = {
 
 const MAX_ATTACHMENTS = 3;
 const MAX_ATTACHMENT_BYTES = 2 * 1024 * 1024;
-const ACCEPTED_IMAGE_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif"]);
+const ACCEPTED_IMAGE_TYPES = new Set(["image/png", "image/jpeg"]);
 
 const initialForm: FormState = {
   email: "",
@@ -56,13 +56,13 @@ const copy = {
     description: "提交 Aviso 的问题、建议或安装反馈。",
     eyebrow: "支持反馈",
     heading: "告诉我们哪里需要改进",
-    lede: "写下问题描述，可以附上脱敏截图。反馈会发送到维护者邮箱，用于定位问题和后续回复。",
+    lede: "写下问题描述，可以附上脱敏截图。反馈会先拦截高置信度密钥、token、私人正文和 raw prompt/response，再发送到维护者邮箱用于定位问题和后续回复。",
     safetyTitle: "发送前请注意",
     safetyText: "不要提交 API Key、token、私人网页正文、客户资料、未公开文档或未脱敏截图。",
     docsLink: "查看安全反馈说明",
     message: "问题描述",
     messagePlaceholder: "请写清楚你做了什么、预期是什么、实际发生了什么。也可以直接粘贴截图。",
-    imageHelp: "可选，最多 3 张；支持 PNG、JPG、WebP、GIF，每张不超过 2 MB。",
+    imageHelp: "可选，最多 3 张；支持 PNG 或 JPG，每张不超过 2 MB。上传前请先脱敏。",
     addImage: "上传图片",
     removeImage: "移除",
     tagsLabel: "问题类型（可选）",
@@ -73,7 +73,7 @@ const copy = {
     success: "已发送。谢谢你的反馈。",
     error: "发送失败。请稍后重试，或使用支持页里的备用渠道。",
     required: "请先填写问题描述。",
-    invalidImage: "只能上传 PNG、JPG、WebP 或 GIF 图片。",
+    invalidImage: "只能上传 PNG 或 JPG 图片。",
     imageTooLarge: "单张图片不能超过 2 MB。",
     tooManyImages: "最多上传 3 张插图。"
   },
@@ -82,13 +82,13 @@ const copy = {
     description: "Send Aviso bug reports, product feedback, or install issues.",
     eyebrow: "Support feedback",
     heading: "Tell us what needs attention",
-    lede: "Describe the issue and attach redacted screenshots if helpful. Feedback is emailed to the maintainer for triage and replies.",
+    lede: "Describe the issue and attach redacted screenshots if helpful. The form blocks high-confidence keys, tokens, private page bodies, and raw prompt/response dumps before emailing the maintainer for triage and replies.",
     safetyTitle: "Before sending",
     safetyText: "Do not submit API keys, tokens, private page bodies, customer data, unpublished documents, or unredacted screenshots.",
     docsLink: "Read safe feedback guidance",
     message: "Issue description",
     messagePlaceholder: "Describe what you did, what you expected, and what happened. You can also paste a screenshot here.",
-    imageHelp: "Optional, up to 3 images. PNG, JPG, WebP, or GIF; each image must be under 2 MB.",
+    imageHelp: "Optional, up to 3 images. PNG or JPG only; each image must be under 2 MB. Redact before uploading.",
     addImage: "Upload image",
     removeImage: "Remove",
     tagsLabel: "Issue type (optional)",
@@ -99,7 +99,7 @@ const copy = {
     success: "Sent. Thanks for the feedback.",
     error: "Could not send. Please try again later or use the fallback channel on the support page.",
     required: "Please describe the issue first.",
-    invalidImage: "Only PNG, JPG, WebP, or GIF images are supported.",
+    invalidImage: "Only PNG or JPG images are supported.",
     imageTooLarge: "Each image must be under 2 MB.",
     tooManyImages: "You can attach up to 3 images."
   }
@@ -305,7 +305,7 @@ export default function FeedbackPage(): JSX.Element {
               <div className="feedback-images-head">
                 <label className={`feedback-upload-button${attachments.length >= MAX_ATTACHMENTS ? " disabled" : ""}`}>
                   <input
-                    accept="image/png,image/jpeg,image/webp,image/gif"
+                    accept="image/png,image/jpeg"
                     disabled={attachments.length >= MAX_ATTACHMENTS}
                     multiple
                     type="file"

@@ -55,11 +55,11 @@ Aviso 仅在右键内部路径中，对支持的图片 URL 或支持格式的 ba
 
 ## Aviso AI 与发布状态
 
-Aviso AI 支持登录后使用免费额度。
+托管账号路径仍是候选能力；真实 Supabase 登录、计划/额度和 Creem 计费启动需要 owner-gated 激活、后端和部署证据。
 
 Chrome Web Store 正式商店链接暂不可用；官网会在正式链接可用后更新安装入口。
 
-未登录 Aviso AI 不会阻止用户继续使用自己的 API Key；退出 Aviso AI 也不会删除 BYOK 配置。
+未登录托管账号不会阻止用户继续使用自己的 API Key；退出托管账号候选状态也不会删除 BYOK 配置。
 
 ## Provider 支持范围
 

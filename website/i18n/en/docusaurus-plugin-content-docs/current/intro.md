@@ -14,7 +14,7 @@ Aviso's core value is reducing copy-paste friction: when you are already looking
 
 Aviso supports two AI service paths:
 
-- **Sign in to Aviso AI**: best for starting quickly. After sign-in, you can use free quota without preparing a model provider API key first.
+- **Hosted account candidate path**: the current Supabase frontend foundation is default-disabled, and live sign-in requires owner-gated configuration. Only after activation would that path pass requests through the Aviso backend and upstream model providers.
 - **Bring your own API key**: best if you already have model service accounts such as OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, or Tencent Hunyuan. Requests are sent directly from the browser extension to the provider you choose.
 
 You can switch between the two paths by task. BYOK does not require sign-in; signing out of Aviso AI does not remove or disable your BYOK configs.
@@ -26,7 +26,7 @@ Current facts:
 - This site describes the current product in public website form; the Chrome Web Store install link is not available yet and will be updated later.
 - Before the official link is available, the install guide explains the current loadable extension build directory.
 - Right-click menu, selection toolbar, selection translation card, command palette, double-click quick menu, default-off clipboard prompt, copy current context, in-page result panel, and Popup settings are implemented.
-- Aviso AI sign-in, account status, free quota display, refresh / sign-out, BYOK provider configuration, default service switching, manual model ID editing, Chinese / English UI, and Manifest localization are implemented.
+- Hosted account foundation, account-status display, refresh / sign-out, local safe-failure states, BYOK provider configuration, default service switching, manual model ID editing, Chinese / English UI, and Manifest localization are implemented. Live Supabase activation still needs owner-gated configuration.
 - Aviso supports multiple model service configs, including OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan. You can enter your own API key, model ID, or endpoint in settings; actual availability depends on your account access, model access, and provider status.
 
 ## Who It Is For
@@ -36,17 +36,17 @@ Aviso is useful if you often process information in the browser:
 - Reading English materials and needing quick translation or explanation.
 - Editing webpage text, emails, forms, or drafts and needing wording help.
 - Researching webpages, links, bookmarks, and history records.
-- Signing in and starting with Aviso AI free quota.
+- Reviewing the hosted account path's default-disabled and safe-failure boundaries in the candidate package.
 - Calling models with your own API key while understanding exactly which data goes to the selected provider.
 - Keeping copy context, prompts, model switching, history reuse, and follow-up questions inside the current browser context.
 
 ## Product Boundaries
 
-If you choose “bring your own API key”, Aviso lets your browser connect directly to the model service you selected. Your API keys, settings, and history stay primarily in your browser. When you sign in to Aviso AI and use free quota, requests pass through the Aviso backend and upstream model providers.
+If you choose “bring your own API key”, Aviso lets your browser connect directly to the model service you selected. Your API keys, settings, and history stay primarily in your browser. The hosted account path passes through the Aviso backend and upstream model providers only after the user chooses that path, usable sign-in state exists, and owner-gated activation is complete.
 
 This means:
 
-- To start quickly, sign in to Aviso AI and use free quota.
+- The default usable path is BYOK; the hosted account path is verified through the candidate reviewer notes.
 - To use your own model service, add your own API key. Billing, data handling, and terms are governed by your account relationship with that service.
 - Aviso does not promise instant model responses. First-token latency depends on network, model, input length, provider status, and API key status.
 - Aviso has improved visible waiting states and a local summary-only timing method, but it does not claim live provider p50 / p95 targets have been achieved.

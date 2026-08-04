@@ -17,14 +17,14 @@ Aviso follows a minimum-use permission design: it requests only the permissions 
 5. After the provider returns a result, Aviso shows it in the current page.
 6. If the user saves the result, history is stored locally in the browser.
 
-BYOK does not force sign-in. Aviso AI requires user-initiated sign-in before free quota can be used; the two paths can be switched by task.
+BYOK does not force sign-in. The hosted account path requires user choice and an owner-gated activation environment before use; the two paths can be switched by task.
 
 ## Local Data
 
 | Data | Purpose | Current storage |
 | --- | --- | --- |
 | API key | Call the BYOK provider selected by the user | Not stored in plaintext; stored in Chrome local extension storage inside the current browser profile with local encryption/obfuscation-level protection. |
-| Aviso AI session | Identify sign-in state, account state, and quota | Stored in Chrome local extension storage; users can sign out in the Popup. |
+| Hosted account session | Identify sign-in state, account state, and plan/quota | Stored in Chrome local extension storage; users can sign out in the Popup. |
 | Settings | Models, switches, UI language, theme, templates, and provider metadata | Stored in Chrome sync settings. |
 | History | Search, save, and reuse previous results | Stored in Chrome local extension storage. |
 | Runtime short cache | Reduce repeated preparation cost | Only in extension runtime memory; not persisted. |
@@ -33,7 +33,7 @@ BYOK does not force sign-in. Aviso AI requires user-initiated sign-in before fre
 
 Depending on the selected feature, request content may include selected text, page URL, link URL, image URL, page text excerpt, custom prompt, recent conversation excerpt for follow-up, or the user’s directly entered question.
 
-The BYOK direct-provider path sends this content directly to the provider selected by the user. After the user chooses Aviso AI and signs in, the Aviso AI path sends this content to the Aviso backend and upstream providers. The Aviso backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, user BYOK API keys, or full URLs. Account, quota, abuse-prevention, request-status, and operational metadata is currently retained for 30 days.
+The BYOK direct-provider path sends this content directly to the provider selected by the user. After the user chooses the hosted path, usable sign-in state exists, and owner-gated activation is complete, the hosted path sends this content to the Aviso backend and upstream providers. The Aviso backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, user BYOK API keys, or full URLs. Account, plan/quota, abuse-prevention, request-status, and operational metadata is currently retained for 30 days.
 
 The following do not enter provider requests:
 
@@ -52,7 +52,7 @@ Do not actively send passwords, API keys, private account information, unpublish
 | `storage` | Save settings, API keys, templates, and history. |
 | `history` | Search Chrome browsing history in the command palette; search is local and is not sent to Aviso servers or AI providers. |
 | `bookmarks` | Search Chrome bookmarks in the command palette. |
-| `identity` | Open the Google authorization window and exchange for a session only when the user actively signs in to Aviso AI; BYOK does not require this sign-in. |
+| `identity` | Open the authorization window and exchange for a session only when the user actively uses the hosted account candidate path and owner-gated configuration exists; BYOK does not require this sign-in. |
 | `clipboardWrite` | Copy results from the floating panel. |
 
 ## Site Access
