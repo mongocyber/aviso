@@ -33,7 +33,7 @@ Some internal storage keys still use `contextai_*` names for compatibility with 
 
 ## Data Sent to Model Providers or Aviso AI
 
-When you actively trigger an AI action, Aviso sends only the information needed for that action through the path you selected. The BYOK direct-provider path sends it directly to the provider you selected. After you choose Aviso AI and sign in, the Aviso AI path sends it through the Aviso backend and upstream model providers. Depending on the action, this may include:
+When you actively trigger an AI action, Aviso sends only the information needed for that action through the path you selected. The BYOK direct-provider path sends it directly to the provider you selected. The Aviso AI path sends it through the Aviso backend and upstream model providers only after you choose the hosted path, usable sign-in state exists, and owner-gated activation is complete. Depending on the action, this may include:
 
 - Selected text.
 - User-entered question or prompt.
@@ -80,13 +80,13 @@ BYOK API keys are not stored in plaintext. They are stored in Chrome local exten
 
 This protection is only a convenience boundary inside the browser profile. It does not defend against a readable browser profile, a compromised device, or a malicious extension, and it is not keychain storage, hardware-backed protection, end-to-end encryption, or zero-knowledge protection. If you suspect the device or browser profile is compromised, rotate or revoke the API key in the provider console first.
 
-When you use a BYOK provider, the request goes directly from the browser extension to that provider. When you choose the hosted path and owner-gated activation is complete, the request passes through the Aviso backend and upstream providers. Providers may process request content, logs, billing, and retention according to their own terms. Review and accept the provider’s terms and privacy policy before use.
+When you use a BYOK provider, the request goes directly from the browser extension to that provider. When you choose the hosted path, usable sign-in state exists, and owner-gated activation is complete, the request passes through the Aviso backend and upstream providers. Providers may process request content, logs, billing, and retention according to their own terms. Review and accept the provider’s terms and privacy policy before use.
 
 ## Chrome Web Store Limited Use Statement
 
 Aviso uses extension-handled user data only to provide user-triggered AI assistant features on the current webpage. Aviso does not sell user data, use user data for advertising, or use user data for credit/lending or similar decisions.
 
-When the user actively triggers an AI action, the BYOK path sends required content directly from the browser extension to the selected model provider. The Aviso AI path sends required content to the Aviso backend and upstream model providers. The Aviso backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, user BYOK API keys, or full URLs. Provider handling depends on provider terms, account configuration, and privacy policy.
+When the user actively triggers an AI action, the BYOK path sends required content directly from the browser extension to the selected model provider. The Aviso AI path sends required content to the Aviso backend and upstream model providers only after the user chooses the hosted path, usable sign-in state exists, and owner-gated activation is complete. The Aviso backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, user BYOK API keys, or full URLs. Provider handling depends on provider terms, account configuration, and privacy policy.
 
 ## Browser Permissions
 

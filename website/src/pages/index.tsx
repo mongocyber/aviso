@@ -200,7 +200,7 @@ const copy = {
     privacyTag: "04 — 隐私与控制",
     privacyTitlePre: "每一种使用方式,",
     privacyTitleEm: "数据流向都清楚",
-    privacyLede: "BYOK direct-provider 模式下,浏览器直连你选择的模型服务商。Aviso AI 需要你选择并登录后使用,请求会经过 Aviso 后端和上游模型服务。剪贴板感知默认关闭；开启后敏感内容会跳过提示,功能入口也可以在设置里关闭。",
+    privacyLede: "BYOK direct-provider 模式下,浏览器直连你选择的模型服务商。Aviso AI 仅在你选择托管路径、登录状态可用且 owner-gated 激活完成后，才会经过 Aviso 后端和上游模型服务。剪贴板感知默认关闭；开启后敏感内容会跳过提示,功能入口也可以在设置里关闭。",
     compareThem: "多数 AI 助手扩展",
     compareUs: "Aviso",
     privacyNote:
@@ -284,7 +284,7 @@ const copy = {
     privacyTitlePre: "Every way to use Aviso",
     privacyTitleEm: "has a clear data path",
     privacyLede:
-      "In BYOK direct-provider mode, your browser connects directly to the model provider you choose. Aviso AI runs after you choose it and sign in, then requests pass through the Aviso backend and upstream model services. Clipboard-aware prompts are off by default; when enabled, sensitive clipboard content is skipped, and entry points can be turned off in settings.",
+      "In BYOK direct-provider mode, your browser connects directly to the model provider you choose. Aviso AI requests pass through the Aviso backend and upstream model services only after you choose the hosted path, usable sign-in state exists, and owner-gated activation is complete. Clipboard-aware prompts are off by default; when enabled, sensitive clipboard content is skipped, and entry points can be turned off in settings.",
     compareThem: "Most AI assistant extensions",
     compareUs: "Aviso",
     privacyNote:
@@ -429,8 +429,8 @@ const compareRows = [
     enCrit: "Where your content goes",
     zhThem: "通常要先接受一套统一的数据处理规则",
     enThem: "Often asks you to accept one broad data policy",
-    zhUs: "BYOK 直连 provider；Aviso AI 在你选择并登录后经过 Aviso 后端,且不持久化正文",
-    enUs: "BYOK goes direct; Aviso AI passes through the backend after you choose it and sign in, and does not persist raw content"
+    zhUs: "BYOK 直连 provider；Aviso AI 仅在你选择托管路径、登录状态可用且 owner-gated 激活完成后经过 Aviso 后端,且不持久化正文",
+    enUs: "BYOK goes direct; Aviso AI does not persist raw content and passes through the backend only after you choose the hosted path, usable sign-in state exists, and owner-gated activation is complete"
   },
   {
     zhCrit: "怎么开始",
@@ -445,8 +445,8 @@ const compareRows = [
     enCrit: "Account required?",
     zhThem: "常需注册登录才能用",
     enThem: "Often sign-up and login required",
-    zhUs: "Aviso AI 需要登录；BYOK 可以不登录",
-    enUs: "Aviso AI needs sign-in; BYOK can be used without signing in"
+    zhUs: "Aviso AI 需要可用登录状态和 owner-gated 激活；BYOK 可以不登录",
+    enUs: "Aviso AI needs usable sign-in state plus owner-gated activation; BYOK can be used without signing in"
   },
   {
     zhCrit: "索取什么权限",
@@ -512,8 +512,8 @@ const faqs = [
   {
     zhQ: "Aviso 会收集我的浏览数据吗?",
     enQ: "Does Aviso collect my browsing data?",
-    zhA: "Aviso 不做被动浏览数据收集,没有遥测或第三方分析 SDK。BYOK 路径不经过 Aviso 后端；Aviso AI 只在你登录并主动触发后使用,请求会经过 Aviso 后端和上游模型服务。Aviso AI 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板、API Key 或完整 URL。",
-    enA: "Aviso does not passively collect browsing data, and it has no telemetry or third-party analytics SDK. BYOK requests do not pass through the Aviso backend; Aviso AI is used only after you sign in and trigger it, and requests pass through the Aviso backend and upstream model services. The Aviso AI backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, API keys, or full URLs."
+    zhA: "Aviso 不做被动浏览数据收集,没有遥测或第三方分析 SDK。BYOK 路径不经过 Aviso 后端；Aviso AI 仅在你选择托管路径、登录状态可用、owner-gated 激活完成并主动触发后使用，请求会经过 Aviso 后端和上游模型服务。Aviso AI 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板、API Key 或完整 URL。",
+    enA: "Aviso does not passively collect browsing data, and it has no telemetry or third-party analytics SDK. BYOK requests do not pass through the Aviso backend; Aviso AI is used only after you choose the hosted path, usable sign-in state exists, owner-gated activation is complete, and you trigger it. Requests then pass through the Aviso backend and upstream model services. The Aviso AI backend does not persist raw prompts, raw responses, page bodies, screenshots/base64, clipboard content, API keys, or full URLs."
   },
   {
     zhQ: "它在每个网站都能用吗?",

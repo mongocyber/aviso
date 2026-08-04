@@ -33,7 +33,7 @@ Aviso 会在浏览器扩展存储中保存必要数据：
 
 ## 会发送给模型 provider 或托管路径的数据
 
-当用户主动触发 AI 操作时，Aviso 会把完成该操作所需的信息发送到当前选择的路径。BYOK direct-provider 路径会直接发送给用户选择的模型 provider；用户选择 Aviso AI 并登录后，Aviso AI 路径会经过 Aviso 后端和上游模型 provider。可能包含：
+当用户主动触发 AI 操作时，Aviso 会把完成该操作所需的信息发送到当前选择的路径。BYOK direct-provider 路径会直接发送给用户选择的模型 provider；只有当用户选择托管路径、登录状态可用且 owner-gated 激活完成后，Aviso AI 路径才会经过 Aviso 后端和上游模型 provider。可能包含：
 
 - 选中的文本。
 - 用户输入的问题或提示词。
@@ -80,13 +80,13 @@ BYOK API Key 不明文保存，会以本地加密/混淆级保护保存在当前
 
 这类保护只是浏览器 profile 内的便利边界，不防御可读浏览器 profile、已被控制的设备或恶意扩展，也不是系统钥匙串、硬件安全模块、端到端加密或零知识保护。如果你怀疑本机或浏览器 profile 已被控制，请先在 provider 后台轮换或撤销 API Key。
 
-当你使用 BYOK provider 时，请求会从浏览器扩展直接发送到该 provider。当你选择托管路径且 owner-gated 激活完成后，请求会经过 Aviso 后端和上游 provider。provider 可能会按照其服务条款处理请求内容、日志、计费和滞留数据。使用前，请自行阅读并接受对应 provider 的条款和隐私政策。
+当你使用 BYOK provider 时，请求会从浏览器扩展直接发送到该 provider。当你选择托管路径、登录状态可用且 owner-gated 激活完成后，请求会经过 Aviso 后端和上游 provider。provider 可能会按照其服务条款处理请求内容、日志、计费和滞留数据。使用前，请自行阅读并接受对应 provider 的条款和隐私政策。
 
 ## Chrome Web Store Limited Use 说明
 
 Aviso 只会把扩展处理的用户数据用于提供当前网页 AI 助手的用户主动触发功能。Aviso 不出售用户数据，不使用用户数据投放广告，不使用用户数据做信用、借贷或类似决策。
 
-用户主动触发 AI 操作时，BYOK 路径会把完成该功能所需的内容从浏览器扩展直接发送到用户选择的模型 provider；Aviso AI 路径会把完成该功能所需的内容发送到 Aviso 后端和上游模型 provider。Aviso 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板内容、用户 BYOK API Key 或完整 URL。provider 对数据的处理取决于 provider 服务条款、账户配置和隐私政策。
+用户主动触发 AI 操作时，BYOK 路径会把完成该功能所需的内容从浏览器扩展直接发送到用户选择的模型 provider；Aviso AI 路径只有在用户选择托管路径、登录状态可用且 owner-gated 激活完成后，才会把完成该功能所需的内容发送到 Aviso 后端和上游模型 provider。Aviso 后端不持久化 raw prompt、raw response、页面正文、截图/base64、剪贴板内容、用户 BYOK API Key 或完整 URL。provider 对数据的处理取决于 provider 服务条款、账户配置和隐私政策。
 
 ## 浏览器权限
 

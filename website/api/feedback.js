@@ -17,6 +17,9 @@ const SENSITIVE_FEEDBACK_PATTERNS = [
   /\bsk-ant-[A-Za-z0-9_-]{24,}/i,
   /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/,
   /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
+  /\bprivate\s+(?:(?:web\s*)?page|webpage)\s+bod(?:y|ies)\s*:/i,
+  /\bcustomer\s+data\s*:/i,
+  /\bunpublished\s+document\s*:/i,
   /\braw\s+(?:prompt|response)\s*:/i,
   /\bprovider\s+(?:request|response)\s*:/i,
   /(?:私人网页正文|客户资料|未公开文档|原始\s*(?:prompt|response)|原始请求|原始响应)/

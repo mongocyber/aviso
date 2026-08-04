@@ -34,6 +34,27 @@ test("feedback API rejects likely credentials and raw prompt or response dumps b
   }
 })
 
+test("feedback API rejects English private-content markers before email forwarding", () => {
+  for (const message of [
+    "Private page body: customer contract terms and pricing",
+    "private webpage body: customer contract terms and pricing",
+    "Customer data: alice@example.com account notes",
+    "Unpublished document: roadmap draft"
+  ]) {
+    const result = normalizeFeedbackPayload({
+      category: "privacy",
+      email: "reviewer@example.com",
+      locale: "en",
+      message
+    })
+
+    assert.deepEqual(result, {
+      ok: false,
+      reason: "sensitive_content"
+    })
+  }
+})
+
 test("feedback email subject does not echo user issue text or private page details", () => {
   const normalized = normalizeFeedbackPayload({
     category: "bug",
