@@ -37,6 +37,32 @@ test("feedback API rejects likely credentials and raw prompt or response dumps b
   }
 })
 
+test("feedback API rejects normalized generic secret label bypass variants", () => {
+  for (const message of [
+    "The provider failed. a p i   key — " + "a".repeat(24),
+    "The provider failed. token -> " + "b".repeat(24),
+    "The provider failed. token / " + "c".repeat(24),
+    "The provider failed. secret equals word " + "d".repeat(24),
+    "The provider failed. tοken: " + "e".repeat(24),
+    "The provider failed. ｔｏｋｅｎ: " + "f".repeat(24),
+    "The provider failed. s e c r e t ≔ " + "g".repeat(24),
+    "The provider failed. api_key ~= " + "h".repeat(24),
+    "The provider failed. authorization • Bearer " + "i".repeat(24)
+  ]) {
+    const result = normalizeFeedbackPayload({
+      category: "bug",
+      email: "reviewer@example.com",
+      locale: "en",
+      message
+    })
+
+    assert.deepEqual(result, {
+      ok: false,
+      reason: "sensitive_content"
+    })
+  }
+})
+
 test("feedback API rejects English private-content markers before email forwarding", () => {
   for (const message of [
     "Private page body: customer contract terms and pricing",
@@ -64,7 +90,9 @@ test("feedback API rejects English private-content markers before email forwardi
 test("feedback API accepts normal feedback with sensitive-sounding words", () => {
   for (const message of [
     "The token counter is hard to read when the sidebar is narrow.",
-    "The onboarding copy has a nice secret sauce but the install button wraps."
+    "The onboarding copy has a nice secret sauce but the install button wraps.",
+    "The API key setup docs should mention where users can find the button.",
+    "The authorization wording is confusing in the privacy section."
   ]) {
     const result = normalizeFeedbackPayload({
       category: "idea",

@@ -11,10 +11,35 @@ const CATEGORY_LABELS = {
 const VALID_IMAGE_TYPES = new Set(["image/png", "image/jpeg"]);
 const PNG_SIGNATURE = Buffer.from("89504e470d0a1a0a", "hex");
 const ZERO_WIDTH_CHARS = /[\u200B-\u200D\uFEFF]/g;
-const SENSITIVE_LABEL_CONNECTOR = String.raw`(?:\s*(?::|=|：|-|–|—)\s*|\s+is\s+)`;
+const CONFUSABLE_LABEL_CHARS = new Map([
+  ["Α", "A"], ["А", "A"], ["α", "a"], ["а", "a"],
+  ["С", "C"], ["Ϲ", "C"], ["с", "c"], ["ϲ", "c"],
+  ["Ε", "E"], ["Е", "E"], ["ε", "e"], ["е", "e"],
+  ["Η", "H"], ["Н", "H"], ["һ", "h"], ["н", "h"],
+  ["Ι", "I"], ["І", "I"], ["Ӏ", "I"], ["ι", "i"], ["і", "i"], ["ı", "i"],
+  ["Κ", "K"], ["К", "K"], ["κ", "k"], ["к", "k"],
+  ["Ο", "O"], ["О", "O"], ["ο", "o"], ["о", "o"],
+  ["Ρ", "P"], ["Р", "P"], ["ρ", "p"], ["р", "p"],
+  ["Ѕ", "S"], ["ѕ", "s"],
+  ["Τ", "T"], ["Т", "T"], ["τ", "t"], ["т", "t"],
+  ["Υ", "Y"], ["У", "Y"], ["υ", "y"], ["у", "y"]
+]);
+const CONFUSABLE_LABEL_PATTERN = new RegExp(`[${[...CONFUSABLE_LABEL_CHARS.keys()].join("")}]`, "g");
+const LABEL_CHAR_GAP = String.raw`[\s_.-]*`;
+const SENSITIVE_LABEL_WORD_PATTERN = [
+  "apikey",
+  "secret",
+  "token",
+  "authorization"
+]
+  .map((word) => word.split("").join(LABEL_CHAR_GAP))
+  .join("|");
+const SENSITIVE_SYMBOL_CONNECTOR = String.raw`(?:[^\p{L}\p{N}\s]{1,12}\s*){1,3}`;
+const SENSITIVE_WORD_CONNECTOR = String.raw`(?:is|equals?|equal\s+to)`;
+const SENSITIVE_LABEL_CONNECTOR = String.raw`(?:\s*${SENSITIVE_SYMBOL_CONNECTOR}|\s+${SENSITIVE_WORD_CONNECTOR}\s+)`;
 const GENERIC_SECRET_LABEL_PATTERN = new RegExp(
-  String.raw`\b(?:api[_\s-]?key|secret|token|authorization)\b${SENSITIVE_LABEL_CONNECTOR}(?:bearer\s+)?([A-Za-z0-9._~+/=\-\s\u200B-\u200D\uFEFF]{16,})`,
-  "gi"
+  String.raw`(?<![\p{L}\p{N}])(?:${SENSITIVE_LABEL_WORD_PATTERN})(?![\p{L}\p{N}])${SENSITIVE_LABEL_CONNECTOR}(?:bearer\s+)?([A-Za-z0-9._~+/=\-\s]{16,})`,
+  "giu"
 );
 const SENSITIVE_FEEDBACK_PATTERNS = [
   /\bBearer\s+[A-Za-z0-9._~+/=-]{24,}/i,
@@ -22,11 +47,11 @@ const SENSITIVE_FEEDBACK_PATTERNS = [
   /\bsk-ant-[A-Za-z0-9_-]{24,}/i,
   /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/,
   /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
-  new RegExp(String.raw`\bprivate\s+(?:(?:web\s*)?page|webpage)\s+bod(?:y|ies)\b${SENSITIVE_LABEL_CONNECTOR}`, "i"),
-  new RegExp(String.raw`\bcustomer\s+data\b${SENSITIVE_LABEL_CONNECTOR}`, "i"),
-  new RegExp(String.raw`\bunpublished\s+document\b${SENSITIVE_LABEL_CONNECTOR}`, "i"),
-  new RegExp(String.raw`\braw\s+(?:prompt|response)\b${SENSITIVE_LABEL_CONNECTOR}`, "i"),
-  new RegExp(String.raw`\bprovider\s+(?:request|response)\b${SENSITIVE_LABEL_CONNECTOR}`, "i"),
+  new RegExp(String.raw`\bprivate\s+(?:(?:web\s*)?page|webpage)\s+bod(?:y|ies)\b${SENSITIVE_LABEL_CONNECTOR}`, "iu"),
+  new RegExp(String.raw`\bcustomer\s+data\b${SENSITIVE_LABEL_CONNECTOR}`, "iu"),
+  new RegExp(String.raw`\bunpublished\s+document\b${SENSITIVE_LABEL_CONNECTOR}`, "iu"),
+  new RegExp(String.raw`\braw\s+(?:prompt|response)\b${SENSITIVE_LABEL_CONNECTOR}`, "iu"),
+  new RegExp(String.raw`\bprovider\s+(?:request|response)\b${SENSITIVE_LABEL_CONNECTOR}`, "iu"),
   /(?:私人网页正文|客户资料|未公开文档|原始\s*(?:prompt|response)|原始请求|原始响应)/
 ];
 
@@ -54,16 +79,43 @@ function isValidEmail(value) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
+function normalizeSensitiveFeedbackText(value) {
+  return value
+    .normalize("NFKC")
+    .replace(ZERO_WIDTH_CHARS, "")
+    .replace(CONFUSABLE_LABEL_PATTERN, (char) => CONFUSABLE_LABEL_CHARS.get(char) || char)
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function isSensitiveCredentialCandidate(value) {
+  const compact = value.replace(/\s+/g, "");
+  if (compact.length < 16 || !/^[A-Za-z0-9._~+/=-]+$/.test(compact)) {
+    return false;
+  }
+  if (/(?:^|[-_])sk-(?:proj-)?|^sk-ant-|^eyJ/i.test(compact)) {
+    return true;
+  }
+  if (/[0-9._~+/=-]/.test(compact)) {
+    return true;
+  }
+  if (/[A-Za-z0-9._~+/=-]{16,}/.test(value)) {
+    return true;
+  }
+
+  const parts = value.trim().split(/\s+/).filter(Boolean);
+  return parts.length >= 8 && parts.every((part) => /^[A-Za-z0-9._~+/=-]{1,2}$/.test(part));
+}
+
 function containsSensitiveFeedbackContent(value) {
   if (typeof value !== "string" || !value.trim()) {
     return false;
   }
 
-  const normalized = value.replace(ZERO_WIDTH_CHARS, "");
+  const normalized = normalizeSensitiveFeedbackText(value);
   GENERIC_SECRET_LABEL_PATTERN.lastIndex = 0;
   for (const match of normalized.matchAll(GENERIC_SECRET_LABEL_PATTERN)) {
-    const candidate = (match[1] || "").replace(/\s+/g, "");
-    if (candidate.length >= 16 && /^[A-Za-z0-9._~+/=-]+$/.test(candidate)) {
+    if (isSensitiveCredentialCandidate(match[1] || "")) {
       return true;
     }
   }
