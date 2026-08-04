@@ -8,7 +8,7 @@ Updated: 2026-08-01
 - Supported languages: `Chinese (Simplified)`, `English`
 - Current release posture: resubmission listing source after Chrome Web Store rejected the prior product description for excessive or unrelated keyword-style provider names; not approved by Chrome Web Store, and not public live
 
-Scope note: this file is the Chrome Web Store listing copy source for owner final validation. It describes the current package boundary: BYOK direct-provider remains the default path, while optional Aviso AI / hosted AI uses user-initiated hosted sign-in and the approved production-candidate backend only when the user chooses it. The V013 Supabase Auth frontend foundation remains default-disabled until a separate owner-gated activation supplies the exact Supabase origin/anon key, redirect allowlist, and manifest host permission. This file does not upload the listing, prove Chrome Web Store approval, or mark hosted AI live. Do not paste provider-name lists into the public product description; keep provider-specific wording only where it is needed for permission or reviewer explanations.
+Scope note: this file is the Chrome Web Store listing copy source for owner final validation. It describes the current package boundary: BYOK direct-provider remains the default path, while optional Aviso AI / hosted AI uses user-initiated hosted sign-in and the approved production-candidate backend only when the user chooses it. MON-124 adds signed-in Aviso AI plan-status and backend-created hosted billing entry points, but paid billing availability remains gated by `docs/STATE.md` and backend/deployment evidence. The V013 Supabase Auth frontend foundation remains default-disabled until a separate owner-gated activation supplies the exact Supabase origin/anon key, redirect allowlist, and manifest host permission. This file does not upload the listing, prove Chrome Web Store approval, or change hosted-AI public status. Do not paste provider-name lists into the public product description; keep provider-specific wording only where it is needed for permission or reviewer explanations.
 
 ## Short Description
 
@@ -32,7 +32,7 @@ Aviso 是一个 Chrome 扩展，帮助你在当前网页里直接调用 AI，而
 - 右键菜单：选中文本、当前页面、链接、图片内部路径、复制当前上下文、模型切换、自定义模板
 - 命令面板：搜索本地 AI 对话、Chrome 浏览历史、Chrome 书签；无结果时可直接把输入发给 AI
 - 页面内结果面板：流式结果、复制、保存、继续追问
-- Popup 设置页：多 AI 服务配置、API Key、Aviso AI 登录、默认模型、功能开关、模板、历史、界面语言
+- Popup 设置页：多 AI 服务配置、API Key、Aviso AI 登录与账户计划状态、默认模型、功能开关、模板、历史、界面语言
 - 中文 / English 界面
 
 Aviso 保留 BYOK direct-provider 作为默认路径：用户自己提供 API Key，扩展从浏览器直接连接到已批准的 provider host。用户也可以主动选择 Aviso AI / hosted AI 路径并登录；只有选择该路径时，请求才会经过 Aviso 后端和上游模型 provider。BYOK 不需要登录，也不会被 Aviso AI 登录状态拦住。
@@ -41,7 +41,7 @@ Aviso 保留 BYOK direct-provider 作为默认路径：用户自己提供 API Ke
 
 截图能力只保留在用户主动触发的右键内部路径中，不作为普通用户主入口或公开卖点。
 
-当前不包含订阅支付、公开匿名额度、联网搜索、远端链接正文抓取、广告、遥测或分析 SDK。
+Aviso AI 的结账或账单管理入口只在用户登录托管账号后出现，并且只打开 Aviso 后端创建的 hosted 页面；BYOK 不需要订阅或登录。真实付费结算仍以当前 gate 为准。当前不包含公开匿名额度、联网搜索、远端链接正文抓取、广告、遥测或分析 SDK。
 
 ### English
 
@@ -53,7 +53,7 @@ Current features include:
 - Right-click actions for selected text, current page, links, image internal path, copy current context, model switching, and custom templates
 - Command palette for local AI conversation search, Chrome browsing history search, Chrome bookmarks search, and direct ask when no local result matches
 - In-page result panel with streaming output, copy, save, and follow-up
-- Popup settings for multiple AI service configs, API keys, Aviso AI sign-in, default model, feature switches, templates, history, and UI language
+- Popup settings for multiple AI service configs, API keys, Aviso AI sign-in and account plan status, default model, feature switches, templates, history, and UI language
 - Chinese and English UI
 
 Aviso keeps BYOK direct-provider as the default path: users bring their own API keys, and the extension connects directly from the browser to approved provider hosts. Users may also choose Aviso AI / hosted AI and sign in; only that optional path sends requests through the Aviso backend and upstream model providers. BYOK does not require sign-in and is not blocked by Aviso AI account state.
@@ -62,7 +62,7 @@ If you bring your own API key, you can add model service configs in Settings and
 
 Screenshot capability remains an internal right-click path and is not presented as a main public entry or promotional feature.
 
-This release does not include subscription payment, public anonymous quota, web search, remote link-body fetching, advertising, telemetry, or analytics SDKs.
+Aviso AI checkout or billing management entries appear only after the user signs in to the hosted account, and they only open hosted pages created by the Aviso backend. BYOK does not require a subscription or sign-in. Paid billing remains governed by the current release state. This release does not include public anonymous quota, web search, remote link-body fetching, advertising, telemetry, or analytics SDKs.
 
 ## Single Purpose Description
 
@@ -98,7 +98,7 @@ Aviso has a single purpose: provide user-triggered AI reading, translation, summ
 | `https://openrouter.ai/*` | Allows direct browser-to-provider API requests to this declared API domain when the user configures their own key and model access. |
 | `https://generativelanguage.googleapis.com/*` | Allows direct browser-to-provider API requests to this declared API domain when the user configures their own key and model access. |
 | `https://api.hunyuan.cloud.tencent.com/*` | Allows direct browser-to-provider API requests to this declared API domain when the user configures their own key and model access. |
-| `https://aviso-backend-production.vercel.app/*` | Allows the optional Aviso AI / hosted AI path to reach the approved production-candidate backend after the user signs in. BYOK requests do not use this backend. |
+| `https://aviso-backend-production.vercel.app/*` | Allows the optional Aviso AI / hosted AI path to reach the approved production-candidate backend after the user signs in, including account refresh and backend-created billing checkout/portal requests when the billing gate is enabled. BYOK requests do not use this backend. |
 
 These host permissions are limited to approved provider API domains and the exact Aviso hosted AI backend origin. MON-121 adds no Supabase host permission; Supabase host-permission activation is a separate owner-gated follow-up. These permissions are not used for remote webpage scraping, analytics, or remote logging.
 
@@ -115,6 +115,7 @@ These host permissions are limited to approved provider API domains and the exac
 - Aviso does not use user data for credit, lending, or similar eligibility decisions.
 - BYOK user content is not sent to an Aviso-owned backend.
 - Optional Aviso AI / hosted AI requests pass through the Aviso backend only after the user chooses hosted AI and signs in.
+- Optional Aviso AI billing entry points, when enabled, request backend-created hosted checkout or customer-portal URLs and do not send BYOK API keys to Aviso.
 - BYOK API keys are not stored in plaintext; they remain in `chrome.storage.local/contextai_api_keys` inside the current browser profile with local encryption / obfuscation-level protection.
 - This API-key protection is only a browser-profile convenience boundary. It does not defend against a readable browser profile, a compromised device, or a malicious extension, and it is not keychain storage, hardware-backed protection, end-to-end encryption, or zero-knowledge protection.
 - Non-secret settings are stored in `chrome.storage.sync/contextai_settings`.

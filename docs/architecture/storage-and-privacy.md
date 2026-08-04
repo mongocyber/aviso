@@ -14,12 +14,15 @@ Storage and privacy rules define where user data lives, how sensitive data is ha
 - `src/utils/hosted-session.ts:9` defines `aviso_hosted_session`.
 - `src/utils/hosted-session.ts:131` reads hosted session state from `chrome.storage.local`.
 - `src/utils/hosted-session.ts:143` validates hosted base URL before saving a session.
+- `src/utils/billing-subscription.ts` keeps Creem checkout / portal requests behind hosted session auth, validates returned external Creem origins, and does not persist billing URLs or provider identifiers.
 
 ## Invariants
 
 - API Keys are not plaintext, but this is local encryption/obfuscation only; do not claim machine-compromise resistance.
 - Non-secret settings belong in Chrome sync storage; API Keys, local history, and hosted session state stay local.
 - Hosted session tokens can be stored for hosted login state; raw Google `id_token` must not enter docs, logs, or durable project records.
+- Billing checkout / portal UI state is transient. Do not store Creem customer IDs, subscription IDs, price IDs, returned billing URLs, or client-side entitlement decisions.
+- Checkout return or cancel indicators are hints to refresh backend account state only; entitlement must come from `/v1/me` or equivalent normalized hosted account data.
 - Do not store or log raw prompts, raw responses, private page bodies, screenshots/base64, clipboard content, BYOK API Keys, or full URLs.
 - Storage-key migrations are owner-gated because they can affect user data.
 

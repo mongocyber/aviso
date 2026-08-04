@@ -21,6 +21,14 @@ import type {
 } from "~types/history"
 import type { HostedSignInData, MessageResponse } from "~types/messages"
 import {
+  getHostedBillingTier,
+  openTrustedBillingUrl,
+  refreshHostedSubscriptionStatus,
+  requestBillingCheckout,
+  requestBillingPortal,
+  type BillingRequestResult
+} from "~utils/billing-subscription"
+import {
   getAccountDeletionStateLabelKey,
   requestAccountDeletion,
   resolveAccountDeletionDialogAction,
@@ -249,6 +257,28 @@ function getInitialPopupTab(): PopupTab {
   return hash === "api" || hash === "history" || hash === "templates"
     ? hash
     : "general"
+}
+
+function getPopupLocationHref(): string {
+  try {
+    return window.location.href
+  } catch {
+    return ""
+  }
+}
+
+function hasBillingReturnHint(value: string): boolean {
+  if (!value) return false
+  try {
+    const url = new URL(value)
+    return (
+      url.searchParams.has("checkout") ||
+      url.searchParams.has("billing") ||
+      url.searchParams.has("creem")
+    )
+  } catch {
+    return false
+  }
 }
 
 const APPEARANCE_OPTIONS: {
@@ -557,6 +587,12 @@ function Popup() {
   const [accountDeletionResult, setAccountDeletionResult] =
     useState<AccountDeletionRequestResult | null>(null)
   const [accountPanelOpen, setAccountPanelOpen] = useState(false)
+  const [billingBusy, setBillingBusy] = useState(false)
+  const [billingMessageKey, setBillingMessageKey] = useState<I18nKey | null>(
+    null
+  )
+  const [billingMessageTone, setBillingMessageTone] =
+    useState<ModelAvailability["tone"]>("muted")
   const [systemPrefersDark, setSystemPrefersDark] = useState(true)
   const [popupRuntimeHeight, setPopupRuntimeHeight] = useState<number>(
     POPUP_FRAME.safeMaxHeight
@@ -566,6 +602,7 @@ function Popup() {
   const loaded = useRef(false)
   const persistedSettingsSignature = useRef("")
   const explicitDefaultProviderConfigId = useRef<string | null>(null)
+  const billingReturnHandled = useRef(false)
   const saveTimer = useRef<ReturnType<typeof setTimeout>>()
   const modelDropdownRef = useRef<HTMLDivElement>(null)
   const fastServiceDropdownRef = useRef<HTMLDivElement>(null)
@@ -964,6 +1001,105 @@ function Popup() {
     }
   }
 
+  const setBillingMessage = (
+    messageKey: I18nKey | null,
+    tone: ModelAvailability["tone"] = "muted"
+  ) => {
+    setBillingMessageKey(messageKey)
+    setBillingMessageTone(tone)
+  }
+
+  const applyBillingRequestResult = async (result: BillingRequestResult) => {
+    if (result.kind === "success") {
+      const opened = await openTrustedBillingUrl(result.url)
+      if (opened.kind === "opened") {
+        setBillingMessage("popup.billing.status.opened", "ok")
+        setAccountPanelOpen(false)
+        return
+      }
+      setBillingMessage(
+        opened.messageKey,
+        opened.kind === "blocked" ? "danger" : "warning"
+      )
+      return
+    }
+
+    if (result.kind === "local_auth") {
+      setHostedAccountResult("signed_out", "popup.hosted.status.signedOut", null)
+      setBillingMessage(result.messageKey, "warning")
+      return
+    }
+
+    setBillingMessage(
+      result.messageKey,
+      result.reason === "portal_unavailable" ? "warning" : "danger"
+    )
+  }
+
+  const startBillingCheckout = async () => {
+    setTab("api")
+    setBillingBusy(true)
+    setBillingMessage("popup.billing.status.checkoutOpening", "warning")
+    try {
+      await applyBillingRequestResult(await requestBillingCheckout())
+    } finally {
+      setBillingBusy(false)
+    }
+  }
+
+  const openBillingPortal = async () => {
+    setTab("api")
+    setBillingBusy(true)
+    setBillingMessage("popup.billing.status.portalOpening", "warning")
+    try {
+      await applyBillingRequestResult(await requestBillingPortal())
+    } finally {
+      setBillingBusy(false)
+    }
+  }
+
+  const refreshBillingPlanStatus = async () => {
+    if (!hostedSession) {
+      setBillingMessage("popup.billing.status.signedOut", "warning")
+      return
+    }
+
+    setBillingBusy(true)
+    setBillingMessage("popup.hosted.status.refreshing", "warning")
+    try {
+      const result = await refreshHostedSubscriptionStatus({
+        session: hostedSession,
+        returnUrl: getPopupLocationHref(),
+        refreshHostedAccount: ({ session }) =>
+          hostedAuthAdapter.refreshHostedAccount({ session })
+      })
+
+      if (result.kind === "refreshed") {
+        setHostedAccountResult("signed_in", result.messageKey, result.session)
+        setBillingMessage(result.messageKey, "ok")
+        return
+      }
+
+      if (result.kind === "signed_out") {
+        setHostedAccountResult("signed_out", "popup.hosted.status.signedOut", null)
+        setBillingMessage(result.messageKey, "warning")
+        return
+      }
+
+      setBillingMessage(result.messageKey, "danger")
+    } finally {
+      setBillingBusy(false)
+    }
+  }
+
+  useEffect(() => {
+    if (billingReturnHandled.current) return
+    if (!hostedSession) return
+    if (!hasBillingReturnHint(getPopupLocationHref())) return
+    billingReturnHandled.current = true
+    void refreshBillingPlanStatus()
+  }, [hostedSession?.updatedAt])
+
   const signOutHostedLocal = async () => {
     setHostedBusy(true)
     try {
@@ -976,6 +1112,7 @@ function Popup() {
         "popup.hosted.status.signedOut",
         null
       )
+      setBillingMessage(null)
       setHostedBusy(false)
     }
   }
@@ -2289,6 +2426,13 @@ function Popup() {
       tierPaid: t("popup.hosted.tier.paid")
     }
   })
+  const hostedBillingTier = getHostedBillingTier(hostedSession)
+  const hostedBillingPlanLabel = t(
+    `popup.billing.plan.${hostedBillingTier}` as I18nKey
+  )
+  const billingActionsDisabled =
+    billingBusy || hostedBusy || hostedStatus !== "signed_in"
+  const billingStatusVisible = Boolean(billingMessageKey)
   const selectedProviderKeyValue = getProviderKeyValue(
     selectedRoute.provider.id,
     {
@@ -3031,6 +3175,10 @@ function Popup() {
                   </div>
                   <div style={styles.accountQuotaBlock}>
                     <div style={{ ...styles.accountQuotaRow, color: ui.text3 }}>
+                      <span>{t("popup.billing.plan")}</span>
+                      <span>{hostedBillingPlanLabel}</span>
+                    </div>
+                    <div style={{ ...styles.accountQuotaRow, color: ui.text3 }}>
                       <span>{t("popup.hosted.monthlyQuota")}</span>
                       <span>{hostedQuotaDisplay.monthlyQuotaLabel}</span>
                     </div>
@@ -3068,6 +3216,36 @@ function Popup() {
                     <button
                       type="button"
                       className="aviso-popup-button"
+                      onClick={() => void startBillingCheckout()}
+                      disabled={billingActionsDisabled}
+                      style={{
+                        ...styles.accountActionBtn,
+                        borderColor: ui.accentBorder,
+                        color: ui.accent,
+                        ...(billingActionsDisabled ? styles.disabledBtn : {})
+                      }}>
+                      <AvisoIcon name="plus" size={13} />
+                      {t("popup.billing.checkout")}
+                    </button>
+                    <button
+                      type="button"
+                      className="aviso-popup-button"
+                      onClick={() => void openBillingPortal()}
+                      disabled={billingActionsDisabled || hostedBillingTier !== "paid"}
+                      style={{
+                        ...styles.accountActionBtn,
+                        borderColor: ui.line,
+                        color: ui.text2,
+                        ...(billingActionsDisabled || hostedBillingTier !== "paid"
+                          ? styles.disabledBtn
+                          : {})
+                      }}>
+                      <AvisoIcon name="key" size={13} />
+                      {t("popup.billing.portal")}
+                    </button>
+                    <button
+                      type="button"
+                      className="aviso-popup-button"
                       onClick={() => {
                         setTab("api")
                         setAccountPanelOpen(false)
@@ -3080,6 +3258,25 @@ function Popup() {
                       {t("popup.account.manage")}
                     </button>
                   </div>
+                  <p style={{ ...styles.accountQuotaReset, color: ui.text3 }}>
+                    {t("popup.billing.returnSafe")}
+                  </p>
+                  {billingStatusVisible && billingMessageKey && (
+                    <p
+                      role={billingMessageTone === "danger" ? "alert" : "status"}
+                      style={{
+                        ...styles.recStatus,
+                        marginTop: 8,
+                        color:
+                          billingMessageTone === "danger"
+                            ? ui.danger
+                            : billingMessageTone === "warning"
+                              ? ui.text2
+                              : ui.text3
+                      }}>
+                      {t(billingMessageKey)}
+                    </p>
+                  )}
                   <button
                     type="button"
                     className="aviso-popup-button"
@@ -4163,6 +4360,76 @@ function Popup() {
                       {t("popup.hosted.resetTiming")}:{" "}
                       {hostedQuotaDisplay.resetLabel}
                     </div>
+                    <div style={{ ...styles.acardMeta, color: ui.text3 }}>
+                      {t("popup.billing.plan")}: {hostedBillingPlanLabel}
+                      {" · "}
+                      {t("popup.billing.returnSafe")}
+                    </div>
+                    <div style={styles.accountPanelActions}>
+                      <button
+                        type="button"
+                        className="aviso-popup-button"
+                        onClick={() => void refreshBillingPlanStatus()}
+                        disabled={billingActionsDisabled}
+                        style={{
+                          ...styles.accountActionBtn,
+                          borderColor: ui.line,
+                          color: ui.text2,
+                          ...(billingActionsDisabled ? styles.disabledBtn : {})
+                        }}>
+                        <AvisoIcon name="refresh" size={13} />
+                        {t("popup.billing.refresh")}
+                      </button>
+                      <button
+                        type="button"
+                        className="aviso-popup-button"
+                        onClick={() => void startBillingCheckout()}
+                        disabled={billingActionsDisabled}
+                        style={{
+                          ...styles.accountActionBtn,
+                          borderColor: ui.accentBorder,
+                          color: ui.accent,
+                          ...(billingActionsDisabled ? styles.disabledBtn : {})
+                        }}>
+                        <AvisoIcon name="plus" size={13} />
+                        {t("popup.billing.checkout")}
+                      </button>
+                      <button
+                        type="button"
+                        className="aviso-popup-button"
+                        onClick={() => void openBillingPortal()}
+                        disabled={
+                          billingActionsDisabled || hostedBillingTier !== "paid"
+                        }
+                        style={{
+                          ...styles.accountActionBtn,
+                          borderColor: ui.line,
+                          color: ui.text2,
+                          ...(billingActionsDisabled || hostedBillingTier !== "paid"
+                            ? styles.disabledBtn
+                            : {})
+                        }}>
+                        <AvisoIcon name="key" size={13} />
+                        {t("popup.billing.portal")}
+                      </button>
+                    </div>
+                    {billingStatusVisible && billingMessageKey && (
+                      <p
+                        role={
+                          billingMessageTone === "danger" ? "alert" : "status"
+                        }
+                        style={{
+                          ...styles.recStatus,
+                          color:
+                            billingMessageTone === "danger"
+                              ? ui.danger
+                              : billingMessageTone === "warning"
+                                ? ui.text2
+                                : ui.text3
+                        }}>
+                        {t(billingMessageKey)}
+                      </p>
+                    )}
                     <div style={styles.hostedAccountActions}>
                       <button
                         type="button"
@@ -5822,10 +6089,12 @@ const styles: Record<string, React.CSSProperties> = {
   },
   accountPanelActions: {
     display: "flex",
+    flexWrap: "wrap",
     gap: 7
   },
   accountActionBtn: {
-    flex: 1,
+    flex: "1 1 calc(50% - 7px)",
+    minWidth: 0,
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",

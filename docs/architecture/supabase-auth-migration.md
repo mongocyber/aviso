@@ -240,6 +240,34 @@ The frontend confirmation UI must show explicit deletion scope, require a
 second confirmation before submitting, and display the backend state labels
 without renaming the frozen states.
 
+## Creem Billing Consumption Contract
+
+MON-124 consumes only the frontend-visible billing contract. Provider payloads,
+price IDs, customer IDs, subscription IDs, webhook payloads, and entitlement
+decisions stay backend-private.
+
+Signed-in hosted users may request backend-created billing URLs:
+
+- `POST /v1/billing/checkout`, optional body `{ "plan": "pro-monthly" }`,
+  response `{ "checkout_url": "https://..." }`.
+- `POST /v1/billing/portal`, no client body, response
+  `{ "portal_url": "https://..." }`.
+
+Frontend rules:
+
+- Always use the stored hosted bearer with the existing hosted backend base URL.
+- Never construct Creem checkout, customer-portal, price, customer, subscription,
+  or entitlement values in the extension.
+- Validate returned external URLs against trusted Creem HTTPS origins before
+  opening them.
+- Treat checkout return/cancel URL parameters only as a hint to refresh account
+  status; never grant paid status locally from URL params.
+- Continue to use `/v1/me` or equivalent normalized hosted account data as the
+  source of displayed tier/plan status. In the current contract this remains
+  `user.tier` (`free` or `paid`) plus quota/rate-limit/model data.
+- BYOK remains independent and must stay usable without Aviso login,
+  checkout, portal access, or subscription.
+
 ## Validation Expected In MON-121
 
 MON-121 should add focused tests before runtime changes for:
