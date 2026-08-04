@@ -941,6 +941,106 @@ const MESSAGES = {
     "zh-CN": "当前浏览器无法写入剪贴板。",
     en: "Clipboard write is unavailable in this browser."
   },
+  "popup.accountDeletion.open": {
+    "zh-CN": "删除账号",
+    en: "Delete account"
+  },
+  "popup.accountDeletion.dialogTitle": {
+    "zh-CN": "删除 Aviso AI 账号",
+    en: "Delete Aviso AI account"
+  },
+  "popup.accountDeletion.scopeTitle": {
+    "zh-CN": "确认删除范围",
+    en: "Review deletion scope"
+  },
+  "popup.accountDeletion.scopeDesc": {
+    "zh-CN": "这会请求后端删除当前 Aviso AI 账号；请先确认影响范围。",
+    en: "This requests backend deletion for the current Aviso AI account; review the scope first."
+  },
+  "popup.accountDeletion.scopeHosted": {
+    "zh-CN": "删除 Aviso AI 托管账号、额度和后端持有的托管元数据。",
+    en: "Delete the Aviso AI hosted account, quota, and hosted metadata held by the backend."
+  },
+  "popup.accountDeletion.scopeSession": {
+    "zh-CN": "本地托管登录状态会被清理，之后需要重新登录才能使用 Aviso AI。",
+    en: "Local hosted sign-in state will be cleared; Aviso AI requires sign-in again afterward."
+  },
+  "popup.accountDeletion.scopeByok": {
+    "zh-CN": "自己的 API Keys、服务配置和 BYOK 路径不受影响。",
+    en: "Your own API keys, service configurations, and BYOK path are not affected."
+  },
+  "popup.accountDeletion.reviewScope": {
+    "zh-CN": "继续确认",
+    en: "Continue"
+  },
+  "popup.accountDeletion.secondConfirmTitle": {
+    "zh-CN": "再次确认删除",
+    en: "Confirm deletion again"
+  },
+  "popup.accountDeletion.secondConfirmDesc": {
+    "zh-CN": "扩展只会调用已登录后端删除接口，不会调用 Supabase 管理接口。",
+    en: "The extension will call only the authenticated backend deletion endpoint, not Supabase admin APIs."
+  },
+  "popup.accountDeletion.secondConfirmWarning": {
+    "zh-CN": "这是账号级操作；提交后本地托管 session 会按后端状态安全清理。",
+    en: "This is an account-level action; after submission, local hosted session state is safely cleaned according to the backend state."
+  },
+  "popup.accountDeletion.confirm": {
+    "zh-CN": "确认删除",
+    en: "Confirm delete"
+  },
+  "popup.accountDeletion.processing": {
+    "zh-CN": "正在提交删除请求...",
+    en: "Submitting deletion request..."
+  },
+  "popup.accountDeletion.resultTitle": {
+    "zh-CN": "删除状态",
+    en: "Deletion state"
+  },
+  "popup.accountDeletion.retryTitle": {
+    "zh-CN": "可以重试",
+    en: "Retry available"
+  },
+  "popup.accountDeletion.retryDesc": {
+    "zh-CN": "后端返回 retry 或网络暂不可用；本地可用托管 session 暂不清理。",
+    en: "The backend returned retry or the network is temporarily unavailable; a usable local hosted session was kept."
+  },
+  "popup.accountDeletion.authExpiredTitle": {
+    "zh-CN": "登录状态已失效",
+    en: "Sign-in expired"
+  },
+  "popup.accountDeletion.authExpiredDesc": {
+    "zh-CN": "已清理失效的托管登录状态；自己的 API Keys 仍可使用。",
+    en: "Expired hosted sign-in state was cleared; your own API keys still work."
+  },
+  "popup.accountDeletion.message.accepted": {
+    "zh-CN": "删除请求已接受，本地托管 session 已清理。",
+    en: "Deletion request accepted; local hosted session state was cleared."
+  },
+  "popup.accountDeletion.message.processing": {
+    "zh-CN": "删除正在处理中，本地托管 session 已清理。",
+    en: "Deletion is processing; local hosted session state was cleared."
+  },
+  "popup.accountDeletion.message.completed": {
+    "zh-CN": "删除已完成，本地托管 session 已清理。",
+    en: "Deletion completed; local hosted session state was cleared."
+  },
+  "popup.accountDeletion.state.accepted": {
+    "zh-CN": "state: accepted",
+    en: "state: accepted"
+  },
+  "popup.accountDeletion.state.processing": {
+    "zh-CN": "state: processing",
+    en: "state: processing"
+  },
+  "popup.accountDeletion.state.completed": {
+    "zh-CN": "state: completed",
+    en: "state: completed"
+  },
+  "popup.accountDeletion.state.retry": {
+    "zh-CN": "state: retry",
+    en: "state: retry"
+  },
   "popup.service.fastTitle": {
     "zh-CN": "快速任务服务",
     en: "Fast task service"

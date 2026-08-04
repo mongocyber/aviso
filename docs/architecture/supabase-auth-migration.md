@@ -218,35 +218,27 @@ The mapper must continue to exclude raw provider messages, raw callback URLs,
 tokens, profile payloads, provider stack traces, and credential values from
 stored sign-in results, UI strings, copied trace text, and project evidence.
 
-## Account Deletion Consumption Assumption
+## Account Deletion Contract
 
-MON-43 currently has no frontend implementation in this repository. It should
-wait for the backend contract from `aviso-mon119-be` before building UI.
+MON-43 consumes the MON-119-frozen backend deletion contract. The extension
+does not call Supabase Admin APIs and does not require a service-role credential.
 
-Frontend assumption for planning only:
+- Method/path: `POST /v1/account/deletion` through the existing hosted backend
+  base URL.
+- Auth: `Authorization: Bearer <hosted bearer>` obtained from the hosted
+  session. BYOK API keys are never sent, read, cleared, or used.
+- Body: `{ "confirm": true }`.
+- Response states: `accepted`, `processing`, `completed`, and `retry`.
+- Cleanup states: malformed/legacy hosted session state, expired hosted
+  sessions, malformed hosted sign-in results, `401`, and backend `accepted`,
+  `processing`, or `completed` states may clear only `aviso_hosted_session` and
+  `aviso_hosted_sign_in_result`.
+- Retry states: backend `retry`, `429`, network failure, timeout, and `5xx` keep
+  a usable hosted session and surface retry UI.
 
-- Method: `DELETE` to a backend-published public account endpoint under the
-  existing `/v1` API namespace. Placeholder path for planning is
-  `DELETE /v1/account`; exact path is pending `aviso-mon119-be`.
-- Auth: `Authorization: Bearer <hosted bearer>` obtained from
-  `getHostedSession()`. BYOK API keys are never sent, read, cleared, or used.
-- Body: no body unless `aviso-mon119-be` publishes a confirmation or idempotency
-  contract.
-- Success states: backend reports deletion accepted, deletion completed, or
-  already pending/already deleted. The frontend may clear only hosted session
-  state after an accepted terminal or pending deletion state.
-- Auth failure states: `401` or equivalent means the hosted session is expired
-  or missing; show sign-in-required/expired UX and do not claim deletion.
-- Conflict or forbidden states: backend may reject deletion because lifecycle,
-  ownership, subscription/customer, or provider state is not in a deletable
-  condition. Show a provider-neutral error and do not invent remediation beyond
-  the backend-published state.
-- Retry states: `429`, network failure, and `5xx` are retryable safe failures.
-
-MON-43 must reconcile the final method/path/request body, success enum, error
-enum, idempotency semantics, and lifecycle ordering with whatever
-`aviso-mon119-be` publishes for Supabase Auth, Aviso data, Upstash metadata, and
-Creem customer/subscription state.
+The frontend confirmation UI must show explicit deletion scope, require a
+second confirmation before submitting, and display the backend state labels
+without renaming the frozen states.
 
 ## Creem Billing Consumption Contract
 
