@@ -10,18 +10,23 @@ const CATEGORY_LABELS = {
 };
 const VALID_IMAGE_TYPES = new Set(["image/png", "image/jpeg"]);
 const PNG_SIGNATURE = Buffer.from("89504e470d0a1a0a", "hex");
+const ZERO_WIDTH_CHARS = /[\u200B-\u200D\uFEFF]/g;
+const SENSITIVE_LABEL_CONNECTOR = String.raw`(?:\s*(?::|=|：|-|–|—)\s*|\s+is\s+)`;
+const GENERIC_SECRET_LABEL_PATTERN = new RegExp(
+  String.raw`\b(?:api[_\s-]?key|secret|token|authorization)\b${SENSITIVE_LABEL_CONNECTOR}(?:bearer\s+)?([A-Za-z0-9._~+/=\-\s\u200B-\u200D\uFEFF]{16,})`,
+  "gi"
+);
 const SENSITIVE_FEEDBACK_PATTERNS = [
-  /\b(?:api[_\s-]?key|secret|token|authorization)\s*[:=]\s*(?:bearer\s+)?[A-Za-z0-9._~+/=-]{16,}/i,
   /\bBearer\s+[A-Za-z0-9._~+/=-]{24,}/i,
   /\bsk-(?:proj-)?[A-Za-z0-9_-]{24,}/i,
   /\bsk-ant-[A-Za-z0-9_-]{24,}/i,
   /\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b/,
   /-----BEGIN [A-Z ]*PRIVATE KEY-----/,
-  /\bprivate\s+(?:(?:web\s*)?page|webpage)\s+bod(?:y|ies)\s*:/i,
-  /\bcustomer\s+data\s*:/i,
-  /\bunpublished\s+document\s*:/i,
-  /\braw\s+(?:prompt|response)\s*:/i,
-  /\bprovider\s+(?:request|response)\s*:/i,
+  new RegExp(String.raw`\bprivate\s+(?:(?:web\s*)?page|webpage)\s+bod(?:y|ies)\b${SENSITIVE_LABEL_CONNECTOR}`, "i"),
+  new RegExp(String.raw`\bcustomer\s+data\b${SENSITIVE_LABEL_CONNECTOR}`, "i"),
+  new RegExp(String.raw`\bunpublished\s+document\b${SENSITIVE_LABEL_CONNECTOR}`, "i"),
+  new RegExp(String.raw`\braw\s+(?:prompt|response)\b${SENSITIVE_LABEL_CONNECTOR}`, "i"),
+  new RegExp(String.raw`\bprovider\s+(?:request|response)\b${SENSITIVE_LABEL_CONNECTOR}`, "i"),
   /(?:私人网页正文|客户资料|未公开文档|原始\s*(?:prompt|response)|原始请求|原始响应)/
 ];
 
@@ -54,7 +59,16 @@ function containsSensitiveFeedbackContent(value) {
     return false;
   }
 
-  return SENSITIVE_FEEDBACK_PATTERNS.some((pattern) => pattern.test(value));
+  const normalized = value.replace(ZERO_WIDTH_CHARS, "");
+  GENERIC_SECRET_LABEL_PATTERN.lastIndex = 0;
+  for (const match of normalized.matchAll(GENERIC_SECRET_LABEL_PATTERN)) {
+    const candidate = (match[1] || "").replace(/\s+/g, "");
+    if (candidate.length >= 16 && /^[A-Za-z0-9._~+/=-]+$/.test(candidate)) {
+      return true;
+    }
+  }
+
+  return SENSITIVE_FEEDBACK_PATTERNS.some((pattern) => pattern.test(normalized));
 }
 
 function escapeHtml(value) {
@@ -193,10 +207,7 @@ function stripJpegMetadata(buffer) {
       return null;
     }
 
-    const isMetadataSegment =
-      marker === 0xe1 ||
-      marker === 0xed ||
-      marker === 0xfe;
+    const isMetadataSegment = (marker >= 0xe0 && marker <= 0xef) || marker === 0xfe;
     if (!isMetadataSegment) {
       chunks.push(buffer.subarray(segmentStart, segmentEnd));
     }
