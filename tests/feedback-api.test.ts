@@ -197,6 +197,79 @@ test("feedback API redacts combining-mark sensitive content from every forwarded
   }
 })
 
+test("feedback API redacts bidi-control sensitive labels from unshaped provider and model fields", () => {
+  const bidiFormatControls = [
+    "\u202a",
+    "\u202b",
+    "\u202c",
+    "\u202d",
+    "\u202e",
+    "\u2066",
+    "\u2067",
+    "\u2068",
+    "\u2069"
+  ]
+  const unshapedFields = ["providerModel", "providerName", "modelName"]
+  const sensitiveLabels = ["token", "secret", "authorization"]
+
+  for (const control of bidiFormatControls) {
+    for (const field of unshapedFields) {
+      for (const label of sensitiveLabels) {
+        const input = {
+          ...baseStructuredPayload,
+          [field]: `${label.split("").join(control)}: ${"c".repeat(24)}1234`
+        }
+        if (field === "providerName" || field === "modelName") {
+          delete (input as Record<string, unknown>).providerModel
+        }
+
+        const normalized = normalizeFeedbackPayload(input)
+
+        assert.equal(normalized.ok, true, `${field} ${label}`)
+        assert.equal(normalized.payload.needsRedaction, true, `${field} ${label}`)
+        assert.equal(normalized.payload.providerModel, "", `${field} ${label}`)
+      }
+    }
+  }
+})
+
+test("feedback API redacts default-ignorable format characters from every forwarded short field", () => {
+  const forwardedFields = [
+    "chromeVersion",
+    "os",
+    "avisoVersion",
+    "providerModel",
+    "providerName",
+    "modelName"
+  ]
+  const formatCharacterBypasses = [
+    `t\u00ado\u00adk\u00ade\u00adn\u00ad: ${"d".repeat(24)}1234`,
+    `s\u180ee\u180ec\u180er\u180ee\u180et\u180e = customer-secret-value-1234567890`
+  ]
+
+  for (const field of forwardedFields) {
+    for (const bypass of formatCharacterBypasses) {
+      const input = {
+        ...baseStructuredPayload,
+        [field]: bypass
+      }
+      if (field === "providerName" || field === "modelName") {
+        delete (input as Record<string, unknown>).providerModel
+      }
+
+      const normalized = normalizeFeedbackPayload(input)
+      const outputField =
+        field === "os" || field === "avisoVersion" || field === "chromeVersion"
+          ? field
+          : "providerModel"
+
+      assert.equal(normalized.ok, true, field)
+      assert.equal(normalized.payload.needsRedaction, true, field)
+      assert.equal(normalized.payload[outputField], "", field)
+    }
+  }
+})
+
 test("feedback API keeps normal short structured field values", () => {
   for (const payload of [
     baseStructuredPayload,

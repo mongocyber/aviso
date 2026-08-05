@@ -44,6 +44,7 @@ const VALID_IMAGE_TYPES = new Set(["image/png", "image/jpeg"]);
 const PNG_SIGNATURE = Buffer.from("89504e470d0a1a0a", "hex");
 const ZERO_WIDTH_CHARS = /[\u200B-\u200D\u2060\uFEFF]/g;
 const COMBINING_MARKS = /\p{M}/gu;
+const FORMAT_CHARS = /\p{Cf}/gu;
 const CONFUSABLE_LABEL_CHARS = new Map([
   ["Α", "A"], ["А", "A"], ["α", "a"], ["а", "a"],
   ["С", "C"], ["Ϲ", "C"], ["с", "c"], ["ϲ", "c"],
@@ -128,8 +129,10 @@ function isValidEmail(value) {
 function normalizeSensitiveFeedbackText(value) {
   return value
     .replace(COMBINING_MARKS, "")
+    .replace(FORMAT_CHARS, "")
     .normalize("NFKC")
     .replace(ZERO_WIDTH_CHARS, "")
+    .replace(FORMAT_CHARS, "")
     .replace(COMBINING_MARKS, "")
     .replace(CONFUSABLE_LABEL_PATTERN, (char) => CONFUSABLE_LABEL_CHARS.get(char) || char)
     .replace(/\s+/g, " ")
