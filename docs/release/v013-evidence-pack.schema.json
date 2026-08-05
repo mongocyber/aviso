@@ -1,0 +1,568 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aviso.local/schemas/v013-release-evidence-pack.schema.json",
+  "title": "Aviso V013 Immutable Release Evidence Pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "releaseLine",
+    "generatedAt",
+    "generator",
+    "repositories",
+    "contract",
+    "boundEvidence",
+    "verificationCommands",
+    "qaEvidence",
+    "externalGates"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "aviso.v013.release-evidence-pack.v1"
+    },
+    "releaseLine": {
+      "const": "V013"
+    },
+    "generatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "generator": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "mode"
+      ],
+      "properties": {
+        "name": {
+          "const": "scripts/release-evidence-pack.mjs"
+        },
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "mode": {
+          "const": "local-only-no-live-provider-calls"
+        }
+      }
+    },
+    "repositories": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "frontend",
+        "backend"
+      ],
+      "properties": {
+        "frontend": {
+          "$ref": "#/$defs/repositoryBinding"
+        },
+        "backend": {
+          "$ref": "#/$defs/repositoryBinding"
+        }
+      }
+    },
+    "contract": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "version"
+      ],
+      "properties": {
+        "version": {
+          "const": "V013"
+        }
+      }
+    },
+    "boundEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "prd",
+        "contract",
+        "supabaseMigrations",
+        "creemAdapterFixtures",
+        "packageArtifacts",
+        "publicCopy",
+        "assets"
+      ],
+      "properties": {
+        "prd": {
+          "$ref": "#/$defs/fileEvidenceList"
+        },
+        "contract": {
+          "$ref": "#/$defs/fileEvidenceList"
+        },
+        "supabaseMigrations": {
+          "$ref": "#/$defs/fileEvidenceList"
+        },
+        "creemAdapterFixtures": {
+          "$ref": "#/$defs/fileEvidenceList"
+        },
+        "packageArtifacts": {
+          "$ref": "#/$defs/fileEvidenceList"
+        },
+        "publicCopy": {
+          "$ref": "#/$defs/fileEvidenceList"
+        },
+        "assets": {
+          "$ref": "#/$defs/fileEvidenceList"
+        }
+      }
+    },
+    "verificationCommands": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/verificationCommand"
+      }
+    },
+    "qaEvidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/evidenceGate"
+      }
+    },
+    "externalGates": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "#/$defs/evidenceGate"
+      }
+    }
+  },
+  "$defs": {
+    "repositoryBinding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "commit"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1
+        },
+        "commit": {
+          "pattern": "^[0-9a-fA-F]{40}$",
+          "type": "string"
+        }
+      }
+    },
+    "fileEvidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "label",
+        "repository",
+        "path",
+        "sourceCommit"
+      ],
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "repository": {
+          "enum": [
+            "frontend",
+            "backend"
+          ]
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sha256": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        "sourceCommit": {
+          "pattern": "^[0-9a-fA-F]{40}$",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "present",
+            "missing"
+          ]
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "status": {
+                "const": "present"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "sha256"
+            ]
+          }
+        }
+      ]
+    },
+    "fileEvidenceList": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/fileEvidence"
+      }
+    },
+    "verificationCommand": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "kind",
+            "script",
+            "args",
+            "packageJsonRef",
+            "packageLockRef",
+            "exitCode",
+            "evidenceRefs"
+          ],
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "npm-script"
+            },
+            "script": {
+              "const": "supply-chain:check"
+            },
+            "args": {
+              "const": [],
+              "type": "array"
+            },
+            "packageJsonRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "packageLockRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "exitCode": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fileEvidence"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "kind",
+            "script",
+            "args",
+            "packageJsonRef",
+            "packageLockRef",
+            "exitCode",
+            "evidenceRefs"
+          ],
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "npm-script"
+            },
+            "script": {
+              "const": "test"
+            },
+            "args": {
+              "const": [],
+              "type": "array"
+            },
+            "packageJsonRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "packageLockRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "exitCode": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fileEvidence"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "kind",
+            "script",
+            "args",
+            "packageJsonRef",
+            "packageLockRef",
+            "exitCode",
+            "evidenceRefs"
+          ],
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "npm-script"
+            },
+            "script": {
+              "const": "docs:check"
+            },
+            "args": {
+              "const": [],
+              "type": "array"
+            },
+            "packageJsonRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "packageLockRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "exitCode": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fileEvidence"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "kind",
+            "script",
+            "args",
+            "packageJsonRef",
+            "packageLockRef",
+            "exitCode",
+            "evidenceRefs"
+          ],
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "npm-script"
+            },
+            "script": {
+              "const": "verify:release-candidate"
+            },
+            "args": {
+              "const": [],
+              "type": "array"
+            },
+            "packageJsonRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "packageLockRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "exitCode": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fileEvidence"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "kind",
+            "script",
+            "args",
+            "packageJsonRef",
+            "packageLockRef",
+            "exitCode",
+            "evidenceRefs"
+          ],
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "npm-script"
+            },
+            "script": {
+              "const": "evidence:verify"
+            },
+            "args": {
+              "const": [],
+              "type": "array"
+            },
+            "packageJsonRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "packageLockRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "exitCode": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fileEvidence"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "kind",
+            "packageName",
+            "binary",
+            "version",
+            "args",
+            "packageJsonRef",
+            "packageLockRef",
+            "exitCode",
+            "evidenceRefs"
+          ],
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "npx-local-bin"
+            },
+            "packageName": {
+              "const": "typescript"
+            },
+            "binary": {
+              "const": "tsc"
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "args": {
+              "const": [
+                "--noEmit"
+              ],
+              "type": "array"
+            },
+            "packageJsonRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "packageLockRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "exitCode": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fileEvidence"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "evidenceGate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "key",
+        "label",
+        "status",
+        "evidenceRefs"
+      ],
+      "properties": {
+        "key": {
+          "type": "string",
+          "minLength": 1
+        },
+        "label": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "enum": [
+            "passed",
+            "waived",
+            "blocked",
+            "pending",
+            "missing",
+            "not_applicable"
+          ]
+        },
+        "openCriticalImportantFindings": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "reason": {
+          "type": "string"
+        },
+        "evidenceRefs": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/fileEvidence"
+          }
+        }
+      }
+    }
+  }
+}

@@ -13,6 +13,8 @@
     "build:wxt": "wxt build --mv3",
     "check:manifests": "node scripts/check-extension-manifests.mjs",
     "docs:check": "node scripts/check-docs.mjs --root .",
+    "evidence:generate": "node scripts/release-evidence-pack.mjs generate --backend-sha f30f6cccb1f7805d8ef95975a425c0c97c26379c --out build/release-evidence/v013-evidence-pack.json",
+    "evidence:verify": "node scripts/release-evidence-pack.mjs verify --pack build/release-evidence/v013-evidence-pack.json",
     "supply-chain:check": "node scripts/check-supply-chain-baseline.mjs",
     "verify:release-candidate": "node scripts/verify-release-candidate.mjs",
     "package": "node scripts/package-production.mjs",
