@@ -13,21 +13,29 @@ import { fileURLToPath } from "node:url"
 
 export const evidencePackSchemaVersion = "aviso.v013.release-evidence-pack.v1"
 
-const allowedNpmScriptNames = Object.freeze([
-  "supply-chain:check",
-  "test",
-  "docs:check",
-  "verify:release-candidate",
-  "evidence:verify"
-])
+const allowedNpmScriptCommands = Object.freeze(
+  [
+    "supply-chain:check",
+    "test",
+    "docs:check",
+    "verify:release-candidate",
+    "evidence:verify"
+  ].map((script) =>
+    Object.freeze({
+      script,
+      args: Object.freeze([])
+    })
+  )
+)
+const allowedNpmScriptNames = Object.freeze(
+  allowedNpmScriptCommands.map((entry) => entry.script)
+)
 const allowedNpxLocalBins = Object.freeze([
-  { packageName: "typescript", binary: "tsc" }
-])
-const allowedNpxLocalBinPackageNames = Object.freeze([
-  ...new Set(allowedNpxLocalBins.map((entry) => entry.packageName))
-])
-const allowedNpxLocalBinBinaries = Object.freeze([
-  ...new Set(allowedNpxLocalBins.map((entry) => entry.binary))
+  {
+    packageName: "typescript",
+    binary: "tsc",
+    args: Object.freeze(["--noEmit"])
+  }
 ])
 
 export const evidencePackSchema = {
@@ -156,7 +164,7 @@ export const evidencePackSchema = {
     },
     verificationCommand: {
       oneOf: [
-        {
+        ...allowedNpmScriptCommands.map((entry) => ({
           type: "object",
           additionalProperties: false,
           required: [
@@ -172,8 +180,8 @@ export const evidencePackSchema = {
           properties: {
             label: { type: "string", minLength: 1 },
             kind: { const: "npm-script" },
-            script: { enum: allowedNpmScriptNames },
-            args: { $ref: "#/$defs/commandArgs" },
+            script: { const: entry.script },
+            args: exactArgsSchema(entry.args),
             packageJsonRef: { $ref: "#/$defs/fileEvidence" },
             packageLockRef: { $ref: "#/$defs/fileEvidence" },
             exitCode: { type: ["integer", "null"] },
@@ -182,8 +190,8 @@ export const evidencePackSchema = {
               items: { $ref: "#/$defs/fileEvidence" }
             }
           }
-        },
-        {
+        })),
+        ...allowedNpxLocalBins.map((entry) => ({
           type: "object",
           additionalProperties: false,
           required: [
@@ -201,10 +209,10 @@ export const evidencePackSchema = {
           properties: {
             label: { type: "string", minLength: 1 },
             kind: { const: "npx-local-bin" },
-            packageName: { enum: allowedNpxLocalBinPackageNames },
-            binary: { enum: allowedNpxLocalBinBinaries },
+            packageName: { const: entry.packageName },
+            binary: { const: entry.binary },
             version: { type: "string", minLength: 1 },
-            args: { $ref: "#/$defs/commandArgs" },
+            args: exactArgsSchema(entry.args),
             packageJsonRef: { $ref: "#/$defs/fileEvidence" },
             packageLockRef: { $ref: "#/$defs/fileEvidence" },
             exitCode: { type: ["integer", "null"] },
@@ -213,12 +221,8 @@ export const evidencePackSchema = {
               items: { $ref: "#/$defs/fileEvidence" }
             }
           }
-        }
+        }))
       ]
-    },
-    commandArgs: {
-      type: "array",
-      items: { type: "string" }
     },
     evidenceGate: {
       type: "object",
@@ -1013,7 +1017,8 @@ function verifyCommandKeys(command, label, allowedKeys, reasons) {
 function verifyNpmScriptCommand(command, label, roots, commits, reasons) {
   verifyCommandPackageRefs(command, label, roots, commits, reasons)
 
-  if (!allowedNpmScriptNames.includes(command.script)) {
+  const commandPolicy = npmScriptCommandPolicy(command.script)
+  if (!commandPolicy) {
     reasons.push(`${label}.script must be an allow-listed npm script`)
   } else {
     const packageJson = readBoundJsonRef(
@@ -1031,23 +1036,26 @@ function verifyNpmScriptCommand(command, label, roots, commits, reasons) {
         `${label}.script ${command.script} must exist in bound package.json scripts`
       )
     }
+    verifyExactArgs(command.args, `${label}.args`, commandPolicy.args, reasons)
   }
-
-  verifyStaticArgs(command.args, `${label}.args`, reasons)
 }
 
 function verifyNpxLocalBinCommand(command, label, roots, commits, reasons) {
   verifyCommandPackageRefs(command, label, roots, commits, reasons)
 
-  if (!isAllowedNpxLocalBin(command.packageName, command.binary)) {
+  const commandPolicy = npxLocalBinCommandPolicy(
+    command.packageName,
+    command.binary
+  )
+  if (!commandPolicy) {
     reasons.push(`${label}.packageName/binary pair must be allow-listed`)
+  } else {
+    verifyExactArgs(command.args, `${label}.args`, commandPolicy.args, reasons)
   }
 
   if (typeof command.version !== "string" || command.version.length === 0) {
     reasons.push(`${label}.version is required`)
   }
-
-  verifyStaticArgs(command.args, `${label}.args`, reasons)
 
   const packageJson = readBoundJsonRef(
     command.packageJsonRef,
@@ -1157,69 +1165,37 @@ function verifyRequiredPackageRef(
   }
 }
 
-function verifyStaticArgs(args, label, reasons) {
-  if (!Array.isArray(args)) {
-    reasons.push(`${label} must be an array of static literal arguments`)
-    return
+function verifyExactArgs(args, label, expectedArgs, reasons) {
+  if (
+    !Array.isArray(args) ||
+    args.length !== expectedArgs.length ||
+    args.some((arg, index) => arg !== expectedArgs[index])
+  ) {
+    reasons.push(`${label} must exactly match ${JSON.stringify(expectedArgs)}`)
   }
-
-  args.forEach((arg, index) => {
-    const violation = staticArgViolation(arg)
-    if (violation) {
-      reasons.push(
-        `${label}[${index}] must be a static literal argument: ${violation}`
-      )
-    }
-  })
 }
 
-function staticArgViolation(arg) {
-  if (typeof arg !== "string" || arg.length === 0) {
-    return "expected non-empty string"
+function npmScriptCommandPolicy(script) {
+  return allowedNpmScriptCommands.find((entry) => entry.script === script)
+}
+
+function npxLocalBinCommandPolicy(packageName, binary) {
+  return allowedNpxLocalBins.find(
+    (entry) => entry.packageName === packageName && entry.binary === binary
+  )
+}
+
+function exactArgsSchema(args) {
+  return {
+    const: [...args],
+    type: "array"
   }
-  if (/\s/.test(arg)) {
-    return "whitespace is not allowed"
-  }
-  if (/[$`"';|&()<>]/.test(arg)) {
-    return "shell metacharacters are not allowed"
-  }
-  if (/refs\//i.test(arg)) {
-    return "refs/ is not allowed"
-  }
-  if (/^(?:main|master|integration\/[a-z0-9._/-]+)$/i.test(arg)) {
-    return "mutable branch tokens are not allowed"
-  }
-  if (/\borigin\b/i.test(arg)) {
-    return "origin is not allowed"
-  }
-  if (/\bHEAD(?:[~^]\d*)?\b/i.test(arg)) {
-    return "HEAD references are not allowed"
-  }
-  if (/\/tree\//i.test(arg)) {
-    return "/tree/ references are not allowed"
-  }
-  if (/^[0-9a-f]{7,39}$/i.test(arg)) {
-    return "short commit SHAs are not allowed"
-  }
-  if (packageVersionSpecRegex.test(arg)) {
-    return "@-versioned package specs are not allowed"
-  }
-  if (bareNpmRangeOrTagRegex.test(arg)) {
-    return "bare npm ranges or tags are not allowed"
-  }
-  return null
 }
 
 const packageVersionSpecRegex =
   /(?:^|[^\w@./-])(?:@[a-z0-9._-]+\/)?[a-z0-9._-]+@(?:latest|next|beta|alpha|rc|canary|dev|nightly|experimental|stable|[\^~]?\d+(?:\.\d+){0,2}(?:[-+][0-9a-z.-]+)?|\*|[xX]|v?\d+\.\d+\.\d+(?:[-+][0-9a-z.-]+)?)(?=$|[^\w.-])/i
 const bareNpmRangeOrTagRegex =
   /^(?:latest|next|beta|alpha|rc|canary|dev|nightly|experimental|stable|[\^~]\d+(?:\.\d+){0,2}(?:[-+][0-9a-z.-]+)?|\*|[xX]|\d+(?:\.\d+){0,2}|v\d+\.\d+\.\d+(?:[-+][0-9a-z.-]+)?)$/i
-
-function isAllowedNpxLocalBin(packageName, binary) {
-  return allowedNpxLocalBins.some(
-    (entry) => entry.packageName === packageName && entry.binary === binary
-  )
-}
 
 function packageJsonDependencySpec(packageJson, packageName) {
   for (const section of [
@@ -1518,10 +1494,13 @@ function mutableReferenceLabel(value) {
     lower === "head" ||
     lower === "main" ||
     lower === "master" ||
+    lower === "origin" ||
     lower.startsWith("origin/") ||
     lower.startsWith("refs/heads/") ||
     lower.startsWith("refs/remotes/") ||
     lower.startsWith("refs/tags/latest") ||
+    /^head(?:[~^]\d*)?$/i.test(trimmed) ||
+    /^[0-9a-f]{7,39}$/i.test(trimmed) ||
     /^integration\/[a-z0-9._/-]+$/i.test(trimmed)
   ) {
     return trimmed
@@ -1541,6 +1520,8 @@ function embeddedMutableReferenceLabel(value) {
   const packageName = String.raw`(?:@[a-z0-9._-]+\/)?[a-z0-9._-]+`
   const mutableDistTag = String.raw`(?:latest|next|beta|alpha|rc|canary|dev|nightly|experimental|stable)`
   const mutableSemverRange = String.raw`(?:[\^~]\d+(?:\.\d+){0,2}(?:[-+][0-9a-z.-]+)?|\*|[xX]|\d+(?:\.(?:[xX]|\*))+(?:[-+][0-9a-z.-]+)?|\d+(?:\.\d+)?)`
+  const gitRefTail = "[^\\s\"'`,;:)\\]}]+"
+  const mutableTreeRef = String.raw`(?:main|master|head|origin|origin\/${gitRefTail}|refs\/(?:heads|remotes)\/${gitRefTail}|refs\/tags\/latest(?:\/${gitRefTail})?|integration\/[a-z0-9._/-]+)`
 
   const embeddedPackageRef = new RegExp(
     `${tokenBoundary}(${packageName}@(?:${mutableDistTag}|${mutableSemverRange}))${tokenEnd}`,
@@ -1551,14 +1532,22 @@ function embeddedMutableReferenceLabel(value) {
     return packageRefMatch[1]
   }
 
-  const gitRefTail = "[^\\s\"'`,;:)\\]}]+"
   const embeddedGitRef = new RegExp(
-    `${tokenBoundary}((?:origin|refs\\/(?:heads|remotes|tags))\\/${gitRefTail}|integration\\/[a-z0-9._/-]+)${tokenEnd}`,
+    `${tokenBoundary}((?:origin|refs\\/(?:heads|remotes|tags))\\/${gitRefTail}|integration\\/[a-z0-9._/-]+|origin|HEAD(?:[~^]\\d*)?|[0-9a-f]{7,39})${tokenEnd}`,
     "i"
   )
   const gitRefMatch = value.match(embeddedGitRef)
   if (gitRefMatch) {
     return gitRefMatch[1]
+  }
+
+  const embeddedTreeRef = new RegExp(
+    `/tree/(${mutableTreeRef})(?=$|[/?#])`,
+    "i"
+  )
+  const treeRefMatch = value.match(embeddedTreeRef)
+  if (treeRefMatch) {
+    return treeRefMatch[1]
   }
 
   return null

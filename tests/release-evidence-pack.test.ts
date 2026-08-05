@@ -442,7 +442,7 @@ test("MON-49 verifier rejects historical bypass strings by structured command po
       assert.equal(argsResult.status, "BLOCKED", `args: ${bypass}`)
       assert.match(
         joinedReasons(argsResult),
-        /verificationCommands\[0\]\.args\[0\] must be a static literal argument/,
+        /verificationCommands\[0\]\.args must exactly match \[\]/,
         `args: ${bypass}`
       )
 
@@ -472,6 +472,98 @@ test("MON-49 verifier rejects historical bypass strings by structured command po
         joinedReasons(binaryResult),
         /verificationCommands\[1\]\.packageName\/binary pair must be allow-listed/,
         `binary: ${bypass}`
+      )
+    }
+  } finally {
+    rmSync(frontendRoot, { force: true, recursive: true })
+    rmSync(backendRoot, { force: true, recursive: true })
+  }
+})
+
+test("MON-49 verifier rejects behavior-changing args for allow-listed commands", () => {
+  const { backendRoot, frontendRoot, pack } = completeSyntheticPack()
+
+  try {
+    const probes = [
+      {
+        name: "npx args replace typecheck with --help",
+        mutate(probePack: EvidencePack) {
+          probePack.verificationCommands[1].args = ["--help"]
+        },
+        expected:
+          /verificationCommands\[1\]\.args must exactly match \["--noEmit"\]/
+      },
+      {
+        name: "npx args point at alternate project",
+        mutate(probePack: EvidencePack) {
+          probePack.verificationCommands[1].args = [
+            "--project",
+            "tsconfig.attacker.json"
+          ]
+        },
+        expected:
+          /verificationCommands\[1\]\.args must exactly match \["--noEmit"\]/
+      },
+      {
+        name: "npm evidence:verify args override pack",
+        mutate(probePack: EvidencePack) {
+          probePack.verificationCommands[0].script = "evidence:verify"
+          probePack.verificationCommands[0].args = [
+            "--pack",
+            "attacker.json"
+          ]
+        },
+        expected: /verificationCommands\[0\]\.args must exactly match \[\]/
+      },
+      {
+        name: "npm test args add --eval",
+        mutate(probePack: EvidencePack) {
+          probePack.verificationCommands[0].args = ["--eval"]
+        },
+        expected: /verificationCommands\[0\]\.args must exactly match \[\]/
+      }
+    ]
+
+    for (const probe of probes) {
+      const probePack = structuredClone(pack)
+      probe.mutate(probePack)
+
+      const result = verify(probePack, frontendRoot, backendRoot)
+
+      assert.equal(result.status, "BLOCKED", probe.name)
+      assert.match(joinedReasons(result), probe.expected, probe.name)
+    }
+  } finally {
+    rmSync(frontendRoot, { force: true, recursive: true })
+    rmSync(backendRoot, { force: true, recursive: true })
+  }
+})
+
+test("MON-49 verifier rejects historical mutable refs in evidence metadata labels", () => {
+  const { backendRoot, frontendRoot, pack } = completeSyntheticPack()
+  const labelBypasses = [
+    "HEAD~1",
+    "HEAD^",
+    "0123456",
+    "origin",
+    "https://github.com/mongocyber/aviso/tree/main",
+    "tool@latest"
+  ]
+
+  try {
+    for (const bypass of labelBypasses) {
+      const labelPack = structuredClone(pack)
+      labelPack.verificationCommands[0].evidenceRefs[0].label = bypass
+
+      const result = verify(labelPack, frontendRoot, backendRoot)
+
+      assert.equal(result.status, "BLOCKED", `label: ${bypass}`)
+      assert.match(
+        joinedReasons(result),
+        new RegExp(
+          `\\$\\.verificationCommands\\[0\\]\\.evidenceRefs\\[0\\]\\.label mutable reference`
+        ),
+        `label: ${bypass}`
       )
     }
   } finally {

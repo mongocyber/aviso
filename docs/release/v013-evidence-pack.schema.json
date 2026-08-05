@@ -239,16 +239,203 @@
               "const": "npm-script"
             },
             "script": {
-              "enum": [
-                "supply-chain:check",
-                "test",
-                "docs:check",
-                "verify:release-candidate",
-                "evidence:verify"
-              ]
+              "const": "supply-chain:check"
             },
             "args": {
-              "$ref": "#/$defs/commandArgs"
+              "const": [],
+              "type": "array"
+            },
+            "packageJsonRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "packageLockRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "exitCode": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fileEvidence"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "kind",
+            "script",
+            "args",
+            "packageJsonRef",
+            "packageLockRef",
+            "exitCode",
+            "evidenceRefs"
+          ],
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "npm-script"
+            },
+            "script": {
+              "const": "test"
+            },
+            "args": {
+              "const": [],
+              "type": "array"
+            },
+            "packageJsonRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "packageLockRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "exitCode": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fileEvidence"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "kind",
+            "script",
+            "args",
+            "packageJsonRef",
+            "packageLockRef",
+            "exitCode",
+            "evidenceRefs"
+          ],
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "npm-script"
+            },
+            "script": {
+              "const": "docs:check"
+            },
+            "args": {
+              "const": [],
+              "type": "array"
+            },
+            "packageJsonRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "packageLockRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "exitCode": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fileEvidence"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "kind",
+            "script",
+            "args",
+            "packageJsonRef",
+            "packageLockRef",
+            "exitCode",
+            "evidenceRefs"
+          ],
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "npm-script"
+            },
+            "script": {
+              "const": "verify:release-candidate"
+            },
+            "args": {
+              "const": [],
+              "type": "array"
+            },
+            "packageJsonRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "packageLockRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "exitCode": {
+              "type": [
+                "integer",
+                "null"
+              ]
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fileEvidence"
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "kind",
+            "script",
+            "args",
+            "packageJsonRef",
+            "packageLockRef",
+            "exitCode",
+            "evidenceRefs"
+          ],
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "npm-script"
+            },
+            "script": {
+              "const": "evidence:verify"
+            },
+            "args": {
+              "const": [],
+              "type": "array"
             },
             "packageJsonRef": {
               "$ref": "#/$defs/fileEvidence"
@@ -294,21 +481,20 @@
               "const": "npx-local-bin"
             },
             "packageName": {
-              "enum": [
-                "typescript"
-              ]
+              "const": "typescript"
             },
             "binary": {
-              "enum": [
-                "tsc"
-              ]
+              "const": "tsc"
             },
             "version": {
               "type": "string",
               "minLength": 1
             },
             "args": {
-              "$ref": "#/$defs/commandArgs"
+              "const": [
+                "--noEmit"
+              ],
+              "type": "array"
             },
             "packageJsonRef": {
               "$ref": "#/$defs/fileEvidence"
@@ -331,12 +517,6 @@
           }
         }
       ]
-    },
-    "commandArgs": {
-      "type": "array",
-      "items": {
-        "type": "string"
-      }
     },
     "evidenceGate": {
       "type": "object",
