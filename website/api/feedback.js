@@ -8,9 +8,41 @@ const CATEGORY_LABELS = {
   install: "Install help",
   privacy: "Privacy"
 };
+const VALID_TRIGGER_METHODS = new Set([
+  "right_click",
+  "selection_toolbar",
+  "selection_translation_card",
+  "double_click_quick_menu",
+  "command_palette",
+  "clipboard_prompt",
+  "in_page_result_panel",
+  "popup",
+  "install_setup",
+  "website_docs",
+  "other"
+]);
+const TRIGGER_METHOD_LABELS = {
+  right_click: "Right-click menu",
+  selection_toolbar: "Selection toolbar",
+  selection_translation_card: "Selection translation card",
+  double_click_quick_menu: "Double-click quick menu",
+  command_palette: "Command palette",
+  clipboard_prompt: "Clipboard prompt",
+  in_page_result_panel: "In-page result panel",
+  popup: "Popup",
+  install_setup: "Install/setup",
+  website_docs: "Website/docs",
+  other: "Other"
+};
+const VALID_PROVIDER_PATHS = new Set(["byok", "hosted_candidate", "unknown"]);
+const PROVIDER_PATH_LABELS = {
+  byok: "BYOK direct-provider",
+  hosted_candidate: "Hosted candidate",
+  unknown: "Unknown / not relevant"
+};
 const VALID_IMAGE_TYPES = new Set(["image/png", "image/jpeg"]);
 const PNG_SIGNATURE = Buffer.from("89504e470d0a1a0a", "hex");
-const ZERO_WIDTH_CHARS = /[\u200B-\u200D\uFEFF]/g;
+const ZERO_WIDTH_CHARS = /[\u200B-\u200D\u2060\uFEFF]/g;
 const CONFUSABLE_LABEL_CHARS = new Map([
   ["Α", "A"], ["А", "A"], ["α", "a"], ["а", "a"],
   ["С", "C"], ["Ϲ", "C"], ["с", "c"], ["ϲ", "c"],
@@ -71,6 +103,14 @@ function normalize(value, maxLength) {
   return value.trim().slice(0, maxLength);
 }
 
+function normalizeOptionalEnum(value, validValues, fallback) {
+  const normalized = normalize(value, 80);
+  if (!normalized) {
+    return fallback;
+  }
+  return validValues.has(normalized) ? normalized : "";
+}
+
 function isValidEmail(value) {
   if (!value) {
     return true;
@@ -121,6 +161,28 @@ function containsSensitiveFeedbackContent(value) {
   }
 
   return SENSITIVE_FEEDBACK_PATTERNS.some((pattern) => pattern.test(normalized));
+}
+
+function normalizeStructuredText(value, maxLength) {
+  const normalized = normalize(value, maxLength);
+  if (!normalized) {
+    return {
+      needsRedaction: false,
+      value: ""
+    };
+  }
+
+  if (containsSensitiveFeedbackContent(normalized)) {
+    return {
+      needsRedaction: true,
+      value: ""
+    };
+  }
+
+  return {
+    needsRedaction: false,
+    value: normalized
+  };
 }
 
 function escapeHtml(value) {
@@ -316,16 +378,32 @@ function normalizeAttachments(value) {
 
 function subjectFromPayload(payload) {
   const label = CATEGORY_LABELS[payload.category] || "General";
-  return `[Aviso feedback] ${label || "New feedback"}`;
+  const triggerLabel = TRIGGER_METHOD_LABELS[payload.triggerMethod] || "Other";
+  return `[Aviso feedback] ${label || "New feedback"} / ${triggerLabel}`;
 }
 
 function buildMessage(payload) {
   const rows = [
     ["Category", payload.categoryLabel || payload.category || "Not selected"],
+    ["Trigger method", payload.triggerMethodLabel || payload.triggerMethod || "Not selected"],
+    ["Chrome version", payload.chromeVersion || "Not provided"],
+    ["Operating system", payload.os || "Not provided"],
+    ["Aviso version", payload.avisoVersion || "Not provided"],
+    ["Provider path", payload.providerPathLabel || "Unknown / not relevant"],
+    ["Provider/model", payload.providerModel || "Not provided"],
     ["Email", payload.email || "Not provided"],
     ["Locale", payload.locale || "Not provided"],
-    ["Images", payload.attachmentCount ? `${payload.attachmentCount} attached` : "None"],
-    ["Description", payload.message]
+    [
+      "Optional narrative fields",
+      payload.narrativeFieldCount > 0 ? "Omitted by policy" : "Not provided"
+    ],
+    [
+      "Attachments",
+      payload.attachmentCount > 0
+        ? `Omitted by policy (${payload.attachmentCount} accepted image${payload.attachmentCount === 1 ? "" : "s"})`
+        : "Not provided"
+    ],
+    ["Redaction signal", payload.needsRedaction ? "needs_redaction" : "none"]
   ];
 
   const text = rows.map(([label, value]) => `${label}: ${value}`).join("\n\n");
@@ -344,30 +422,63 @@ function buildMessage(payload) {
 }
 
 function normalizeFeedbackPayload(body) {
-  const message = normalize(body.message || body.description, 5000);
   const email = normalize(body.email, 160);
   const locale = normalize(body.locale, 20);
   const category = VALID_CATEGORIES.has(body.category) ? body.category : "";
+  const triggerMethod = VALID_TRIGGER_METHODS.has(body.triggerMethod) ? body.triggerMethod : "";
+  const providerPath = normalizeOptionalEnum(body.providerPath, VALID_PROVIDER_PATHS, "unknown");
   const categoryLabel = CATEGORY_LABELS[category] || "General";
+  const triggerMethodLabel = TRIGGER_METHOD_LABELS[triggerMethod] || "";
+  const providerPathLabel = PROVIDER_PATH_LABELS[providerPath] || "";
+  const details = normalize(body.details || body.message || body.description, 5000);
+  const expectedResult = normalize(body.expectedResult, 1500);
+  const actualResult = normalize(body.actualResult, 1500);
+  const reproSteps = normalize(body.reproSteps, 2500);
+  const narrativeFields = [details, expectedResult, actualResult, reproSteps].filter(Boolean);
   const attachments = normalizeAttachments(body.attachments);
+  const chromeVersion = normalizeStructuredText(body.chromeVersion, 80);
+  const os = normalizeStructuredText(body.os, 80);
+  const avisoVersion = normalizeStructuredText(body.avisoVersion, 80);
+  const providerModel = normalizeStructuredText(
+    body.providerModel || [body.providerName, body.modelName].filter(Boolean).join(" / "),
+    120
+  );
+  const attachmentNameNeedsRedaction = Array.isArray(body.attachments)
+    ? body.attachments.some((item) => containsSensitiveFeedbackContent(normalize(item?.name, 120)))
+    : false;
+  const needsRedaction =
+    narrativeFields.some((value) => containsSensitiveFeedbackContent(value)) ||
+    attachmentNameNeedsRedaction ||
+    chromeVersion.needsRedaction ||
+    os.needsRedaction ||
+    avisoVersion.needsRedaction ||
+    providerModel.needsRedaction;
 
-  if (message.length < 5 || !isValidEmail(email)) {
+  if (!category || !triggerMethod || !providerPath || !isValidEmail(email)) {
     return {ok: false, reason: "invalid_input"};
-  }
-  if (containsSensitiveFeedbackContent(message) || containsSensitiveFeedbackContent(email)) {
-    return {ok: false, reason: "sensitive_content"};
   }
 
   return {
     ok: true,
     payload: {
-      message,
-      email,
-      locale,
       category,
       categoryLabel,
+      triggerMethod,
+      triggerMethodLabel,
+      chromeVersion: chromeVersion.value,
+      os: os.value,
+      avisoVersion: avisoVersion.value,
+      providerPath,
+      providerPathLabel,
+      providerModel: providerModel.value,
+      email,
+      locale,
       attachmentCount: attachments.length,
-      attachments
+      attachments: [],
+      attachmentsForwarded: false,
+      detailsForwarded: false,
+      narrativeFieldCount: narrativeFields.length,
+      needsRedaction
     }
   };
 }
@@ -442,7 +553,12 @@ async function handler(req, res) {
       return;
     }
 
-    sendJson(res, 200, {ok: true});
+    sendJson(res, 200, {
+      ok: true,
+      detailsForwarded: normalized.payload.detailsForwarded,
+      attachmentsForwarded: normalized.payload.attachmentsForwarded,
+      needs_redaction: normalized.payload.needsRedaction
+    });
   } catch {
     sendJson(res, 502, {ok: false});
   }

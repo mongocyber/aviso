@@ -1,36 +1,41 @@
 import Link from "@docusaurus/Link";
 import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Layout from "@theme/Layout";
-import {useEffect, useState, type ChangeEvent, type FormEvent, type ClipboardEvent} from "react";
+import {useEffect, useState, type FormEvent} from "react";
 
 type Lang = "zh" | "en";
 type Status = "idle" | "success" | "error";
 
 type FormState = {
   email: string;
-  message: string;
   category: string;
+  triggerMethod: string;
+  chromeVersion: string;
+  os: string;
+  avisoVersion: string;
+  providerPath: string;
+  providerModel: string;
+  expectedResult: string;
+  actualResult: string;
+  reproSteps: string;
+  details: string;
   website: string;
   startedAt: string;
 };
 
-type Attachment = {
-  id: string;
-  name: string;
-  type: string;
-  size: number;
-  data: string;
-  previewUrl: string;
-};
-
-const MAX_ATTACHMENTS = 3;
-const MAX_ATTACHMENT_BYTES = 2 * 1024 * 1024;
-const ACCEPTED_IMAGE_TYPES = new Set(["image/png", "image/jpeg"]);
-
 const initialForm: FormState = {
   email: "",
-  message: "",
   category: "",
+  triggerMethod: "",
+  chromeVersion: "",
+  os: "",
+  avisoVersion: "",
+  providerPath: "unknown",
+  providerModel: "",
+  expectedResult: "",
+  actualResult: "",
+  reproSteps: "",
+  details: "",
   website: "",
   startedAt: ""
 };
@@ -50,58 +55,126 @@ const categoryOptions = {
   ]
 } as const;
 
+const triggerMethodOptions = {
+  zh: [
+    {value: "right_click", label: "右键菜单"},
+    {value: "selection_toolbar", label: "划词工具栏"},
+    {value: "selection_translation_card", label: "划词翻译卡"},
+    {value: "double_click_quick_menu", label: "双击快捷菜单"},
+    {value: "command_palette", label: "命令面板"},
+    {value: "clipboard_prompt", label: "剪贴板提示"},
+    {value: "in_page_result_panel", label: "页面内结果面板"},
+    {value: "popup", label: "Popup"},
+    {value: "install_setup", label: "安装 / 设置"},
+    {value: "website_docs", label: "官网 / 文档"},
+    {value: "other", label: "其他"}
+  ],
+  en: [
+    {value: "right_click", label: "Right-click menu"},
+    {value: "selection_toolbar", label: "Selection toolbar"},
+    {value: "selection_translation_card", label: "Selection translation card"},
+    {value: "double_click_quick_menu", label: "Double-click quick menu"},
+    {value: "command_palette", label: "Command palette"},
+    {value: "clipboard_prompt", label: "Clipboard prompt"},
+    {value: "in_page_result_panel", label: "In-page result panel"},
+    {value: "popup", label: "Popup"},
+    {value: "install_setup", label: "Install / setup"},
+    {value: "website_docs", label: "Website / docs"},
+    {value: "other", label: "Other"}
+  ]
+} as const;
+
+const providerPathOptions = {
+  zh: [
+    {value: "unknown", label: "未知 / 不相关"},
+    {value: "byok", label: "BYOK"},
+    {value: "hosted_candidate", label: "托管候选路径"}
+  ],
+  en: [
+    {value: "unknown", label: "Unknown / not relevant"},
+    {value: "byok", label: "BYOK"},
+    {value: "hosted_candidate", label: "Hosted candidate"}
+  ]
+} as const;
+
 const copy = {
   zh: {
     title: "反馈 Aviso",
     description: "提交 Aviso 的问题、建议或安装反馈。",
     eyebrow: "支持反馈",
     heading: "告诉我们哪里需要改进",
-    lede: "写下问题描述，可以附上脱敏截图。反馈会先拦截高置信度密钥、token、私人正文和 raw prompt/response，再发送到维护者邮箱用于定位问题和后续回复。",
+    lede: "表单默认只把结构化字段发送到维护者邮箱。可选描述和截图不会默认转发；如果内容看起来有风险，提交仍会成功，但会提示需要脱敏。",
     safetyTitle: "发送前请注意",
     safetyText: "不要提交 API Key、token、私人网页正文、客户资料、未公开文档或未脱敏截图。",
     docsLink: "查看安全反馈说明",
-    message: "问题描述",
-    messagePlaceholder: "请写清楚你做了什么、预期是什么、实际发生了什么。也可以直接粘贴截图。",
-    imageHelp: "可选，最多 3 张；支持 PNG 或 JPG，每张不超过 2 MB。上传前请先脱敏。",
-    addImage: "上传图片",
-    removeImage: "移除",
-    tagsLabel: "问题类型（可选）",
+    category: "问题类型",
+    triggerMethod: "触发方式",
+    choose: "请选择",
+    chromeVersion: "Chrome 版本",
+    chromeVersionPlaceholder: "例如 126.0.6478.127",
+    os: "操作系统",
+    osPlaceholder: "例如 macOS 15 / Windows 11",
+    avisoVersion: "Aviso 版本",
+    avisoVersionPlaceholder: "例如 0.1.1",
+    providerPath: "使用路径",
+    providerModel: "Provider / 模型",
+    providerModelPlaceholder: "可选；不要填写 API Key",
+    expectedResult: "预期结果",
+    actualResult: "实际结果",
+    reproSteps: "复现步骤",
+    details: "补充说明",
+    narrativeHelp: "可选；如果看起来有风险，当前策略可能不会转发到邮件。",
+    detailsPlaceholder: "可选补充背景。请先删除密钥、私人正文和客户资料。",
+    attachmentsLabel: "截图附件",
+    attachmentsDisabled: "截图上传暂时关闭；当前邮件默认不转发附件内容。",
     email: "联系邮箱",
     emailPlaceholder: "可选；填写后便于回复",
     submit: "提交反馈",
-    submitting: "正在发送…",
-    success: "已发送。谢谢你的反馈。",
+    submitting: "正在发送...",
+    success: "已发送结构化反馈。谢谢你的反馈。",
+    successOmitted: "已发送结构化反馈。按当前策略，可选描述和附件未进入维护者邮件。",
+    successNeedsRedaction: "已发送结构化反馈。可选描述或附件可能包含敏感内容，已从维护者邮件中省略。",
     error: "发送失败。请稍后重试，或使用支持页里的备用渠道。",
-    required: "请先填写问题描述。",
-    invalidImage: "只能上传 PNG 或 JPG 图片。",
-    imageTooLarge: "单张图片不能超过 2 MB。",
-    tooManyImages: "最多上传 3 张插图。"
+    required: "请先选择问题类型和触发方式。"
   },
   en: {
     title: "Send Aviso Feedback",
     description: "Send Aviso bug reports, product feedback, or install issues.",
     eyebrow: "Support feedback",
     heading: "Tell us what needs attention",
-    lede: "Describe the issue and attach redacted screenshots if helpful. The form blocks high-confidence keys, tokens, private page bodies, and raw prompt/response dumps before emailing the maintainer for triage and replies.",
+    lede: "The form emails server-controlled structured fields by default. Optional notes and screenshots are not forwarded by default; if optional content looks risky, the submission can still succeed with a redaction notice.",
     safetyTitle: "Before sending",
     safetyText: "Do not submit API keys, tokens, private page bodies, customer data, unpublished documents, or unredacted screenshots.",
     docsLink: "Read safe feedback guidance",
-    message: "Issue description",
-    messagePlaceholder: "Describe what you did, what you expected, and what happened. You can also paste a screenshot here.",
-    imageHelp: "Optional, up to 3 images. PNG or JPG only; each image must be under 2 MB. Redact before uploading.",
-    addImage: "Upload image",
-    removeImage: "Remove",
-    tagsLabel: "Issue type (optional)",
+    category: "Issue type",
+    triggerMethod: "Trigger method",
+    choose: "Choose",
+    chromeVersion: "Chrome version",
+    chromeVersionPlaceholder: "For example 126.0.6478.127",
+    os: "Operating system",
+    osPlaceholder: "For example macOS 15 / Windows 11",
+    avisoVersion: "Aviso version",
+    avisoVersionPlaceholder: "For example 0.1.1",
+    providerPath: "Provider path",
+    providerModel: "Provider / model",
+    providerModelPlaceholder: "Optional; do not enter an API key",
+    expectedResult: "Expected result",
+    actualResult: "Actual result",
+    reproSteps: "Reproduction steps",
+    details: "Additional details",
+    narrativeHelp: "Optional; if it looks risky, current policy may keep it out of the maintainer email.",
+    detailsPlaceholder: "Optional background. Remove secrets, private page bodies, and customer data first.",
+    attachmentsLabel: "Screenshot attachments",
+    attachmentsDisabled: "Screenshot upload is temporarily disabled; current email policy does not forward attachment content by default.",
     email: "Contact email",
     emailPlaceholder: "Optional; used only if a reply is needed",
     submit: "Send feedback",
-    submitting: "Sending…",
-    success: "Sent. Thanks for the feedback.",
+    submitting: "Sending...",
+    success: "Structured feedback sent. Thanks for the feedback.",
+    successOmitted: "Structured feedback sent. Optional notes and attachments were not included in the maintainer email under current policy.",
+    successNeedsRedaction: "Structured feedback sent. Optional notes or attachments may contain sensitive content, so they were omitted from the maintainer email.",
     error: "Could not send. Please try again later or use the fallback channel on the support page.",
-    required: "Please describe the issue first.",
-    invalidImage: "Only PNG or JPG images are supported.",
-    imageTooLarge: "Each image must be under 2 MB.",
-    tooManyImages: "You can attach up to 3 images."
+    required: "Choose an issue type and trigger method first."
   }
 } as const;
 
@@ -109,57 +182,14 @@ function getLang(locale: string): Lang {
   return locale.startsWith("en") ? "en" : "zh";
 }
 
-function makeId(): string {
-  if (typeof crypto !== "undefined" && "randomUUID" in crypto) {
-    return crypto.randomUUID();
-  }
-
-  return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-}
-
-function readImage(file: File, messages: (typeof copy)[Lang]): Promise<Attachment> {
-  if (!ACCEPTED_IMAGE_TYPES.has(file.type)) {
-    return Promise.reject(new Error(messages.invalidImage));
-  }
-
-  if (file.size > MAX_ATTACHMENT_BYTES) {
-    return Promise.reject(new Error(messages.imageTooLarge));
-  }
-
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      const result = typeof reader.result === "string" ? reader.result : "";
-      const [, data = ""] = result.split(",");
-
-      if (!data) {
-        reject(new Error(messages.invalidImage));
-        return;
-      }
-
-      resolve({
-        id: makeId(),
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        data,
-        previewUrl: result
-      });
-    };
-
-    reader.onerror = () => reject(new Error(messages.invalidImage));
-    reader.readAsDataURL(file);
-  });
-}
-
 export default function FeedbackPage(): JSX.Element {
   const {i18n} = useDocusaurusContext();
   const lang = getLang(i18n.currentLocale);
   const t = copy[lang];
-  const options = categoryOptions[lang];
+  const categories = categoryOptions[lang];
+  const triggerMethods = triggerMethodOptions[lang];
+  const providerPaths = providerPathOptions[lang];
   const [form, setForm] = useState<FormState>(initialForm);
-  const [attachments, setAttachments] = useState<Attachment[]>([]);
   const [status, setStatus] = useState<{type: Status; message: string}>({
     type: "idle",
     message: ""
@@ -177,53 +207,26 @@ export default function FeedbackPage(): JSX.Element {
     setForm((current) => ({...current, [field]: value}));
   }
 
-  async function addImages(files: Iterable<File>): Promise<void> {
-    setStatus({type: "idle", message: ""});
-
-    const incoming = Array.from(files).filter((file) => file.type.startsWith("image/"));
-    const availableSlots = MAX_ATTACHMENTS - attachments.length;
-
-    if (incoming.length > availableSlots) {
-      setStatus({type: "error", message: t.tooManyImages});
+  function statusMessage(data: unknown): string {
+    if (!data || typeof data !== "object") {
+      return t.success;
     }
 
-    const selected = incoming.slice(0, Math.max(availableSlots, 0));
-
-    try {
-      const loaded = await Promise.all(selected.map((file) => readImage(file, t)));
-      if (loaded.length > 0) {
-        setAttachments((current) => [...current, ...loaded]);
-      }
-    } catch (error) {
-      setStatus({type: "error", message: error instanceof Error ? error.message : t.invalidImage});
+    const payload = data as {detailsForwarded?: boolean; needs_redaction?: boolean};
+    if (payload.needs_redaction) {
+      return t.successNeedsRedaction;
     }
-  }
-
-  function handleFileInput(event: ChangeEvent<HTMLInputElement>): void {
-    void addImages(event.target.files ?? []);
-    event.target.value = "";
-  }
-
-  function handlePaste(event: ClipboardEvent<HTMLTextAreaElement>): void {
-    const imageFiles = Array.from(event.clipboardData.files).filter((file) => file.type.startsWith("image/"));
-
-    if (imageFiles.length === 0) {
-      return;
+    if (payload.detailsForwarded === false) {
+      return t.successOmitted;
     }
-
-    event.preventDefault();
-    void addImages(imageFiles);
-  }
-
-  function removeImage(id: string): void {
-    setAttachments((current) => current.filter((item) => item.id !== id));
+    return t.success;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setStatus({type: "idle", message: ""});
 
-    if (!form.message.trim()) {
+    if (!form.category || !form.triggerMethod) {
       setStatus({type: "error", message: t.required});
       return;
     }
@@ -231,7 +234,6 @@ export default function FeedbackPage(): JSX.Element {
     setIsSubmitting(true);
 
     try {
-      const selectedCategory = options.find((option) => option.value === form.category);
       const response = await fetch("/api/feedback", {
         method: "POST",
         headers: {
@@ -239,11 +241,10 @@ export default function FeedbackPage(): JSX.Element {
         },
         body: JSON.stringify({
           ...form,
-          categoryLabel: selectedCategory?.label ?? "",
-          attachments: attachments.map(({name, type, size, data}) => ({name, type, size, data})),
           locale: lang
         })
       });
+      const data = await response.json().catch(() => ({}));
 
       if (!response.ok) {
         throw new Error("Feedback request failed");
@@ -253,8 +254,7 @@ export default function FeedbackPage(): JSX.Element {
         ...initialForm,
         startedAt: String(Date.now())
       });
-      setAttachments([]);
-      setStatus({type: "success", message: t.success});
+      setStatus({type: "success", message: statusMessage(data)});
     } catch {
       setStatus({type: "error", message: t.error});
     } finally {
@@ -288,70 +288,150 @@ export default function FeedbackPage(): JSX.Element {
               onChange={(event) => updateField("website", event.target.value)}
             />
 
-            <label className="feedback-editor">
-              <span>{t.message}</span>
-              <textarea
-                maxLength={5000}
-                placeholder={t.messagePlaceholder}
-                required
-                rows={10}
-                value={form.message}
-                onChange={(event) => updateField("message", event.target.value)}
-                onPaste={handlePaste}
-              />
-            </label>
-
-            <div className="feedback-images">
-              <div className="feedback-images-head">
-                <label className={`feedback-upload-button${attachments.length >= MAX_ATTACHMENTS ? " disabled" : ""}`}>
-                  <input
-                    accept="image/png,image/jpeg"
-                    disabled={attachments.length >= MAX_ATTACHMENTS}
-                    multiple
-                    type="file"
-                    onChange={handleFileInput}
-                  />
-                  <svg aria-hidden="true" viewBox="0 0 24 24">
-                    <path d="M12 16V4m0 0 4.5 4.5M12 4 7.5 8.5" />
-                    <path d="M5 15.5V18a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-2.5" />
-                  </svg>
-                  <span>{t.addImage}</span>
-                </label>
-                <small>{t.imageHelp}</small>
-              </div>
-              {attachments.length > 0 ? (
-                <div className="feedback-image-list">
-                  {attachments.map((item) => (
-                    <div className="feedback-image" key={item.id}>
-                      <img src={item.previewUrl} alt="" />
-                      <button type="button" onClick={() => removeImage(item.id)}>
-                        {t.removeImage}
-                      </button>
-                    </div>
+            <div className="feedback-grid feedback-grid-two">
+              <label>
+                <span>{t.category}</span>
+                <select
+                  required
+                  value={form.category}
+                  onChange={(event) => updateField("category", event.target.value)}
+                >
+                  <option value="">{t.choose}</option>
+                  {categories.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
                   ))}
-                </div>
-              ) : null}
+                </select>
+              </label>
+
+              <label>
+                <span>{t.triggerMethod}</span>
+                <select
+                  required
+                  value={form.triggerMethod}
+                  onChange={(event) => updateField("triggerMethod", event.target.value)}
+                >
+                  <option value="">{t.choose}</option>
+                  {triggerMethods.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
 
-            <div className="feedback-tags" aria-label={t.tagsLabel}>
-              <span>{t.tagsLabel}</span>
-              <div className="feedback-tag-list">
-                {options.map((option) => {
-                  const active = form.category === option.value;
+            <div className="feedback-grid feedback-grid-three">
+              <label>
+                <span>{t.chromeVersion}</span>
+                <input
+                  autoComplete="off"
+                  maxLength={80}
+                  placeholder={t.chromeVersionPlaceholder}
+                  value={form.chromeVersion}
+                  onChange={(event) => updateField("chromeVersion", event.target.value)}
+                />
+              </label>
 
-                  return (
-                    <button
-                      aria-pressed={active}
-                      className={`feedback-tag${active ? " active" : ""}`}
-                      key={option.value}
-                      type="button"
-                      onClick={() => updateField("category", active ? "" : option.value)}
-                    >
+              <label>
+                <span>{t.os}</span>
+                <input
+                  autoComplete="off"
+                  maxLength={80}
+                  placeholder={t.osPlaceholder}
+                  value={form.os}
+                  onChange={(event) => updateField("os", event.target.value)}
+                />
+              </label>
+
+              <label>
+                <span>{t.avisoVersion}</span>
+                <input
+                  autoComplete="off"
+                  maxLength={80}
+                  placeholder={t.avisoVersionPlaceholder}
+                  value={form.avisoVersion}
+                  onChange={(event) => updateField("avisoVersion", event.target.value)}
+                />
+              </label>
+            </div>
+
+            <div className="feedback-grid feedback-grid-two">
+              <label>
+                <span>{t.providerPath}</span>
+                <select
+                  value={form.providerPath}
+                  onChange={(event) => updateField("providerPath", event.target.value)}
+                >
+                  {providerPaths.map((option) => (
+                    <option key={option.value} value={option.value}>
                       {option.label}
-                    </button>
-                  );
-                })}
-              </div>
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label>
+                <span>{t.providerModel}</span>
+                <input
+                  autoComplete="off"
+                  maxLength={120}
+                  placeholder={t.providerModelPlaceholder}
+                  value={form.providerModel}
+                  onChange={(event) => updateField("providerModel", event.target.value)}
+                />
+              </label>
+            </div>
+
+            <label>
+              <span>{t.expectedResult}</span>
+              <textarea
+                maxLength={1500}
+                rows={3}
+                value={form.expectedResult}
+                onChange={(event) => updateField("expectedResult", event.target.value)}
+              />
+              <small className="feedback-field-help">{t.narrativeHelp}</small>
+            </label>
+
+            <label>
+              <span>{t.actualResult}</span>
+              <textarea
+                maxLength={1500}
+                rows={3}
+                value={form.actualResult}
+                onChange={(event) => updateField("actualResult", event.target.value)}
+              />
+              <small className="feedback-field-help">{t.narrativeHelp}</small>
+            </label>
+
+            <label>
+              <span>{t.reproSteps}</span>
+              <textarea
+                maxLength={2500}
+                rows={4}
+                value={form.reproSteps}
+                onChange={(event) => updateField("reproSteps", event.target.value)}
+              />
+              <small className="feedback-field-help">{t.narrativeHelp}</small>
+            </label>
+
+            <label className="feedback-editor">
+              <span>{t.details}</span>
+              <textarea
+                maxLength={5000}
+                placeholder={t.detailsPlaceholder}
+                rows={5}
+                value={form.details}
+                onChange={(event) => updateField("details", event.target.value)}
+              />
+              <small className="feedback-field-help">{t.narrativeHelp}</small>
+            </label>
+
+            <div className="feedback-images feedback-attachments-disabled">
+              <span>{t.attachmentsLabel}</span>
+              <small>{t.attachmentsDisabled}</small>
             </div>
 
             <label>

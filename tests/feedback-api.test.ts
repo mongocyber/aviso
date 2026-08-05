@@ -1,6 +1,6 @@
 import assert from "node:assert/strict"
-import { createRequire } from "node:module"
 import { Buffer } from "node:buffer"
+import { createRequire } from "node:module"
 import { test } from "node:test"
 
 const require = createRequire(import.meta.url)
@@ -12,121 +12,199 @@ const {
   normalizeFeedbackPayload
 } = feedbackHandler.__test
 
-test("feedback API rejects likely credentials and raw prompt or response dumps before email forwarding", () => {
-  for (const message of [
-    "The provider failed. API key: sk-proj-" + "a".repeat(48),
-    "The provider failed. API key: sk - proj - " + "a ".repeat(48),
-    "The provider failed. token is " + "b".repeat(24),
-    "The provider failed. secret：" + "c".repeat(24),
-    "Raw prompt: summarize this private customer contract",
-    "raw response: {\"customer\":\"secret\"}",
-    "Authorization: Bearer " + "b".repeat(48),
-    "-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----"
-  ]) {
-    const result = normalizeFeedbackPayload({
-      category: "bug",
-      email: "reviewer@example.com",
-      locale: "en",
-      message
-    })
+const baseStructuredPayload = {
+  category: "bug",
+  chromeVersion: "Chrome 126.0",
+  email: "reviewer@example.com",
+  locale: "en",
+  os: "macOS 15",
+  providerModel: "OpenAI / gpt-4o-mini",
+  providerPath: "byok",
+  triggerMethod: "right_click",
+  avisoVersion: "0.1.1"
+}
 
-    assert.deepEqual(result, {
-      ok: false,
-      reason: "sensitive_content"
-    })
-  }
-})
-
-test("feedback API rejects normalized generic secret label bypass variants", () => {
-  for (const message of [
-    "The provider failed. a p i   key — " + "a".repeat(24),
-    "The provider failed. token -> " + "b".repeat(24),
-    "The provider failed. token / " + "c".repeat(24),
-    "The provider failed. secret equals word " + "d".repeat(24),
-    "The provider failed. tοken: " + "e".repeat(24),
-    "The provider failed. ｔｏｋｅｎ: " + "f".repeat(24),
-    "The provider failed. s e c r e t ≔ " + "g".repeat(24),
-    "The provider failed. api_key ~= " + "h".repeat(24),
-    "The provider failed. authorization • Bearer " + "i".repeat(24)
-  ]) {
-    const result = normalizeFeedbackPayload({
-      category: "bug",
-      email: "reviewer@example.com",
-      locale: "en",
-      message
-    })
-
-    assert.deepEqual(result, {
-      ok: false,
-      reason: "sensitive_content"
-    })
-  }
-})
-
-test("feedback API rejects English private-content markers before email forwarding", () => {
-  for (const message of [
-    "Private page body: customer contract terms and pricing",
-    "Private page body - copied internal document text",
-    "private webpage body: customer contract terms and pricing",
-    "Customer data: alice@example.com account notes",
-    "Customer data - alice@example.com account notes",
-    "Raw prompt - summarize this private customer contract",
-    "Unpublished document: roadmap draft"
-  ]) {
-    const result = normalizeFeedbackPayload({
-      category: "privacy",
-      email: "reviewer@example.com",
-      locale: "en",
-      message
-    })
-
-    assert.deepEqual(result, {
-      ok: false,
-      reason: "sensitive_content"
-    })
-  }
-})
-
-test("feedback API accepts normal feedback with sensitive-sounding words", () => {
-  for (const message of [
-    "The token counter is hard to read when the sidebar is narrow.",
-    "The onboarding copy has a nice secret sauce but the install button wraps.",
-    "The API key setup docs should mention where users can find the button.",
-    "The authorization wording is confusing in the privacy section."
-  ]) {
-    const result = normalizeFeedbackPayload({
-      category: "idea",
-      email: "reviewer@example.com",
-      locale: "en",
-      message
-    })
-
-    assert.equal(result.ok, true)
-  }
-})
-
-test("feedback email subject does not echo user issue text or private page details", () => {
+test("feedback API accepts structured submissions and builds maintainer email from structured fields only", () => {
   const normalized = normalizeFeedbackPayload({
-    category: "bug",
-    categoryLabel: "Private customer contract page",
-    email: "reviewer@example.com",
-    locale: "en",
-    message: "Private customer contract page failed on admin.example/private"
+    ...baseStructuredPayload,
+    actualResult: "The panel showed a private customer contract from admin.example.",
+    details: "Raw provider response: {\"secret\":\"do not forward\"}",
+    expectedResult: "The result should stay private.",
+    reproSteps: "Open the unpublished document and use the right-click action."
   })
 
   assert.equal(normalized.ok, true)
+  assert.equal(normalized.payload.detailsForwarded, false)
+  assert.equal(normalized.payload.needsRedaction, true)
+
   const body = buildResendBody(normalized.payload, {
     from: "Aviso Feedback <feedback@example.com>",
     to: "maintainer@example.com"
   })
+  const serialized = JSON.stringify(body)
 
-  assert.equal(body.subject, "[Aviso feedback] Bug")
-  assert.doesNotMatch(body.subject, /Private customer|admin\.example|contract/i)
-  assert.equal(body.text.startsWith("Category: Bug"), true)
-  assert.match(body.text, /Private customer contract page failed/)
+  assert.equal(body.subject, "[Aviso feedback] Bug / Right-click menu")
+  assert.match(body.text, /Category: Bug/)
+  assert.match(body.text, /Trigger method: Right-click menu/)
+  assert.match(body.text, /Chrome version: Chrome 126\.0/)
+  assert.match(body.text, /Provider path: BYOK direct-provider/)
+  assert.match(body.text, /Provider\/model: OpenAI \/ gpt-4o-mini/)
+  assert.match(body.text, /Optional narrative fields: Omitted by policy/)
+  assert.doesNotMatch(serialized, /private customer contract/i)
+  assert.doesNotMatch(serialized, /Raw provider response/i)
+  assert.doesNotMatch(serialized, /unpublished document/i)
+  assert.deepEqual(body.attachments, [])
 })
 
-test("feedback image normalization strips PNG metadata before forwarding attachments", () => {
+test("feedback API preserves legacy message and description as omitted details", () => {
+  for (const legacyField of ["message", "description"]) {
+    const normalized = normalizeFeedbackPayload({
+      ...baseStructuredPayload,
+      [legacyField]: `Legacy ${legacyField} field with token -> ${"a".repeat(24)}`
+    })
+
+    assert.equal(normalized.ok, true)
+    assert.equal(normalized.payload.detailsForwarded, false)
+    assert.equal(normalized.payload.needsRedaction, true)
+
+    const body = buildResendBody(normalized.payload, {
+      from: "Aviso Feedback <feedback@example.com>",
+      to: "maintainer@example.com"
+    })
+
+    assert.doesNotMatch(JSON.stringify(body), new RegExp(`Legacy ${legacyField} field`))
+  }
+})
+
+test("feedback email property: generated raw detail variants never reach Resend body", () => {
+  for (const rawDetails of generatedSensitiveDetailCorpus()) {
+    const normalized = normalizeFeedbackPayload({
+      ...baseStructuredPayload,
+      actualResult: rawDetails,
+      details: rawDetails,
+      expectedResult: rawDetails,
+      reproSteps: rawDetails
+    })
+
+    assert.equal(normalized.ok, true)
+    const body = buildResendBody(normalized.payload, {
+      from: "Aviso Feedback <feedback@example.com>",
+      to: "maintainer@example.com"
+    })
+    const serialized = JSON.stringify(body)
+
+    assert.doesNotMatch(serialized, literalPattern(rawDetails))
+    assert.doesNotMatch(serialized, /sk-proj-|Bearer|PRIVATE KEY|customer-secret-value/i)
+    assert.deepEqual(body.attachments, [])
+  }
+})
+
+test("feedback email property: raw attachment bytes are omitted from Resend body by policy", () => {
+  const rawAttachmentBytes = Buffer.from("RAW_ATTACHMENT_BYTES_DO_NOT_FORWARD customer-secret-value", "utf8")
+  const attachment = minimalPng(rawAttachmentBytes)
+  const normalized = normalizeFeedbackPayload({
+    ...baseStructuredPayload,
+    attachments: [
+      {
+        data: attachment.toString("base64"),
+        name: "redacted-screenshot.png",
+        size: attachment.byteLength,
+        type: "image/png"
+      }
+    ],
+    details: "Screenshot attached after redaction."
+  })
+
+  assert.equal(normalized.ok, true)
+  assert.equal(normalized.payload.attachmentCount, 1)
+  assert.equal(normalized.payload.attachmentsForwarded, false)
+
+  const body = buildResendBody(normalized.payload, {
+    from: "Aviso Feedback <feedback@example.com>",
+    to: "maintainer@example.com"
+  })
+  const serialized = JSON.stringify(body)
+
+  assert.deepEqual(body.attachments, [])
+  assert.doesNotMatch(serialized, /RAW_ATTACHMENT_BYTES_DO_NOT_FORWARD/)
+  assert.doesNotMatch(serialized, new RegExp(attachment.toString("base64").slice(0, 24)))
+})
+
+test("feedback API validates structured enums and email without requiring free-text details", () => {
+  assert.equal(normalizeFeedbackPayload(baseStructuredPayload).ok, true)
+
+  for (const patch of [
+    {category: "billing"},
+    {triggerMethod: "toolbar"},
+    {providerPath: "hosted-live"},
+    {email: "not-an-email"}
+  ]) {
+    const normalized = normalizeFeedbackPayload({
+      ...baseStructuredPayload,
+      ...patch
+    })
+
+    assert.deepEqual(normalized, {
+      ok: false,
+      reason: "invalid_input"
+    })
+  }
+})
+
+test("feedback API returns success with detailsForwarded false when risky details are omitted", async () => {
+  const previousFetch = global.fetch
+  const previousEnv = {
+    FEEDBACK_FROM_EMAIL: process.env.FEEDBACK_FROM_EMAIL,
+    FEEDBACK_TO_EMAIL: process.env.FEEDBACK_TO_EMAIL,
+    RESEND_API_KEY: process.env.RESEND_API_KEY
+  }
+  let resendRequestBody = ""
+
+  process.env.FEEDBACK_FROM_EMAIL = "Aviso Feedback <feedback@example.com>"
+  process.env.FEEDBACK_TO_EMAIL = "maintainer@example.com"
+  process.env.RESEND_API_KEY = "test_resend_key"
+  global.fetch = async (_url, init) => {
+    resendRequestBody = String(init?.body ?? "")
+    return new Response("{}", {status: 200})
+  }
+
+  try {
+    const res = createJsonResponse()
+    await feedbackHandler(
+      {
+        body: {
+          ...baseStructuredPayload,
+          attachments: [
+            {
+              data: minimalPng(Buffer.from("RAW_ATTACHMENT_BYTES_DO_NOT_FORWARD", "utf8")).toString("base64"),
+              name: "redacted-screenshot.png",
+              size: 128,
+              type: "image/png"
+            }
+          ],
+          details: `authorization equals Bearer ${"b".repeat(48)}`
+        },
+        method: "POST"
+      },
+      res
+    )
+
+    assert.equal(res.statusCode, 200)
+    assert.deepEqual(JSON.parse(res.body), {
+      ok: true,
+      detailsForwarded: false,
+      attachmentsForwarded: false,
+      needs_redaction: true
+    })
+    assert.doesNotMatch(resendRequestBody, /authorization equals|Bearer|RAW_ATTACHMENT_BYTES_DO_NOT_FORWARD/i)
+    assert.deepEqual(JSON.parse(resendRequestBody).attachments, [])
+  } finally {
+    global.fetch = previousFetch
+    restoreEnv(previousEnv)
+  }
+})
+
+test("feedback image normalization strips PNG metadata before forwarding attachments when called directly", () => {
   const metadataText = "private unpublished roadmap"
   const png = Buffer.concat([
     Buffer.from("89504e470d0a1a0a", "hex"),
@@ -153,7 +231,7 @@ test("feedback image normalization strips PNG metadata before forwarding attachm
   assert.equal(attachments[0].content_type, "image/png")
 })
 
-test("feedback image normalization strips JPEG APP and COM metadata while preserving structure", () => {
+test("feedback image normalization strips JPEG APP and COM metadata while preserving structure when called directly", () => {
   const app1 = Buffer.from("Exif\0private exif metadata", "utf8")
   const app2 = Buffer.from("ICC_PROFILE\0private app2 metadata", "utf8")
   const app13 = Buffer.from("Photoshop 3.0\0private iptc metadata", "utf8")
@@ -194,6 +272,78 @@ test("feedback image normalization strips JPEG APP and COM metadata while preser
   assert.deepEqual([...forwarded.subarray(-2)], [0xff, 0xd9])
   assert.equal(attachments[0].content_type, "image/jpeg")
 })
+
+function generatedSensitiveDetailCorpus(): string[] {
+  const values = new Set<string>()
+  const labels = [
+    "API key",
+    "api_key",
+    "a p i key",
+    "token",
+    "tοken",
+    "ｔｏｋｅｎ",
+    "to\u0301ken",
+    "t\u200bo\u2060k\u200de\ufeffn",
+    "secret",
+    "authorization"
+  ]
+  const connectors = [":", "：", " - ", " — ", " -> ", " = ", " equals ", " ≔ "]
+  const candidates = [
+    `sk-proj-${"a".repeat(48)}`,
+    `Bearer ${"b".repeat(48)}`,
+    "customer-secret-value-1234567890",
+    "-----BEGIN PRIVATE KEY-----\nabc\n-----END PRIVATE KEY-----"
+  ]
+
+  for (const label of labels) {
+    for (const connector of connectors) {
+      for (const candidate of candidates) {
+        values.add(`${label}${connector}${candidate}`)
+        values.add(`${label.toUpperCase()}${connector}${candidate}`)
+      }
+    }
+  }
+  values.add("Private page body: copied internal document text")
+  values.add("Customer data - alice@example.com account notes")
+  values.add("Raw prompt - summarize this private customer contract")
+  values.add("Unpublished document: roadmap draft")
+
+  return [...values]
+}
+
+function literalPattern(value: string): RegExp {
+  return new RegExp(value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+}
+
+function createJsonResponse(): {body: string; statusCode: number; setHeader(name: string, value: string): void; end(chunk: string): void} {
+  return {
+    body: "",
+    statusCode: 0,
+    setHeader() {},
+    end(chunk: string) {
+      this.body = chunk
+    }
+  }
+}
+
+function restoreEnv(previous: Record<string, string | undefined>): void {
+  for (const [key, value] of Object.entries(previous)) {
+    if (value === undefined) {
+      delete process.env[key]
+    } else {
+      process.env[key] = value
+    }
+  }
+}
+
+function minimalPng(idat: Buffer): Buffer {
+  return Buffer.concat([
+    Buffer.from("89504e470d0a1a0a", "hex"),
+    pngChunk("IHDR", Buffer.from([0, 0, 0, 1, 0, 0, 0, 1, 8, 6, 0, 0, 0])),
+    pngChunk("IDAT", idat),
+    pngChunk("IEND", Buffer.alloc(0))
+  ])
+}
 
 function pngChunk(type: string, data: Buffer): Buffer {
   const out = Buffer.alloc(12 + data.length)

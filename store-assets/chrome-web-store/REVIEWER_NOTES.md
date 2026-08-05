@@ -36,7 +36,7 @@ Creem billing is test-mode/local-fixture-gated for this candidate. The frontend 
 
 ## Feedback And Evidence Notes
 
-The website feedback form is a separate website email channel, not extension telemetry. The V013 hardening rejects high-confidence API keys, bearer tokens, private-key blocks, private page body markers, and original model input/output dumps before email forwarding; accepted PNG/JPEG attachments are metadata-stripped before forwarding. Evidence in this repository must stay summary-only and must not include credentials, private content, original model input/output, private page bodies, screenshot/base64 payloads, full URLs, or clipboard content.
+The website feedback form is a separate website email channel, not extension telemetry. The V013 hardening uses structured email-only ingestion by default: maintainer emails are built from issue type, trigger method, runtime facts, provider path, optional provider/model name, optional contact email, locale, and redaction/omission signals. Optional free-text details and attachment content are omitted from maintainer emails by default; risky-looking optional content returns a redaction signal instead of silently rejecting valid structured submissions. PNG/JPEG metadata stripping and sensitive-content detection remain as safety signals, not as the sole boundary for forwarding raw text. Evidence in this repository must stay summary-only and must not include credentials, private content, original model input/output, private page bodies, screenshot/base64 payloads, full URLs, or clipboard content.
 
 ## Asset Notes
 

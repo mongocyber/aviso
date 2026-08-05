@@ -10,7 +10,7 @@ Updated: 2026-08-01
 
 Scope note: this file is the Chrome Web Store listing copy source for owner final validation. It describes the current package boundary: BYOK direct-provider remains the default path. The optional hosted account path is candidate-only: MON-121 provides a Supabase Auth frontend foundation that remains default-disabled until a separate owner-gated activation supplies the exact Supabase origin/anon key, redirect allowlist, and manifest host permission. MON-124 adds frontend plan-status and backend-created hosted billing entry points, but Creem billing remains test-mode/local-fixture-gated and paid billing availability remains gated by `docs/STATE.md` plus backend/deployment evidence. This file does not upload the listing, prove Chrome Web Store approval, or change hosted-AI public status. Do not paste provider-name lists into the public product description; keep provider-specific wording only where it is needed for permission or reviewer explanations.
 
-Deterministic V013 reviewer notes for BYOK, Supabase, Creem, exact commits, package hashes, feedback hardening, and asset metadata live in `REVIEWER_NOTES.md`.
+Deterministic V013 reviewer notes for BYOK, Supabase, Creem, exact commits, package hashes, structured feedback hardening, and asset metadata live in `REVIEWER_NOTES.md`.
 
 ## Short Description
 

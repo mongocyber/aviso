@@ -26,7 +26,7 @@ This site contains user documentation and a website-only feedback endpoint. It d
 
 ## Feedback email settings
 
-The feedback form posts to `website/api/feedback.js`. It sends the issue description, optional contact email, optional tag, and up to three redacted PNG/JPG image attachments. The endpoint rejects high-confidence secrets/private-content markers and strips common PNG/JPG metadata before forwarding. On Vercel, configure these environment variables for the website project:
+The feedback form posts to `website/api/feedback.js`. It emails server-controlled structured fields by default: issue type, trigger method, short runtime facts, provider path, optional provider/model name, optional contact email, locale, and omission/redaction signals. Optional free-text notes and attachment content are omitted from maintainer emails by default; sensitive-content detection and PNG/JPG metadata stripping remain as safety signals. On Vercel, configure these environment variables for the website project:
 
 ```bash
 RESEND_API_KEY=<resend-api-key>
