@@ -30,11 +30,7 @@
     "generator": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "name",
-        "version",
-        "mode"
-      ],
+      "required": ["name", "version", "mode"],
       "properties": {
         "name": {
           "const": "scripts/release-evidence-pack.mjs"
@@ -51,10 +47,7 @@
     "repositories": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "frontend",
-        "backend"
-      ],
+      "required": ["frontend", "backend"],
       "properties": {
         "frontend": {
           "$ref": "#/$defs/repositoryBinding"
@@ -67,9 +60,7 @@
     "contract": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "version"
-      ],
+      "required": ["version"],
       "properties": {
         "version": {
           "const": "V013"
@@ -138,10 +129,7 @@
     "repositoryBinding": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "name",
-        "commit"
-      ],
+      "required": ["name", "commit"],
       "properties": {
         "name": {
           "type": "string",
@@ -156,22 +144,14 @@
     "fileEvidence": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "label",
-        "repository",
-        "path",
-        "sourceCommit"
-      ],
+      "required": ["label", "repository", "path", "sourceCommit"],
       "properties": {
         "label": {
           "type": "string",
           "minLength": 1
         },
         "repository": {
-          "enum": [
-            "frontend",
-            "backend"
-          ]
+          "enum": ["frontend", "backend"]
         },
         "path": {
           "type": "string",
@@ -186,10 +166,7 @@
           "type": "string"
         },
         "status": {
-          "enum": [
-            "present",
-            "missing"
-          ]
+          "enum": ["present", "missing"]
         }
       },
       "allOf": [
@@ -202,9 +179,7 @@
             }
           },
           "then": {
-            "required": [
-              "sha256"
-            ]
+            "required": ["sha256"]
           }
         }
       ]
@@ -216,46 +191,122 @@
       }
     },
     "verificationCommand": {
-      "type": "object",
-      "additionalProperties": false,
-      "required": [
-        "label",
-        "command",
-        "exitCode",
-        "evidenceRefs"
-      ],
-      "properties": {
-        "label": {
-          "type": "string",
-          "minLength": 1
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "kind",
+            "script",
+            "args",
+            "packageJsonRef",
+            "packageLockRef",
+            "exitCode",
+            "evidenceRefs"
+          ],
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "npm-script"
+            },
+            "script": {
+              "enum": [
+                "supply-chain:check",
+                "test",
+                "docs:check",
+                "verify:release-candidate",
+                "evidence:verify"
+              ]
+            },
+            "args": {
+              "$ref": "#/$defs/commandArgs"
+            },
+            "packageJsonRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "packageLockRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "exitCode": {
+              "type": ["integer", "null"]
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fileEvidence"
+              }
+            }
+          }
         },
-        "command": {
-          "type": "string",
-          "minLength": 1
-        },
-        "exitCode": {
-          "type": [
-            "integer",
-            "null"
-          ]
-        },
-        "evidenceRefs": {
-          "type": "array",
-          "items": {
-            "$ref": "#/$defs/fileEvidence"
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "label",
+            "kind",
+            "packageName",
+            "binary",
+            "version",
+            "args",
+            "packageJsonRef",
+            "packageLockRef",
+            "exitCode",
+            "evidenceRefs"
+          ],
+          "properties": {
+            "label": {
+              "type": "string",
+              "minLength": 1
+            },
+            "kind": {
+              "const": "npx-local-bin"
+            },
+            "packageName": {
+              "enum": ["typescript"]
+            },
+            "binary": {
+              "enum": ["tsc"]
+            },
+            "version": {
+              "type": "string",
+              "minLength": 1
+            },
+            "args": {
+              "$ref": "#/$defs/commandArgs"
+            },
+            "packageJsonRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "packageLockRef": {
+              "$ref": "#/$defs/fileEvidence"
+            },
+            "exitCode": {
+              "type": ["integer", "null"]
+            },
+            "evidenceRefs": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/fileEvidence"
+              }
+            }
           }
         }
+      ]
+    },
+    "commandArgs": {
+      "type": "array",
+      "items": {
+        "type": "string"
       }
     },
     "evidenceGate": {
       "type": "object",
       "additionalProperties": false,
-      "required": [
-        "key",
-        "label",
-        "status",
-        "evidenceRefs"
-      ],
+      "required": ["key", "label", "status", "evidenceRefs"],
       "properties": {
         "key": {
           "type": "string",
@@ -276,10 +327,7 @@
           ]
         },
         "openCriticalImportantFindings": {
-          "type": [
-            "integer",
-            "null"
-          ],
+          "type": ["integer", "null"],
           "minimum": 0
         },
         "reason": {

@@ -33,7 +33,10 @@ function currentFrontendSha(): string {
   return git(repoRoot, ["rev-parse", "HEAD"])
 }
 
-function makeSyntheticRepo(name: string, files: Record<string, string>): {
+function makeSyntheticRepo(
+  name: string,
+  files: Record<string, string>
+): {
   commit: string
   root: string
 } {
@@ -60,34 +63,95 @@ function completeSyntheticPack(): {
 } {
   const frontend = makeSyntheticRepo("frontend", {
     "docs/prd.md": "# Synthetic V013 PRD fixture\n",
-    "docs/architecture/supabase-auth-migration.md": "# Synthetic V013 contract fixture\n",
-    "package.json": "{\"name\":\"synthetic-aviso\"}\n",
-    "package-lock.json": "{\"lockfileVersion\":3}\n",
-    "build/canonical-chrome-mv3-prod/manifest.json": "{\"manifest_version\":3,\"name\":\"Aviso\"}\n",
+    "docs/architecture/supabase-auth-migration.md":
+      "# Synthetic V013 contract fixture\n",
+    "package.json": `${JSON.stringify(
+      {
+        name: "synthetic-aviso",
+        version: "0.0.0",
+        scripts: {
+          "supply-chain:check": "node scripts/check-supply-chain-baseline.mjs",
+          test: "node --test",
+          "docs:check": "node scripts/check-docs.mjs --root .",
+          "verify:release-candidate":
+            "node scripts/verify-release-candidate.mjs",
+          "evidence:verify":
+            "node scripts/release-evidence-pack.mjs verify --pack build/release-evidence/v013-evidence-pack.json"
+        },
+        devDependencies: {
+          typescript: "5.3.3"
+        }
+      },
+      null,
+      2
+    )}\n`,
+    "package-lock.json": `${JSON.stringify(
+      {
+        name: "synthetic-aviso",
+        version: "0.0.0",
+        lockfileVersion: 3,
+        requires: true,
+        packages: {
+          "": {
+            name: "synthetic-aviso",
+            version: "0.0.0",
+            devDependencies: {
+              typescript: "5.3.3"
+            }
+          },
+          "node_modules/typescript": {
+            version: "5.3.3",
+            dev: true
+          }
+        }
+      },
+      null,
+      2
+    )}\n`,
+    "build/canonical-chrome-mv3-prod/manifest.json":
+      '{"manifest_version":3,"name":"Aviso"}\n',
     "build/canonical-chrome-mv3-prod.zip": "synthetic zip bytes\n",
-    "store-assets/chrome-web-store/STORE_LISTING_COPY.md": "Synthetic public copy fixture for V013.\n",
+    "store-assets/chrome-web-store/STORE_LISTING_COPY.md":
+      "Synthetic public copy fixture for V013.\n",
     "public/icon-128.png": "synthetic asset bytes\n",
-    "evidence/qa/loaded-extension.md": "Synthetic QA PASS fixture for tests only.\n",
-    "evidence/reviews/spec.md": "Synthetic independent spec review PASS fixture for tests only.\n",
+    "evidence/qa/loaded-extension.md":
+      "Synthetic QA PASS fixture for tests only.\n",
+    "evidence/reviews/spec.md":
+      "Synthetic independent spec review PASS fixture for tests only.\n",
     "evidence/reviews/security-code.md":
       "Synthetic independent security/code review PASS fixture for tests only.\n",
-    "evidence/external/cws.md": "Synthetic CWS gate PASS fixture for tests only.\n",
-    "evidence/external/owner.md": "Synthetic owner release approval PASS fixture for tests only.\n",
-    "evidence/external/supabase.md": "Synthetic Supabase migration gate PASS fixture for tests only.\n",
-    "evidence/external/creem.md": "Synthetic Creem billing gate PASS fixture for tests only.\n",
-    "evidence/commands/npm-test.log": "Synthetic command output fixture: npm test exited 0.\n"
+    "evidence/external/cws.md":
+      "Synthetic CWS gate PASS fixture for tests only.\n",
+    "evidence/external/owner.md":
+      "Synthetic owner release approval PASS fixture for tests only.\n",
+    "evidence/external/supabase.md":
+      "Synthetic Supabase migration gate PASS fixture for tests only.\n",
+    "evidence/external/creem.md":
+      "Synthetic Creem billing gate PASS fixture for tests only.\n",
+    "evidence/commands/npm-test.log":
+      "Synthetic command output fixture: npm test exited 0.\n",
+    "evidence/commands/tsc-no-emit.log":
+      "Synthetic command output fixture: npx tsc --noEmit exited 0.\n"
   })
   const backend = makeSyntheticRepo("backend", {
-    "supabase/migrations/20260804000000_v013.sql": "-- Synthetic V013 migration fixture\n",
+    "supabase/migrations/20260804000000_v013.sql":
+      "-- Synthetic V013 migration fixture\n",
     "tests/fixtures/creem/subscription-active.json":
-      "{\"fixture\":\"synthetic-creem-adapter-pass\"}\n"
+      '{"fixture":"synthetic-creem-adapter-pass"}\n'
   })
 
-  const commandEvidenceRef = {
+  const npmTestEvidenceRef = {
     label: "synthetic npm test output",
     repository: "frontend" as const,
     path: "evidence/commands/npm-test.log",
     sha256: hashFile(join(frontend.root, "evidence/commands/npm-test.log")),
+    sourceCommit: frontend.commit
+  }
+  const typecheckEvidenceRef = {
+    label: "synthetic typecheck output",
+    repository: "frontend" as const,
+    path: "evidence/commands/tsc-no-emit.log",
+    sha256: hashFile(join(frontend.root, "evidence/commands/tsc-no-emit.log")),
     sourceCommit: frontend.commit
   }
 
@@ -200,9 +264,21 @@ function completeSyntheticPack(): {
     verificationCommands: [
       {
         label: "Synthetic npm test",
-        command: "npm test",
+        kind: "npm-script",
+        script: "test",
+        args: [],
         exitCode: 0,
-        evidenceRefs: [commandEvidenceRef]
+        evidenceRefs: [npmTestEvidenceRef]
+      },
+      {
+        label: "Synthetic local typecheck",
+        kind: "npx-local-bin",
+        packageName: "typescript",
+        binary: "tsc",
+        version: "5.3.3",
+        args: ["--noEmit"],
+        exitCode: 0,
+        evidenceRefs: [typecheckEvidenceRef]
       }
     ]
   })
@@ -210,7 +286,11 @@ function completeSyntheticPack(): {
   return { backendRoot: backend.root, frontendRoot: frontend.root, pack }
 }
 
-function verify(pack: EvidencePack, frontendRoot: string, backendRoot?: string): EvidencePackVerificationResult {
+function verify(
+  pack: EvidencePack,
+  frontendRoot: string,
+  backendRoot?: string
+): EvidencePackVerificationResult {
   return verifyEvidencePack(pack, {
     roots: {
       backend: backendRoot,
@@ -224,7 +304,9 @@ function joinedReasons(result: EvidencePackVerificationResult): string {
 }
 
 test("MON-49 package evidence scripts bind the current candidate defaults", () => {
-  const packageJson = JSON.parse(readFileSync(join(repoRoot, "package.json"), "utf8"))
+  const packageJson = JSON.parse(
+    readFileSync(join(repoRoot, "package.json"), "utf8")
+  )
 
   assert.equal(
     packageJson.scripts["evidence:generate"],
@@ -248,13 +330,25 @@ test("MON-49 verifier blocks the current real V013 candidate while required exte
 
   assert.equal(result.status, "BLOCKED")
   assert.match(joinedReasons(result), /repositories\.backend\.root is required/)
-  assert.match(joinedReasons(result), /supabaseMigrations must include at least one/)
-  assert.match(joinedReasons(result), /creemAdapterFixtures must include at least one/)
-  assert.match(joinedReasons(result), /externalGates\.independentSpecReview must be passed or waived/)
-  assert.match(joinedReasons(result), /qaEvidence\.loadedExtensionQa must be passed or waived/)
+  assert.match(
+    joinedReasons(result),
+    /supabaseMigrations must include at least one/
+  )
+  assert.match(
+    joinedReasons(result),
+    /creemAdapterFixtures must include at least one/
+  )
+  assert.match(
+    joinedReasons(result),
+    /externalGates\.independentSpecReview must be passed or waived/
+  )
+  assert.match(
+    joinedReasons(result),
+    /qaEvidence\.loadedExtensionQa must be passed or waived/
+  )
 })
 
-test("MON-49 verifier passes only for a complete synthetic immutable fixture", () => {
+test("MON-49 verifier passes only for a complete structured immutable fixture", () => {
   const { backendRoot, frontendRoot, pack } = completeSyntheticPack()
 
   try {
@@ -262,6 +356,19 @@ test("MON-49 verifier passes only for a complete synthetic immutable fixture", (
 
     assert.equal(result.status, "PASS")
     assert.deepEqual(result.reasons, [])
+    assert.deepEqual(
+      pack.verificationCommands.map((command) => command.kind),
+      ["npm-script", "npx-local-bin"]
+    )
+    assert.equal(
+      pack.verificationCommands[0].packageJsonRef.path,
+      "package.json"
+    )
+    assert.equal(
+      pack.verificationCommands[0].packageLockRef.path,
+      "package-lock.json"
+    )
+    assert.equal(pack.verificationCommands[1].version, "5.3.3")
   } finally {
     rmSync(frontendRoot, { force: true, recursive: true })
     rmSync(backendRoot, { force: true, recursive: true })
@@ -279,65 +386,93 @@ test("MON-49 verifier rejects mutable branch/latest references even if other evi
     const result = verify(mutablePack, frontendRoot, backendRoot)
 
     assert.equal(result.status, "BLOCKED")
-    assert.match(joinedReasons(result), /repositories\.frontend\.commit must be a 40-character commit SHA/)
-    assert.match(joinedReasons(result), /mutable reference "latest" is not allowed/)
+    assert.match(
+      joinedReasons(result),
+      /repositories\.frontend\.commit must be a 40-character commit SHA/
+    )
+    assert.match(
+      joinedReasons(result),
+      /mutable reference "latest" is not allowed/
+    )
   } finally {
     rmSync(frontendRoot, { force: true, recursive: true })
     rmSync(backendRoot, { force: true, recursive: true })
   }
 })
 
-test("MON-49 verifier rejects embedded mutable references in command strings", () => {
+test("MON-49 verifier rejects historical bypass strings by structured command policy", () => {
   const { backendRoot, frontendRoot, pack } = completeSyntheticPack()
-  const mutableCommands = [
-    {
-      command: "npx tool@latest --check",
-      expected: "tool@latest"
-    },
-    {
-      command: "npx tool@^1 --check",
-      expected: "tool@^1"
-    },
-    {
-      command: "git checkout integration/aviso-v013 && npm test",
-      expected: "integration/aviso-v013"
-    },
-    {
-      command: "git checkout main && npm test",
-      expected: "main"
-    },
-    {
-      command: "git pull origin main",
-      expected: "main"
-    },
-    {
-      command: "npx tool@1 --check",
-      expected: "tool@1"
-    },
-    {
-      command: "npx tool@1.2 --check",
-      expected: "tool@1.2"
-    },
-    {
-      command: "git show refs/tags/latest:release/evidence.json",
-      expected: "refs/tags/latest"
-    },
-    {
-      command: "git checkout refs/tags/v1.2.3 && npm test",
-      expected: "refs/tags/v1.2.3"
-    }
+  const historicalBypasses = [
+    "npx tool@latest --check",
+    "npx tool@^1 --check",
+    "integration/aviso-v013",
+    "main",
+    "git pull origin main",
+    "^1",
+    "1.2",
+    "v1.2.3",
+    "refs/tags/v1.2.3",
+    "HEAD~1",
+    "HEAD^",
+    "0123456",
+    "origin",
+    "https://github.com/mongocyber/aviso/tree/main",
+    'ma""in'
   ]
 
   try {
-    for (const { command, expected } of mutableCommands) {
-      const mutablePack = structuredClone(pack)
-      mutablePack.verificationCommands[0].command = command
+    for (const bypass of historicalBypasses) {
+      const scriptPack = structuredClone(pack)
+      scriptPack.verificationCommands[0].script = bypass
 
-      const result = verify(mutablePack, frontendRoot, backendRoot)
+      const scriptResult = verifyEvidencePack(scriptPack)
 
-      assert.equal(result.status, "BLOCKED", command)
-      assert.match(joinedReasons(result), /verificationCommands\[0\]\.command mutable reference/)
-      assert.ok(joinedReasons(result).includes(`"${expected}"`), command)
+      assert.equal(scriptResult.status, "BLOCKED", `script: ${bypass}`)
+      assert.match(
+        joinedReasons(scriptResult),
+        /verificationCommands\[0\]\.script must be an allow-listed npm script/,
+        `script: ${bypass}`
+      )
+
+      const argsPack = structuredClone(pack)
+      argsPack.verificationCommands[0].args = [bypass]
+
+      const argsResult = verifyEvidencePack(argsPack)
+
+      assert.equal(argsResult.status, "BLOCKED", `args: ${bypass}`)
+      assert.match(
+        joinedReasons(argsResult),
+        /verificationCommands\[0\]\.args\[0\] must be a static literal argument/,
+        `args: ${bypass}`
+      )
+
+      const packageNamePack = structuredClone(pack)
+      packageNamePack.verificationCommands[1].packageName = bypass
+
+      const packageNameResult = verifyEvidencePack(packageNamePack)
+
+      assert.equal(
+        packageNameResult.status,
+        "BLOCKED",
+        `packageName: ${bypass}`
+      )
+      assert.match(
+        joinedReasons(packageNameResult),
+        /verificationCommands\[1\]\.packageName\/binary pair must be allow-listed/,
+        `packageName: ${bypass}`
+      )
+
+      const binaryPack = structuredClone(pack)
+      binaryPack.verificationCommands[1].binary = bypass
+
+      const binaryResult = verifyEvidencePack(binaryPack)
+
+      assert.equal(binaryResult.status, "BLOCKED", `binary: ${bypass}`)
+      assert.match(
+        joinedReasons(binaryResult),
+        /verificationCommands\[1\]\.packageName\/binary pair must be allow-listed/,
+        `binary: ${bypass}`
+      )
     }
   } finally {
     rmSync(frontendRoot, { force: true, recursive: true })
@@ -345,23 +480,53 @@ test("MON-49 verifier rejects embedded mutable references in command strings", (
   }
 })
 
-test("MON-49 verifier accepts exact package versions and embedded commit SHAs in command strings", () => {
+test("MON-49 verifier rejects legacy free-form command strings outright", () => {
   const { backendRoot, frontendRoot, pack } = completeSyntheticPack()
-  const immutableCommands = [
-    "npx package@1.2.3 --check",
-    "git checkout 0123456789abcdef0123456789abcdef01234567 && npm test"
-  ]
 
   try {
-    for (const command of immutableCommands) {
-      const immutablePack = structuredClone(pack)
-      immutablePack.verificationCommands[0].command = command
-
-      const result = verify(immutablePack, frontendRoot, backendRoot)
-
-      assert.equal(result.status, "PASS", command)
-      assert.deepEqual(result.reasons, [], command)
+    const legacyPack = structuredClone(pack)
+    legacyPack.verificationCommands[0] = {
+      label: "Legacy command shape",
+      command: "npm test",
+      exitCode: 0,
+      evidenceRefs: legacyPack.verificationCommands[0].evidenceRefs
     }
+
+    const result = verify(legacyPack, frontendRoot, backendRoot)
+
+    assert.equal(result.status, "BLOCKED")
+    assert.match(
+      joinedReasons(result),
+      /verificationCommands\[0\]\.command is not allowed; use structured verification command fields/
+    )
+    assert.match(
+      joinedReasons(result),
+      /verificationCommands\[0\]\.kind must be npm-script or npx-local-bin/
+    )
+  } finally {
+    rmSync(frontendRoot, { force: true, recursive: true })
+    rmSync(backendRoot, { force: true, recursive: true })
+  }
+})
+
+test("MON-49 verifier rejects npx-local-bin version mismatch against bound package files", () => {
+  const { backendRoot, frontendRoot, pack } = completeSyntheticPack()
+
+  try {
+    const mismatchedPack = structuredClone(pack)
+    mismatchedPack.verificationCommands[1].version = "5.3.2"
+
+    const result = verify(mismatchedPack, frontendRoot, backendRoot)
+
+    assert.equal(result.status, "BLOCKED")
+    assert.match(
+      joinedReasons(result),
+      /verificationCommands\[1\]\.version must match package\.json devDependencies\.typescript 5\.3\.3/
+    )
+    assert.match(
+      joinedReasons(result),
+      /verificationCommands\[1\]\.version must match package-lock\.json locked typescript 5\.3\.3/
+    )
   } finally {
     rmSync(frontendRoot, { force: true, recursive: true })
     rmSync(backendRoot, { force: true, recursive: true })
@@ -395,8 +560,14 @@ test("MON-49 verifier rejects hashes that do not match the file at the bound com
 
   try {
     const dirtyPack = structuredClone(pack)
-    const copyPath = join(frontendRoot, "store-assets/chrome-web-store/STORE_LISTING_COPY.md")
-    writeFileSync(copyPath, "Synthetic dirty public copy fixture after commit.\n")
+    const copyPath = join(
+      frontendRoot,
+      "store-assets/chrome-web-store/STORE_LISTING_COPY.md"
+    )
+    writeFileSync(
+      copyPath,
+      "Synthetic dirty public copy fixture after commit.\n"
+    )
     dirtyPack.boundEvidence.publicCopy[0].sha256 = hashFile(copyPath)
 
     const result = verify(dirtyPack, frontendRoot, backendRoot)

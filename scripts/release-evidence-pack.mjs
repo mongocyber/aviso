@@ -4,14 +4,31 @@ import {
   existsSync,
   lstatSync,
   mkdirSync,
-  readFileSync,
   readdirSync,
+  readFileSync,
   writeFileSync
 } from "node:fs"
 import { dirname, isAbsolute, join, posix, relative, resolve } from "node:path"
 import { fileURLToPath } from "node:url"
 
 export const evidencePackSchemaVersion = "aviso.v013.release-evidence-pack.v1"
+
+const allowedNpmScriptNames = Object.freeze([
+  "supply-chain:check",
+  "test",
+  "docs:check",
+  "verify:release-candidate",
+  "evidence:verify"
+])
+const allowedNpxLocalBins = Object.freeze([
+  { packageName: "typescript", binary: "tsc" }
+])
+const allowedNpxLocalBinPackageNames = Object.freeze([
+  ...new Set(allowedNpxLocalBins.map((entry) => entry.packageName))
+])
+const allowedNpxLocalBinBinaries = Object.freeze([
+  ...new Set(allowedNpxLocalBins.map((entry) => entry.binary))
+])
 
 export const evidencePackSchema = {
   $schema: "https://json-schema.org/draft/2020-12/schema",
@@ -138,18 +155,70 @@ export const evidencePackSchema = {
       items: { $ref: "#/$defs/fileEvidence" }
     },
     verificationCommand: {
-      type: "object",
-      additionalProperties: false,
-      required: ["label", "command", "exitCode", "evidenceRefs"],
-      properties: {
-        label: { type: "string", minLength: 1 },
-        command: { type: "string", minLength: 1 },
-        exitCode: { type: ["integer", "null"] },
-        evidenceRefs: {
-          type: "array",
-          items: { $ref: "#/$defs/fileEvidence" }
+      oneOf: [
+        {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "label",
+            "kind",
+            "script",
+            "args",
+            "packageJsonRef",
+            "packageLockRef",
+            "exitCode",
+            "evidenceRefs"
+          ],
+          properties: {
+            label: { type: "string", minLength: 1 },
+            kind: { const: "npm-script" },
+            script: { enum: allowedNpmScriptNames },
+            args: { $ref: "#/$defs/commandArgs" },
+            packageJsonRef: { $ref: "#/$defs/fileEvidence" },
+            packageLockRef: { $ref: "#/$defs/fileEvidence" },
+            exitCode: { type: ["integer", "null"] },
+            evidenceRefs: {
+              type: "array",
+              items: { $ref: "#/$defs/fileEvidence" }
+            }
+          }
+        },
+        {
+          type: "object",
+          additionalProperties: false,
+          required: [
+            "label",
+            "kind",
+            "packageName",
+            "binary",
+            "version",
+            "args",
+            "packageJsonRef",
+            "packageLockRef",
+            "exitCode",
+            "evidenceRefs"
+          ],
+          properties: {
+            label: { type: "string", minLength: 1 },
+            kind: { const: "npx-local-bin" },
+            packageName: { enum: allowedNpxLocalBinPackageNames },
+            binary: { enum: allowedNpxLocalBinBinaries },
+            version: { type: "string", minLength: 1 },
+            args: { $ref: "#/$defs/commandArgs" },
+            packageJsonRef: { $ref: "#/$defs/fileEvidence" },
+            packageLockRef: { $ref: "#/$defs/fileEvidence" },
+            exitCode: { type: ["integer", "null"] },
+            evidenceRefs: {
+              type: "array",
+              items: { $ref: "#/$defs/fileEvidence" }
+            }
+          }
         }
-      }
+      ]
+    },
+    commandArgs: {
+      type: "array",
+      items: { type: "string" }
     },
     evidenceGate: {
       type: "object",
@@ -159,7 +228,14 @@ export const evidencePackSchema = {
         key: { type: "string", minLength: 1 },
         label: { type: "string", minLength: 1 },
         status: {
-          enum: ["passed", "waived", "blocked", "pending", "missing", "not_applicable"]
+          enum: [
+            "passed",
+            "waived",
+            "blocked",
+            "pending",
+            "missing",
+            "not_applicable"
+          ]
         },
         openCriticalImportantFindings: {
           type: ["integer", "null"],
@@ -224,31 +300,42 @@ const defaultAssetPaths = [
 const defaultVerificationCommands = [
   {
     label: "supply-chain baseline",
-    command: "npm run supply-chain:check",
+    kind: "npm-script",
+    script: "supply-chain:check",
+    args: [],
     exitCode: null,
     evidenceRefs: []
   },
   {
     label: "unit tests",
-    command: "npm test",
+    kind: "npm-script",
+    script: "test",
+    args: [],
     exitCode: null,
     evidenceRefs: []
   },
   {
     label: "typecheck",
-    command: "npx tsc --noEmit",
+    kind: "npx-local-bin",
+    packageName: "typescript",
+    binary: "tsc",
+    args: ["--noEmit"],
     exitCode: null,
     evidenceRefs: []
   },
   {
     label: "release candidate verifier",
-    command: "npm run verify:release-candidate",
+    kind: "npm-script",
+    script: "verify:release-candidate",
+    args: [],
     exitCode: null,
     evidenceRefs: []
   },
   {
     label: "immutable evidence pack verifier",
-    command: "npm run evidence:verify -- --pack <artifact>",
+    kind: "npm-script",
+    script: "evidence:verify",
+    args: [],
     exitCode: null,
     evidenceRefs: []
   }
@@ -310,8 +397,11 @@ export function hashFile(path) {
 
 export function generateEvidencePack(options = {}) {
   const frontendRoot = resolve(options.frontendRoot ?? process.cwd())
-  const backendRoot = options.backendRoot ? resolve(options.backendRoot) : undefined
-  const frontendSha = options.frontendSha ?? gitOutput(frontendRoot, ["rev-parse", "HEAD"])
+  const backendRoot = options.backendRoot
+    ? resolve(options.backendRoot)
+    : undefined
+  const frontendSha =
+    options.frontendSha ?? gitOutput(frontendRoot, ["rev-parse", "HEAD"])
   const backendSha = options.backendSha ?? ""
 
   assertExactCommitInput("frontendSha", frontendSha)
@@ -364,13 +454,17 @@ export function generateEvidencePack(options = {}) {
         sourceCommit: frontendSha
       }),
       supabaseMigrations: buildFileRefs({
-        paths: options.supabaseMigrationPaths ?? collectSupabaseMigrationPaths(backendRoot),
+        paths:
+          options.supabaseMigrationPaths ??
+          collectSupabaseMigrationPaths(backendRoot),
         repository: "backend",
         root: backendRoot,
         sourceCommit: backendSha
       }),
       creemAdapterFixtures: buildFileRefs({
-        paths: options.creemAdapterFixturePaths ?? collectCreemAdapterFixturePaths(backendRoot),
+        paths:
+          options.creemAdapterFixturePaths ??
+          collectCreemAdapterFixturePaths(backendRoot),
         repository: "backend",
         root: backendRoot,
         sourceCommit: backendSha
@@ -399,7 +493,12 @@ export function generateEvidencePack(options = {}) {
       roots,
       commits
     ),
-    qaEvidence: mergeEvidenceGates(requiredQaEvidence, options.qaEvidence ?? [], roots, commits),
+    qaEvidence: mergeEvidenceGates(
+      requiredQaEvidence,
+      options.qaEvidence ?? [],
+      roots,
+      commits
+    ),
     externalGates: mergeEvidenceGates(
       requiredExternalGates,
       options.externalGates ?? [],
@@ -412,8 +511,12 @@ export function generateEvidencePack(options = {}) {
 export function verifyEvidencePack(pack, options = {}) {
   const reasons = []
   const roots = {
-    backend: options.roots?.backend ? resolve(options.roots.backend) : undefined,
-    frontend: options.roots?.frontend ? resolve(options.roots.frontend) : undefined
+    backend: options.roots?.backend
+      ? resolve(options.roots.backend)
+      : undefined,
+    frontend: options.roots?.frontend
+      ? resolve(options.roots.frontend)
+      : undefined
   }
   const commits = {
     backend: pack?.repositories?.backend?.commit,
@@ -468,7 +571,9 @@ export function formatVerificationReport(result) {
 
 function assertExactCommitInput(name, value) {
   if (!commitShaRegex.test(value)) {
-    throw new Error(`${name} must be a 40-character commit SHA; mutable refs are not accepted`)
+    throw new Error(
+      `${name} must be a 40-character commit SHA; mutable refs are not accepted`
+    )
   }
 }
 
@@ -501,7 +606,11 @@ function buildFileRef({ label, path, repository, root, sourceCommit }) {
   }
 
   const absPath = join(root, normalizedPath)
-  if (!isInside(root, absPath) || !existsSync(absPath) || !lstatSync(absPath).isFile()) {
+  if (
+    !isInside(root, absPath) ||
+    !existsSync(absPath) ||
+    !lstatSync(absPath).isFile()
+  ) {
     return {
       ...base,
       status: "missing"
@@ -516,12 +625,65 @@ function buildFileRef({ label, path, repository, root, sourceCommit }) {
 }
 
 function normalizeVerificationCommands(commands, roots, commits) {
-  return commands.map((command) => ({
-    label: command.label,
-    command: command.command,
-    exitCode: command.exitCode ?? null,
-    evidenceRefs: normalizeEvidenceRefs(command.evidenceRefs ?? [], roots, commits)
-  }))
+  return commands.map((command) => {
+    const common = {
+      label: command.label,
+      kind: command.kind,
+      args: Array.isArray(command.args) ? [...command.args] : [],
+      packageJsonRef: normalizeEvidenceRef(
+        command.packageJsonRef ?? {
+          label: "frontend package.json",
+          repository: "frontend",
+          path: "package.json"
+        },
+        roots,
+        commits
+      ),
+      packageLockRef: normalizeEvidenceRef(
+        command.packageLockRef ?? {
+          label: "frontend package-lock.json",
+          repository: "frontend",
+          path: "package-lock.json"
+        },
+        roots,
+        commits
+      ),
+      exitCode: command.exitCode ?? null,
+      evidenceRefs: normalizeEvidenceRefs(
+        command.evidenceRefs ?? [],
+        roots,
+        commits
+      )
+    }
+
+    if (command.kind === "npm-script") {
+      return {
+        ...common,
+        script: command.script
+      }
+    }
+
+    if (command.kind === "npx-local-bin") {
+      return {
+        ...common,
+        packageName: command.packageName,
+        binary: command.binary,
+        version:
+          command.version ??
+          lockedPackageVersionFromRoot(roots.frontend, command.packageName) ??
+          ""
+      }
+    }
+
+    return {
+      ...common,
+      ...command
+    }
+  })
+}
+
+function normalizeEvidenceRef(ref, roots, commits) {
+  return normalizeEvidenceRefs([ref], roots, commits)[0]
 }
 
 function mergeEvidenceGates(required, provided, roots, commits) {
@@ -532,7 +694,11 @@ function mergeEvidenceGates(required, provided, roots, commits) {
     byKey.set(gate.key, {
       ...prior,
       ...gate,
-      evidenceRefs: normalizeEvidenceRefs(gate.evidenceRefs ?? [], roots, commits)
+      evidenceRefs: normalizeEvidenceRefs(
+        gate.evidenceRefs ?? [],
+        roots,
+        commits
+      )
     })
   }
 
@@ -626,10 +792,14 @@ function verifySchemaSurface(pack, reasons) {
     reasons.push(`schemaVersion must be ${evidencePackSchemaVersion}`)
   }
   if (pack.releaseLine !== "V013") {
-    reasons.push("releaseLine must be V013; stale V012 evidence cannot satisfy MON-49")
+    reasons.push(
+      "releaseLine must be V013; stale V012 evidence cannot satisfy MON-49"
+    )
   }
   if (pack.contract?.version !== "V013") {
-    reasons.push("contract.version must be V013; stale V012 contract evidence cannot satisfy MON-49")
+    reasons.push(
+      "contract.version must be V013; stale V012 contract evidence cannot satisfy MON-49"
+    )
   }
   if (pack.generator?.mode !== "local-only-no-live-provider-calls") {
     reasons.push("generator.mode must be local-only-no-live-provider-calls")
@@ -637,19 +807,41 @@ function verifySchemaSurface(pack, reasons) {
 }
 
 function verifyRepositoryBindings(pack, roots, reasons) {
-  verifyCommitField(pack.repositories?.frontend?.commit, "repositories.frontend.commit", reasons)
-  verifyCommitField(pack.repositories?.backend?.commit, "repositories.backend.commit", reasons)
+  verifyCommitField(
+    pack.repositories?.frontend?.commit,
+    "repositories.frontend.commit",
+    reasons
+  )
+  verifyCommitField(
+    pack.repositories?.backend?.commit,
+    "repositories.backend.commit",
+    reasons
+  )
 
   if (!roots.frontend) {
-    reasons.push("repositories.frontend.root is required to verify bound frontend file hashes")
+    reasons.push(
+      "repositories.frontend.root is required to verify bound frontend file hashes"
+    )
   } else {
-    verifyGitCommitExists(roots.frontend, pack.repositories?.frontend?.commit, "repositories.frontend.commit", reasons)
+    verifyGitCommitExists(
+      roots.frontend,
+      pack.repositories?.frontend?.commit,
+      "repositories.frontend.commit",
+      reasons
+    )
   }
 
   if (!roots.backend) {
-    reasons.push("repositories.backend.root is required to verify bound backend file hashes")
+    reasons.push(
+      "repositories.backend.root is required to verify bound backend file hashes"
+    )
   } else {
-    verifyGitCommitExists(roots.backend, pack.repositories?.backend?.commit, "repositories.backend.commit", reasons)
+    verifyGitCommitExists(
+      roots.backend,
+      pack.repositories?.backend?.commit,
+      "repositories.backend.commit",
+      reasons
+    )
   }
 }
 
@@ -732,34 +924,389 @@ function verifyBoundEvidence(pack, roots, commits, reasons) {
 }
 
 function verifyVerificationCommands(pack, roots, commits, reasons) {
-  if (!Array.isArray(pack.verificationCommands) || pack.verificationCommands.length === 0) {
-    reasons.push("verificationCommands must include at least one command with exitCode 0")
+  if (
+    !Array.isArray(pack.verificationCommands) ||
+    pack.verificationCommands.length === 0
+  ) {
+    reasons.push(
+      "verificationCommands must include at least one command with exitCode 0"
+    )
     return
   }
 
   pack.verificationCommands.forEach((command, index) => {
     const label = `verificationCommands[${index}]`
-    if (!command?.label) {
+    if (!command || typeof command !== "object" || Array.isArray(command)) {
+      reasons.push(`${label} must be a structured verification command object`)
+      return
+    }
+
+    if (!command.label) {
       reasons.push(`${label}.label is required`)
     }
-    if (!command?.command) {
-      reasons.push(`${label}.command is required`)
+
+    if (command.kind === "npm-script") {
+      verifyCommandKeys(command, label, npmScriptCommandKeys, reasons)
+      verifyNpmScriptCommand(command, label, roots, commits, reasons)
+    } else if (command.kind === "npx-local-bin") {
+      verifyCommandKeys(command, label, npxLocalBinCommandKeys, reasons)
+      verifyNpxLocalBinCommand(command, label, roots, commits, reasons)
+    } else {
+      verifyCommandKeys(command, label, allStructuredCommandKeys, reasons)
+      reasons.push(`${label}.kind must be npm-script or npx-local-bin`)
     }
-    if (command?.exitCode !== 0) {
+
+    if (command.exitCode !== 0) {
       reasons.push(`${label}.exitCode must be 0`)
     }
     verifyFileRefList({
       commits,
       label: `${label}.evidenceRefs`,
       minItems: 1,
-      refs: command?.evidenceRefs,
+      refs: command.evidenceRefs,
       reasons,
       roots
     })
   })
 }
 
-function verifyEvidenceGateList({ commits, gates, label, reasons, required, roots }) {
+const commonVerificationCommandKeys = [
+  "label",
+  "kind",
+  "args",
+  "packageJsonRef",
+  "packageLockRef",
+  "exitCode",
+  "evidenceRefs"
+]
+const npmScriptCommandKeys = new Set([
+  ...commonVerificationCommandKeys,
+  "script"
+])
+const npxLocalBinCommandKeys = new Set([
+  ...commonVerificationCommandKeys,
+  "packageName",
+  "binary",
+  "version"
+])
+const allStructuredCommandKeys = new Set([
+  ...npmScriptCommandKeys,
+  ...npxLocalBinCommandKeys
+])
+
+function verifyCommandKeys(command, label, allowedKeys, reasons) {
+  for (const key of Object.keys(command)) {
+    if (allowedKeys.has(key)) {
+      continue
+    }
+
+    if (key === "command") {
+      reasons.push(
+        `${label}.command is not allowed; use structured verification command fields`
+      )
+    } else {
+      reasons.push(`${label}.${key} is not allowed`)
+    }
+  }
+}
+
+function verifyNpmScriptCommand(command, label, roots, commits, reasons) {
+  verifyCommandPackageRefs(command, label, roots, commits, reasons)
+
+  if (!allowedNpmScriptNames.includes(command.script)) {
+    reasons.push(`${label}.script must be an allow-listed npm script`)
+  } else {
+    const packageJson = readBoundJsonRef(
+      command.packageJsonRef,
+      `${label}.packageJsonRef`,
+      roots,
+      commits,
+      reasons
+    )
+    if (
+      packageJson &&
+      !Object.hasOwn(packageJson.scripts ?? {}, command.script)
+    ) {
+      reasons.push(
+        `${label}.script ${command.script} must exist in bound package.json scripts`
+      )
+    }
+  }
+
+  verifyStaticArgs(command.args, `${label}.args`, reasons)
+}
+
+function verifyNpxLocalBinCommand(command, label, roots, commits, reasons) {
+  verifyCommandPackageRefs(command, label, roots, commits, reasons)
+
+  if (!isAllowedNpxLocalBin(command.packageName, command.binary)) {
+    reasons.push(`${label}.packageName/binary pair must be allow-listed`)
+  }
+
+  if (typeof command.version !== "string" || command.version.length === 0) {
+    reasons.push(`${label}.version is required`)
+  }
+
+  verifyStaticArgs(command.args, `${label}.args`, reasons)
+
+  const packageJson = readBoundJsonRef(
+    command.packageJsonRef,
+    `${label}.packageJsonRef`,
+    roots,
+    commits,
+    reasons
+  )
+  const packageLock = readBoundJsonRef(
+    command.packageLockRef,
+    `${label}.packageLockRef`,
+    roots,
+    commits,
+    reasons
+  )
+
+  if (
+    typeof command.packageName !== "string" ||
+    command.packageName.length === 0
+  ) {
+    return
+  }
+
+  const declared = packageJson
+    ? packageJsonDependencySpec(packageJson, command.packageName)
+    : null
+  if (!declared) {
+    reasons.push(
+      `${label}.packageName ${command.packageName} must be declared in bound package.json`
+    )
+  } else if (
+    typeof command.version === "string" &&
+    command.version !== declared.version
+  ) {
+    reasons.push(
+      `${label}.version must match package.json ${declared.section}.${command.packageName} ${declared.version}`
+    )
+  }
+
+  const lockedVersion = packageLock
+    ? packageLockVersion(packageLock, command.packageName)
+    : null
+  if (!lockedVersion) {
+    reasons.push(
+      `${label}.packageName ${command.packageName} must be locked in bound package-lock.json`
+    )
+  } else if (
+    typeof command.version === "string" &&
+    command.version !== lockedVersion
+  ) {
+    reasons.push(
+      `${label}.version must match package-lock.json locked ${command.packageName} ${lockedVersion}`
+    )
+  }
+}
+
+function verifyCommandPackageRefs(command, label, roots, commits, reasons) {
+  verifyRequiredPackageRef(
+    command.packageJsonRef,
+    `${label}.packageJsonRef`,
+    "package.json",
+    roots,
+    commits,
+    reasons
+  )
+  verifyRequiredPackageRef(
+    command.packageLockRef,
+    `${label}.packageLockRef`,
+    "package-lock.json",
+    roots,
+    commits,
+    reasons
+  )
+}
+
+function verifyRequiredPackageRef(
+  ref,
+  label,
+  expectedPath,
+  roots,
+  commits,
+  reasons
+) {
+  verifyFileRef(ref, label, roots, commits, reasons)
+
+  if (!ref || typeof ref !== "object" || Array.isArray(ref)) {
+    return
+  }
+
+  if (ref.repository !== "frontend") {
+    reasons.push(`${label}.repository must be frontend`)
+  }
+
+  let normalizedPath
+  try {
+    normalizedPath = normalizeEvidencePath(ref.path)
+  } catch {
+    return
+  }
+
+  if (normalizedPath !== expectedPath) {
+    reasons.push(`${label}.path must be ${expectedPath}`)
+  }
+
+  if (ref.status !== "present") {
+    reasons.push(`${label}.status must be present`)
+  }
+}
+
+function verifyStaticArgs(args, label, reasons) {
+  if (!Array.isArray(args)) {
+    reasons.push(`${label} must be an array of static literal arguments`)
+    return
+  }
+
+  args.forEach((arg, index) => {
+    const violation = staticArgViolation(arg)
+    if (violation) {
+      reasons.push(
+        `${label}[${index}] must be a static literal argument: ${violation}`
+      )
+    }
+  })
+}
+
+function staticArgViolation(arg) {
+  if (typeof arg !== "string" || arg.length === 0) {
+    return "expected non-empty string"
+  }
+  if (/\s/.test(arg)) {
+    return "whitespace is not allowed"
+  }
+  if (/[$`"';|&()<>]/.test(arg)) {
+    return "shell metacharacters are not allowed"
+  }
+  if (/refs\//i.test(arg)) {
+    return "refs/ is not allowed"
+  }
+  if (/^(?:main|master|integration\/[a-z0-9._/-]+)$/i.test(arg)) {
+    return "mutable branch tokens are not allowed"
+  }
+  if (/\borigin\b/i.test(arg)) {
+    return "origin is not allowed"
+  }
+  if (/\bHEAD(?:[~^]\d*)?\b/i.test(arg)) {
+    return "HEAD references are not allowed"
+  }
+  if (/\/tree\//i.test(arg)) {
+    return "/tree/ references are not allowed"
+  }
+  if (/^[0-9a-f]{7,39}$/i.test(arg)) {
+    return "short commit SHAs are not allowed"
+  }
+  if (packageVersionSpecRegex.test(arg)) {
+    return "@-versioned package specs are not allowed"
+  }
+  if (bareNpmRangeOrTagRegex.test(arg)) {
+    return "bare npm ranges or tags are not allowed"
+  }
+  return null
+}
+
+const packageVersionSpecRegex =
+  /(?:^|[^\w@./-])(?:@[a-z0-9._-]+\/)?[a-z0-9._-]+@(?:latest|next|beta|alpha|rc|canary|dev|nightly|experimental|stable|[\^~]?\d+(?:\.\d+){0,2}(?:[-+][0-9a-z.-]+)?|\*|[xX]|v?\d+\.\d+\.\d+(?:[-+][0-9a-z.-]+)?)(?=$|[^\w.-])/i
+const bareNpmRangeOrTagRegex =
+  /^(?:latest|next|beta|alpha|rc|canary|dev|nightly|experimental|stable|[\^~]\d+(?:\.\d+){0,2}(?:[-+][0-9a-z.-]+)?|\*|[xX]|\d+(?:\.\d+){0,2}|v\d+\.\d+\.\d+(?:[-+][0-9a-z.-]+)?)$/i
+
+function isAllowedNpxLocalBin(packageName, binary) {
+  return allowedNpxLocalBins.some(
+    (entry) => entry.packageName === packageName && entry.binary === binary
+  )
+}
+
+function packageJsonDependencySpec(packageJson, packageName) {
+  for (const section of [
+    "dependencies",
+    "devDependencies",
+    "optionalDependencies"
+  ]) {
+    const dependencies = packageJson?.[section]
+    if (dependencies && Object.hasOwn(dependencies, packageName)) {
+      return { section, version: dependencies[packageName] }
+    }
+  }
+  return null
+}
+
+function packageLockVersion(packageLock, packageName) {
+  return (
+    packageLock?.packages?.[`node_modules/${packageName}`]?.version ??
+    packageLock?.dependencies?.[packageName]?.version ??
+    null
+  )
+}
+
+function lockedPackageVersionFromRoot(root, packageName) {
+  if (!root || typeof packageName !== "string" || packageName.length === 0) {
+    return null
+  }
+
+  try {
+    return packageLockVersion(
+      JSON.parse(readFileSync(join(root, "package-lock.json"), "utf8")),
+      packageName
+    )
+  } catch {
+    return null
+  }
+}
+
+function readBoundJsonRef(ref, label, roots, commits, reasons) {
+  if (!ref || typeof ref !== "object" || Array.isArray(ref)) {
+    return null
+  }
+  if (ref.repository !== "frontend" && ref.repository !== "backend") {
+    return null
+  }
+
+  let normalizedPath
+  try {
+    normalizedPath = normalizeEvidencePath(ref.path)
+  } catch {
+    return null
+  }
+
+  const root = roots[ref.repository]
+  const commit = commits?.[ref.repository]
+  if (!root || !commitShaRegex.test(commit ?? "")) {
+    return null
+  }
+
+  let content
+  try {
+    content = execFileSync("git", ["show", `${commit}:${normalizedPath}`], {
+      cwd: root,
+      encoding: "utf8",
+      stdio: ["ignore", "pipe", "pipe"]
+    })
+  } catch {
+    reasons.push(`${label} must be readable from bound commit ${commit}`)
+    return null
+  }
+
+  try {
+    return JSON.parse(content)
+  } catch (error) {
+    reasons.push(`${label} must be valid JSON: ${error.message}`)
+    return null
+  }
+}
+
+function verifyEvidenceGateList({
+  commits,
+  gates,
+  label,
+  reasons,
+  required,
+  roots
+}) {
   if (!Array.isArray(gates)) {
     reasons.push(`${label} must be an array`)
     return
@@ -774,7 +1321,9 @@ function verifyEvidenceGateList({ commits, gates, label, reasons, required, root
     }
 
     if (gate.status !== "passed" && gate.status !== "waived") {
-      reasons.push(`${gateLabel} must be passed or waived, got ${JSON.stringify(gate.status)}`)
+      reasons.push(
+        `${gateLabel} must be passed or waived, got ${JSON.stringify(gate.status)}`
+      )
     }
 
     if (
@@ -803,15 +1352,21 @@ function verifyEvidenceGateList({ commits, gates, label, reasons, required, root
 function verifyFileRefList({ commits, label, refs, minItems, reasons, roots }) {
   const minItemsLabel = minItems === 1 ? "one" : String(minItems)
   if (!Array.isArray(refs)) {
-    reasons.push(`${label} must include at least ${minItemsLabel} content-hashed file reference(s)`)
+    reasons.push(
+      `${label} must include at least ${minItemsLabel} content-hashed file reference(s)`
+    )
     return
   }
 
   if (refs.length < minItems) {
-    reasons.push(`${label} must include at least ${minItemsLabel} content-hashed file reference(s)`)
+    reasons.push(
+      `${label} must include at least ${minItemsLabel} content-hashed file reference(s)`
+    )
   }
 
-  refs.forEach((ref, index) => verifyFileRef(ref, `${label}[${index}]`, roots, commits, reasons))
+  refs.forEach((ref, index) =>
+    verifyFileRef(ref, `${label}[${index}]`, roots, commits, reasons)
+  )
 }
 
 function verifyFileRef(ref, label, roots, commits, reasons) {
@@ -829,18 +1384,26 @@ function verifyFileRef(ref, label, roots, commits, reasons) {
     reasons.push(`${label}.label is required`)
   }
 
-  const normalizedPath = validateEvidencePath(ref.path, `${label}.path`, reasons)
+  const normalizedPath = validateEvidencePath(
+    ref.path,
+    `${label}.path`,
+    reasons
+  )
   if (!sha256Regex.test(ref.sha256 ?? "")) {
     reasons.push(`${label}.sha256 must be sha256:<64 lowercase hex chars>`)
   }
 
   const expectedCommit = commits?.[ref.repository]
   if (expectedCommit && ref.sourceCommit !== expectedCommit) {
-    reasons.push(`${label}.sourceCommit must match ${ref.repository} repository commit`)
+    reasons.push(
+      `${label}.sourceCommit must match ${ref.repository} repository commit`
+    )
   }
 
   if (isStaleReleaseEvidencePath(ref.path)) {
-    reasons.push(`${label}.path points at stale V012 evidence and cannot satisfy MON-49`)
+    reasons.push(
+      `${label}.path points at stale V012 evidence and cannot satisfy MON-49`
+    )
   }
 
   const root = roots[ref.repository]
@@ -854,14 +1417,20 @@ function verifyFileRef(ref, label, roots, commits, reasons) {
   }
 
   const absPath = join(root, normalizedPath)
-  if (!isInside(root, absPath) || !existsSync(absPath) || !lstatSync(absPath).isFile()) {
+  if (
+    !isInside(root, absPath) ||
+    !existsSync(absPath) ||
+    !lstatSync(absPath).isFile()
+  ) {
     reasons.push(`${label} missing file ${normalizedPath}`)
     return
   }
 
   const actualHash = hashFile(absPath)
   if (actualHash !== ref.sha256) {
-    reasons.push(`${label} hash mismatch for ${normalizedPath}: expected ${ref.sha256}, got ${actualHash}`)
+    reasons.push(
+      `${label} hash mismatch for ${normalizedPath}: expected ${ref.sha256}, got ${actualHash}`
+    )
   }
 
   if (expectedCommit && commitShaRegex.test(expectedCommit)) {
@@ -889,16 +1458,24 @@ function validateEvidencePath(path, label, reasons) {
   }
 
   if (normalized !== path) {
-    reasons.push(`${label} must be normalized relative POSIX path ${JSON.stringify(normalized)}`)
+    reasons.push(
+      `${label} must be normalized relative POSIX path ${JSON.stringify(normalized)}`
+    )
   }
   return normalized
 }
 
 function scanMutableReferences(value, path, reasons) {
+  if (isStructuredCommandPolicyField(path)) {
+    return
+  }
+
   if (typeof value === "string") {
     const mutable = mutableReferenceLabel(value)
     if (mutable) {
-      reasons.push(`${path} mutable reference "${mutable}" is not allowed; use an exact commit SHA or sha256 content hash`)
+      reasons.push(
+        `${path} mutable reference "${mutable}" is not allowed; use an exact commit SHA or sha256 content hash`
+      )
     }
     return
   }
@@ -908,16 +1485,28 @@ function scanMutableReferences(value, path, reasons) {
   }
 
   if (Array.isArray(value)) {
-    value.forEach((item, index) => scanMutableReferences(item, `${path}[${index}]`, reasons))
+    value.forEach((item, index) =>
+      scanMutableReferences(item, `${path}[${index}]`, reasons)
+    )
     return
   }
 
   for (const [key, nested] of Object.entries(value)) {
     if (key.toLowerCase().includes("branch")) {
-      reasons.push(`${path}.${key} branch fields are mutable and not allowed in an evidence pack`)
+      reasons.push(
+        `${path}.${key} branch fields are mutable and not allowed in an evidence pack`
+      )
     }
     scanMutableReferences(nested, `${path}.${key}`, reasons)
   }
+}
+
+function isStructuredCommandPolicyField(path) {
+  return (
+    /^\$\.verificationCommands\[\d+\]\.(?:script|packageName|binary|version)$/.test(
+      path
+    ) || /^\$\.verificationCommands\[\d+\]\.args(?:\[\d+\])?$/.test(path)
+  )
 }
 
 function mutableReferenceLabel(value) {
@@ -972,91 +1561,7 @@ function embeddedMutableReferenceLabel(value) {
     return gitRefMatch[1]
   }
 
-  const gitCommandOperand = embeddedGitCommandOperandLabel(value)
-  if (gitCommandOperand) {
-    return gitCommandOperand
-  }
-
   return null
-}
-
-function embeddedGitCommandOperandLabel(value) {
-  const gitRefOperandCommands = new Set([
-    "checkout",
-    "diff",
-    "log",
-    "merge",
-    "pull",
-    "rebase",
-    "reset",
-    "show",
-    "switch"
-  ])
-  const mutableBranchOperands = new Set(["head", "main", "master"])
-  const tokens = commandTokens(value)
-
-  for (let index = 0; index < tokens.length; index += 1) {
-    if (tokens[index].toLowerCase() !== "git") {
-      continue
-    }
-
-    for (let commandIndex = index + 1; commandIndex < tokens.length; commandIndex += 1) {
-      const commandToken = tokens[commandIndex]
-      if (isCommandSeparator(commandToken)) {
-        break
-      }
-      if (commandToken.startsWith("-")) {
-        commandIndex += gitOptionValueCount(commandToken)
-        continue
-      }
-
-      const command = commandToken.toLowerCase()
-      if (!gitRefOperandCommands.has(command)) {
-        break
-      }
-
-      for (let operandIndex = commandIndex + 1; operandIndex < tokens.length; operandIndex += 1) {
-        const operandToken = tokens[operandIndex]
-        if (isCommandSeparator(operandToken)) {
-          break
-        }
-        if (operandToken.startsWith("-")) {
-          operandIndex += gitOptionValueCount(operandToken)
-          continue
-        }
-
-        const refOperand = normalizeGitRefOperandToken(operandToken)
-        if (mutableBranchOperands.has(refOperand.toLowerCase())) {
-          return refOperand
-        }
-      }
-      break
-    }
-  }
-
-  return null
-}
-
-function commandTokens(value) {
-  return value.match(/&&|\|\||[;|]|[^\s"'`,;|()[\]{}]+/g) ?? []
-}
-
-function isCommandSeparator(token) {
-  return token === "&&" || token === "||" || token === ";" || token === "|"
-}
-
-function gitOptionValueCount(option) {
-  if (option.includes("=")) {
-    return 0
-  }
-  return new Set(["-C", "-c", "--config-env", "--git-dir", "--namespace", "--work-tree"]).has(option)
-    ? 1
-    : 0
-}
-
-function normalizeGitRefOperandToken(token) {
-  const colonIndex = token.indexOf(":")
-  return colonIndex === -1 ? token : token.slice(0, colonIndex)
 }
 
 function normalizeEvidencePath(path) {
@@ -1071,14 +1576,20 @@ function normalizeEvidencePath(path) {
   }
 
   const normalized = posix.normalize(path)
-  if (normalized === "." || normalized.startsWith("../") || normalized === "..") {
+  if (
+    normalized === "." ||
+    normalized.startsWith("../") ||
+    normalized === ".."
+  ) {
     throw new Error("must stay inside its repository root")
   }
   return normalized
 }
 
 function isStaleReleaseEvidencePath(path) {
-  return /(^|\/)(?:v012|v0\.12|aviso-v012)(?:\/|$)|integration\/aviso-v012/i.test(path ?? "")
+  return /(^|\/)(?:v012|v0\.12|aviso-v012)(?:\/|$)|integration\/aviso-v012/i.test(
+    path ?? ""
+  )
 }
 
 function gitOutput(root, args) {
@@ -1103,7 +1614,10 @@ function tryHashGitFile(root, commit, path) {
 
 function isInside(root, target) {
   const relativePath = relative(resolve(root), resolve(target))
-  return relativePath === "" || (!relativePath.startsWith("..") && !isAbsolute(relativePath))
+  return (
+    relativePath === "" ||
+    (!relativePath.startsWith("..") && !isAbsolute(relativePath))
+  )
 }
 
 function parseArgs(argv) {
@@ -1158,7 +1672,9 @@ function main() {
 
     const frontendRoot = resolve(String(args["frontend-root"] ?? "."))
     const pack = generateEvidencePack({
-      backendRoot: args["backend-root"] ? resolve(String(args["backend-root"])) : undefined,
+      backendRoot: args["backend-root"]
+        ? resolve(String(args["backend-root"]))
+        : undefined,
       backendSha: String(args["backend-sha"]),
       contractVersion: String(args["contract-version"] ?? "V013"),
       frontendRoot,
@@ -1183,7 +1699,9 @@ function main() {
 
     const result = verifyEvidencePack(readJson(packPath), {
       roots: {
-        backend: args["backend-root"] ? resolve(String(args["backend-root"])) : undefined,
+        backend: args["backend-root"]
+          ? resolve(String(args["backend-root"]))
+          : undefined,
         frontend: resolve(String(args["frontend-root"] ?? "."))
       }
     })
