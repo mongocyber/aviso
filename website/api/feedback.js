@@ -43,6 +43,7 @@ const PROVIDER_PATH_LABELS = {
 const VALID_IMAGE_TYPES = new Set(["image/png", "image/jpeg"]);
 const PNG_SIGNATURE = Buffer.from("89504e470d0a1a0a", "hex");
 const ZERO_WIDTH_CHARS = /[\u200B-\u200D\u2060\uFEFF]/g;
+const COMBINING_MARKS = /\p{M}/gu;
 const CONFUSABLE_LABEL_CHARS = new Map([
   ["Α", "A"], ["А", "A"], ["α", "a"], ["а", "a"],
   ["С", "C"], ["Ϲ", "C"], ["с", "c"], ["ϲ", "c"],
@@ -86,6 +87,11 @@ const SENSITIVE_FEEDBACK_PATTERNS = [
   new RegExp(String.raw`\bprovider\s+(?:request|response)\b${SENSITIVE_LABEL_CONNECTOR}`, "iu"),
   /(?:私人网页正文|客户资料|未公开文档|原始\s*(?:prompt|response)|原始请求|原始响应)/
 ];
+const BROWSER_VERSION_PATTERN =
+  /^(?:(?:Chrome|Chromium|Edge|Microsoft Edge|Brave|Vivaldi|Opera|Firefox|Safari|Arc)\s+)?\d+(?:\.\d+){0,4}(?:\s*\([A-Za-z0-9 ._+/()-]{1,32}\))?$/i;
+const OS_SUMMARY_PATTERN =
+  /^(?:macOS|Mac OS|Windows|Linux|Ubuntu|Debian|Fedora|ChromeOS|Chrome OS|Android|iOS|iPadOS)(?:\s+[A-Za-z0-9 ._+/()-]{1,48})?$/i;
+const AVISO_VERSION_PATTERN = /^v?\d+(?:\.\d+){1,3}(?:[-+][A-Za-z0-9.-]{1,32})?$/i;
 
 function sendJson(res, statusCode, body) {
   res.statusCode = statusCode;
@@ -121,8 +127,10 @@ function isValidEmail(value) {
 
 function normalizeSensitiveFeedbackText(value) {
   return value
+    .replace(COMBINING_MARKS, "")
     .normalize("NFKC")
     .replace(ZERO_WIDTH_CHARS, "")
+    .replace(COMBINING_MARKS, "")
     .replace(CONFUSABLE_LABEL_PATTERN, (char) => CONFUSABLE_LABEL_CHARS.get(char) || char)
     .replace(/\s+/g, " ")
     .trim();
@@ -163,8 +171,8 @@ function containsSensitiveFeedbackContent(value) {
   return SENSITIVE_FEEDBACK_PATTERNS.some((pattern) => pattern.test(normalized));
 }
 
-function normalizeStructuredText(value, maxLength) {
-  const normalized = normalize(value, maxLength);
+function normalizeStructuredText(value, maxLength, isAllowedValue = () => true) {
+  const normalized = normalizeSensitiveFeedbackText(normalize(value, maxLength));
   if (!normalized) {
     return {
       needsRedaction: false,
@@ -173,6 +181,13 @@ function normalizeStructuredText(value, maxLength) {
   }
 
   if (containsSensitiveFeedbackContent(normalized)) {
+    return {
+      needsRedaction: true,
+      value: ""
+    };
+  }
+
+  if (!isAllowedValue(normalized)) {
     return {
       needsRedaction: true,
       value: ""
@@ -436,9 +451,13 @@ function normalizeFeedbackPayload(body) {
   const reproSteps = normalize(body.reproSteps, 2500);
   const narrativeFields = [details, expectedResult, actualResult, reproSteps].filter(Boolean);
   const attachments = normalizeAttachments(body.attachments);
-  const chromeVersion = normalizeStructuredText(body.chromeVersion, 80);
-  const os = normalizeStructuredText(body.os, 80);
-  const avisoVersion = normalizeStructuredText(body.avisoVersion, 80);
+  const chromeVersion = normalizeStructuredText(body.chromeVersion, 80, (value) =>
+    BROWSER_VERSION_PATTERN.test(value)
+  );
+  const os = normalizeStructuredText(body.os, 80, (value) => OS_SUMMARY_PATTERN.test(value));
+  const avisoVersion = normalizeStructuredText(body.avisoVersion, 80, (value) =>
+    AVISO_VERSION_PATTERN.test(value)
+  );
   const providerModel = normalizeStructuredText(
     body.providerModel || [body.providerName, body.modelName].filter(Boolean).join(" / "),
     120

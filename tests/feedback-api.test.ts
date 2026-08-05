@@ -151,6 +151,81 @@ test("feedback API validates structured enums and email without requiring free-t
   }
 })
 
+test("feedback API redacts combining-mark sensitive content from every forwarded short field", () => {
+  const forwardedFields = [
+    "chromeVersion",
+    "os",
+    "avisoVersion",
+    "providerModel",
+    "providerName",
+    "modelName"
+  ]
+  const combiningMarkBypasses = [
+    `t\u0332o\u0332k\u0332e\u0332n\u0332: ${"a".repeat(24)}1234`,
+    `a\u0301p\u0301i\u0301 \u0301k\u0301e\u0301y\u0301 = sk-proj-${"b".repeat(32)}`,
+    `s\u034fe\u034fc\u034fr\u034fe\u034ft\u034f -> customer-secret-value-1234567890`
+  ]
+
+  for (const field of forwardedFields) {
+    for (const bypass of combiningMarkBypasses) {
+      const input = {
+        ...baseStructuredPayload,
+        [field]: bypass
+      }
+      if (field === "providerName" || field === "modelName") {
+        delete (input as Record<string, unknown>).providerModel
+      }
+
+      const normalized = normalizeFeedbackPayload(input)
+      const outputField =
+        field === "os" || field === "avisoVersion" || field === "chromeVersion"
+          ? field
+          : "providerModel"
+
+      assert.equal(normalized.ok, true, field)
+      assert.equal(normalized.payload.needsRedaction, true, field)
+      assert.equal(normalized.payload[outputField], "")
+
+      const body = buildResendBody(normalized.payload, {
+        from: "Aviso Feedback <feedback@example.com>",
+        to: "maintainer@example.com"
+      })
+      const serialized = JSON.stringify(body)
+
+      assert.doesNotMatch(serialized, /customer-secret-value|sk-proj-|a{24}1234/i, field)
+    }
+  }
+})
+
+test("feedback API keeps normal short structured field values", () => {
+  for (const payload of [
+    baseStructuredPayload,
+    {
+      ...baseStructuredPayload,
+      chromeVersion: "Chrome 126.0.6478.127",
+      os: "Windows 11",
+      avisoVersion: "0.1.1-beta.2",
+      providerModel: "Anthropic / claude-3-5-sonnet"
+    },
+    {
+      ...baseStructuredPayload,
+      chromeVersion: "Edge 126.0.2592.87",
+      os: "Ubuntu 24.04",
+      avisoVersion: "0.1.1",
+      providerModel: "OpenRouter / meta-llama/llama-3.1-70b"
+    }
+  ]) {
+    const normalized = normalizeFeedbackPayload(payload)
+
+    assert.equal(normalized.ok, true)
+    assert.equal(normalized.payload.needsRedaction, false)
+    assert.equal(normalized.payload.chromeVersion, payload.chromeVersion)
+    assert.equal(normalized.payload.os, payload.os)
+    assert.equal(normalized.payload.avisoVersion, payload.avisoVersion)
+    assert.equal(normalized.payload.providerModel, payload.providerModel)
+  }
+})
+
 test("feedback API returns success with detailsForwarded false when risky details are omitted", async () => {
   const previousFetch = global.fetch
   const previousEnv = {
