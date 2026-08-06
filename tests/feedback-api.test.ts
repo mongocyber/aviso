@@ -297,6 +297,20 @@ test("feedback API provider/model rejects shape-looking known secrets", () => {
   }
 })
 
+test("feedback API provider/model rejects common fixed-prefix credential formats", () => {
+  const fixedPrefixSecrets = [
+    `ghp_${"A".repeat(36)}`,
+    "xoxb-111111111111-222222222222-abcdefghijklmnopqrstuvwx",
+    "AKIA1234567890ABCDEF"
+  ]
+
+  for (const field of providerModelFields()) {
+    for (const value of fixedPrefixSecrets) {
+      assertProviderModelRedacted(field, value, value)
+    }
+  }
+})
+
 test("feedback API provider/model rejects non-default-ignorable label mutations by shape", () => {
   const mutatedLabels = ["tóken", "səcret", "t0ken"]
 
