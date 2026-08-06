@@ -151,141 +151,41 @@ test("feedback API validates structured enums and email without requiring free-t
   }
 })
 
-test("feedback API redacts combining-mark sensitive content from every forwarded short field", () => {
-  const forwardedFields = [
-    "chromeVersion",
-    "os",
-    "avisoVersion",
-    "providerModel",
-    "providerName",
-    "modelName"
-  ]
-  const combiningMarkBypasses = [
+test("feedback API redacts manipulated sensitive content from version and system short fields", () => {
+  const forwardedFields = ["chromeVersion", "os", "avisoVersion"]
+  const manipulatedValues = [
     `t\u0332o\u0332k\u0332e\u0332n\u0332: ${"a".repeat(24)}1234`,
-    `a\u0301p\u0301i\u0301 \u0301k\u0301e\u0301y\u0301 = sk-proj-${"b".repeat(32)}`,
-    `s\u034fe\u034fc\u034fr\u034fe\u034ft\u034f -> customer-secret-value-1234567890`
+    `s\u00ade\u00adc\u00adr\u00ade\u00adt\u00ad = customer-secret-value-1234567890`
   ]
 
   for (const field of forwardedFields) {
-    for (const bypass of combiningMarkBypasses) {
-      const input = {
+    for (const value of manipulatedValues) {
+      const normalized = normalizeFeedbackPayload({
         ...baseStructuredPayload,
-        [field]: bypass
-      }
-      if (field === "providerName" || field === "modelName") {
-        delete (input as Record<string, unknown>).providerModel
-      }
-
-      const normalized = normalizeFeedbackPayload(input)
-      const outputField =
-        field === "os" || field === "avisoVersion" || field === "chromeVersion"
-          ? field
-          : "providerModel"
-
-      assert.equal(normalized.ok, true, field)
-      assert.equal(normalized.payload.needsRedaction, true, field)
-      assert.equal(normalized.payload[outputField], "")
-
-      const body = buildResendBody(normalized.payload, {
-        from: "Aviso Feedback <feedback@example.com>",
-        to: "maintainer@example.com"
+        [field]: value
       })
-      const serialized = JSON.stringify(body)
-
-      assert.doesNotMatch(serialized, /customer-secret-value|sk-proj-|a{24}1234/i, field)
-    }
-  }
-})
-
-test("feedback API redacts bidi-control sensitive labels from unshaped provider and model fields", () => {
-  const bidiFormatControls = [
-    "\u202a",
-    "\u202b",
-    "\u202c",
-    "\u202d",
-    "\u202e",
-    "\u2066",
-    "\u2067",
-    "\u2068",
-    "\u2069"
-  ]
-  const unshapedFields = ["providerModel", "providerName", "modelName"]
-  const sensitiveLabels = ["token", "secret", "authorization"]
-
-  for (const control of bidiFormatControls) {
-    for (const field of unshapedFields) {
-      for (const label of sensitiveLabels) {
-        const input = {
-          ...baseStructuredPayload,
-          [field]: `${label.split("").join(control)}: ${"c".repeat(24)}1234`
-        }
-        if (field === "providerName" || field === "modelName") {
-          delete (input as Record<string, unknown>).providerModel
-        }
-
-        const normalized = normalizeFeedbackPayload(input)
-
-        assert.equal(normalized.ok, true, `${field} ${label}`)
-        assert.equal(normalized.payload.needsRedaction, true, `${field} ${label}`)
-        assert.equal(normalized.payload.providerModel, "", `${field} ${label}`)
-      }
-    }
-  }
-})
-
-test("feedback API redacts default-ignorable format characters from every forwarded short field", () => {
-  const forwardedFields = [
-    "chromeVersion",
-    "os",
-    "avisoVersion",
-    "providerModel",
-    "providerName",
-    "modelName"
-  ]
-  const formatCharacterBypasses = [
-    `t\u00ado\u00adk\u00ade\u00adn\u00ad: ${"d".repeat(24)}1234`,
-    `s\u180ee\u180ec\u180er\u180ee\u180et\u180e = customer-secret-value-1234567890`
-  ]
-
-  for (const field of forwardedFields) {
-    for (const bypass of formatCharacterBypasses) {
-      const input = {
-        ...baseStructuredPayload,
-        [field]: bypass
-      }
-      if (field === "providerName" || field === "modelName") {
-        delete (input as Record<string, unknown>).providerModel
-      }
-
-      const normalized = normalizeFeedbackPayload(input)
-      const outputField =
-        field === "os" || field === "avisoVersion" || field === "chromeVersion"
-          ? field
-          : "providerModel"
 
       assert.equal(normalized.ok, true, field)
       assert.equal(normalized.payload.needsRedaction, true, field)
-      assert.equal(normalized.payload[outputField], "", field)
+      assert.equal(normalized.payload[field], "", field)
     }
   }
 })
 
-test("feedback API keeps normal short structured field values", () => {
+test("feedback API keeps normal version and system short structured field values", () => {
   for (const payload of [
     baseStructuredPayload,
     {
       ...baseStructuredPayload,
       chromeVersion: "Chrome 126.0.6478.127",
       os: "Windows 11",
-      avisoVersion: "0.1.1-beta.2",
-      providerModel: "Anthropic / claude-3-5-sonnet"
+      avisoVersion: "0.1.1-beta.2"
     },
     {
       ...baseStructuredPayload,
       chromeVersion: "Edge 126.0.2592.87",
       os: "Ubuntu 24.04",
-      avisoVersion: "0.1.1",
-      providerModel: "OpenRouter / meta-llama/llama-3.1-70b"
+      avisoVersion: "0.1.1"
     }
   ]) {
     const normalized = normalizeFeedbackPayload(payload)
@@ -295,7 +195,118 @@ test("feedback API keeps normal short structured field values", () => {
     assert.equal(normalized.payload.chromeVersion, payload.chromeVersion)
     assert.equal(normalized.payload.os, payload.os)
     assert.equal(normalized.payload.avisoVersion, payload.avisoVersion)
-    assert.equal(normalized.payload.providerModel, payload.providerModel)
+  }
+})
+
+test("feedback API provider/model grammar accepts supported identifiers", () => {
+  const acceptedValues = [
+    "OpenAI",
+    "gpt-4o-mini",
+    "Anthropic",
+    "claude-3-5-sonnet",
+    "OpenRouter",
+    "meta-llama/llama-3.1-70b",
+    "Google",
+    "gemini-1.5-pro",
+    "gemini-1.5-flash",
+    "OpenAI / gpt-4o-mini",
+    "Anthropic / claude-3-5-sonnet",
+    "OpenRouter / meta-llama/llama-3.1-70b",
+    "Google / gemini-1.5-pro",
+    "Google / gemini-1.5-flash"
+  ]
+
+  for (const providerModel of acceptedValues) {
+    const normalized = normalizeFeedbackPayload({
+      ...baseStructuredPayload,
+      providerModel
+    })
+
+    assert.equal(normalized.ok, true, providerModel)
+    assert.equal(normalized.payload.needsRedaction, false, providerModel)
+    assert.equal(normalized.payload.providerModel, providerModel)
+  }
+})
+
+test("feedback API provider/model split fields validate before joining", () => {
+  const acceptedInput: Record<string, unknown> = {
+    ...baseStructuredPayload,
+    providerName: "OpenRouter",
+    modelName: "meta-llama/llama-3.1-70b"
+  }
+  delete acceptedInput.providerModel
+  const accepted = normalizeFeedbackPayload(acceptedInput)
+
+  assert.equal(accepted.ok, true)
+  assert.equal(accepted.payload.needsRedaction, false)
+  assert.equal(accepted.payload.providerModel, "OpenRouter / meta-llama/llama-3.1-70b")
+
+  for (const patch of [
+    {providerName: "OpenRouter Labs", modelName: "meta-llama/llama-3.1-70b"},
+    {providerName: "OpenRouter", modelName: "meta llama: llama-3.1-70b"}
+  ]) {
+    const input: Record<string, unknown> = {
+      ...baseStructuredPayload,
+      ...patch
+    }
+    delete input.providerModel
+    const normalized = normalizeFeedbackPayload(input)
+
+    assert.equal(normalized.ok, true)
+    assert.equal(normalized.payload.needsRedaction, true)
+    assert.equal(normalized.payload.providerModel, "")
+  }
+})
+
+test("feedback API provider/model rejects Unicode-manipulated sensitive labels", () => {
+  const labels = ["token", "secret", "authorization", "apikey"]
+  const gapClasses = [
+    "\u0332",
+    "\u202e",
+    "\u115f",
+    "\u1160",
+    "\u3164",
+    "\uffa0"
+  ]
+
+  for (const field of providerModelFields()) {
+    for (const [labelIndex, label] of labels.entries()) {
+      for (const [gapIndex, gap] of gapClasses.entries()) {
+        const credential = `${"c".repeat(24)}${labelIndex}${gapIndex}1234`
+        const manipulatedValue = `${insertBetweenLetters(label, gap)}: ${credential}`
+
+        assertProviderModelRedacted(field, manipulatedValue, credential)
+      }
+    }
+  }
+})
+
+test("feedback API provider/model rejects shape-looking known secrets", () => {
+  const knownSecrets = [
+    `sk-proj-${"d".repeat(32)}`,
+    `sk-ant-${"e".repeat(32)}`,
+    `eyJ${"f".repeat(12)}.${"g".repeat(16)}.${"h".repeat(16)}`,
+    "customer-secret-value-1234567890",
+    `token-${"i".repeat(24)}1234`
+  ]
+
+  for (const field of providerModelFields()) {
+    for (const value of knownSecrets) {
+      assertProviderModelRedacted(field, value, value)
+    }
+  }
+})
+
+test("feedback API provider/model rejects non-default-ignorable label mutations by shape", () => {
+  const mutatedLabels = ["tóken", "səcret", "t0ken"]
+
+  for (const field of providerModelFields()) {
+    for (const label of mutatedLabels) {
+      const credential = `${field}-${label.replace(/\W/g, "")}-${"j".repeat(24)}1234`
+      const value = `${label}: ${credential}`
+
+      assertProviderModelRedacted(field, value, credential)
+    }
   }
 })
 
@@ -457,6 +468,52 @@ function generatedSensitiveDetailCorpus(): string[] {
   values.add("Unpublished document: roadmap draft")
 
   return [...values]
+}
+
+type ProviderModelField = "providerModel" | "providerName" | "modelName"
+
+function providerModelFields(): ProviderModelField[] {
+  return ["providerModel", "providerName", "modelName"]
+}
+
+function providerModelInput(field: ProviderModelField, value: string): Record<string, unknown> {
+  const input: Record<string, unknown> = {
+    ...baseStructuredPayload
+  }
+
+  if (field === "providerModel") {
+    input.providerModel = value
+    return input
+  }
+
+  delete input.providerModel
+  input.providerName = field === "providerName" ? value : "OpenAI"
+  input.modelName = field === "modelName" ? value : "gpt-4o-mini"
+  return input
+}
+
+function assertProviderModelRedacted(field: ProviderModelField, value: string, forbidden: string): void {
+  const normalized = normalizeFeedbackPayload(providerModelInput(field, value))
+
+  assert.equal(normalized.ok, true, `${field} ${value}`)
+  assert.equal(normalized.payload.needsRedaction, true, `${field} ${value}`)
+  assert.equal(normalized.payload.providerModel, "", `${field} ${value}`)
+  assert.equal(normalized.payload.detailsForwarded, false, `${field} ${value}`)
+  assert.equal(normalized.payload.attachmentsForwarded, false, `${field} ${value}`)
+
+  const body = buildResendBody(normalized.payload, {
+    from: "Aviso Feedback <feedback@example.com>",
+    to: "maintainer@example.com"
+  })
+  const serialized = JSON.stringify(body)
+
+  assert.match(body.text, /Provider\/model: Not provided/, `${field} ${value}`)
+  assert.doesNotMatch(serialized, literalPattern(value), `${field} ${value}`)
+  assert.doesNotMatch(serialized, literalPattern(forbidden), `${field} ${value}`)
+}
+
+function insertBetweenLetters(label: string, gap: string): string {
+  return label.split("").join(gap)
 }
 
 function literalPattern(value: string): RegExp {

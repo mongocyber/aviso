@@ -42,9 +42,8 @@ const PROVIDER_PATH_LABELS = {
 };
 const VALID_IMAGE_TYPES = new Set(["image/png", "image/jpeg"]);
 const PNG_SIGNATURE = Buffer.from("89504e470d0a1a0a", "hex");
-const ZERO_WIDTH_CHARS = /[\u200B-\u200D\u2060\uFEFF]/g;
+const DEFAULT_IGNORABLE_CODE_POINTS = /\p{Default_Ignorable_Code_Point}/gu;
 const COMBINING_MARKS = /\p{M}/gu;
-const FORMAT_CHARS = /\p{Cf}/gu;
 const CONFUSABLE_LABEL_CHARS = new Map([
   ["Α", "A"], ["А", "A"], ["α", "a"], ["а", "a"],
   ["С", "C"], ["Ϲ", "C"], ["с", "c"], ["ϲ", "c"],
@@ -93,6 +92,11 @@ const BROWSER_VERSION_PATTERN =
 const OS_SUMMARY_PATTERN =
   /^(?:macOS|Mac OS|Windows|Linux|Ubuntu|Debian|Fedora|ChromeOS|Chrome OS|Android|iOS|iPadOS)(?:\s+[A-Za-z0-9 ._+/()-]{1,48})?$/i;
 const AVISO_VERSION_PATTERN = /^v?\d+(?:\.\d+){1,3}(?:[-+][A-Za-z0-9.-]{1,32})?$/i;
+const PROVIDER_MODEL_MAX_LENGTH = 120;
+const PROVIDER_NAME_PATTERN =
+  /^[A-Za-z][A-Za-z0-9]*(?:[._-]?[A-Za-z0-9]+){0,5}$/;
+const MODEL_ID_PATTERN =
+  /^[A-Za-z0-9]+(?:[._+-][A-Za-z0-9]+)*(?:\/[A-Za-z0-9]+(?:[._+-][A-Za-z0-9]+)*){0,3}$/;
 
 function sendJson(res, statusCode, body) {
   res.statusCode = statusCode;
@@ -128,11 +132,10 @@ function isValidEmail(value) {
 
 function normalizeSensitiveFeedbackText(value) {
   return value
+    .replace(DEFAULT_IGNORABLE_CODE_POINTS, "")
     .replace(COMBINING_MARKS, "")
-    .replace(FORMAT_CHARS, "")
     .normalize("NFKC")
-    .replace(ZERO_WIDTH_CHARS, "")
-    .replace(FORMAT_CHARS, "")
+    .replace(DEFAULT_IGNORABLE_CODE_POINTS, "")
     .replace(COMBINING_MARKS, "")
     .replace(CONFUSABLE_LABEL_PATTERN, (char) => CONFUSABLE_LABEL_CHARS.get(char) || char)
     .replace(/\s+/g, " ")
@@ -195,6 +198,94 @@ function normalizeStructuredText(value, maxLength, isAllowedValue = () => true) 
       needsRedaction: true,
       value: ""
     };
+  }
+
+  return {
+    needsRedaction: false,
+    value: normalized
+  };
+}
+
+function normalizeProviderModelText(value) {
+  return normalize(value, PROVIDER_MODEL_MAX_LENGTH)
+    .replace(DEFAULT_IGNORABLE_CODE_POINTS, "")
+    .replace(COMBINING_MARKS, "")
+    .normalize("NFKC")
+    .replace(DEFAULT_IGNORABLE_CODE_POINTS, "")
+    .replace(COMBINING_MARKS, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, PROVIDER_MODEL_MAX_LENGTH)
+    .trim();
+}
+
+function redactedProviderModel() {
+  return {
+    needsRedaction: true,
+    value: ""
+  };
+}
+
+function isAllowedProviderModelDisplay(value) {
+  if (PROVIDER_NAME_PATTERN.test(value) || MODEL_ID_PATTERN.test(value)) {
+    return true;
+  }
+
+  const parts = value.split(" / ");
+  return (
+    parts.length === 2 &&
+    PROVIDER_NAME_PATTERN.test(parts[0]) &&
+    MODEL_ID_PATTERN.test(parts[1])
+  );
+}
+
+function normalizeProviderModelDisplay(value) {
+  const normalized = normalizeProviderModelText(value);
+  if (!normalized) {
+    return {
+      needsRedaction: false,
+      value: ""
+    };
+  }
+
+  if (!isAllowedProviderModelDisplay(normalized)) {
+    return redactedProviderModel();
+  }
+
+  if (containsSensitiveFeedbackContent(normalized)) {
+    return redactedProviderModel();
+  }
+
+  return {
+    needsRedaction: false,
+    value: normalized
+  };
+}
+
+function normalizeProviderModelFields(body) {
+  if (typeof body.providerModel === "string") {
+    return normalizeProviderModelDisplay(body.providerModel);
+  }
+
+  const providerName = normalizeProviderModelText(body.providerName);
+  const modelName = normalizeProviderModelText(body.modelName);
+  if (!providerName && !modelName) {
+    return {
+      needsRedaction: false,
+      value: ""
+    };
+  }
+
+  if (providerName && !PROVIDER_NAME_PATTERN.test(providerName)) {
+    return redactedProviderModel();
+  }
+  if (modelName && !MODEL_ID_PATTERN.test(modelName)) {
+    return redactedProviderModel();
+  }
+
+  const normalized = [providerName, modelName].filter(Boolean).join(" / ");
+  if (containsSensitiveFeedbackContent(normalized)) {
+    return redactedProviderModel();
   }
 
   return {
@@ -461,10 +552,7 @@ function normalizeFeedbackPayload(body) {
   const avisoVersion = normalizeStructuredText(body.avisoVersion, 80, (value) =>
     AVISO_VERSION_PATTERN.test(value)
   );
-  const providerModel = normalizeStructuredText(
-    body.providerModel || [body.providerName, body.modelName].filter(Boolean).join(" / "),
-    120
-  );
+  const providerModel = normalizeProviderModelFields(body);
   const attachmentNameNeedsRedaction = Array.isArray(body.attachments)
     ? body.attachments.some((item) => containsSensitiveFeedbackContent(normalize(item?.name, 120)))
     : false;
