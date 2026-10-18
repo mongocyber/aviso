@@ -1,8 +1,8 @@
 {
   "name": "aviso",
   "displayName": "Aviso",
-  "version": "0.1.1",
-  "description": "智能浏览器助手，感知操作对象，就地调用 AI，浮窗展示结果。BYOK 默认可用，可选 Aviso AI 候选路径，无遥测。",
+  "version": "0.1.2",
+  "description": "智能浏览器助手，感知操作对象，就地调用 AI，浮窗展示结果。BYOK 直连 AI 服务，无遥测。",
   "author": "Aviso",
   "scripts": {
     "dev": "plasmo dev",
@@ -59,8 +59,7 @@
       "https://api.moonshot.cn/*",
       "https://openrouter.ai/*",
       "https://generativelanguage.googleapis.com/*",
-      "https://api.hunyuan.cloud.tencent.com/*",
-      "https://aviso-backend-production.vercel.app/*"
+      "https://api.hunyuan.cloud.tencent.com/*"
     ],
     "permissions": [
       "contextMenus",
@@ -68,7 +67,6 @@
       "storage",
       "history",
       "bookmarks",
-      "identity",
       "clipboardWrite"
     ],
     "commands": {

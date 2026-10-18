@@ -16,15 +16,13 @@ import { assertSupportedImageSrc } from "~utils/image-src"
 import { parseIntentLocally } from "~utils/intent"
 import {
   getProviderConfigById,
-  isFastModelEligibleOperation,
   resolveFastModelRouteForOperation,
   type ModelRoute,
   type ProviderId
 } from "~utils/model-registry"
 import {
   getLegacyProviderFromConfigId,
-  getProviderConfigsWithLegacy,
-  resolveDefaultProviderConfigId
+  getProviderConfigsWithLegacy
 } from "~utils/provider-configs"
 import {
   buildConnectivityTestPayload,
@@ -40,20 +38,12 @@ import {
   extractReasoningDeltaText,
   shouldUseMaxCompletionTokens
 } from "~utils/reasoning"
-import {
-  isHostedAiProviderConfigId,
-  isHostedSessionUsable,
-  readHostedSession,
-  selectConfiguredHostedRoute,
-  type StoredHostedSession
-} from "~utils/hosted-session"
 import { getImageInputBlockReason } from "~utils/screenshot"
 import { getTemplates } from "~utils/storage"
 import { expandTemplate } from "~utils/template"
 import {
   buildPerfSummary,
   categorizePerfError,
-  type HostedFirstRequestReason,
   logPerfSummary,
   logTiming,
   markTiming,
@@ -87,10 +77,6 @@ import {
   resolveRuntimeModelRoute,
   resolveRuntimeProviderConfigRoute
 } from "./ai-runtime-cache"
-import {
-  runHostedChatRequest,
-  shouldUseHostedChatRoute
-} from "./hosted-chat-routing"
 import {
   getCachedTranslation,
   getTranslationCacheKey,
@@ -206,8 +192,6 @@ export async function handleAIRequest(
     signal?: AbortSignal
     pageUrl?: string
     runtimeConfigSnapshot?: Awaited<ReturnType<typeof getRuntimeConfigSnapshot>>
-    hostedSession?: StoredHostedSession | null
-    hostedFirstRequestReason?: HostedFirstRequestReason
     onPerfSummary?: (summary: PerfSummary) => void
   } = {}
 ): Promise<PerfSummary | undefined> {
@@ -284,64 +268,7 @@ export async function handleAIRequest(
   }
 
   const providerConfigs = getProviderConfigsWithLegacy(settings, apiKeys)
-  const fastEligible = isFastModelEligibleOperation(payload)
-  const fastByokConfigSelected = Boolean(
-    fastEligible &&
-      settings.fastProviderConfigId &&
-      !isHostedAiProviderConfigId(settings.fastProviderConfigId) &&
-      getProviderConfigById(providerConfigs, settings.fastProviderConfigId)
-  )
-  const hostedSession = options.hostedSession ?? (await readHostedSession())
-  const hostedUsable = isHostedSessionUsable(hostedSession)
-  const hostedIsSavedDefault =
-    (isHostedAiProviderConfigId(settings.fastProviderConfigId) &&
-      fastEligible) ||
-    (isHostedAiProviderConfigId(settings.defaultProviderConfigId) &&
-      !fastByokConfigSelected)
-  const byokFallbackConfigId = hostedIsSavedDefault
-    ? resolveDefaultProviderConfigId(settings, providerConfigs, false)
-    : ""
-  const byokFallbackConfig =
-    byokFallbackConfigId && !isHostedAiProviderConfigId(byokFallbackConfigId)
-      ? getProviderConfigById(providerConfigs, byokFallbackConfigId)
-      : undefined
-  const shouldUseConfiguredHostedRoute = selectConfiguredHostedRoute({
-    requestedRoute: payload.aiRoute,
-    hostedExplicit: shouldUseHostedChatRoute(payload),
-    hostedIsSavedDefault,
-    hostedUsable,
-    hasByokFallback: Boolean(byokFallbackConfig)
-  })
-
-  if (shouldUseConfiguredHostedRoute) {
-    try {
-      const hostedPerfSummary = await runHostedChatRequest(
-        { ...payload, aiRoute: "hosted" },
-        forwardVisibleChunk,
-        {
-          requestId: options.requestId,
-          signal: options.signal,
-          session: hostedSession,
-          targetLanguage:
-            translationTargetLanguage ?? settings.inlineTranslationTargetLanguage,
-          firstRequestReason: options.hostedFirstRequestReason,
-          onPerfSummary: recordPerfSummary
-        }
-      )
-      return hostedPerfSummary
-    } catch (err) {
-      throw new Error(normalizeError(err))
-    }
-  }
-
-  // Hosted was only a saved default and isn't usable right now: route to the
-  // effective BYOK default config instead of a stale hosted model id.
-  const byokFallbackRoute =
-    hostedIsSavedDefault && payload.aiRoute !== "byok" && byokFallbackConfig
-      ? resolveRuntimeProviderConfigRoute(byokFallbackConfig, settings)
-      : undefined
   const route =
-    byokFallbackRoute ??
     resolveFastModelRouteForOperation(payload, settings, providerConfigs) ??
     resolveRuntimeModelRoute(payload.model, settings)
 

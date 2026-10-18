@@ -19,8 +19,7 @@ import {
 
 export async function handleCommandQuickAction(
   actionId: CommandQuickActionId,
-  sender: chrome.runtime.MessageSender,
-  options: { aiRoute?: AIRequestPayload["aiRoute"] } = {}
+  sender: chrome.runtime.MessageSender
 ): Promise<MessageResponse> {
   const tabId = sender.tab?.id
   if (!tabId) {
@@ -58,8 +57,7 @@ export async function handleCommandQuickAction(
       tabId,
       sourceFrameId,
       sourceFrameUrl,
-      pageUrl,
-      options.aiRoute
+      pageUrl
     )
   }
 
@@ -68,8 +66,7 @@ export async function handleCommandQuickAction(
       tabId,
       sourceFrameId,
       sourceFrameUrl,
-      pageUrl,
-      options.aiRoute
+      pageUrl
     )
   }
 
@@ -132,8 +129,7 @@ async function summarizePageQuickAction(
   tabId: number,
   sourceFrameId: number,
   sourceFrameUrl: string | undefined,
-  pageUrl: string,
-  aiRoute?: AIRequestPayload["aiRoute"]
+  pageUrl: string
 ): Promise<MessageResponse> {
   return runPageAiQuickAction({
     tabId,
@@ -147,7 +143,6 @@ async function summarizePageQuickAction(
     aiPayload: (pageContent, timing) => ({
       trigger: "command-palette",
       operation: "summarize",
-      aiRoute,
       context: "page",
       pageUrl,
       pageContent,
@@ -160,8 +155,7 @@ async function translatePageQuickAction(
   tabId: number,
   sourceFrameId: number,
   sourceFrameUrl: string | undefined,
-  pageUrl: string,
-  aiRoute?: AIRequestPayload["aiRoute"]
+  pageUrl: string
 ): Promise<MessageResponse> {
   return runPageAiQuickAction({
     tabId,
@@ -175,7 +169,6 @@ async function translatePageQuickAction(
     aiPayload: (pageContent, timing) => ({
       trigger: "command-palette",
       operation: "translate",
-      aiRoute,
       context: "page",
       pageUrl,
       selectionText: pageContent,

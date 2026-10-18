@@ -116,7 +116,7 @@ function accessForPreview(
         blocked: true,
         usesProvider: false,
         label: "未配置 API Key",
-        detail: "请登录 Aviso AI，或在 AI 服务页配置自己的 API Key。"
+        detail: "请先在 AI 服务中配置自己的 API Key。"
       }
     case "model_unavailable":
       return {

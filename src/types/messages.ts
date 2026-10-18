@@ -1,10 +1,6 @@
 import type { ConversationMessage } from "~types/history"
 import type { ClipboardType } from "~utils/clipboard-detect"
 import type { CommandQuickActionId } from "~utils/command-access"
-import type {
-  HostedAccountStatus,
-  HostedSignInStage
-} from "~utils/hosted-session"
 import type { AiUnavailableGuidance } from "~utils/ai-unavailable-guidance"
 import type { ProviderId } from "~utils/model-registry"
 import type { PerfSummary, RequestTiming } from "~utils/timing"
@@ -21,7 +17,6 @@ export type AIRequestPayload = {
   trigger?: string
   context?: ContextMenuContext
   operation?: string
-  aiRoute?: "byok" | "hosted"
   imageSource?: "remote-image" | "screenshot-region"
   selectionText?: string
   pageContent?: string
@@ -46,16 +41,6 @@ export type AIStreamChunk = {
 export type ProviderConnectivityPayload = {
   provider: ProviderId
   providerConfigId?: string
-}
-
-export type HostedGoogleSignInData = {
-  status: HostedAccountStatus
-  stage: HostedSignInStage
-  error?: {
-    source: "oauth" | "backend" | "storage" | "unknown"
-    code: string
-    httpStatusClass?: "1xx" | "2xx" | "3xx" | "4xx" | "5xx" | "unknown"
-  }
 }
 
 export type ScreenshotRegion = {
@@ -92,7 +77,6 @@ export type MessageRequest =
       action: "VALIDATE_PROVIDER_CONNECTIVITY"
       payload: ProviderConnectivityPayload
     }
-  | { action: "HOSTED_GOOGLE_SIGN_IN" }
   | {
       action: "START_SCREENSHOT_SELECTION"
       payload: {
@@ -118,7 +102,6 @@ export type MessageRequest =
         requestId?: string
         trigger: string
         operation: string
-        aiRoute?: AIRequestPayload["aiRoute"]
         context?: ContextMenuContext
         imageSource?: AIRequestPayload["imageSource"]
         selectionText?: string
@@ -130,11 +113,6 @@ export type MessageRequest =
         userMessage?: string
         timing?: RequestTiming
         deferAiRequest?: boolean
-        hostedAi?: {
-          route: "hosted"
-          state: "sign_in_required"
-          hasByokProvider?: boolean
-        }
         statusText?: string
         // 从历史恢复：直接回填已有对话，不再调用 AI
         restore?: {
@@ -179,7 +157,6 @@ export type MessageRequest =
       action: "RUN_COMMAND_QUICK_ACTION"
       payload: {
         actionId: CommandQuickActionId
-        aiRoute?: AIRequestPayload["aiRoute"]
       }
     }
   | { action: "OPEN_COMMAND_PALETTE" }

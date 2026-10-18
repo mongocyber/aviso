@@ -1,11 +1,6 @@
 import type { I18nKey } from "./i18n-core"
 
 export type AiUnavailableGuidanceReason =
-  | "hosted_sign_in_required"
-  | "hosted_quota_exhausted"
-  | "hosted_rate_limited"
-  | "hosted_service_unavailable"
-  | "hosted_provider_unavailable"
   | "byok_api_key_missing"
   | "byok_model_missing"
   | "ai_service_unavailable"
@@ -17,36 +12,6 @@ export type AiUnavailableGuidance = {
 export function deriveAiUnavailableGuidance(
   error: string
 ): AiUnavailableGuidance | undefined {
-  if (/托管登录状态已失效|Aviso AI.*登录|hosted.*sign|sign in/i.test(error)) {
-    return {
-      reason: "hosted_sign_in_required"
-    }
-  }
-
-  if (/托管额度暂不可用/i.test(error)) {
-    return {
-      reason: "hosted_quota_exhausted"
-    }
-  }
-
-  if (/托管请求过于频繁/i.test(error)) {
-    return {
-      reason: "hosted_rate_limited"
-    }
-  }
-
-  if (/托管服务暂不可用|托管服务异常/i.test(error)) {
-    return {
-      reason: "hosted_service_unavailable"
-    }
-  }
-
-  if (/托管上游服务失败|当前托管模型不可用/i.test(error)) {
-    return {
-      reason: "hosted_provider_unavailable"
-    }
-  }
-
   if (/api key.*未配置|key 未配置|missing.*api key/i.test(error)) {
     return {
       reason: "byok_api_key_missing"
@@ -63,7 +28,7 @@ export function deriveAiUnavailableGuidance(
     }
   }
 
-  if (/AI 服务返回错误|托管|network|网络|timeout|超时|unavailable/i.test(error)) {
+  if (/AI 服务返回错误|network|网络|timeout|超时|unavailable/i.test(error)) {
     return {
       reason: "ai_service_unavailable"
     }
@@ -76,16 +41,6 @@ export function getAiUnavailableTitleKey(
   guidance: AiUnavailableGuidance
 ): I18nKey {
   switch (guidance.reason) {
-    case "hosted_sign_in_required":
-      return "aiUnavailable.hostedSignIn.title"
-    case "hosted_quota_exhausted":
-      return "aiUnavailable.hostedQuotaExhausted.title"
-    case "hosted_rate_limited":
-      return "aiUnavailable.hostedRateLimited.title"
-    case "hosted_service_unavailable":
-      return "aiUnavailable.hostedServiceUnavailable.title"
-    case "hosted_provider_unavailable":
-      return "aiUnavailable.hostedProviderUnavailable.title"
     case "byok_api_key_missing":
       return "aiUnavailable.apiKeyMissing.title"
     case "byok_model_missing":
@@ -99,16 +54,6 @@ export function getAiUnavailableDetailKey(
   guidance: AiUnavailableGuidance
 ): I18nKey {
   switch (guidance.reason) {
-    case "hosted_sign_in_required":
-      return "aiUnavailable.hostedSignIn.detail"
-    case "hosted_quota_exhausted":
-      return "aiUnavailable.hostedQuotaExhausted.detail"
-    case "hosted_rate_limited":
-      return "aiUnavailable.hostedRateLimited.detail"
-    case "hosted_service_unavailable":
-      return "aiUnavailable.hostedServiceUnavailable.detail"
-    case "hosted_provider_unavailable":
-      return "aiUnavailable.hostedProviderUnavailable.detail"
     case "byok_api_key_missing":
       return "aiUnavailable.apiKeyMissing.detail"
     case "byok_model_missing":

@@ -1,6 +1,8 @@
 import CryptoJS from "crypto-js"
 import type { PromptTemplate, ProviderConfig, Settings } from "~types/history"
 
+import { migrateLegacyProviderSelection } from "./legacy-migration"
+
 // API key storage is local obfuscation, not a confidentiality boundary.
 // The release extension id is public/stable, so code that can read the local
 // browser profile or chrome.storage.local can derive the same AES passphrase.
@@ -48,7 +50,10 @@ const DEFAULT_SETTINGS: Settings = {
 export async function getSettings(): Promise<Settings> {
   // Keep legacy storage keys for upgrade compatibility after the Aviso rename.
   const result = await chrome.storage.sync.get("contextai_settings")
-  return { ...DEFAULT_SETTINGS, ...(result.contextai_settings ?? {}) }
+  return migrateLegacyProviderSelection({
+    ...DEFAULT_SETTINGS,
+    ...(result.contextai_settings ?? {})
+  }).settings
 }
 
 export async function saveSettings(settings: Partial<Settings>): Promise<void> {

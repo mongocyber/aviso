@@ -5,10 +5,6 @@ import {
   PROVIDER_PRIMARY_MODEL,
   type ProviderId
 } from "./model-registry"
-import {
-  HOSTED_AI_PROVIDER_CONFIG_ID,
-  isHostedAiProviderConfigId
-} from "./hosted-session"
 import type { ApiKeys } from "./storage"
 
 const PROVIDER_DISPLAY_NAME: Record<ProviderId, string> = {
@@ -155,67 +151,10 @@ export function hasProviderConfigKey(
   return Boolean(getProviderConfigKey(config, apiKeys))
 }
 
-export function isProviderConfigReadyForSelection(
-  config: ProviderConfig,
-  apiKeys: ApiKeys
-): boolean {
-  if (!hasProviderConfigKey(config, apiKeys)) return false
-  if (requiresProviderConfigModel(config.provider) && !config.model.trim()) {
-    return false
-  }
-  return true
-}
-
-export function resolvePopupCurrentModelProviderConfigId(input: {
-  settings: Settings
-  providerConfigs: ProviderConfig[]
-  apiKeys: ApiKeys
-  hostedUsable: boolean
-  explicitByokDefaultId?: string | null
-}): string {
-  const byokDefaultId = resolveDefaultProviderConfigId(
-    input.settings,
-    input.providerConfigs,
-    false
-  )
-
-  const byokDefaultConfig = input.providerConfigs.find(
-    (config) => config.id === byokDefaultId
-  )
-  const byokDefaultReady = byokDefaultConfig
-    ? isProviderConfigReadyForSelection(byokDefaultConfig, input.apiKeys)
-    : isLegacyDefaultModelReadyForSelection(input.settings, input.apiKeys)
-
-  if (
-    isHostedAiProviderConfigId(input.settings.defaultProviderConfigId) &&
-    input.hostedUsable
-  ) {
-    return HOSTED_AI_PROVIDER_CONFIG_ID
-  }
-
-  if (
-    input.hostedUsable &&
-    !byokDefaultReady &&
-    input.explicitByokDefaultId !== byokDefaultId
-  ) {
-    return HOSTED_AI_PROVIDER_CONFIG_ID
-  }
-
-  return byokDefaultId
-}
-
 export function resolveDefaultProviderConfigId(
   settings: Settings,
-  providerConfigs: ProviderConfig[],
-  hostedUsable = true
+  providerConfigs: ProviderConfig[]
 ): string {
-  if (
-    isHostedAiProviderConfigId(settings.defaultProviderConfigId) &&
-    hostedUsable
-  ) {
-    return HOSTED_AI_PROVIDER_CONFIG_ID
-  }
-
   if (
     settings.defaultProviderConfigId &&
     providerConfigs.some((config) => config.id === settings.defaultProviderConfigId)
@@ -260,15 +199,6 @@ export function requiresProviderConfigModel(provider: ProviderId): boolean {
     provider === "gemini" ||
     provider === "hunyuan"
   )
-}
-
-function isLegacyDefaultModelReadyForSelection(
-  settings: Settings,
-  apiKeys: ApiKeys
-): boolean {
-  const provider = getProviderForModel(settings.defaultModel)
-  if (!apiKeys[provider]) return false
-  return provider !== "doubao" || Boolean(settings.doubaoModel?.trim())
 }
 
 export function isProviderConfigTestCurrent(config: ProviderConfig): boolean {

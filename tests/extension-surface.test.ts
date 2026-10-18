@@ -2,27 +2,6 @@ import assert from "node:assert/strict"
 import { readFileSync } from "node:fs"
 import { test } from "node:test"
 import {
-  buildHostedAccountQuotaDisplay,
-  clearHostedSession,
-  deriveHostedAccountStatus,
-  getHostedMonthlyQuotaWindow,
-  HOSTED_AI_DEFAULT_BASE_URL,
-  HOSTED_AI_DEFAULT_MODEL,
-  HOSTED_AI_LOCAL_BASE_URL,
-  HOSTED_AI_PRODUCTION_BASE_URL,
-  HOSTED_AI_PRODUCTION_HOST_PERMISSION,
-  HOSTED_AI_PROVIDER_CONFIG_ID,
-  HOSTED_SESSION_STORAGE_KEY,
-  isByokBlockedByHostedSignIn,
-  isHostedAiProviderConfigId,
-  isHostedSessionUsable,
-  readHostedSession,
-  requiresHostedSignInForRoute,
-  saveHostedSession,
-  selectConfiguredHostedRoute,
-  type StoredHostedSession
-} from "../src/utils/hosted-session.ts"
-import {
   buildTranslationSystemPrompt,
   buildTranslationUserContent,
   formatTranslationError,
@@ -251,13 +230,10 @@ test("command palette AI actions are visible candidates with disconnected guard"
   assert.match(buildIntentResultsBlock, /type: "ask-ai"/)
   assert.doesNotMatch(buildIntentResultsBlock, /fallback/)
   assert.match(handleSelectBlock, /command\.aiDisconnected/)
-  assert.match(handleSelectBlock, /aiConnection\.route === "hosted"/)
+  assert.match(handleSelectBlock, /payload: \{ actionId: item\.actionId \}/)
   assert.match(handleSendToAiBlock, /!aiConnection\.connected/)
   assert.match(handleSendToAiBlock, /command\.aiDisconnected/)
-  assert.match(handleSendToAiBlock, /aiRoute: aiConnection\.route === "hosted"/)
-  assert.match(commandSource, /readHostedSession/)
-  assert.match(commandSource, /isHostedSessionUsable/)
-  assert.match(commandSource, /providerLabel: "Aviso AI"/)
+  assert.match(commandSource, /providerLabel: route\.provider\.displayName/)
 })
 
 test("URL-bearing warning logs use presence fields instead of raw URLs", () => {

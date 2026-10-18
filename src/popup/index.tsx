@@ -19,31 +19,7 @@ import type {
   ProviderConfig,
   Settings
 } from "~types/history"
-import type { HostedGoogleSignInData, MessageResponse } from "~types/messages"
-import {
-  createHostedAiClient,
-  HostedAiClientError
-} from "~utils/hosted-ai-client"
-import {
-  buildHostedAccountQuotaDisplay,
-  clearHostedSignInResult,
-  clearHostedSession,
-  deriveHostedAccountStatus,
-  getHostedMonthlyQuotaWindow,
-  HOSTED_AI_DEFAULT_BASE_URL,
-  HOSTED_AI_DEFAULT_MODEL,
-  HOSTED_AI_PROVIDER_CONFIG_ID,
-  HOSTED_SIGN_IN_RESULT_STORAGE_KEY,
-  HOSTED_SESSION_STORAGE_KEY,
-  isHostedAiProviderConfigId,
-  isHostedSessionUsable,
-  readHostedSignInResult,
-  readHostedSession,
-  updateHostedSessionMe,
-  type HostedAccountStatus,
-  type StoredHostedSignInResult,
-  type StoredHostedSession
-} from "~utils/hosted-session"
+import type { MessageResponse } from "~types/messages"
 import {
   createI18n,
   resolveUiLanguage,
@@ -71,7 +47,7 @@ import {
   isLegacyProviderConfigId,
   markProviderConfigTestResult,
   requiresProviderConfigModel,
-  resolvePopupCurrentModelProviderConfigId,
+  resolveDefaultProviderConfigId,
   shouldClearProviderConfigTestResult
 } from "~utils/provider-configs"
 import {
@@ -89,7 +65,6 @@ import {
   saveProviderConfigApiKey,
   saveSettings
 } from "~utils/storage"
-import type { ApiKeys } from "~utils/storage"
 import { TRANSLATION_TARGET_OPTIONS } from "~utils/translation"
 
 const TEMPLATE_CONTEXTS: { value: string; labelKey: I18nKey }[] = [
@@ -488,15 +463,6 @@ function Popup() {
   const [providerMessages, setProviderMessages] = useState<
     Partial<Record<ProviderId, ProviderActionMessage>>
   >({})
-  const [hostedSession, setHostedSession] =
-    useState<StoredHostedSession | null>(null)
-  const [hostedBusy, setHostedBusy] = useState(false)
-  const [hostedStatus, setHostedStatus] =
-    useState<HostedAccountStatus>("signed_out")
-  const [hostedMessageKey, setHostedMessageKey] = useState<I18nKey>(
-    "popup.hosted.status.signedOut"
-  )
-  const [accountPanelOpen, setAccountPanelOpen] = useState(false)
   const [systemPrefersDark, setSystemPrefersDark] = useState(true)
   const [popupRuntimeHeight, setPopupRuntimeHeight] = useState<number>(
     POPUP_FRAME.safeMaxHeight
@@ -505,7 +471,6 @@ function Popup() {
   // 自动保存：首屏加载完成前不触发保存，避免把默认值写回覆盖已存设置
   const loaded = useRef(false)
   const persistedSettingsSignature = useRef("")
-  const explicitDefaultProviderConfigId = useRef<string | null>(null)
   const saveTimer = useRef<ReturnType<typeof setTimeout>>()
   const modelDropdownRef = useRef<HTMLDivElement>(null)
   const fastServiceDropdownRef = useRef<HTMLDivElement>(null)
@@ -712,208 +677,12 @@ function Popup() {
     })
   }
 
-  const setHostedAccountResult = (
-    status: HostedAccountStatus,
-    messageKey: I18nKey,
-    session: StoredHostedSession | null = hostedSession
-  ) => {
-    setHostedStatus(status)
-    setHostedMessageKey(messageKey)
-    setHostedSession(session)
-  }
-
-  const createLocalHostedClient = (session?: StoredHostedSession | null) =>
-    createHostedAiClient({
-      baseUrl: session?.baseUrl ?? HOSTED_AI_DEFAULT_BASE_URL,
-      sessionToken: session?.session.session_token
-    })
-
-  const refreshHostedSessionStateFromStorage = async (
-    signedInMessageKey?: I18nKey
-  ) => {
-    const stored = await readHostedSession()
-    const status = deriveHostedAccountStatus({ session: stored })
-    setHostedAccountResult(
-      status,
-      status === "signed_in" && signedInMessageKey
-        ? signedInMessageKey
-        : getHostedAccountStatusMessageKey(status),
-      stored
-    )
-    return stored
-  }
-
-  const applyHostedSignInResult = (
-    result: StoredHostedSignInResult | HostedGoogleSignInData | null
-  ) => {
-    if (!result || result.status === "signed_in") return false
-    setHostedAccountResult(
-      result.status,
-      getHostedSignInFailureMessageKey(result, false),
-      null
-    )
-    return true
-  }
-
-  const refreshHostedSignInResultFromStorage = async () => {
-    const [stored, result] = await Promise.all([
-      readHostedSession(),
-      readHostedSignInResult()
-    ])
-    if (stored) return null
-    applyHostedSignInResult(result)
-    return result
-  }
-
-  const signInHosted = async () => {
-    setHostedBusy(true)
-    void clearHostedSignInResult()
-    setHostedAccountResult("signing_in", "popup.hosted.status.signingIn")
-    try {
-      const response = await sendRuntimeMessage<HostedGoogleSignInData>({
-        action: "HOSTED_GOOGLE_SIGN_IN"
-      })
-      const stored = await refreshHostedSessionStateFromStorage(
-        "popup.hosted.status.signedIn"
-      )
-      if (stored) return
-      if (response.success) {
-        setHostedAccountResult("signing_in", "popup.hosted.status.signingIn", null)
-        window.setTimeout(() => {
-          void refreshHostedSessionStateFromStorage(
-            "popup.hosted.status.signedIn"
-          )
-        }, 100)
-        return
-      }
-      if (!response.success) {
-        const result = response.data
-        if (!applyHostedSignInResult(result ?? null)) {
-          setHostedAccountResult(
-            "local_backend_unavailable",
-            getHostedSignInFailureMessageKey(result, false),
-            null
-          )
-        }
-        return
-      }
-    } catch (error) {
-      const status =
-        error instanceof HostedAiClientError
-          ? deriveHostedAccountStatus({
-              session: null,
-              errorCode: error.normalized.code
-            })
-          : "local_backend_unavailable"
-      setHostedAccountResult(
-        status,
-        error instanceof HostedAiClientError
-          ? getHostedAccountStatusMessageKey(status)
-          : "popup.hosted.status.runtimeUnavailable"
-      )
-    } finally {
-      setHostedBusy(false)
-    }
-  }
-
   useEffect(() => {
-    const onHostedSessionStorageChange = (
-      changes: Record<string, chrome.storage.StorageChange>,
-      areaName: string
-    ) => {
-      if (areaName !== "local") return
-      if (changes[HOSTED_SESSION_STORAGE_KEY]) {
-        void refreshHostedSessionStateFromStorage()
-        return
-      }
-      if (changes[HOSTED_SIGN_IN_RESULT_STORAGE_KEY]) {
-        void refreshHostedSignInResultFromStorage()
-      }
-    }
-
-    chrome.storage.onChanged.addListener(onHostedSessionStorageChange)
-    return () =>
-      chrome.storage.onChanged.removeListener(onHostedSessionStorageChange)
-  }, [])
-
-  const refreshHostedAccount = async () => {
-    if (!hostedSession) {
-      setHostedAccountResult(
-        "signed_out",
-        "popup.hosted.status.signedOut",
-        null
-      )
-      return
-    }
-
-    setHostedBusy(true)
-    setHostedAccountResult("signing_in", "popup.hosted.status.refreshing")
-    try {
-      const client = createLocalHostedClient(hostedSession)
-      const me = await client.me(hostedSession.session.session_token)
-      const stored = await updateHostedSessionMe(hostedSession, me)
-      setHostedAccountResult(
-        "signed_in",
-        "popup.hosted.status.refreshed",
-        stored
-      )
-    } catch (error) {
-      const status =
-        error instanceof HostedAiClientError
-          ? deriveHostedAccountStatus({
-              session: hostedSession,
-              errorCode: error.normalized.code
-            })
-          : "local_backend_unavailable"
-      setHostedAccountResult(status, getHostedAccountStatusMessageKey(status))
-    } finally {
-      setHostedBusy(false)
-    }
-  }
-
-  const signOutHostedLocal = async () => {
-    setHostedBusy(true)
-    try {
-      if (hostedSession) {
-        const client = createLocalHostedClient(hostedSession)
-        await client.logout(hostedSession.session.session_token)
-      }
-    } catch {
-      // Local sign-out should not leave a stale token when the backend is down.
-    } finally {
-      await clearHostedSession()
-      await clearHostedSignInResult()
-      setHostedAccountResult(
-        "signed_out",
-        "popup.hosted.status.signedOut",
-        null
-      )
-      setHostedBusy(false)
-    }
-  }
-
-  useEffect(() => {
-    Promise.all([
-      getSettings(),
-      getApiKeys(),
-      readHostedSession(),
-      readHostedSignInResult()
-    ]).then(([s, keys, session, signInResult]) => {
+    Promise.all([getSettings(), getApiKeys()]).then(([s, keys]) => {
         const normalizedSettings = normalizeCommonFeatureSettings(s)
         persistedSettingsSignature.current =
           settingsSignature(normalizedSettings)
         setSettings(normalizedSettings)
-        setHostedSession(session)
-        if (!session && signInResult) {
-          applyHostedSignInResult(signInResult)
-        } else {
-          setHostedStatus(deriveHostedAccountStatus({ session }))
-          setHostedMessageKey(
-            session
-              ? "popup.hosted.status.signedIn"
-              : "popup.hosted.status.signedOut"
-          )
-        }
         if (settingsSignature(normalizedSettings) !== settingsSignature(s)) {
           void saveSettings(normalizedSettings)
         }
@@ -959,7 +728,7 @@ function Popup() {
         if (keys.anthropic)
           setAnthropicKey("••••••••" + keys.anthropic.slice(-4))
         if (keys.doubao) setDoubaoKey("••••••••" + keys.doubao.slice(-4))
-        // 零状态（无 hosted 登录且无任何自有 Key）默认进入 AI 服务页签，
+        // 零状态（无任何自有 Key）默认进入 AI 服务页签，
         // 让新用户直接看到「开始使用」；已配置用户仍默认停在设置页。
         const hasByokAtLoad =
           configs.length > 0 ||
@@ -974,10 +743,7 @@ function Popup() {
               keys.hunyuan
           ) ||
           Object.keys(keys.providerConfigKeys ?? {}).length > 0
-        if (
-          !hasByokAtLoad &&
-          deriveHostedAccountStatus({ session }) !== "signed_in"
-        ) {
+        if (!hasByokAtLoad) {
           setTab("api")
         }
         // 加载完成后才允许自动保存
@@ -1092,9 +858,7 @@ function Popup() {
       (config) => !isLegacyProviderConfigId(config.id)
     )
     let defaultProviderConfigId = ""
-    if (isHostedAiProviderConfigId(preferredDefaultId)) {
-      defaultProviderConfigId = HOSTED_AI_PROVIDER_CONFIG_ID
-    } else if (
+    if (
       preferredDefaultId &&
       nextConfigs.some((config) => config.id === preferredDefaultId)
     ) {
@@ -1104,19 +868,14 @@ function Popup() {
         nextConfigs.find((config) => config.id !== activeProviderConfigId)
           ?.id ?? ""
     }
-    const defaultConfig = isHostedAiProviderConfigId(defaultProviderConfigId)
-      ? undefined
-      : nextConfigs.find((config) => config.id === defaultProviderConfigId) ??
-        nextConfigs[0]
-    const nextDefaultModel = isHostedAiProviderConfigId(defaultProviderConfigId)
-      ? HOSTED_AI_DEFAULT_MODEL
-      : defaultConfig
+    const defaultConfig =
+      nextConfigs.find((config) => config.id === defaultProviderConfigId) ??
+      nextConfigs[0]
+    const nextDefaultModel = defaultConfig
       ? getModelForProviderConfig(defaultConfig)
       : settings.defaultModel
     let nextFastProviderConfigId = ""
-    if (isHostedAiProviderConfigId(settings.fastProviderConfigId)) {
-      nextFastProviderConfigId = HOSTED_AI_PROVIDER_CONFIG_ID
-    } else if (
+    if (
       settings.fastProviderConfigId &&
       nextConfigs.some((config) => config.id === settings.fastProviderConfigId)
     ) {
@@ -1332,25 +1091,12 @@ function Popup() {
 
   const setDefaultProviderConfig = async (config: ProviderConfig) => {
     setConfirmingDeleteProviderConfigId(null)
-    explicitDefaultProviderConfigId.current = config.id
     const nextConfigs = providerConfigs.map((item) => ({
       ...item,
       isDefault: item.id === config.id
     }))
     setProviderConfigs(nextConfigs)
     await persistProviderConfigs(nextConfigs, config.id)
-    flashSaved()
-  }
-
-  const setDefaultHostedAiService = async () => {
-    setConfirmingDeleteProviderConfigId(null)
-    explicitDefaultProviderConfigId.current = HOSTED_AI_PROVIDER_CONFIG_ID
-    const nextConfigs = providerConfigs.map((item) => ({
-      ...item,
-      isDefault: false
-    }))
-    setProviderConfigs(nextConfigs)
-    await persistProviderConfigs(nextConfigs, HOSTED_AI_PROVIDER_CONFIG_ID)
     flashSaved()
   }
 
@@ -1808,38 +1554,13 @@ function Popup() {
     })
   }
 
-  const popupApiKeyPresence: ApiKeys = {
-    openai: savedProviderKeys.openai ? "configured" : "",
-    anthropic: savedProviderKeys.anthropic ? "configured" : "",
-    doubao: savedProviderKeys.doubao ? "configured" : "",
-    deepseek: savedProviderKeys.deepseek ? "configured" : "",
-    moonshot: savedProviderKeys.moonshot ? "configured" : "",
-    openrouter: savedProviderKeys.openrouter ? "configured" : "",
-    gemini: savedProviderKeys.gemini ? "configured" : "",
-    hunyuan: savedProviderKeys.hunyuan ? "configured" : "",
-    providerConfigKeys: Object.fromEntries(
-      providerConfigs.map((config) => {
-        const keyValue =
-          providerConfigKeyInputs[config.id] ??
-          providerConfigKeys[config.id] ??
-          ""
-        return [config.id, keyValue.trim() ? "configured" : ""]
-      })
-    )
-  }
-  const defaultProviderConfigId = resolvePopupCurrentModelProviderConfigId({
+  const defaultProviderConfigId = resolveDefaultProviderConfigId(
     settings,
-    providerConfigs,
-    apiKeys: popupApiKeyPresence,
-    hostedUsable: isHostedSessionUsable(hostedSession),
-    explicitByokDefaultId: explicitDefaultProviderConfigId.current
-  })
-  const isHostedDefaultSelected = isHostedAiProviderConfigId(
-    defaultProviderConfigId
+    providerConfigs
   )
-  const selectedProviderConfig = isHostedDefaultSelected
-    ? undefined
-    : providerConfigs.find((config) => config.id === defaultProviderConfigId)
+  const selectedProviderConfig = providerConfigs.find(
+    (config) => config.id === defaultProviderConfigId
+  )
   const selectedModel =
     MODEL_OPTIONS.find(
       (m) =>
@@ -1886,15 +1607,7 @@ function Popup() {
   const selectedProviderConfigConnectivity = selectedProviderConfig
     ? providerConfigConnectivityResults[selectedProviderConfig.id]
     : undefined
-  const hostedStatusTone = getHostedAccountStatusTone(hostedStatus)
-  const hostedSelectedModelAvailability: ModelAvailability = {
-    disabled: hostedStatus !== "signed_in",
-    status: t(`popup.hosted.statusLabel.${hostedStatus}` as I18nKey),
-    tone: hostedStatusTone
-  }
-  const selectedModelAvailability = isHostedDefaultSelected
-    ? hostedSelectedModelAvailability
-    : selectedProviderConfig
+  const selectedModelAvailability = selectedProviderConfig
     ? (() => {
         if (!selectedProviderConfigKeyValue.trim()) {
           return {
@@ -1952,9 +1665,6 @@ function Popup() {
     (config) => providerConfigModes[config.id] !== "add"
   )
   const selectedFastProviderConfigId = settings.fastProviderConfigId ?? ""
-  const isHostedFastSelected = isHostedAiProviderConfigId(
-    selectedFastProviderConfigId
-  )
   const selectedFastProviderConfig = configuredProviderConfigOptions.find(
     (config) => config.id === selectedFastProviderConfigId
   )
@@ -1968,40 +1678,17 @@ function Popup() {
     : serviceFailed
       ? t("popup.service.failed")
       : t("popup.service.disconnected")
-  const serviceStatusDetail = isHostedDefaultSelected
-    ? serviceReady
-      ? `${t("popup.service.currentUsing")}${t("popup.hosted.title")}`
-      : t(hostedMessageKey)
-    : serviceReady
-      ? `${t("popup.service.currentUsing")}${selectedRoute.providerConfigName ?? selectedRoute.provider.displayName}`
-      : serviceFailed
-        ? t("popup.service.checkKeyNetwork")
-        : t("popup.service.connectFirst")
+  const serviceStatusDetail = serviceReady
+    ? `${t("popup.service.currentUsing")}${selectedRoute.providerConfigName ?? selectedRoute.provider.displayName}`
+    : serviceFailed
+      ? t("popup.service.checkKeyNetwork")
+      : t("popup.service.connectFirst")
   const routeLabel = `${t("popup.service.routePrefix")}${
-    isHostedDefaultSelected
-      ? t("popup.hosted.title")
-      : selectedRoute.providerConfigName ?? selectedRoute.provider.displayName
+    selectedRoute.providerConfigName ?? selectedRoute.provider.displayName
   }`
-  const routeModelLabel = isHostedDefaultSelected
-    ? HOSTED_AI_DEFAULT_MODEL
-    : requiresProviderConfigModel(selectedRoute.provider.id)
-      ? selectedRoute.requestModel || t("popup.provider.status.endpointMissing")
-      : selectedRoute.model.displayName
-  const hostedAccountLabel =
-    hostedSession?.session.user.email ??
-    hostedSession?.session.user.id ??
-    t("popup.hosted.account.none")
-  const hostedQuotaDisplay = buildHostedAccountQuotaDisplay({
-    session: hostedSession,
-    status: hostedStatus,
-    labels: {
-      unknown: t("popup.hosted.quota.unknown"),
-      unavailable: t("popup.hosted.quota.unavailable"),
-      tokens: t("popup.hosted.quota.tokens"),
-      tierFree: t("popup.hosted.tier.free"),
-      tierPaid: t("popup.hosted.tier.paid")
-    }
-  })
+  const routeModelLabel = requiresProviderConfigModel(selectedRoute.provider.id)
+    ? selectedRoute.requestModel || t("popup.provider.status.endpointMissing")
+    : selectedRoute.model.displayName
   const selectedProviderKeyValue = getProviderKeyValue(
     selectedRoute.provider.id,
     {
@@ -2020,36 +1707,10 @@ function Popup() {
     systemPrefersDark
   )
   const ui = getAvisoThemeTokens(resolvedAppearance)
-  const hostedMonthlyWindow = getHostedMonthlyQuotaWindow(hostedSession)
-  const hostedQuotaPercent =
-    hostedMonthlyWindow && hostedMonthlyWindow.limit > 0
-      ? Math.min(
-          100,
-          Math.round(
-            (hostedMonthlyWindow.used / hostedMonthlyWindow.limit) * 100
-          )
-        )
-      : null
-  const hostedQuotaBarColor =
-    hostedQuotaPercent === null
-      ? ui.text3
-      : hostedQuotaPercent >= 100
-        ? ui.danger
-        : hostedQuotaPercent >= 80
-          ? ui.warningBorder
-          : ui.accent
-  const accountInitial = (
-    hostedSession?.session.user.email ??
-    hostedSession?.session.user.id ??
-    "A"
-  )
-    .trim()
-    .charAt(0)
-    .toUpperCase()
   const hasAnyByok =
     configuredProviderConfigOptions.length > 0 ||
     Object.values(providerConfigured).some(Boolean)
-  const showZeroState = !hasAnyByok && hostedStatus !== "signed_in"
+  const showZeroState = !hasAnyByok
   const hasOpenAddDraft = Object.values(providerConfigModes).some(
     (mode) => mode === "add"
   )
@@ -2294,162 +1955,6 @@ function Popup() {
           Aviso
         </span>
         <span style={styles.headerActions}>
-          <span style={styles.accountWrap}>
-            {hostedSession ? (
-              <button
-                type="button"
-                className="aviso-popup-button"
-                aria-haspopup="dialog"
-                aria-expanded={accountPanelOpen}
-                aria-label={t("popup.hosted.account")}
-                onClick={() => setAccountPanelOpen((open) => !open)}
-                style={{
-                  ...styles.accountChip,
-                  borderColor: ui.line,
-                  color: ui.text2
-                }}>
-                <span
-                  style={{
-                    ...styles.accountAvatar,
-                    background: ui.accentSoft,
-                    color: ui.accent
-                  }}>
-                  {accountInitial}
-                </span>
-                <span style={{ ...styles.accountChipTier, color: ui.text3 }}>
-                  {hostedQuotaDisplay.tierLabel}
-                </span>
-                <AvisoIcon name="chevdown" size={12} />
-              </button>
-            ) : (
-              <button
-                type="button"
-                className="aviso-popup-button"
-                onClick={() => void signInHosted()}
-                disabled={hostedBusy}
-                style={{
-                  ...styles.accountSignInBtn,
-                  borderColor: ui.accentBorder,
-                  background: ui.accentSoft,
-                  color: ui.accent,
-                  ...(hostedBusy ? styles.disabledBtn : {})
-                }}>
-                <AvisoIcon name="shield" size={13} />
-                {hostedBusy
-                  ? t("popup.hosted.statusLabel.signing_in")
-                  : t("popup.hosted.signIn")}
-              </button>
-            )}
-            {accountPanelOpen && hostedSession && (
-              <>
-                <div
-                  style={styles.accountBackdrop}
-                  onClick={() => setAccountPanelOpen(false)}
-                />
-                <div
-                  role="dialog"
-                  aria-label={t("popup.hosted.account")}
-                  style={{
-                    ...styles.accountPanel,
-                    background: ui.card,
-                    borderColor: ui.line,
-                    boxShadow: ui.popShadow
-                  }}>
-                  <div style={styles.accountPanelHead}>
-                    <span
-                      style={{
-                        ...styles.accountAvatarLg,
-                        background: ui.accentSoft,
-                        color: ui.accent
-                      }}>
-                      {accountInitial}
-                    </span>
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ ...styles.accountPanelName, color: ui.text }}>
-                        {hostedAccountLabel}
-                      </div>
-                      <div
-                        style={{ ...styles.accountPanelTier, color: ui.text3 }}>
-                        {hostedQuotaDisplay.tierLabel}
-                      </div>
-                    </div>
-                    <span
-                      style={{
-                        ...styles.statusPill,
-                        ...getDropdownStatusStyle(hostedStatusTone, ui),
-                        marginLeft: "auto"
-                      }}>
-                      {t(`popup.hosted.statusLabel.${hostedStatus}` as I18nKey)}
-                    </span>
-                  </div>
-                  <div style={styles.accountQuotaBlock}>
-                    <div style={{ ...styles.accountQuotaRow, color: ui.text3 }}>
-                      <span>{t("popup.hosted.monthlyQuota")}</span>
-                      <span>{hostedQuotaDisplay.monthlyQuotaLabel}</span>
-                    </div>
-                    {hostedQuotaPercent !== null && (
-                      <div style={{ ...styles.quotaBarTrack, background: ui.bg }}>
-                        <div
-                          style={{
-                            ...styles.quotaBarFill,
-                            width: `${hostedQuotaPercent}%`,
-                            background: hostedQuotaBarColor
-                          }}
-                        />
-                      </div>
-                    )}
-                    <div style={{ ...styles.accountQuotaReset, color: ui.text3 }}>
-                      {t("popup.hosted.resetTiming")}:{" "}
-                      {hostedQuotaDisplay.resetLabel}
-                    </div>
-                  </div>
-                  <div style={styles.accountPanelActions}>
-                    <button
-                      type="button"
-                      className="aviso-popup-button"
-                      onClick={() => void refreshHostedAccount()}
-                      disabled={hostedBusy}
-                      style={{
-                        ...styles.accountActionBtn,
-                        borderColor: ui.line,
-                        color: ui.text2,
-                        ...(hostedBusy ? styles.disabledBtn : {})
-                      }}>
-                      <AvisoIcon name="refresh" size={13} />
-                      {t("popup.hosted.refresh")}
-                    </button>
-                    <button
-                      type="button"
-                      className="aviso-popup-button"
-                      onClick={() => {
-                        setTab("api")
-                        setAccountPanelOpen(false)
-                      }}
-                      style={{
-                        ...styles.accountActionBtn,
-                        borderColor: ui.line,
-                        color: ui.text2
-                      }}>
-                      {t("popup.account.manage")}
-                    </button>
-                  </div>
-                  <button
-                    type="button"
-                    className="aviso-popup-button"
-                    onClick={() => void signOutHostedLocal()}
-                    disabled={hostedBusy}
-                    style={{
-                      ...styles.accountSignOutBtn,
-                      color: ui.danger,
-                      ...(hostedBusy ? styles.disabledBtn : {})
-                    }}>
-                    <AvisoIcon name="close" size={13} />
-                    {t("popup.hosted.signOut")}
-                  </button>
-                </div>
-              </>
-            )}
-          </span>
           <span
             role="group"
             aria-label={t("popup.theme.aria")}
@@ -2595,10 +2100,8 @@ function Popup() {
                     />
                     <span style={styles.modelDropdownCopy}>
                       <strong style={{ color: ui.text }}>
-                        {isHostedDefaultSelected
-                          ? t("popup.hosted.title")
-                          : selectedProviderConfig?.displayName ??
-                            t(selectedModel.labelKey)}
+                        {selectedProviderConfig?.displayName ??
+                          t(selectedModel.labelKey)}
                       </strong>
                       <small style={{ color: ui.text3 }}>
                         {serviceStatusDetail}
@@ -2630,57 +2133,6 @@ function Popup() {
                         background: ui.surface2,
                         borderColor: ui.line
                       }}>
-                      <button
-                        type="button"
-                        className="aviso-dropdown-option"
-                        role="option"
-                        aria-selected={isHostedDefaultSelected}
-                        onClick={async () => {
-                          await setDefaultHostedAiService()
-                          setModelDropdownOpen(false)
-                        }}
-                        style={{
-                          ...styles.dropdownOption,
-                          color: isHostedDefaultSelected
-                            ? ui.accent
-                            : ui.text2,
-                          ...(isHostedDefaultSelected
-                            ? {
-                                background: ui.accentSoft,
-                                fontWeight: 650
-                              }
-                            : {})
-                        }}>
-                        <AvisoIcon
-                          name="shield"
-                          size={16}
-                          style={{
-                            color: isHostedDefaultSelected
-                              ? ui.accent
-                              : ui.text3
-                          }}
-                        />
-                        <span style={styles.dropdownOptionBody}>
-                          <span style={styles.dropdownOptionText}>
-                            {t("popup.hosted.title")}
-                          </span>
-                          <span style={styles.dropdownSubText}>
-                            {t("popup.hosted.optionHelper")}
-                          </span>
-                        </span>
-                        <span
-                          style={getDropdownStatusStyle(hostedStatusTone, ui)}>
-                          {t(`popup.hosted.statusLabel.${hostedStatus}` as I18nKey)}
-                        </span>
-                        <AvisoIcon
-                          name="check"
-                          size={15}
-                          style={{
-                            ...styles.dropdownCheck,
-                            opacity: isHostedDefaultSelected ? 1 : 0
-                          }}
-                        />
-                      </button>
                       {configuredProviderConfigOptions.map((config) => {
                         const route = buildProviderConfigRoute(config, settings)
                         const selected = config.id === defaultProviderConfigId
@@ -3275,75 +2727,6 @@ function Popup() {
                 <p style={{ ...styles.onbSub, color: ui.text2 }}>
                   {t("popup.zero.subtitle")}
                 </p>
-                <div
-                  style={{
-                    ...styles.recCard,
-                    background: ui.accentSoft,
-                    borderColor: ui.accentBorder,
-                    boxShadow: `0 0 0 3px ${ui.accentSoft}`
-                  }}>
-                  <div style={styles.recTop}>
-                    <span
-                      style={{
-                        color: ui.accent,
-                        display: "inline-flex",
-                        flex: "0 0 auto"
-                      }}>
-                      <AvisoMark size={20} />
-                    </span>
-                    <span style={{ ...styles.recName, color: ui.text }}>
-                      {t("popup.hosted.title")}
-                    </span>
-                    <span
-                      style={{
-                        ...styles.recBadge,
-                        background: ui.accent,
-                        color: ui.accentText
-                      }}>
-                      {t("popup.zero.recommended")}
-                    </span>
-                  </div>
-                  <p style={{ ...styles.recDesc, color: ui.text2 }}>
-                    {t("popup.zero.hosted.desc")}
-                  </p>
-                  <button
-                    type="button"
-                    className="aviso-popup-button aviso-accent-btn"
-                    onClick={() => void signInHosted()}
-                    disabled={hostedBusy}
-                    style={{
-                      ...styles.recPrimaryBtn,
-                      background: ui.accent,
-                      color: ui.accentText,
-                      ...(hostedBusy ? styles.disabledBtn : {})
-                    }}>
-                    {hostedBusy
-                      ? t("popup.hosted.statusLabel.signing_in")
-                      : t("popup.zero.hosted.cta")}
-                  </button>
-                  {(hostedBusy || hostedStatus !== "signed_out") && (
-                    <p
-                      role={hostedStatusTone === "danger" ? "alert" : "status"}
-                      style={{
-                        ...styles.recStatus,
-                        color:
-                          hostedStatusTone === "danger"
-                            ? ui.danger
-                            : hostedStatusTone === "warning"
-                              ? ui.text2
-                              : ui.text3
-                      }}>
-                      {t(hostedMessageKey)}
-                    </p>
-                  )}
-                </div>
-                <div style={styles.orRow}>
-                  <span style={{ ...styles.orLine, background: ui.line }} />
-                  <span style={{ ...styles.orText, color: ui.text3 }}>
-                    {t("popup.zero.or")}
-                  </span>
-                  <span style={{ ...styles.orLine, background: ui.line }} />
-                </div>
                 <h3 style={{ ...styles.byokH, color: ui.text }}>
                   {t("popup.zero.byok.heading")}
                 </h3>
@@ -3418,156 +2801,6 @@ function Popup() {
             )}
             {(!showZeroState || hasOpenAddDraft) && (
             <>
-            {!showZeroState &&
-              (hostedSession ? (
-                <>
-                  <div
-                    style={{ ...styles.controlSectionTitle, color: ui.text3 }}>
-                    {t("popup.account.section")}
-                    <span
-                      style={{ ...styles.sectionLine, background: ui.line }}
-                    />
-                  </div>
-                  <div
-                    style={{
-                      ...styles.acard,
-                      background: ui.accentSoft,
-                      borderColor: ui.accentBorder
-                    }}>
-                    <div style={styles.acardTop}>
-                      <span style={{ color: ui.accent, display: "inline-flex" }}>
-                        <AvisoMark size={20} />
-                      </span>
-                      <span
-                        style={{
-                          ...styles.recName,
-                          color: ui.text,
-                          fontSize: 14
-                        }}>
-                        {t("popup.hosted.title")}
-                      </span>
-                      <span
-                        style={{
-                          ...styles.statusPill,
-                          ...getDropdownStatusStyle(hostedStatusTone, ui),
-                          marginLeft: "auto"
-                        }}>
-                        {t(
-                          `popup.hosted.statusLabel.${hostedStatus}` as I18nKey
-                        )}
-                      </span>
-                    </div>
-                    <div style={{ ...styles.acardQuotaRow, color: ui.text2 }}>
-                      <span
-                        style={{
-                          ...styles.acardQuotaLabel,
-                          fontSize: 12
-                        }}>
-                        {t("popup.hosted.monthlyQuota")}
-                      </span>
-                      <span
-                        style={{
-                          ...styles.tagMono,
-                          background: ui.pill,
-                          color: ui.text2
-                        }}>
-                        {hostedQuotaDisplay.tierLabel}
-                      </span>
-                      <span
-                        style={{
-                          ...styles.acardQuotaValue,
-                          fontFamily: aviso.mono,
-                          fontSize: 12,
-                          color: ui.text
-                        }}>
-                        {hostedQuotaDisplay.monthlyQuotaLabel}
-                      </span>
-                    </div>
-                    {hostedQuotaPercent !== null && (
-                      <div style={{ ...styles.quotaBarTrack, background: ui.bg }}>
-                        <div
-                          style={{
-                            ...styles.quotaBarFill,
-                            width: `${hostedQuotaPercent}%`,
-                            background: hostedQuotaBarColor
-                          }}
-                        />
-                      </div>
-                    )}
-                    <div style={{ ...styles.acardMeta, color: ui.text3 }}>
-                      {t("popup.hosted.dailyQuota")}:{" "}
-                      {hostedQuotaDisplay.dailyQuotaLabel}
-                      {" · "}
-                      {t("popup.hosted.resetTiming")}:{" "}
-                      {hostedQuotaDisplay.resetLabel}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div
-                  style={{
-                    ...styles.recCard,
-                    background: ui.accentSoft,
-                    borderColor: ui.accentBorder,
-                    boxShadow: `0 0 0 3px ${ui.accentSoft}`,
-                    marginBottom: 14
-                  }}>
-                  <div style={styles.recTop}>
-                    <span
-                      style={{
-                        color: ui.accent,
-                        display: "inline-flex",
-                        flex: "0 0 auto"
-                      }}>
-                      <AvisoMark size={20} />
-                    </span>
-                    <span style={{ ...styles.recName, color: ui.text }}>
-                      {t("popup.hosted.title")}
-                    </span>
-                    <span
-                      style={{
-                        ...styles.recBadge,
-                        background: ui.accent,
-                        color: ui.accentText
-                      }}>
-                      {t("popup.zero.recommended")}
-                    </span>
-                  </div>
-                  <p style={{ ...styles.recDesc, color: ui.text2 }}>
-                    {t("popup.zero.hosted.desc")}
-                  </p>
-                  <button
-                    type="button"
-                    className="aviso-popup-button aviso-accent-btn"
-                    onClick={() => void signInHosted()}
-                    disabled={hostedBusy}
-                    style={{
-                      ...styles.recPrimaryBtn,
-                      background: ui.accent,
-                      color: ui.accentText,
-                      ...(hostedBusy ? styles.disabledBtn : {})
-                    }}>
-                    {hostedBusy
-                      ? t("popup.hosted.statusLabel.signing_in")
-                      : t("popup.zero.hosted.cta")}
-                  </button>
-                  {(hostedBusy || hostedStatus !== "signed_out") && (
-                    <p
-                      role={hostedStatusTone === "danger" ? "alert" : "status"}
-                      style={{
-                        ...styles.recStatus,
-                        color:
-                          hostedStatusTone === "danger"
-                            ? ui.danger
-                            : hostedStatusTone === "warning"
-                              ? ui.text2
-                              : ui.text3
-                      }}>
-                      {t(hostedMessageKey)}
-                    </p>
-                  )}
-                </div>
-              ))}
             {!showZeroState && (
             <>
             <div style={{ marginBottom: 14 }}>
@@ -3598,10 +2831,8 @@ function Popup() {
                       color: ui.text
                     }}>
                     <span style={styles.fastServiceDropdownText}>
-                      {isHostedFastSelected
-                        ? t("popup.hosted.title")
-                        : selectedFastProviderConfig?.displayName ??
-                          t("popup.service.fastDisabled")}
+                      {selectedFastProviderConfig?.displayName ??
+                        t("popup.service.fastDisabled")}
                     </span>
                     <AvisoIcon
                       name="chevdown"
@@ -3628,10 +2859,6 @@ function Popup() {
                         {
                           id: "",
                           label: t("popup.service.fastDisabled")
-                        },
-                        {
-                          id: HOSTED_AI_PROVIDER_CONFIG_ID,
-                          label: t("popup.hosted.title")
                         },
                         ...configuredProviderConfigOptions.map((config) => ({
                           id: config.id,
@@ -3741,82 +2968,6 @@ function Popup() {
               </div>
             </div>
 
-            <button
-              type="button"
-              className="aviso-popup-button"
-              onClick={() =>
-                hostedStatus === "signed_in"
-                  ? void setDefaultHostedAiService()
-                  : void signInHosted()
-              }
-              disabled={hostedBusy}
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                width: "100%",
-                textAlign: "left",
-                padding: "10px 12px",
-                marginBottom: 9,
-                border: `1px solid ${
-                  isHostedDefaultSelected ? ui.accentBorder : ui.line
-                }`,
-                borderRadius: 14,
-                background: ui.bg,
-                boxShadow: isHostedDefaultSelected ? ui.activeShadow : "none",
-                fontFamily: "inherit",
-                cursor: hostedBusy ? "default" : "pointer",
-                ...(hostedBusy ? styles.disabledBtn : {})
-              }}>
-              <span
-                style={{
-                  width: 28,
-                  height: 28,
-                  flex: "none",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  borderRadius: 8,
-                  background: ui.accentSoft,
-                  color: ui.accent
-                }}>
-                <AvisoMark size={18} />
-              </span>
-              <span
-                style={{
-                  flex: 1,
-                  minWidth: 0,
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 2
-                }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 7 }}>
-                  <strong
-                    style={{ fontSize: 13, fontWeight: 700, color: ui.text }}>
-                    {t("popup.hosted.title")}
-                  </strong>
-                  {isHostedDefaultSelected && (
-                    <span
-                      style={{
-                        ...styles.statusPill,
-                        ...getDropdownStatusStyle("muted", ui)
-                      }}>
-                      {t("popup.provider.status.default")}
-                    </span>
-                  )}
-                </span>
-                <span style={{ fontSize: 11.5, color: ui.text3 }}>
-                  {t("popup.hosted.compactSub")}
-                </span>
-              </span>
-              <span
-                style={{
-                  ...styles.statusPill,
-                  ...getDropdownStatusStyle(hostedStatusTone, ui)
-                }}>
-                {t(`popup.hosted.statusLabel.${hostedStatus}` as I18nKey)}
-              </span>
-            </button>
             </>
             )}
 
@@ -4303,26 +3454,6 @@ function Popup() {
               </h3>
               <div style={styles.privMode}>
                 <span style={{ ...styles.privModeDot, background: ui.accent }} />
-                <div>
-                  <div style={{ ...styles.privModeTitle, color: ui.text }}>
-                    {t("popup.privacy.hostedTitle")}
-                  </div>
-                  <p style={{ ...styles.privModeDesc, color: ui.text2 }}>
-                    {t("popup.privacy.hostedDesc")}
-                  </p>
-                </div>
-              </div>
-              <div
-                style={{
-                  ...styles.privMode,
-                  borderTop: `1px solid ${ui.line}`
-                }}>
-                <span
-                  style={{
-                    ...styles.privModeDot,
-                    background: "oklch(0.64 0.07 215)"
-                  }}
-                />
                 <div>
                   <div style={{ ...styles.privModeTitle, color: ui.text }}>
                     {t("popup.privacy.byokTitle")}
@@ -4845,69 +3976,6 @@ function getConnectivitySpeedTone(
   return "muted"
 }
 
-function getHostedAccountStatusTone(
-  status: HostedAccountStatus
-): ModelAvailability["tone"] {
-  if (status === "signed_in") return "ok"
-  if (status === "signing_in" || status === "rate_limited") return "warning"
-  if (
-    status === "expired" ||
-    status === "local_backend_unavailable" ||
-    status === "quota_exhausted" ||
-    status === "hosted_route_unavailable" ||
-    status === "request_invalid"
-  ) {
-    return "danger"
-  }
-  return "muted"
-}
-
-function getHostedAccountStatusMessageKey(
-  status: HostedAccountStatus
-): I18nKey {
-  return `popup.hosted.status.${status}` as I18nKey
-}
-
-function getHostedSignInFailureMessageKey(
-  result:
-    | Pick<HostedGoogleSignInData, "status" | "stage" | "error">
-    | undefined,
-  hasStoredSession: boolean
-): I18nKey {
-  if (!result) return "popup.hosted.status.runtimeUnavailable"
-  if (hasStoredSession) return "popup.hosted.status.refreshed"
-
-  if (result.error?.source === "oauth") {
-    if (result.error.code === "user_cancelled") {
-      return "popup.hosted.status.oauthCanceled"
-    }
-    if (result.error.code === "config_missing") {
-      return "popup.hosted.status.oauthConfigMissing"
-    }
-    if (result.error.code === "state_mismatch") {
-      return "popup.hosted.status.oauthStateMismatch"
-    }
-    return "popup.hosted.status.oauthUnavailable"
-  }
-
-  if (result.error?.source === "backend") {
-    if (result.stage === "client") {
-      return "popup.hosted.status.authClientUnavailable"
-    }
-    if (result.stage === "challenge") {
-      return getHostedAccountStatusMessageKey(result.status)
-    }
-    if (result.stage === "auth_google" && result.error.httpStatusClass === "4xx") {
-      return "popup.hosted.status.authRejected"
-    }
-    if (result.stage === "me") return "popup.hosted.status.accountReadFailed"
-    return "popup.hosted.status.authBackendUnavailable"
-  }
-
-  if (result.stage === "storage") return "popup.hosted.status.sessionSaveFailed"
-  return getHostedAccountStatusMessageKey(result.status)
-}
-
 function sendRuntimeMessage<TData = unknown>(
   message: unknown
 ): Promise<PopupRuntimeResponse<TData>> {
@@ -5064,156 +4132,6 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 8,
     marginLeft: "auto"
   },
-  accountWrap: {
-    position: "static",
-    display: "inline-flex"
-  },
-  accountChip: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 6,
-    height: 26,
-    padding: "0 7px 0 3px",
-    border: `1px solid var(--aviso-line)`,
-    borderRadius: 999,
-    background: "transparent",
-    cursor: "pointer"
-  },
-  accountAvatar: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 20,
-    height: 20,
-    borderRadius: 999,
-    fontFamily: aviso.font,
-    fontSize: 11,
-    fontWeight: 700
-  },
-  accountChipTier: {
-    fontFamily: aviso.font,
-    fontSize: 11,
-    fontWeight: 600
-  },
-  accountSignInBtn: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 5,
-    height: 26,
-    padding: "0 11px",
-    border: `1px solid transparent`,
-    borderRadius: 999,
-    fontFamily: aviso.font,
-    fontSize: 12,
-    fontWeight: 700,
-    cursor: "pointer"
-  },
-  accountBackdrop: {
-    position: "fixed",
-    inset: 0,
-    zIndex: 40
-  },
-  accountPanel: {
-    position: "absolute",
-    top: "calc(100% + 6px)",
-    right: 0,
-    width: 270,
-    zIndex: 50,
-    border: `1px solid var(--aviso-line)`,
-    borderRadius: 14,
-    padding: 13,
-    display: "flex",
-    flexDirection: "column",
-    gap: 11,
-    textAlign: "left"
-  },
-  accountPanelHead: {
-    display: "flex",
-    alignItems: "center",
-    gap: 9
-  },
-  accountAvatarLg: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    width: 34,
-    height: 34,
-    borderRadius: 999,
-    flex: "0 0 auto",
-    fontFamily: aviso.font,
-    fontSize: 14,
-    fontWeight: 700
-  },
-  accountPanelName: {
-    fontFamily: aviso.font,
-    fontSize: 13,
-    fontWeight: 700,
-    overflow: "hidden",
-    textOverflow: "ellipsis",
-    whiteSpace: "nowrap"
-  },
-  accountPanelTier: {
-    fontFamily: aviso.font,
-    fontSize: 11,
-    fontWeight: 600
-  },
-  accountQuotaBlock: {
-    display: "flex",
-    flexDirection: "column",
-    gap: 6
-  },
-  accountQuotaRow: {
-    display: "flex",
-    justifyContent: "space-between",
-    fontFamily: aviso.font,
-    fontSize: 12
-  },
-  quotaBarTrack: {
-    height: 6,
-    borderRadius: 999,
-    overflow: "hidden"
-  },
-  quotaBarFill: {
-    height: "100%",
-    borderRadius: 999
-  },
-  accountQuotaReset: {
-    fontFamily: aviso.font,
-    fontSize: 11
-  },
-  accountPanelActions: {
-    display: "flex",
-    gap: 7
-  },
-  accountActionBtn: {
-    flex: 1,
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 5,
-    height: 30,
-    border: `1px solid var(--aviso-line)`,
-    borderRadius: 9,
-    background: "transparent",
-    fontFamily: aviso.font,
-    fontSize: 12,
-    fontWeight: 600,
-    cursor: "pointer"
-  },
-  accountSignOutBtn: {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 6,
-    height: 30,
-    border: `1px solid transparent`,
-    borderRadius: 9,
-    background: "transparent",
-    fontFamily: aviso.font,
-    fontSize: 12,
-    fontWeight: 600,
-    cursor: "pointer"
-  },
   zeroCard: {
     padding: 14,
     border: `1px solid var(--aviso-line)`,
@@ -5365,73 +4283,6 @@ const styles: Record<string, React.CSSProperties> = {
     lineHeight: 1.5,
     margin: "0 0 15px"
   },
-  recCard: {
-    border: `1px solid transparent`,
-    borderRadius: 14,
-    padding: "14px 15px 15px"
-  },
-  recTop: {
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-    marginBottom: 9
-  },
-  recName: {
-    fontFamily: aviso.font,
-    fontSize: 15.5,
-    fontWeight: 800,
-    letterSpacing: "-0.01em"
-  },
-  recBadge: {
-    marginLeft: "auto",
-    fontFamily: aviso.mono,
-    fontSize: 9.5,
-    fontWeight: 700,
-    letterSpacing: "0.04em",
-    borderRadius: 6,
-    padding: "3px 8px"
-  },
-  recDesc: {
-    fontFamily: aviso.font,
-    fontSize: 12.5,
-    lineHeight: 1.5,
-    margin: "0 0 13px"
-  },
-  recPrimaryBtn: {
-    width: "100%",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    height: 40,
-    border: "none",
-    borderRadius: 9,
-    fontFamily: aviso.font,
-    fontSize: 14,
-    fontWeight: 700,
-    cursor: "pointer"
-  },
-  recStatus: {
-    fontFamily: aviso.font,
-    fontSize: 12,
-    lineHeight: 1.45,
-    margin: "9px 2px 0",
-    overflowWrap: "anywhere"
-  },
-  orRow: {
-    display: "flex",
-    alignItems: "center",
-    gap: 12,
-    margin: "15px 2px"
-  },
-  orLine: {
-    flex: 1,
-    height: 1
-  },
-  orText: {
-    fontFamily: aviso.font,
-    fontSize: 11.5
-  },
   byokH: {
     fontFamily: aviso.font,
     fontSize: 13,
@@ -5478,48 +4329,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 12,
     fontWeight: 600,
     cursor: "pointer"
-  },
-  acard: {
-    border: `1px solid var(--aviso-line)`,
-    borderRadius: 12,
-    padding: "12px 13px",
-    marginBottom: 14
-  },
-  acardTop: {
-    display: "flex",
-    alignItems: "center",
-    gap: 9,
-    marginBottom: 9
-  },
-  acardQuotaRow: {
-    display: "grid",
-    gridTemplateColumns: "minmax(76px, 1fr) auto minmax(152px, auto)",
-    alignItems: "baseline",
-    gap: 8,
-    marginBottom: 7
-  },
-  acardQuotaLabel: {
-    minWidth: 0,
-    fontFamily: aviso.font,
-    lineHeight: 1.2
-  },
-  acardQuotaValue: {
-    minWidth: 0,
-    textAlign: "right",
-    whiteSpace: "nowrap"
-  },
-  acardMeta: {
-    fontFamily: aviso.font,
-    fontSize: 11,
-    marginTop: 9
-  },
-  tagMono: {
-    fontFamily: aviso.mono,
-    fontSize: 9,
-    fontWeight: 700,
-    letterSpacing: "0.04em",
-    borderRadius: 6,
-    padding: "2px 7px"
   },
   privMode: {
     display: "flex",
@@ -5670,24 +4479,6 @@ const styles: Record<string, React.CSSProperties> = {
   },
   fastServiceHelper: {
     marginTop: 8
-  },
-  hostedAccountCard: {
-    padding: "12px",
-    marginBottom: 12,
-    border: `1px solid var(--aviso-line)`,
-    borderRadius: aviso.radiusMd
-  },
-  hostedAccountHeader: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 10
-  },
-  hostedAccountActions: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: 8,
-    marginTop: 10
   },
   iconBtn: {
     display: "inline-flex",

@@ -11,12 +11,6 @@ import {
 import type { ConversationMessage, Settings } from "~types/history"
 import type { MessageRequest, MessageResponse } from "~types/messages"
 import type { CommandQuickActionId } from "~utils/command-access"
-import {
-  HOSTED_SESSION_STORAGE_KEY,
-  isHostedAiProviderConfigId,
-  isHostedSessionUsable,
-  readHostedSession
-} from "~utils/hosted-session"
 import { parseIntentLocally, type ParsedIntent } from "~utils/intent"
 import { useSyncedAvisoLanguage, type I18nKey } from "~utils/i18n"
 import {
@@ -86,7 +80,6 @@ type AiNotice = {
 type AiConnection = {
   connected: boolean
   providerLabel: string
-  route?: "byok" | "hosted"
 }
 
 const COMMAND_PANEL_TOP = "clamp(120px, 26vh, 280px)"
@@ -142,20 +135,6 @@ async function getAiConnectionFromSettings(
     providerConfigKeys: Record<string, boolean>
   }
 ): Promise<AiConnection> {
-  const hostedSession = await readHostedSession()
-  const hostedUsable = isHostedSessionUsable(hostedSession)
-
-  if (
-    hostedUsable &&
-    isHostedAiProviderConfigId(settings.defaultProviderConfigId)
-  ) {
-    return {
-      connected: true,
-      providerLabel: "Aviso AI",
-      route: "hosted"
-    }
-  }
-
   const route = resolveModelRoute(undefined, settings)
   const providerId = route.provider.id
   const legacyProvider = route.providerConfigId
@@ -171,16 +150,7 @@ async function getAiConnectionFromSettings(
   if (hasKey && hasEndpoint) {
     return {
       connected: true,
-      providerLabel: route.provider.displayName,
-      route: "byok"
-    }
-  }
-
-  if (hostedUsable) {
-    return {
-      connected: true,
-      providerLabel: "Aviso AI",
-      route: "hosted"
+      providerLabel: route.provider.displayName
     }
   }
 
@@ -255,10 +225,7 @@ function CommandPalette() {
           if (!next.enableCommandPalette) setVisible(false)
         }
       }
-      if (
-        area === "local" &&
-        (changes.contextai_api_keys || changes[HOSTED_SESSION_STORAGE_KEY])
-      ) {
+      if (area === "local" && changes.contextai_api_keys) {
         getSettings().then((settings) => {
           setSettingsSnapshot(settings)
           refreshAiConnection(settings)
@@ -647,10 +614,7 @@ function CommandPalette() {
 
       const response = await sendRuntimeMessage({
         action: "RUN_COMMAND_QUICK_ACTION",
-        payload: {
-          actionId: item.actionId,
-          aiRoute: aiConnection.route === "hosted" ? "hosted" : undefined
-        }
+        payload: { actionId: item.actionId }
       })
       if (!response.success) {
         setAiNotice({
@@ -732,7 +696,6 @@ function CommandPalette() {
         requestId,
         trigger: "command-palette",
         operation,
-        aiRoute: aiConnection.route === "hosted" ? "hosted" : undefined,
         userMessage,
         timing,
         ...(operation === "translate"

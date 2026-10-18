@@ -34,6 +34,11 @@ import {
   haveProviderConfigMenusChanged,
   haveTemplatesChanged
 } from "../src/utils/settings-change.ts"
+import {
+  AI_STREAM_LIMIT_ERROR_MESSAGE,
+  AiStreamResourceLimitError,
+  limitAsyncIterableStream
+} from "../src/utils/stream-limits.ts"
 import { expandTemplate } from "../src/utils/template.ts"
 import {
   buildTranslationSystemPrompt,
@@ -950,4 +955,46 @@ test("formatCurrentContext 缺失字段使用可读兜底且不输出空选区",
   assert.match(out, /URL：未知 URL/)
   assert.match(out, /未能读取页面正文。/)
   assert.doesNotMatch(out, /## 选中文本/)
+})
+
+test("BYOK async stream guard rejects oversized events and idle reads safely", async () => {
+  async function* oversizedStream() {
+    yield { text: "small" }
+    yield { text: "raw provider payload".repeat(20) }
+  }
+
+  await assert.rejects(
+    async () => {
+      for await (const _event of limitAsyncIterableStream(oversizedStream(), {
+        limits: { maxEventChars: 32 },
+        getEventChars: (event) => JSON.stringify(event).length,
+        getOutputText: (event) => event.text
+      })) {
+        // Guarded stream should reject before yielding the oversized event.
+      }
+    },
+    (err) => {
+      assert.ok(err instanceof AiStreamResourceLimitError)
+      assert.equal(err.message, AI_STREAM_LIMIT_ERROR_MESSAGE)
+      assert.doesNotMatch(err.message, /raw provider payload/)
+      return true
+    }
+  )
+
+  async function* idleStream() {
+    await new Promise((resolve) => setTimeout(resolve, 20))
+    yield { text: "late" }
+  }
+
+  await assert.rejects(
+    async () => {
+      for await (const _event of limitAsyncIterableStream(idleStream(), {
+        limits: { idleTimeoutMs: 5, overallTimeoutMs: 20 },
+        getEventChars: (event) => JSON.stringify(event).length
+      })) {
+        // The first read should time out before any event is yielded.
+      }
+    },
+    AiStreamResourceLimitError
+  )
 })

@@ -25,7 +25,6 @@ export default defineConfig({
       "storage",
       "history",
       "bookmarks",
-      "identity",
       "clipboardWrite"
     ],
     host_permissions: [
@@ -36,8 +35,7 @@ export default defineConfig({
       "https://api.moonshot.cn/*",
       "https://openrouter.ai/*",
       "https://generativelanguage.googleapis.com/*",
-      "https://api.hunyuan.cloud.tencent.com/*",
-      "https://aviso-backend-production.vercel.app/*"
+      "https://api.hunyuan.cloud.tencent.com/*"
     ],
     commands: {
       "open-command-palette": {

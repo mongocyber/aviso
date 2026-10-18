@@ -800,8 +800,10 @@ test("page summary paths parallelize page extraction and runtime warmup", () => 
     assert.match(source, /page_content_cache_hit/)
     assert.match(source, /AI_CONTEXT_LIMITS\.pageSummaryChars/)
   }
-  assert.match(backgroundSource, /hostedWarmupStartedAt/)
-  assert.match(backgroundSource, /hostedWarmupDoneAt/)
+  assert.match(
+    backgroundSource,
+    /const runtimeConfigSnapshot = shouldRunAIInBackground\s*\?\s*getRuntimeConfigSnapshot\(\)/
+  )
   assert.match(runtimeCacheSource, /clearPageContentMemoryCache/)
 })
 
@@ -823,7 +825,7 @@ test("inline AI requests warm runtime config before provider calls", () => {
   assert.match(backgroundSource, /case "WARM_RUNTIME_CONFIG"/)
   assert.match(
     backgroundSource,
-    /await Promise\.all\(\[getRuntimeConfigSnapshot\(\), readHostedSession\(\)\]\)/
+    /case "WARM_RUNTIME_CONFIG": \{\s*await getRuntimeConfigSnapshot\(\)/
   )
   assert.match(toolbarSource, /function warmRuntimeConfig\(requestId: string\)/)
   assert.match(toolbarSource, /action: "WARM_RUNTIME_CONFIG"/)
@@ -876,9 +878,8 @@ test("floating toolbar requests run AI directly from background after display op
   assert.match(showFloatingBlock, /const result = await sendMessageToDisplayFrame/)
   assert.match(
     showFloatingBlock,
-    /const routed = await resolveRuntimeAiRouteForPayload/
+    /runtimeConfigSnapshot: await runtimeConfigSnapshot/
   )
-  assert.match(showFloatingBlock, /hostedWarmupDoneAt/)
   assert.match(showFloatingBlock, /await runAIRequestToFrame\(/)
   assert.match(
     showFloatingBlock,
@@ -887,7 +888,7 @@ test("floating toolbar requests run AI directly from background after display op
   assert.match(showFloatingBlock, /sendResponse\(aiResponse\)/)
 })
 
-test("background routes floating requests through hosted current-model fallback", () => {
+test("background passes floating and direct AI requests to BYOK routing unchanged", () => {
   const backgroundSource = readFileSync(
     new URL("../src/background/index.ts", import.meta.url),
     "utf8"
@@ -901,18 +902,13 @@ test("background routes floating requests through hosted current-model fallback"
       /case "AI_REQUEST": \{[\s\S]*?case "SAVE_HISTORY"/
     )?.[0] ?? ""
 
-  assert.match(backgroundSource, /readHostedSession\(\)/)
-  assert.match(backgroundSource, /isHostedSessionUsable\(hostedSession\)/)
+  assert.doesNotMatch(backgroundSource, /aiRoute/)
+  assert.match(showFloatingBlock, /payload: aiPayload/)
+  assert.match(aiRequestBlock, /payload: request\.payload/)
   assert.match(
-    backgroundSource,
-    /resolvePopupCurrentModelProviderConfigId\(\{/
+    aiRequestBlock,
+    /runtimeConfigSnapshot: await getRuntimeConfigSnapshot\(\)/
   )
-  assert.match(backgroundSource, /aiRoute: "hosted"/)
-  assert.match(showFloatingBlock, /runtimeConfigSnapshot/)
-  assert.match(showFloatingBlock, /hostedSession/)
-  assert.match(showFloatingBlock, /payload: routedPayload/)
-  assert.match(aiRequestBlock, /const routed = await resolveRuntimeAiRouteForPayload/)
-  assert.match(aiRequestBlock, /payload: routed\.payload/)
 })
 
 test("floating conversation persistence waits for stream completion", () => {
@@ -978,7 +974,7 @@ test("short translation memory cache is service-worker only and hashed", () => {
   assert.match(aiClientSource, /getTranslationCacheKey\(\{[\s\S]*route,/)
   assert.match(
     backgroundSource,
-    /pageUrl: routedPayload\.pageUrl \?\? sender\.tab\?\.url \?\? sender\.url/
+    /pageUrl: aiPayload\.pageUrl \?\? sender\.tab\?\.url \?\? sender\.url/
   )
 })
 
@@ -1079,4 +1075,33 @@ test("short translation cache key separates fast routes and hides raw inputs", a
     assert.equal(key.includes("deepseek-chat"), false)
     assert.equal(key.includes("deepseek-reasoner"), false)
   }
+})
+
+test("floating follow-up input stays editable while send is disabled during AI unavailable guidance", () => {
+  const floatingSource = readFileSync(
+    new URL("../src/contents/floating.tsx", import.meta.url),
+    "utf8"
+  )
+  const followUpTextarea =
+    floatingSource.match(
+      /<textarea[\s\S]*?className="aviso-follow-up-input"[\s\S]*?\/>/
+    )?.[0] ?? ""
+
+  assert.match(floatingSource, /const followUpBlocked = Boolean/)
+  assert.match(floatingSource, /message\.action === "AI_STREAM_ERROR"/)
+  assert.match(floatingSource, /aiGuidance: guidance/)
+  assert.match(
+    floatingSource,
+    /const canSendFollowUp = !followUpBlocked && followUp\.trim\(\)\.length > 0/
+  )
+  assert.match(followUpTextarea, /value=\{followUp\}/)
+  assert.match(
+    followUpTextarea,
+    /onChange=\{\(e\) => setFollowUp\(e\.target\.value\)\}/
+  )
+  assert.doesNotMatch(followUpTextarea, /disabled=/)
+  assert.doesNotMatch(followUpTextarea, /readOnly=/)
+  assert.match(floatingSource, /disabled=\{!canSendFollowUp\}/)
+  assert.match(floatingSource, /canSendFollowUp \? ui\.accent : ui\.disabledBg/)
+  assert.match(floatingSource, /\.aviso-send-button:disabled/)
 })

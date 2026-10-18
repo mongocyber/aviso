@@ -3,10 +3,6 @@ export type RequestTiming = {
   floatingShownAt?: number
   aiRequestSentAt?: number
   backgroundReceivedAt?: number
-  hostedWarmupStartedAt?: number
-  hostedWarmupDoneAt?: number
-  hostedRouteResolutionStartedAt?: number
-  hostedRouteResolvedAt?: number
   pageContentRequestStartedAt?: number
   pageContentReadyAt?: number
   screenshotCaptureStartedAt?: number
@@ -70,37 +66,6 @@ export type PerfSummaryInput = {
   trigger?: string
   provider?: string
   modelOrEndpoint?: string
-  operation?: string
-  inputChars?: number
-  contextType?: PerfContextType
-  timing?: RequestTiming
-  errorCategory?: PerfErrorCategory
-}
-
-export type HostedFirstRequestReason =
-  | "session_written"
-  | "service_worker_cold_start"
-
-export type HostedFirstRequestPerfSummary = {
-  metric: "hosted_first_request"
-  reason: HostedFirstRequestReason
-  trigger: string
-  operation: PerfOperation
-  input_size_bucket: PerfInputSizeBucket
-  context_type: PerfContextType
-  hosted_first_request_ttft_ms: number | null
-  hosted_first_request_total_ms: number | null
-  hosted_first_request_error_ms: number | null
-  hosted_warmup_ms: number | null
-  hosted_route_resolution_ms: number | null
-  hosted_frontend_to_chat_request_ms: number | null
-  hosted_network_provider_ttft_ms: number | null
-  error_category: PerfErrorCategory
-}
-
-export type HostedFirstRequestPerfInput = {
-  reason: HostedFirstRequestReason
-  trigger?: string
   operation?: string
   inputChars?: number
   contextType?: PerfContextType
@@ -266,58 +231,6 @@ export function logPerfSummary(input: PerfSummaryInput): PerfSummary {
   return summary
 }
 
-export function buildHostedFirstRequestPerfSummary(
-  input: HostedFirstRequestPerfInput
-): HostedFirstRequestPerfSummary {
-  const timing = input.timing
-  const metricStartAt =
-    timing?.triggerAt ?? timing?.aiRequestSentAt ?? timing?.backgroundReceivedAt
-  const errorCategory = input.errorCategory ?? "unknown_error"
-
-  return {
-    metric: "hosted_first_request",
-    reason: input.reason,
-    trigger: sanitizeTrigger(input.trigger),
-    operation: sanitizeOperation(input.operation),
-    input_size_bucket: bucketInputSize(input.inputChars),
-    context_type: input.contextType ?? "unknown",
-    hosted_first_request_ttft_ms: elapsedBetween(
-      metricStartAt,
-      timing?.firstChunkAt
-    ),
-    hosted_first_request_total_ms: elapsedBetween(metricStartAt, timing?.doneAt),
-    hosted_first_request_error_ms:
-      errorCategory === "none"
-        ? null
-        : elapsedBetween(metricStartAt, timing?.doneAt),
-    hosted_warmup_ms: elapsedBetween(
-      timing?.hostedWarmupStartedAt,
-      timing?.hostedWarmupDoneAt
-    ),
-    hosted_route_resolution_ms: elapsedBetween(
-      timing?.hostedRouteResolutionStartedAt,
-      timing?.hostedRouteResolvedAt
-    ),
-    hosted_frontend_to_chat_request_ms: elapsedBetween(
-      metricStartAt,
-      timing?.providerRequestStartedAt
-    ),
-    hosted_network_provider_ttft_ms: elapsedBetween(
-      timing?.providerRequestStartedAt,
-      timing?.firstChunkAt
-    ),
-    error_category: errorCategory
-  }
-}
-
-export function logHostedFirstRequestPerfSummary(
-  input: HostedFirstRequestPerfInput
-): HostedFirstRequestPerfSummary {
-  const summary = buildHostedFirstRequestPerfSummary(input)
-  console.info(`[Aviso hosted perf] ${JSON.stringify(summary)}`)
-  return summary
-}
-
 export function buildSelectionTtftDogfoodRow(
   summary: PerfSummary
 ): SelectionTtftDogfoodRow | null {
@@ -450,8 +363,7 @@ function sanitizeProvider(provider: string | undefined): string {
     provider === "moonshot" ||
     provider === "openrouter" ||
     provider === "gemini" ||
-    provider === "hunyuan" ||
-    provider === "hosted"
+    provider === "hunyuan"
   ) {
     return provider
   }

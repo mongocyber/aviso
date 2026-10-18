@@ -60,10 +60,6 @@ type FloatingState = {
   loading: boolean
   error: string
   aiGuidance?: AiUnavailableGuidance
-  hostedAiNotice?: {
-    state: "sign_in_required"
-    hasByokProvider: boolean
-  }
   sessionId: string
   createdAt: number
   requestId: string
@@ -81,7 +77,6 @@ const INITIAL_STATE: FloatingState = {
   loading: false,
   error: "",
   aiGuidance: undefined,
-  hostedAiNotice: undefined,
   sessionId: "",
   createdAt: 0,
   requestId: "",
@@ -332,7 +327,6 @@ function FloatingWindow() {
             loading: true,
             error: "",
             aiGuidance: undefined,
-            hostedAiNotice: undefined,
             statusText
           }
         : prev
@@ -403,7 +397,6 @@ function FloatingWindow() {
           requestId: providedRequestId,
           trigger,
           operation,
-          aiRoute,
           context,
           imageSource,
           selectionText,
@@ -415,7 +408,6 @@ function FloatingWindow() {
           templateId,
           timing: incomingTiming,
           deferAiRequest,
-          hostedAi,
           statusText,
           restore
         } = message.payload
@@ -424,13 +416,6 @@ function FloatingWindow() {
         const timing = markTiming(incomingTiming, "floatingShownAt")
         const shouldAppendToCurrentConversation =
           currentState.visible && Boolean(currentState.sessionId)
-        const hostedAiNotice =
-          hostedAi?.state === "sign_in_required"
-            ? {
-                state: "sign_in_required" as const,
-                hasByokProvider: Boolean(hostedAi.hasByokProvider)
-              }
-            : undefined
         activeRequestRef.current = requestId
 
         // 从历史恢复：直接回填已存对话，不发起 AI 请求
@@ -448,7 +433,6 @@ function FloatingWindow() {
             loading: false,
             error: "",
             aiGuidance: undefined,
-            hostedAiNotice: undefined,
             sessionId: requestId,
             createdAt: restore.createdAt ?? Date.now(),
             requestId,
@@ -505,10 +489,9 @@ function FloatingWindow() {
           const appending = prev.visible && Boolean(prev.sessionId)
           return {
             visible: true,
-            loading: hostedAiNotice ? false : true,
+            loading: true,
             error: "",
             aiGuidance: undefined,
-            hostedAiNotice,
             sessionId: appending ? prev.sessionId : requestId,
             createdAt: appending ? prev.createdAt : Date.now(),
             requestId,
@@ -531,12 +514,11 @@ function FloatingWindow() {
         })
         setSavedId("")
 
-        if (!hostedAiNotice && !deferAiRequest) {
+        if (!deferAiRequest) {
           sendAIRequest(
             requestId,
             {
               operation,
-              aiRoute,
               trigger,
               context,
               imageSource,
@@ -752,7 +734,7 @@ function FloatingWindow() {
   }
 
   const handleFollowUp = () => {
-    if (state.hostedAiNotice || state.aiGuidance) return
+    if (state.aiGuidance) return
     const q = followUp.trim()
     if (!q) return
     const requestId = `req-${Date.now()}`
@@ -769,7 +751,6 @@ function FloatingWindow() {
       loading: true,
       error: "",
       aiGuidance: undefined,
-      hostedAiNotice: undefined,
       requestId,
       trigger: "follow-up",
       operation: "custom",
@@ -845,7 +826,7 @@ function FloatingWindow() {
 
   if (!state.visible) return null
 
-  const followUpBlocked = Boolean(state.hostedAiNotice || state.aiGuidance)
+  const followUpBlocked = Boolean(state.aiGuidance)
   const canSendFollowUp = !followUpBlocked && followUp.trim().length > 0
 
   return (
@@ -1042,40 +1023,6 @@ function FloatingWindow() {
             </span>
           </div>
         )}
-        {state.hostedAiNotice?.state === "sign_in_required" && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "flex-start",
-              gap: 10,
-              color: ui.text2,
-              background: ui.warningBg,
-              border: `1px solid ${ui.warningBorder}`,
-              borderRadius: aviso.radiusMd,
-              padding: "11px 12px",
-              fontSize: "13px",
-              lineHeight: "1.5"
-            }}>
-            <AvisoIcon
-              name="shield"
-              size={16}
-              style={{ color: ui.warningText, marginTop: 1 }}
-            />
-            <span style={{ minWidth: 0, overflowWrap: "anywhere" }}>
-              <strong
-                style={{
-                  display: "block",
-                  marginBottom: 3,
-                  color: ui.text
-                }}>
-                {t("floating.hostedSignInRequired.title")}
-              </strong>
-              {state.hostedAiNotice.hasByokProvider
-                ? t("floating.hostedSignInRequired.withByok")
-                : t("floating.hostedSignInRequired.noByok")}
-            </span>
-          </div>
-        )}
       </div>
 
       {/* 操作栏 */}
@@ -1088,24 +1035,15 @@ function FloatingWindow() {
           background: `color-mix(in oklab, ${ui.bg} 40%, transparent)`
         }}>
         {[
-          ...(state.hostedAiNotice
+          ...(state.aiGuidance
             ? [
                 {
-                  label: t("common.cancel"),
+                  label: t("common.close"),
                   icon: "close" as AvisoIconName,
                   onClick: handleClose,
                   active: false
                 }
               ]
-            : state.aiGuidance
-              ? [
-                  {
-                    label: t("common.close"),
-                    icon: "close" as AvisoIconName,
-                    onClick: handleClose,
-                    active: false
-                  }
-                ]
             : [
                 {
                   label:

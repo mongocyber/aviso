@@ -545,25 +545,13 @@ const MESSAGES = {
     "zh-CN": "测试中...",
     en: "Testing..."
   },
-  "popup.account.manage": {
-    "zh-CN": "在 AI 服务中管理",
-    en: "Manage in AI services"
-  },
-  "popup.account.section": {
-    "zh-CN": "账户",
-    en: "Account"
-  },
   "popup.zero.title": {
     "zh-CN": "开始使用",
     en: "Get started"
   },
   "popup.zero.subtitle": {
-    "zh-CN": "两种方式，选一种就能用。",
-    en: "Two ways — pick one to get going."
-  },
-  "popup.zero.or": {
-    "zh-CN": "或者",
-    en: "or"
+    "zh-CN": "连接自己的 AI 服务即可开始使用。",
+    en: "Connect your own AI service to get going."
   },
   "popup.zero.jump": {
     "zh-CN": "去启用",
@@ -589,18 +577,6 @@ const MESSAGES = {
     "zh-CN": "自动",
     en: "Auto"
   },
-  "popup.zero.recommended": {
-    "zh-CN": "推荐",
-    en: "Recommended"
-  },
-  "popup.zero.hosted.desc": {
-    "zh-CN": "登录后即可免费使用，内置额度、开箱即用。",
-    en: "Sign in to use it free — built-in quota, ready to go."
-  },
-  "popup.zero.hosted.cta": {
-    "zh-CN": "登录 / 注册",
-    en: "Sign in / sign up"
-  },
   "popup.zero.byok.title": {
     "zh-CN": "我自己的 API Key",
     en: "Your own API key"
@@ -624,206 +600,6 @@ const MESSAGES = {
   "popup.zero.privacy": {
     "zh-CN": "你发起请求时，内容只发往你选择的那一个服务。",
     en: "When you send a request, the content goes only to the one service you chose."
-  },
-  "popup.hosted.title": {
-    "zh-CN": "Aviso AI",
-    en: "Aviso AI"
-  },
-  "popup.hosted.helper": {
-    "zh-CN": "登录后可使用 Aviso 提供的 AI 能力；不影响你自己的 AI 服务配置。",
-    en: "Sign in to use AI provided by Aviso. This does not affect your own AI service configuration."
-  },
-  "popup.hosted.optionHelper": {
-    "zh-CN": "官方后端 · free-small",
-    en: "Aviso backend · free-small"
-  },
-  "popup.hosted.compactSub": {
-    "zh-CN": "官方服务 · 登录可用",
-    en: "Official service · sign in to use"
-  },
-  "popup.hosted.localBackend": {
-    "zh-CN": "后端",
-    en: "Backend"
-  },
-  "popup.hosted.account": {
-    "zh-CN": "账户",
-    en: "Account"
-  },
-  "popup.hosted.account.none": {
-    "zh-CN": "未连接",
-    en: "Not connected"
-  },
-  "popup.hosted.tier": {
-    "zh-CN": "账户层级",
-    en: "Tier"
-  },
-  "popup.hosted.tier.free": {
-    "zh-CN": "免费",
-    en: "Free"
-  },
-  "popup.hosted.tier.paid": {
-    "zh-CN": "付费",
-    en: "Paid"
-  },
-  "popup.hosted.monthlyQuota": {
-    "zh-CN": "月度额度",
-    en: "Monthly quota"
-  },
-  "popup.hosted.dailyQuota": {
-    "zh-CN": "每日额度",
-    en: "Daily quota"
-  },
-  "popup.hosted.resetTiming": {
-    "zh-CN": "重置时间",
-    en: "Reset"
-  },
-  "popup.hosted.quota.tokens": {
-    "zh-CN": "tokens",
-    en: "tokens"
-  },
-  "popup.hosted.quota.unknown": {
-    "zh-CN": "未知",
-    en: "Unknown"
-  },
-  "popup.hosted.quota.unavailable": {
-    "zh-CN": "不可用",
-    en: "Unavailable"
-  },
-  "popup.hosted.latestStatus": {
-    "zh-CN": "状态",
-    en: "Status"
-  },
-  "popup.hosted.signIn": {
-    "zh-CN": "登录",
-    en: "Sign in"
-  },
-  "popup.hosted.signOut": {
-    "zh-CN": "退出",
-    en: "Sign out"
-  },
-  "popup.hosted.refresh": {
-    "zh-CN": "刷新",
-    en: "Refresh"
-  },
-  "popup.hosted.statusLabel.signed_out": {
-    "zh-CN": "未登录",
-    en: "Signed out"
-  },
-  "popup.hosted.statusLabel.signing_in": {
-    "zh-CN": "处理中",
-    en: "Working"
-  },
-  "popup.hosted.statusLabel.signed_in": {
-    "zh-CN": "已登录",
-    en: "Signed in"
-  },
-  "popup.hosted.statusLabel.expired": {
-    "zh-CN": "已失效",
-    en: "Expired"
-  },
-  "popup.hosted.statusLabel.local_backend_unavailable": {
-    "zh-CN": "后端不可用",
-    en: "Backend unavailable"
-  },
-  "popup.hosted.statusLabel.quota_exhausted": {
-    "zh-CN": "额度暂不可用",
-    en: "Quota unavailable"
-  },
-  "popup.hosted.statusLabel.rate_limited": {
-    "zh-CN": "请稍后重试",
-    en: "Retry later"
-  },
-  "popup.hosted.statusLabel.hosted_route_unavailable": {
-    "zh-CN": "路线不可用",
-    en: "Route unavailable"
-  },
-  "popup.hosted.statusLabel.request_invalid": {
-    "zh-CN": "请求不可用",
-    en: "Request unavailable"
-  },
-  "popup.hosted.status.signedOut": {
-    "zh-CN": "Aviso AI 未登录；你仍可使用自己的 AI 服务。",
-    en: "Aviso AI is signed out; your own AI services still work."
-  },
-  "popup.hosted.status.signingIn": {
-    "zh-CN": "正在连接后端...",
-    en: "Connecting to hosted backend..."
-  },
-  "popup.hosted.status.oauthCanceled": {
-    "zh-CN": "托管登录已取消；你仍可使用自己的 AI 服务配置。",
-    en: "Hosted sign-in was cancelled; your own AI service configuration still works."
-  },
-  "popup.hosted.status.oauthConfigMissing": {
-    "zh-CN": "托管登录配置缺失；你仍可使用自己的 AI 服务配置。",
-    en: "Hosted sign-in configuration is missing; your own AI service configuration still works."
-  },
-  "popup.hosted.status.oauthStateMismatch": {
-    "zh-CN": "托管登录校验失败，请重试；你仍可使用自己的 AI 服务配置。",
-    en: "Hosted sign-in validation failed. Retry; your own AI service configuration still works."
-  },
-  "popup.hosted.status.oauthUnavailable": {
-    "zh-CN": "托管登录暂不可用；你仍可使用自己的 AI 服务配置。",
-    en: "Hosted sign-in is unavailable; your own AI service configuration still works."
-  },
-  "popup.hosted.status.runtimeUnavailable": {
-    "zh-CN": "扩展后台未响应，请在扩展程序页面重新加载 Aviso 后重试。",
-    en: "Extension background did not respond. Reload Aviso on the extensions page and retry."
-  },
-  "popup.hosted.status.authBackendUnavailable": {
-    "zh-CN": "授权窗口已打开，但后端换取 session 未完成；请稍后重试。",
-    en: "Authorization opened, but the backend did not complete session exchange. Retry later."
-  },
-  "popup.hosted.status.authClientUnavailable": {
-    "zh-CN": "托管后端配置不可用，请重新加载 Aviso 后重试。",
-    en: "Hosted backend configuration is unavailable. Reload Aviso and retry."
-  },
-  "popup.hosted.status.authRejected": {
-    "zh-CN": "后端未接受这次 Google 登录；请重试，或切换到自己的 AI 服务配置。",
-    en: "The backend did not accept this Google sign-in. Retry, or switch to your own AI service configuration."
-  },
-  "popup.hosted.status.accountReadFailed": {
-    "zh-CN": "登录后读取账户状态失败；请稍后刷新。",
-    en: "Signed in, but account status could not be read. Refresh later."
-  },
-  "popup.hosted.status.sessionSaveFailed": {
-    "zh-CN": "登录成功但本地 session 保存失败；请重新加载扩展后重试。",
-    en: "Sign-in succeeded, but local session could not be saved. Reload the extension and retry."
-  },
-  "popup.hosted.status.signedIn": {
-    "zh-CN": "Aviso AI session 已保存。",
-    en: "Aviso AI session saved."
-  },
-  "popup.hosted.status.refreshing": {
-    "zh-CN": "正在刷新账户状态...",
-    en: "Refreshing account status..."
-  },
-  "popup.hosted.status.refreshed": {
-    "zh-CN": "账户状态已刷新。",
-    en: "Account status refreshed."
-  },
-  "popup.hosted.status.expired": {
-    "zh-CN": "托管 session 已失效，请重新登录。",
-    en: "Hosted session expired. Sign in again."
-  },
-  "popup.hosted.status.local_backend_unavailable": {
-    "zh-CN": "托管后端不可用，请稍后重试。",
-    en: "Hosted backend unavailable. Retry later."
-  },
-  "popup.hosted.status.quota_exhausted": {
-    "zh-CN": "托管额度暂不可用；你仍可使用自己的 AI 服务配置。",
-    en: "Hosted quota is unavailable; your own AI service configuration still works."
-  },
-  "popup.hosted.status.rate_limited": {
-    "zh-CN": "托管请求过于频繁，请稍后重试；你仍可使用自己的 AI 服务配置。",
-    en: "Hosted requests are rate limited. Retry later; your own AI service configuration still works."
-  },
-  "popup.hosted.status.hosted_route_unavailable": {
-    "zh-CN": "托管路线暂不可用；你仍可使用自己的 AI 服务配置。",
-    en: "Hosted route is unavailable; your own AI service configuration still works."
-  },
-  "popup.hosted.status.request_invalid": {
-    "zh-CN": "托管请求格式不可用，请检查联调配置。",
-    en: "Hosted request format is unavailable. Check the integration configuration."
   },
   "popup.service.fastTitle": {
     "zh-CN": "快速任务服务",
@@ -949,14 +725,6 @@ const MESSAGES = {
     "zh-CN":
       "Aviso 没有项目方服务器。你主动发起 AI 请求时，内容会由浏览器直接发送到你选择的模型厂商。",
     en: "Aviso has no project-owned server. When you start an AI request, the browser sends content directly to the model provider you choose."
-  },
-  "popup.privacy.hostedTitle": {
-    "zh-CN": "用 Aviso AI",
-    en: "With Aviso AI"
-  },
-  "popup.privacy.hostedDesc": {
-    "zh-CN": "内容先经过 Aviso 服务再转给模型厂商，我们不存储你的正文。",
-    en: "Content passes through Aviso's service to the model provider; we don't store your text."
   },
   "popup.privacy.byokTitle": {
     "zh-CN": "用自己的 Key",
@@ -1304,8 +1072,8 @@ const MESSAGES = {
     en: "AI not connected"
   },
   "command.aiDisconnectedDetail": {
-    "zh-CN": "请登录 Aviso AI，或在 AI 服务页配置自己的 API Key。",
-    en: "Sign in to Aviso AI, or configure your own API key in AI services."
+    "zh-CN": "请先在 AI 服务页配置自己的 API Key。",
+    en: "Configure your own API key in AI services first."
   },
   "command.selectionPrefix": {
     "zh-CN": "选中文字：",
@@ -1423,71 +1191,13 @@ const MESSAGES = {
     "zh-CN": "继续追问…",
     en: "Ask a follow-up..."
   },
-  "floating.hostedSignInRequired.title": {
-    "zh-CN": "需要登录 Aviso AI",
-    en: "Sign in to Aviso AI"
-  },
-  "floating.hostedSignInRequired.withByok": {
-    "zh-CN":
-      "这个请求选择了 Aviso AI。请先在 AI 服务页登录，或切换到自己的服务配置。",
-    en: "This request selected Aviso AI. Sign in from AI services, or switch to your own service configuration."
-  },
-  "floating.hostedSignInRequired.noByok": {
-    "zh-CN":
-      "这个请求选择了 Aviso AI。请先在 AI 服务页登录，或配置自己的 API Key。",
-    en: "This request selected Aviso AI. Sign in from AI services, or configure your own API key."
-  },
-  "floating.hostedSignInRequired.configureByok": {
-    "zh-CN": "配置自己的服务",
-    en: "Configure own service"
-  },
-  "aiUnavailable.hostedSignIn.title": {
-    "zh-CN": "需要登录 Aviso AI",
-    en: "Sign in to Aviso AI"
-  },
-  "aiUnavailable.hostedSignIn.detail": {
-    "zh-CN": "请先登录 Aviso AI；如果想继续用自己的服务，可以在 AI 服务页切换。",
-    en: "Sign in to Aviso AI first. To keep using your own service, switch from AI services."
-  },
-  "aiUnavailable.hostedQuotaExhausted.title": {
-    "zh-CN": "Aviso AI 额度暂不可用",
-    en: "Aviso AI quota is unavailable"
-  },
-  "aiUnavailable.hostedQuotaExhausted.detail": {
-    "zh-CN": "当前 Aviso AI 额度不可用。可以稍后再试，或切换到自己的 API Key。",
-    en: "Aviso AI quota is unavailable right now. Retry later, or switch to your own API key."
-  },
-  "aiUnavailable.hostedRateLimited.title": {
-    "zh-CN": "Aviso AI 请求过于频繁",
-    en: "Aviso AI is rate limited"
-  },
-  "aiUnavailable.hostedRateLimited.detail": {
-    "zh-CN": "请求太频繁了，请稍后重试；急用时可以切换到自己的 API Key。",
-    en: "Requests are too frequent. Retry later, or switch to your own API key if needed."
-  },
-  "aiUnavailable.hostedServiceUnavailable.title": {
-    "zh-CN": "Aviso AI 暂不可用",
-    en: "Aviso AI is temporarily unavailable"
-  },
-  "aiUnavailable.hostedServiceUnavailable.detail": {
-    "zh-CN": "Aviso AI 服务暂时没有响应，请稍后重试；也可以切换到自己的服务。",
-    en: "Aviso AI is not responding right now. Retry later, or switch to your own service."
-  },
-  "aiUnavailable.hostedProviderUnavailable.title": {
-    "zh-CN": "Aviso AI 上游暂不可用",
-    en: "Aviso AI provider is temporarily unavailable"
-  },
-  "aiUnavailable.hostedProviderUnavailable.detail": {
-    "zh-CN": "Aviso AI 已收到请求，但上游模型暂时失败。请稍后重试，或切换到自己的服务。",
-    en: "Aviso AI received the request, but the upstream model failed. Retry later, or switch to your own service."
-  },
   "aiUnavailable.apiKeyMissing.title": {
     "zh-CN": "AI 服务还不能使用",
     en: "AI service is not ready"
   },
   "aiUnavailable.apiKeyMissing.detail": {
-    "zh-CN": "请登录 Aviso AI，或在 AI 服务页配置自己的 API Key。",
-    en: "Sign in to Aviso AI, or configure your own API key in AI services."
+    "zh-CN": "请先在 AI 服务页配置自己的 API Key。",
+    en: "Configure your own API key in AI services first."
   },
   "aiUnavailable.modelMissing.title": {
     "zh-CN": "模型或接入点未配置",

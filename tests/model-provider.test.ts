@@ -6,27 +6,6 @@ import {
   isCommandAccessBlocked
 } from "../src/utils/command-access.ts"
 import {
-  buildHostedAccountQuotaDisplay,
-  clearHostedSession,
-  deriveHostedAccountStatus,
-  getHostedMonthlyQuotaWindow,
-  HOSTED_AI_DEFAULT_BASE_URL,
-  HOSTED_AI_DEFAULT_MODEL,
-  HOSTED_AI_LOCAL_BASE_URL,
-  HOSTED_AI_PRODUCTION_BASE_URL,
-  HOSTED_AI_PRODUCTION_HOST_PERMISSION,
-  HOSTED_AI_PROVIDER_CONFIG_ID,
-  HOSTED_SESSION_STORAGE_KEY,
-  isByokBlockedByHostedSignIn,
-  isHostedAiProviderConfigId,
-  isHostedSessionUsable,
-  readHostedSession,
-  requiresHostedSignInForRoute,
-  saveHostedSession,
-  selectConfiguredHostedRoute,
-  type StoredHostedSession
-} from "../src/utils/hosted-session.ts"
-import {
   createI18n,
   getI18nMessage,
   normalizeUiLanguageSetting,
@@ -993,9 +972,9 @@ test("command access guides AI setup without quota subscription mock copy", () =
 
   assert.doesNotMatch(
     source,
-    /quota|额度|subscription|订阅|hosted|Mock/i
+    /quota|额度|subscription|订阅|登录|Mock/i
   )
-  assert.match(source, /登录 Aviso AI/)
+  assert.match(source, /配置自己的 API Key/)
   assert.match(source, /api_key_missing/)
   assert.match(source, /model_unavailable/)
   assert.match(source, /feature_unavailable/)
@@ -1008,10 +987,7 @@ test("package host_permissions 精确匹配批准 provider 边界", () => {
 
   assert.deepEqual(
     [...pkg.manifest.host_permissions].sort(),
-    [
-      ...APPROVED_PROVIDER_HOST_PERMISSIONS,
-      HOSTED_AI_PRODUCTION_HOST_PERMISSION
-    ].sort()
+[...APPROVED_PROVIDER_HOST_PERMISSIONS].sort()
   )
 })
 
@@ -1027,27 +1003,35 @@ test("WXT host_permissions 与批准 provider 边界保持一致", () => {
 
   assert.deepEqual(
     [...hostPermissions].sort(),
-    [
-      ...APPROVED_PROVIDER_HOST_PERMISSIONS,
-      HOSTED_AI_PRODUCTION_HOST_PERMISSION
-    ].sort()
+[...APPROVED_PROVIDER_HOST_PERMISSIONS].sort()
   )
 })
 
-test("package 普通权限保持最小边界且包含 identity / clipboardWrite / history", () => {
+test("package 与 WXT 普通权限保持最小 BYOK 边界（clipboardWrite / history）", () => {
   const pkg = JSON.parse(
     readFileSync(new URL("../package.json", import.meta.url), "utf8")
   )
-
-  assert.deepEqual([...pkg.manifest.permissions].sort(), [
+  const wxtConfigSource = readFileSync(
+    new URL("../wxt.config.ts", import.meta.url),
+    "utf8"
+  )
+  const wxtPermissionsBlock =
+    wxtConfigSource.match(/permissions: \[([\s\S]*?)\]/)?.[1] ?? ""
+  const wxtPermissions = Array.from(
+    wxtPermissionsBlock.matchAll(/"([^"]+)"/g),
+    (match) => match[1]
+  )
+  const expected = [
     "activeTab",
     "bookmarks",
     "clipboardWrite",
     "contextMenus",
     "history",
-    "identity",
     "storage"
-  ])
+  ]
+
+  assert.deepEqual([...pkg.manifest.permissions].sort(), expected)
+  assert.deepEqual([...wxtPermissions].sort(), expected)
 })
 
 test("manifest-facing localization uses Chrome _locales without permission expansion", () => {
