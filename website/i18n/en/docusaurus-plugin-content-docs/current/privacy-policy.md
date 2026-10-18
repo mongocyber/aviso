@@ -76,12 +76,6 @@ This protection does not defend against an attacker who can read the local brows
 
 The request goes directly from the browser extension to the provider you selected. Providers may process request content, logs, billing, and retention according to their own terms. Review and accept the provider’s terms and privacy policy before use.
 
-## Chrome Web Store Limited Use Statement
-
-Aviso uses extension-handled user data only to provide user-triggered AI assistant features on the current webpage. Aviso does not sell user data, use user data for advertising, or use user data for credit/lending or similar decisions.
-
-When the user actively triggers an AI action, Aviso sends required content directly from the browser extension to the selected model provider. Provider handling depends on provider terms, account configuration, and privacy policy.
-
 ## Browser Permissions
 
 Aviso currently uses these permissions:

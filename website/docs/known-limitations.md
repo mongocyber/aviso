@@ -55,7 +55,7 @@ Aviso 仅在右键内部路径中，对支持的图片 URL 或支持格式的 ba
 
 ## 发布状态与 API Key
 
-Chrome Web Store 正式商店链接暂不可用；目前请从 GitHub Releases 下载安装包手动加载。
+Aviso 仅通过官网和 GitHub Releases 分发安装包，需手动加载。
 
 Aviso 需要你自己的模型服务 API Key，目前不提供内置的免费模型额度。
 

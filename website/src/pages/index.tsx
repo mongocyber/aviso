@@ -152,7 +152,7 @@ const copy = {
     heroLine2Pre: "直接使用 ",
     heroEm: "AI",
     sub: "选中文本、打开右键菜单或唤起命令面板,就能翻译、解释、总结、追问和复制上下文。需要先在 Popup 中添加你自己的 API Key。",
-    install: "查看安装指南",
+    install: "下载安装包",
     readDocs: "产品文档",
     viewDocs: "查看文档",
     micro: "自带 API Key · 无需注册登录 · Chrome 桌面版",
@@ -232,7 +232,7 @@ const copy = {
     heroLine2Pre: "inside the page ",
     heroEm: "you are on",
     sub: "Select text, open the right-click menu, or launch the command palette to translate, explain, summarize, follow up, and copy page context. You add your own API key in the Popup first.",
-    install: "View install guide",
+    install: "Download",
     readDocs: "Read the docs",
     viewDocs: "View docs",
     micro: "Bring your own API key · No sign-up or login · Chrome desktop",
@@ -524,8 +524,8 @@ const faqs = [
   {
     zhQ: "当前版本的边界是什么?",
     enQ: "What are the current limits?",
-    zhA: "核心功能已经实现,适合日常阅读和资料整理。当前正式商店链接暂不可用；BYOK 使用自己的 Key 和模型权限；首段返回速度会受网络、模型、输入长度和服务状态影响。",
-    enA: "Core features are built for everyday reading and research workflows. The official store link is not available yet; BYOK uses your own key and model access; first-token speed varies by network, model, input length, and service status."
+    zhA: "核心功能已经实现,适合日常阅读和资料整理。通过官网下载安装包手动加载；BYOK 使用自己的 Key 和模型权限；首段返回速度会受网络、模型、输入长度和服务状态影响。",
+    enA: "Core features are built for everyday reading and research workflows. Distributed as a downloadable package from the website (load unpacked); BYOK uses your own key and model access; first-token speed varies by network, model, input length, and service status."
   }
 ] as const;
 

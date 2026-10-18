@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # Install
 
-Aviso is not on the Chrome Web Store yet, so download the package and load it manually.
+Aviso is distributed as a downloadable package from this website and GitHub Releases. Download the zip and load it manually in Chrome (load unpacked).
 
 ## Download
 

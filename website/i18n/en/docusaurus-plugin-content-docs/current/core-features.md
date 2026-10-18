@@ -6,7 +6,7 @@ sidebar_position: 5
 
 # Core Features
 
-Aviso currently focuses on connecting common webpage objects to AI and keeping the result inside the current page. Public installation remains subject to Chrome Web Store review status.
+Aviso currently focuses on connecting common webpage objects to AI and keeping the result inside the current page. Aviso is distributed as a downloadable package from the website and GitHub Releases.
 
 ## AI Service Paths
 

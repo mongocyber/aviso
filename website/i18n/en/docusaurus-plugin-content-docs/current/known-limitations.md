@@ -55,7 +55,7 @@ Screenshot questions also depend on whether the selected model supports visual i
 
 ## Release Status And API Keys
 
-The official Chrome Web Store install link is not available yet. For now, download the package from GitHub Releases and load it manually.
+Aviso is distributed only as a package via the website and GitHub Releases and and must be loaded manually.
 
 Aviso requires your own model service API key and does not currently provide built-in free model quota.
 

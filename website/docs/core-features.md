@@ -6,7 +6,7 @@ sidebar_position: 5
 
 # 核心功能
 
-Aviso 当前重点是把常见网页对象接入 AI，并把结果留在当前页面。公开安装状态仍以 Chrome Web Store 审核结果为准。
+Aviso 当前重点是把常见网页对象接入 AI，并把结果留在当前页面。Aviso 通过官网和 GitHub Releases 下载安装包分发。
 
 ## AI 服务路径
 

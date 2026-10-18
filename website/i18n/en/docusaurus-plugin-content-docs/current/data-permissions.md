@@ -98,7 +98,7 @@ The command palette and double-click quick menu do not show screenshot entries. 
 
 ## Screenshots and Feedback
 
-When submitting an issue through the [website feedback form](/en/feedback/) or preparing store screenshots, do not expose:
+When submitting an issue through the [website feedback form](/en/feedback/) or sharing screenshots, do not expose:
 
 - API keys.
 - Private webpages.

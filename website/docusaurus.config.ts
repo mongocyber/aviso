@@ -81,7 +81,7 @@ const config: Config = {
         {
           to: "/docs/install/",
           position: "right",
-          label: "添加到 Chrome",
+          label: "下载安装包",
           className: "navbar-cta"
         }
       ]

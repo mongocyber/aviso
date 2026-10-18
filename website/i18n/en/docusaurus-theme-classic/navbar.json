@@ -23,8 +23,8 @@
     "message": "Docs",
     "description": "Navbar item with label 文档"
   },
-  "item.label.添加到 Chrome": {
-    "message": "Add to Chrome",
-    "description": "Navbar item with label 添加到 Chrome"
+  "item.label.下载安装包": {
+    "message": "Download",
+    "description": "Navbar item with label 下载安装包"
   }
 }

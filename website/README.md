@@ -4,14 +4,14 @@ This folder contains the Docusaurus user documentation site for Aviso.
 
 Current public copy starts from the AI Doc Kit truth surfaces:
 
-- `docs/STATE.md` is the current-facts registry for release state, Chrome Web Store state, website state, storage/data boundaries, and public claim boundaries.
+- `docs/STATE.md` is the current-facts registry for release state, website state, storage/data boundaries, and public claim boundaries.
 - `STATUS.md` and `RELEASE_CHECKLIST.md` keep supporting release evidence.
 - `docs/architecture/website-and-store-copy.md` defines which website and store-copy files must move together.
 - `docs/privacy-and-security.md` keeps the deeper privacy/security explanation.
 
 Website edits should not turn website pages into their own release-state authority. Update `docs/STATE.md` first when a website change affects release state, storage/data boundaries, public wording gates, or feedback data flow.
 
-Current public copy must keep implementation support, live provider validation, Chrome Web Store approval, and public release status separate. DeepSeek, Kimi / Moonshot, and OpenRouter may be described as configurable provider support, but not as live-provider validated. The site must not invent a Chrome Web Store URL.
+Current public copy must keep implementation support, live provider validation, and public release status separate. DeepSeek, Kimi / Moonshot, and OpenRouter may be described as configurable provider support, but not as live-provider validated. The site must not invent a Chrome Web Store URL.
 
 ## Local commands
 

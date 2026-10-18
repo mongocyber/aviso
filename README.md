@@ -4,13 +4,13 @@ Aviso 是一个 Chrome MV3 浏览器扩展。它在当前网页内提供右键�
 
 当前版本：`0.1.1`
 
-当前状态：见 [docs/STATE.md](./docs/STATE.md)。README 只描述产品形态和本地开发流程，不作为 Chrome Web Store、hosted AI 或 release gate 的事实源。
+当前状态：见 [docs/STATE.md](./docs/STATE.md)。README 只描述产品形态和本地开发流程，不作为 hosted AI 或发布状态 的事实源。
 
 技术栈：Chrome MV3、React 18、TypeScript；本地 `dev` / `build` 保留 Plasmo 路径，规范发布包由 WXT 生成。
 
 ## 当前状态
 
-当前产品状态、Chrome Web Store gate、hosted AI 边界、发布证据和 owner 待确认事项统一维护在 [docs/STATE.md](./docs/STATE.md)。更细的状态视图和证据记录见 [STATUS.md](./STATUS.md) 与 [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)。
+当前产品状态、hosted AI 边界、发布证据和 owner 待确认事项统一维护在 [docs/STATE.md](./docs/STATE.md)。更细的状态视图和证据记录见 [STATUS.md](./STATUS.md) 与 [RELEASE_CHECKLIST.md](./RELEASE_CHECKLIST.md)。
 
 ## 当前功能
 
@@ -105,4 +105,4 @@ BYOK 路径下，Aviso 的 AI 请求由浏览器扩展直接发往用户选择�
 - 本地 AI 对话历史保存在 `chrome.storage.local/contextai_history`。
 - 允许访问的 host 仅限已批准 provider host：OpenAI、Anthropic、火山方舟北京网关、DeepSeek、Moonshot、OpenRouter、Gemini、Tencent Hunyuan，以及 `0.1.1` production candidate 托管 AI 后端域名 `https://aviso-backend-production.vercel.app/*`。
 - 连接测试只能由用户在 Popup 中手动触发，一次只测一个 provider，并只展示脱敏摘要。
-- BYOK 默认路径不添加遥测、分析 SDK、production 模型中转服务或远端日志。任何后续 CWS disclosure 变更、公开发布或 hosted AI live 口径仍需 owner 单独批准和对应审核证据。
+- BYOK 默认路径不添加遥测、分析 SDK、production 模型中转服务或远端日志。任何后续公开发布或 hosted AI live 口径仍需 owner 单独批准和对应复核证据。

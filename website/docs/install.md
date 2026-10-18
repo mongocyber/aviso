@@ -6,7 +6,7 @@ sidebar_position: 2
 
 # 安装
 
-Aviso 目前还没有上架 Chrome Web Store，请下载安装包后手动加载。
+Aviso 通过本官网和 GitHub Releases 以安装包形式分发，请下载 zip 后在 Chrome 中手动加载（加载已解压的扩展程序）。
 
 ## 下载安装包
 
