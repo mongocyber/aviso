@@ -51,7 +51,6 @@ Do not actively send passwords, API keys, private account information, unpublish
 | `storage` | Save settings, API keys, templates, and history. |
 | `history` | Search Chrome browsing history in the command palette; search is local and is not sent to Aviso servers or AI providers. |
 | `bookmarks` | Search Chrome bookmarks in the command palette. |
-| `identity` | Used by an earlier hosted sign-in; BYOK does not use it and needs no sign-in. The permission is still declared in the manifest of the current package. |
 | `clipboardWrite` | Copy results from the floating panel. |
 
 ## Site Access
@@ -64,7 +63,7 @@ Command-palette browsing history, bookmark, and local AI conversation results ar
 
 ## Host Permissions
 
-Current host permissions are limited to supported provider domains plus one retired early backend origin (see below):
+Current host permissions are limited to supported provider domains:
 
 ```text
 https://api.openai.com/*
@@ -75,12 +74,12 @@ https://api.moonshot.cn/*
 https://openrouter.ai/*
 https://generativelanguage.googleapis.com/*
 https://api.hunyuan.cloud.tencent.com/*
-https://aviso-backend-production.vercel.app/*
 ```
 
 They are used for OpenAI, Anthropic, Doubao / Volcengine Ark, DeepSeek, Kimi / Moonshot, OpenRouter, Gemini, and Tencent Hunyuan BYOK provider requests. These model services can be configured with API key, model ID, or endpoint; OpenRouter, Gemini, and Tencent Hunyuan model IDs must be entered manually, and Aviso does not automatically read model lists. Actual availability depends on the user's account access, model access, and service status.
 
-`https://aviso-backend-production.vercel.app/*` was used by an earlier hosted path that has been retired; BYOK requests are not sent to it. Host permissions do not include broad webpage access.
+Host permissions do not include broad webpage access.
+
 
 ## Sensitive Content Handling
 

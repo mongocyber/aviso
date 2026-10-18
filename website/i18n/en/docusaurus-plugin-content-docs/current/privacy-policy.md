@@ -85,12 +85,11 @@ Aviso currently uses these permissions:
 - `storage`: save settings, API keys, and history.
 - `history`: search Chrome browsing history in the command palette; search runs locally.
 - `bookmarks`: search bookmarks in the command palette.
-- `identity`: used by an earlier hosted sign-in; BYOK does not use it and needs no sign-in. The permission is still declared in the manifest of the current package.
 - `clipboardWrite`: copy results from the floating panel.
 
 Aviso content scripts match webpage URLs to show the selection toolbar, selection translation card, double-click quick menu, command palette, in-page result panel, clipboard prompt, iframe bridge, and the screenshot selection UI used by the internal right-click path. This site access is not used to fetch arbitrary remote link bodies, serve ads, run telemetry, or run analytics. Only when the user actively triggers an AI action that requires page content does Aviso send relevant content to the provider you selected.
 
-Current host permissions are limited to supported provider domains plus one retired early backend origin:
+Current host permissions are limited to supported provider domains:
 
 ```text
 https://api.openai.com/*
@@ -101,10 +100,10 @@ https://api.moonshot.cn/*
 https://openrouter.ai/*
 https://generativelanguage.googleapis.com/*
 https://api.hunyuan.cloud.tencent.com/*
-https://aviso-backend-production.vercel.app/*
 ```
 
-`https://aviso-backend-production.vercel.app/*` was used by an earlier hosted path that has been retired; BYOK requests are not sent to it. Aviso does not request broad host permissions to fetch arbitrary remote webpage bodies.
+Aviso does not request broad host permissions to fetch arbitrary remote webpage bodies.
+
 
 ## User Control
 

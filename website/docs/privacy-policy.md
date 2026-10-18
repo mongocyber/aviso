@@ -85,12 +85,11 @@ Aviso 当前使用的主要权限包括：
 - `storage`：保存设置、API Key 和历史。
 - `history`：在命令面板中搜索 Chrome 浏览历史；搜索只在本地执行。
 - `bookmarks`：在命令面板中搜索书签。
-- `identity`：早期版本用于托管登录；BYOK 不使用，也不需要登录。该权限声明仍保留在当前安装包的 manifest 中。
 - `clipboardWrite`：支持从浮窗复制结果。
 
 Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页面上显示划词工具栏、划词翻译卡、双击快捷菜单、命令面板、页面内结果面板、剪贴板提示、iframe 桥接，以及右键内部路径需要的截图框选界面。这类站点访问不会用于抓取任意远端链接正文、投放广告、遥测或分析。只有当用户主动触发需要页面内容的 AI 操作时，相关内容才会发送到你选择的 provider。
 
-当前 host permissions 包含已经批准的 provider 域名，以及一个已停用的早期后端域名：
+当前 host permissions 包含已经批准的 provider 域名：
 
 ```text
 https://api.openai.com/*
@@ -101,10 +100,10 @@ https://api.moonshot.cn/*
 https://openrouter.ai/*
 https://generativelanguage.googleapis.com/*
 https://api.hunyuan.cloud.tencent.com/*
-https://aviso-backend-production.vercel.app/*
 ```
 
-`https://aviso-backend-production.vercel.app/*` 是早期托管路径使用的域名，该路径已停用，BYOK 请求不会发往这个域名。Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文。
+Aviso 当前不请求广域 host permissions 来抓取任意远端网页正文。
+
 
 ## 用户控制
 

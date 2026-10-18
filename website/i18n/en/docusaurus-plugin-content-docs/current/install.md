@@ -10,7 +10,7 @@ Aviso is distributed as a downloadable package from this website and GitHub Rele
 
 ## Download
 
-[Download aviso-0.1.1.zip](https://github.com/mongocyber/aviso/releases/latest/download/aviso-0.1.1.zip) ([all releases](https://github.com/mongocyber/aviso/releases/latest)). Source is on [GitHub](https://github.com/mongocyber/aviso) under the MIT license.
+[Download aviso-0.1.2.zip](https://github.com/mongocyber/aviso/releases/latest/download/aviso-0.1.2.zip) ([all releases](https://github.com/mongocyber/aviso/releases/latest)). Source is on [GitHub](https://github.com/mongocyber/aviso) under the MIT license.
 
 Unzip it into a folder; you will select that folder below.
 

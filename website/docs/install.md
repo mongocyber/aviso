@@ -10,7 +10,7 @@ Aviso 通过本官网和 GitHub Releases 以安装包形式分发，请下载 zi
 
 ## 下载安装包
 
-[下载 aviso-0.1.1.zip](https://github.com/mongocyber/aviso/releases/latest/download/aviso-0.1.1.zip)（[所有版本](https://github.com/mongocyber/aviso/releases/latest)）。源码在 [GitHub](https://github.com/mongocyber/aviso)，使用 MIT 许可。
+[下载 aviso-0.1.2.zip](https://github.com/mongocyber/aviso/releases/latest/download/aviso-0.1.2.zip)（[所有版本](https://github.com/mongocyber/aviso/releases/latest)）。源码在 [GitHub](https://github.com/mongocyber/aviso)，使用 MIT 许可。
 
 先把 zip 解压成一个文件夹，后面要选的就是这个文件夹。
 

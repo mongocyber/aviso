@@ -51,7 +51,6 @@ BYOK 不需要登录 Aviso 账号。
 | `storage` | 保存设置、API Key、模板和历史。 |
 | `history` | 在命令面板中搜索用户 Chrome 浏览历史；搜索只在本地执行，不发送给 Aviso 服务器或 AI provider。 |
 | `bookmarks` | 在命令面板中搜索用户书签。 |
-| `identity` | 早期版本用于托管登录；BYOK 不使用，也不需要登录。该权限声明仍保留在当前安装包的 manifest 中。 |
 | `clipboardWrite` | 允许从浮窗复制结果。 |
 
 ## 站点访问
@@ -64,7 +63,7 @@ Aviso 的内容脚本会匹配网页地址，用来在用户正在浏览的页�
 
 ## Host permissions
 
-当前 host permissions 仅包含已经批准的 provider 域名（以及一个已停用的早期后端域名，见下）：
+当前 host permissions 仅包含已经批准的 provider 域名：
 
 ```text
 https://api.openai.com/*
@@ -75,12 +74,12 @@ https://api.moonshot.cn/*
 https://openrouter.ai/*
 https://generativelanguage.googleapis.com/*
 https://api.hunyuan.cloud.tencent.com/*
-https://aviso-backend-production.vercel.app/*
 ```
 
 它们分别用于 OpenAI、Anthropic、豆包 / Volcengine Ark、DeepSeek、Kimi / Moonshot、OpenRouter、Gemini、Tencent Hunyuan 的 BYOK provider 请求。这些模型服务支持在设置中配置 API Key、模型 ID 或接入点；OpenRouter、Gemini 和 Tencent Hunyuan 的模型 ID 需要用户手动填写，Aviso 不自动读取模型列表。实际可用性取决于用户自己的账号权限、模型权限和服务状态。
 
-`https://aviso-backend-production.vercel.app/*` 是早期托管路径使用的域名，该路径已停用，BYOK 请求不会发往这个域名。当前 host permissions 不包含广域网页访问权限。
+当前 host permissions 不包含广域网页访问权限。
+
 
 ## 敏感内容处理
 
