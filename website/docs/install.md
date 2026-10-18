@@ -6,27 +6,13 @@ sidebar_position: 2
 
 # 安装
 
-Aviso 的正式 Chrome Web Store 安装链接暂不可用。当前页面说明正式链接可用前的加载方式，以及安装后建议检查的项目。
+Aviso 目前还没有上架 Chrome Web Store，请下载安装包后手动加载。
 
-## Chrome Web Store 安装
+## 下载安装包
 
-正式商店链接可用后，本页会更新为标准安装步骤。当前先保留占位说明，不写假链接：
+[下载 aviso-0.1.1.zip](https://github.com/mongocyber/aviso/releases/latest/download/aviso-0.1.1.zip)（[所有版本](https://github.com/mongocyber/aviso/releases/latest)）。源码在 [GitHub](https://github.com/mongocyber/aviso)，使用 MIT 许可。
 
-```text
-Chrome Web Store 正式链接：暂不可用，后续更新
-```
-
-官网首页和导航中的“添加到 Chrome”也会随正式链接同步更新。
-
-## 当前构建获取方式
-
-在正式商店链接可用之前，当前构建目录由维护者提供。当前记录中的构建目录为：
-
-```text
-build/chrome-mv3-prod
-```
-
-这个目录来自项目本地构建，用于加载扩展并完成安装检查。Chrome Web Store 链接可用后，本页会替换为正式安装步骤。
+先把 zip 解压成一个文件夹，后面要选的就是这个文件夹。
 
 ## 在 Chrome 中加载扩展
 
@@ -34,7 +20,7 @@ build/chrome-mv3-prod
 2. 进入 `chrome://extensions/`。
 3. 打开右上角的“开发者模式”。
 4. 点击“加载已解压的扩展程序”。
-5. 选择维护者提供的 `build/chrome-mv3-prod` 目录。
+5. 选择刚才解压出来的文件夹（里面直接能看到 `manifest.json`）。
 6. 确认扩展列表中显示 Aviso。
 
 安装后，Chrome 工具栏中会出现 Aviso 扩展入口。你可以从 Popup 中设置界面语言、外观主题、默认模型、AI 服务配置、API Key、功能开关、本地历史和自定义模板。

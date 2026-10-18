@@ -6,27 +6,13 @@ sidebar_position: 2
 
 # Install
 
-The official Chrome Web Store install link is not available yet. This page explains the current loading method before the official link is available, plus the checks to run after installation.
+Aviso is not on the Chrome Web Store yet, so download the package and load it manually.
 
-## Chrome Web Store Install
+## Download
 
-When the official store link is available, this page will be updated with the standard install steps. For now, no fake store URL is shown:
+[Download aviso-0.1.1.zip](https://github.com/mongocyber/aviso/releases/latest/download/aviso-0.1.1.zip) ([all releases](https://github.com/mongocyber/aviso/releases/latest)). Source is on [GitHub](https://github.com/mongocyber/aviso) under the MIT license.
 
-```text
-Chrome Web Store official link: not available yet; will be updated later
-```
-
-The website homepage and navigation CTA will also point to the official store listing when that link is available.
-
-## Current Build Access
-
-Before the official store link is available, the build directory is provided by the maintainer. The current build directory is:
-
-```text
-build/chrome-mv3-prod
-```
-
-This directory comes from the local project build and is used to load the extension and complete the installation checks. After the Chrome Web Store link is available, this page will be replaced with the official install steps.
+Unzip it into a folder; you will select that folder below.
 
 ## Load the Extension in Chrome
 
@@ -34,7 +20,7 @@ This directory comes from the local project build and is used to load the extens
 2. Go to `chrome://extensions/`.
 3. Turn on “Developer mode” in the top-right corner.
 4. Click “Load unpacked”.
-5. Select the provided `build/chrome-mv3-prod` directory.
+5. Select the folder you just unzipped (you should see `manifest.json` directly inside).
 6. Confirm that Aviso appears in the extensions list.
 
 After installation, Aviso appears in the Chrome toolbar. From the Popup you can set UI language, theme, default model, AI service configs, API keys, feature switches, local history, and custom templates.
