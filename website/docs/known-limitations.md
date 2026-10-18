@@ -53,13 +53,11 @@ Aviso 仅在右键内部路径中，对支持的图片 URL 或支持格式的 ba
 
 截图提问是否可用还取决于用户选择的模型是否支持视觉输入。
 
-## Aviso AI 与发布状态
+## 发布状态与 API Key
 
-Aviso AI 支持登录后使用免费额度。
+Chrome Web Store 正式商店链接暂不可用；目前请从 GitHub Releases 下载安装包手动加载。
 
-Chrome Web Store 正式商店链接暂不可用；官网会在正式链接可用后更新安装入口。
-
-未登录 Aviso AI 不会阻止用户继续使用自己的 API Key；退出 Aviso AI 也不会删除 BYOK 配置。
+Aviso 需要你自己的模型服务 API Key，目前不提供内置的免费模型额度。
 
 ## Provider 支持范围
 

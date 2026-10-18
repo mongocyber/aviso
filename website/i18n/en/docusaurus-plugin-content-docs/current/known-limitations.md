@@ -35,7 +35,7 @@ Aviso does not fetch arbitrary remote link content and does not request broad ho
 
 ## Browsing History and Bookmark Search
 
-The command palette can search Chrome browsing history, Chrome bookmarks, and local Aviso AI conversations. Browsing history and bookmarks are only used for local keyword search. They do not enter AI requests and are not sent to Aviso servers.
+The command palette can search Chrome browsing history, Chrome bookmarks, and local AI conversations. Browsing history and bookmarks are only used for local keyword search. They do not enter AI requests and are not sent to Aviso servers.
 
 Browser permissions, page focus, or the user environment may affect search results.
 
@@ -53,13 +53,11 @@ Screenshot capability is kept only in a user-triggered internal right-click path
 
 Screenshot questions also depend on whether the selected model supports visual input.
 
-## Aviso AI And Release Status
+## Release Status And API Keys
 
-Aviso AI supports free quota after sign-in.
+The official Chrome Web Store install link is not available yet. For now, download the package from GitHub Releases and load it manually.
 
-The official Chrome Web Store install link is not available yet. The website will update the install entry when the official link is available.
-
-Being signed out of Aviso AI does not prevent users from continuing with their own API key. Signing out of Aviso AI also does not remove BYOK configs.
+Aviso requires your own model service API key and does not currently provide built-in free model quota.
 
 ## Provider Support Scope
 

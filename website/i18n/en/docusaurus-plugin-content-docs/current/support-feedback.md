@@ -19,8 +19,7 @@ If you are an invited tester, you can also use the feedback channel provided by 
 If Aviso does not work as expected, first check:
 
 - The extension is enabled in `chrome://extensions/`.
-- If you use Aviso AI, you are signed in, quota is available, and you have tried refreshing account status.
-- If you use BYOK, the API key is saved and the provider account is usable.
+- The API key is saved and the provider account is usable.
 - The current webpage allows extension content scripts.
 - You are not in a sensitive page or sensitive-content scenario that causes the clipboard prompt to be skipped.
 - Relevant feature switches are enabled, such as the selection translation card or double-click quick menu.
@@ -43,7 +42,6 @@ In the issue description, include:
 - Operating system.
 - Aviso version.
 - Trigger method: right-click menu, selection toolbar, selection translation card, double-click quick menu, command palette, clipboard prompt, in-page result panel, or Popup.
-- Whether you were using Aviso AI or a BYOK provider.
 - Provider name, but never the API key.
 - Model or AI service config name, but never the API key.
 - Page type where the issue appeared, such as normal webpage, iframe page, form page, or image page.
@@ -64,8 +62,8 @@ Do not send:
 
 | Symptom | Possible cause |
 | --- | --- |
-| Floating panel appears but keeps waiting | Slow Aviso AI or provider response, API key issue, network problem, or long input. |
-| Aviso AI is unavailable | Not signed in, quota unavailable, account status needs refresh, or service is temporarily unavailable. |
+| Floating panel appears but keeps waiting | Slow provider response, API key issue, network problem, or long input. |
+| API key rejected or request fails | The API key is wrong or expired, the provider account is out of credit or lacks model access, or the service is temporarily unavailable. |
 | Selection toolbar does not appear | Page blocks selection, content is inside a complex iframe, extension is not loaded, or feature switch is off. |
 | Selection translation card does not appear | Feature switch is off, selection is too long, page is not suitable for injection, or provider is unavailable. |
 | Double-click quick menu does not appear | Feature switch is off, or the target is an input, editable area, code editor, or Aviso UI. |

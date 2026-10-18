@@ -29,10 +29,9 @@ After installation, Aviso appears in the Chrome toolbar. From the Popup you can 
 
 Recommended checks:
 
-- Open the Aviso Popup and confirm that Aviso AI sign-in, AI service configs, and API key settings are visible.
-- To start quickly, sign in to Aviso AI and confirm account and free quota status are visible.
-- To use your own model service, add or edit a BYOK service config and save the API key, model ID, or endpoint as needed.
-- After signing in to Aviso AI, saving an API key, or switching to a new model service for the first time, the first request may take longer than usual. Wait for the page prompt to return; later requests are usually faster.
+- Open the Aviso Popup and confirm that AI service configs and API key settings are visible.
+- Add a BYOK service config and save your own API key, model ID, or endpoint.
+- After saving an API key, or switching to a new model service for the first time, the first request may take longer than usual. Wait for the page prompt to return; later requests are usually faster.
 - Open a normal webpage, select text, and check whether the selection toolbar appears.
 - Right-click on a webpage and check whether the Aviso menu appears.
 - On Mac, use `Command+Shift+Space`; on Windows/Linux, use `Ctrl+Shift+Space`; check whether the command palette opens.

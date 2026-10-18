@@ -1,27 +1,12 @@
 ---
 title: AI 服务与 API Key
-description: 选择 Aviso AI 或设置模型 provider API Key，并了解数据会如何发送。
+description: 设置模型 provider API Key，并了解数据会如何发送。
 sidebar_position: 3
 ---
 
 # AI 服务与 API Key
 
-Aviso 支持两种 AI 服务路径：
-
-- **Aviso AI**：登录后可使用免费额度，不需要自己提供模型 provider API Key。
-- **BYOK provider**：使用你自己的模型 provider API Key，请求会从浏览器扩展直连你选择的 provider。
-
-你可以在 Popup 中管理默认服务，也可以按任务切换服务。
-
-## Aviso AI
-
-Aviso AI 适合想快速开始的用户。登录后，Popup 会显示账号状态、额度信息、刷新和退出入口。使用 Aviso AI 时，请求会经过 Aviso 后端和上游模型 provider。
-
-需要注意：
-
-- 免费额度需要登录后使用。
-- 退出 Aviso AI 不会删除或禁用 BYOK provider 配置。
-- 如果额度不可用或服务暂时不可用，可以切回 BYOK provider。
+Aviso 采用自带 API Key（BYOK）方式：使用你自己的模型 provider API Key，请求会从浏览器扩展直连你选择的 provider。你可以在 Popup 中管理默认服务，也可以按任务切换服务。
 
 ## 支持的 provider
 
@@ -44,8 +29,6 @@ Aviso AI 适合想快速开始的用户。登录后，Popup 会显示账号状�
 
 Popup 支持多 AI 服务配置。你可以：
 
-- 登录、刷新或退出 Aviso AI。
-- 查看 Aviso AI 账号状态和额度状态。
 - 为同一个 provider 保存多个配置。
 - 设置当前默认服务。
 - 手动编辑 OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 的模型 ID。
@@ -75,8 +58,6 @@ API Key 不明文保存，会经过本地加密/混淆级保护后保存在 Chro
 - 使用模型时，请求会直接发送给你选择的 provider。
 - provider 的计费、日志、数据保留和使用限制由你的 provider 账户条款决定。
 - 不要在截图、反馈、Issue、录屏或聊天中暴露 API Key。
-
-Aviso AI 不需要你提供模型 provider API Key；Aviso AI session 保存在本地扩展存储中，可以在 Popup 中退出。
 
 ## 更换或移除 Key
 

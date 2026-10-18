@@ -1,27 +1,13 @@
 ---
 title: AI Services And API Keys
-description: Choose Aviso AI or configure model provider API keys and understand where data is sent.
+description: Configure model provider API keys and understand where data is sent.
 sidebar_position: 3
 ---
 
 # AI Services And API Keys
 
-Aviso supports two AI service paths:
-
-- **Aviso AI**: sign in and use free quota without providing your own model provider API key.
-- **BYOK provider**: use your own model provider API key. Requests are sent directly from the browser extension to the provider you select.
-
+Aviso uses a bring-your-own-API-key (BYOK) model: you use your own model provider API key, and requests are sent directly from the browser extension to the provider you select. 
 You can manage the default service in the Popup and switch services by task.
-
-## Aviso AI
-
-Aviso AI is the quickest way to start. After sign-in, the Popup shows account status, quota status, refresh, and sign-out controls. When you use Aviso AI, requests pass through the Aviso backend and upstream model providers.
-
-Important boundaries:
-
-- Free quota is available after sign-in.
-- Signing out of Aviso AI does not remove or disable BYOK provider configs.
-- If quota or service availability blocks a task, you can switch back to a BYOK provider.
 
 ## Supported Providers
 
@@ -44,8 +30,6 @@ These services require your own valid API key. You can trigger a connection test
 
 The Popup supports multiple AI service configs. You can:
 
-- Sign in to, refresh, or sign out of Aviso AI.
-- View Aviso AI account status and quota status.
 - Save multiple configs for the same provider.
 - Set the current default service.
 - Manually edit OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan model IDs.
@@ -75,8 +59,6 @@ Important boundaries:
 - When you use a model, the request is sent directly to the provider you selected.
 - Provider billing, logs, retention, and limits follow your provider account terms.
 - Do not expose API keys in screenshots, feedback, issues, recordings, or chat messages.
-
-Aviso AI does not require a model provider API key from you. Its session is stored in local extension storage and can be signed out from the Popup.
 
 ## Replace or Remove a Key
 

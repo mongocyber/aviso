@@ -29,10 +29,9 @@ Aviso 目前还没有上架 Chrome Web Store，请下载安装包后手动加载
 
 建议先完成这些检查：
 
-- 打开 Aviso Popup，确认能看到 Aviso AI 登录入口、AI 服务配置和 API Key 设置。
-- 如果想快速开始，登录 Aviso AI，确认账号和免费额度状态显示正常。
-- 如果想使用自己的模型服务，新增或编辑一个 BYOK 服务配置，并按需保存 API Key、模型 ID 或接入点。
-- 第一次登录 Aviso AI、保存 API Key 或切换新的模型服务后，首次请求可能需要更久；等待页面提示返回即可，之后通常会更快。
+- 打开 Aviso Popup，确认能看到 AI 服务配置和 API Key 设置。
+- 新增一个 BYOK 服务配置，并保存你自己的 API Key、模型 ID 或接入点。
+- 第一次保存 API Key 或切换新的模型服务后，首次请求可能需要更久；等待页面提示返回即可，之后通常会更快。
 - 打开一个普通网页，选中一段文本，检查是否出现划词工具栏。
 - 在网页中右键，检查是否出现 Aviso 菜单。
 - Mac 使用 `Command+Shift+Space`，Windows/Linux 使用 `Ctrl+Shift+Space`，检查命令面板是否能打开。

@@ -10,12 +10,7 @@ Aviso 当前重点是把常见网页对象接入 AI，并把结果留在当前�
 
 ## AI 服务路径
 
-Aviso 支持两条 AI 服务路径：
-
-- Aviso AI：登录后可使用免费额度，适合快速开始。
-- BYOK direct-provider：填写自己的模型 API Key，浏览器扩展直接请求所选 provider，不强制登录。
-
-只有用户选择 Aviso AI 并登录后，请求才会经过 Aviso 后端和上游模型 provider；BYOK 配置和直连请求不受 Aviso AI 登录状态影响。
+Aviso 采用 BYOK direct-provider 方式：填写自己的模型 API Key，浏览器扩展直接请求所选 provider，不需要登录 Aviso 账号。
 
 ## 右键菜单
 
@@ -92,7 +87,6 @@ Popup 用于管理：
 - API Key。
 - OpenAI / Anthropic / DeepSeek / Kimi-Moonshot / OpenRouter / Gemini / Tencent Hunyuan 模型 ID。
 - 豆包 / Volcengine Ark 接入点和模型字段。
-- Aviso AI 账号登录、刷新、退出、账号状态和额度状态。
 - 功能开关。
 - 翻译目标语言。
 - 自定义模板。

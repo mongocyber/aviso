@@ -6,27 +6,16 @@ sidebar_position: 4
 
 # First Use
 
-After installing Aviso, start from a normal public webpage that does not contain private information. You can sign in to Aviso AI and use free quota, or add your own API key for a BYOK provider.
+After installing Aviso, start from a normal public webpage that does not contain private information. On first start, add your own API key (BYOK) in the Popup.
 
-## Choose An AI Service First
+## Add An API Key First
 
-### Option 1: Sign In To Aviso AI
-
-1. Click the Aviso icon in the Chrome toolbar.
-2. Open the AI services area in the Popup.
-3. Sign in to Aviso AI.
-4. After sign-in, confirm account status and free quota are visible.
-5. Return to the page and trigger an action through selection, right-click, or the command palette.
-
-### Option 2: Add Your Own API Key
 
 1. Click the Aviso icon in the Chrome toolbar.
 2. Add or edit a provider config in the AI services area.
 3. Enter the API key, model ID, or endpoint.
 4. Save it and optionally make it the default service.
 5. Return to the page and trigger an action through selection, right-click, or the command palette.
-
-BYOK does not require Aviso AI sign-in. Signing out of Aviso AI does not delete your BYOK config.
 
 ## Option 1: Use the Selection Toolbar
 
@@ -96,8 +85,7 @@ After you copy normal text, Aviso can show a prompt so you can send clipboard co
 Check:
 
 - The extension is enabled in `chrome://extensions/`.
-- If you use Aviso AI, you are signed in and quota is available.
-- If you use BYOK, the API key is saved and the provider account is usable.
+- The API key is saved and the provider account is usable.
 - The current webpage allows extension content scripts.
 - The feature switch is enabled.
 - The model may simply be slow rather than failed.
